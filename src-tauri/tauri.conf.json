@@ -1,6 +1,6 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "kogu",
+  "productName": "Kogu",
   "version": "0.1.0",
   "identifier": "io.github.seijikohara.kogu",
   "build": {
@@ -12,9 +12,11 @@
   "app": {
     "windows": [
       {
-        "title": "kogu",
-        "width": 800,
-        "height": 600
+        "title": "Kogu - Developer Tools",
+        "width": 1200,
+        "height": 800,
+        "minWidth": 800,
+        "minHeight": 600
       }
     ],
     "security": {
