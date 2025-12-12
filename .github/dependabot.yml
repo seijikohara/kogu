@@ -6,7 +6,7 @@ updates:
       interval: weekly
       day: monday
     commit-message:
-      prefix: "ci"
+      prefix: 'ci'
 
   - package-ecosystem: bun
     directory: /
@@ -14,7 +14,7 @@ updates:
       interval: weekly
       day: monday
     commit-message:
-      prefix: "deps"
+      prefix: 'deps'
 
   - package-ecosystem: cargo
     directory: /src-tauri
@@ -22,4 +22,4 @@ updates:
       interval: weekly
       day: monday
     commit-message:
-      prefix: "deps"
+      prefix: 'deps'

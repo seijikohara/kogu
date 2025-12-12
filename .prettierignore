@@ -1,0 +1,19 @@
+# Build outputs
+build/
+.svelte-kit/
+dist/
+target/
+
+# Tauri generated files
+src-tauri/gen/
+
+# Dependencies
+node_modules/
+
+# Lock files
+bun.lock
+package-lock.json
+
+# Generated
+*.min.js
+*.min.css
