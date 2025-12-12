@@ -5,7 +5,7 @@ inputs:
   components:
     description: Additional Rust components to install (e.g., rustfmt, clippy)
     required: false
-    default: ""
+    default: ''
 
 runs:
   using: composite
