@@ -1,0 +1,17 @@
+name: Setup Rust for Tauri
+description: Setup Rust toolchain with caching configured for Tauri project
+
+inputs:
+  components:
+    description: Additional Rust components to install (e.g., rustfmt, clippy)
+    required: false
+    default: ""
+
+runs:
+  using: composite
+  steps:
+    - name: Setup Rust toolchain
+      uses: actions-rust-lang/setup-rust-toolchain@v1
+      with:
+        components: ${{ inputs.components }}
+        cache-workspaces: src-tauri -> src-tauri/target
