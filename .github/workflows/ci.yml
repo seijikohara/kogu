@@ -14,20 +14,15 @@ permissions:
   issues: write
 
 jobs:
-  check-frontend:
-    name: Check Frontend (TypeScript, Svelte)
+  test-frontend:
+    name: Test Frontend
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@v2
-        with:
-          bun-version: latest
-
-      - name: Install dependencies
-        run: bun install --frozen-lockfile
+      - name: Setup frontend
+        uses: ./.github/actions/setup-frontend
 
       - name: Type check
         run: bun run check
@@ -35,23 +30,21 @@ jobs:
       - name: Build
         run: bun run build
 
-  check-backend:
-    name: Check Backend (Rust, Clippy, Format)
+  test-backend:
+    name: Test Backend
     runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: src-tauri
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
-      - name: Install system dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
+      - name: Setup Tauri dependencies
+        uses: ./.github/actions/setup-tauri-deps
 
       - name: Setup Rust
-        uses: actions-rust-lang/setup-rust-toolchain@v1
+        uses: ./.github/actions/setup-rust-tauri
         with:
           components: rustfmt, clippy
 
@@ -67,7 +60,7 @@ jobs:
   build-tauri:
     name: Build App (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
-    needs: [check-frontend, check-backend]
+    needs: [test-frontend, test-backend]
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     strategy:
       fail-fast: false
@@ -75,24 +68,17 @@ jobs:
         os: [ubuntu-latest, macos-latest, windows-latest]
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@v2
-        with:
-          bun-version: latest
+      - name: Setup frontend
+        uses: ./.github/actions/setup-frontend
 
-      - name: Install system dependencies (Ubuntu)
+      - name: Setup Tauri dependencies (Ubuntu)
         if: matrix.os == 'ubuntu-latest'
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
+        uses: ./.github/actions/setup-tauri-deps
 
       - name: Setup Rust
-        uses: actions-rust-lang/setup-rust-toolchain@v1
-
-      - name: Install dependencies
-        run: bun install --frozen-lockfile
+        uses: ./.github/actions/setup-rust-tauri
 
       - name: Build Tauri app
         run: bun run tauri build
@@ -104,7 +90,7 @@ jobs:
     if: failure() && github.event_name == 'push' && github.ref == 'refs/heads/main'
     steps:
       - name: Create issue
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           script: |
             const runUrl = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
