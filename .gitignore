@@ -8,3 +8,10 @@ node_modules
 !.env.example
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
+
+# Claude Code
+.claude/settings.local.json
+CLAUDE.local.md
+
+# Playwright MCP
+.playwright-mcp/

@@ -18,7 +18,12 @@
 	} from '$lib/services/formatters.js';
 
 	interface Props {
-		onStatsChange?: (stats: { input: string; valid: boolean | null; error: string; format: JsonInputFormat | null }) => void;
+		onStatsChange?: (stats: {
+			input: string;
+			valid: boolean | null;
+			error: string;
+			format: JsonInputFormat | null;
+		}) => void;
 	}
 
 	let { onStatsChange }: Props = $props();
@@ -40,13 +45,15 @@
 
 	// Validation
 	const json1Validation = $derived.by(() => {
-		if (!compareJson1.trim()) return { valid: null as boolean | null, format: null as JsonInputFormat | null };
+		if (!compareJson1.trim())
+			return { valid: null as boolean | null, format: null as JsonInputFormat | null };
 		const result = validateJson(compareJson1);
 		return { valid: result.valid, format: result.detectedFormat };
 	});
 
 	const json2Validation = $derived.by(() => {
-		if (!compareJson2.trim()) return { valid: null as boolean | null, format: null as JsonInputFormat | null };
+		if (!compareJson2.trim())
+			return { valid: null as boolean | null, format: null as JsonInputFormat | null };
 		const result = validateJson(compareJson2);
 		return { valid: result.valid, format: result.detectedFormat };
 	});
@@ -109,63 +116,73 @@
 		if (!jsonStr?.trim() || !targetPath) return null;
 
 		const lines = jsonStr.split('\n');
-		const pathParts = targetPath.replace(/^\$\.?/, '').split(/\.|\[/).filter(Boolean);
+		const pathParts = targetPath
+			.replace(/^\$\.?/, '')
+			.split(/\.|\[/)
+			.filter(Boolean);
 
 		if (pathParts.length === 0) return 1;
 
-		const pathStack: string[] = [];
-		let currentArrayIndex = -1;
+		const targetPathNormalized = pathParts.map((p) => p.replace(/\]$/, '')).join('.');
 
-		for (let i = 0; i < lines.length; i++) {
-			const line = lines[i].trim();
-			const lineNum = i + 1;
-
-			// Match object key
-			const keyMatch = line.match(/^"([^"]+)"\s*:/);
-			if (keyMatch) {
-				const key = keyMatch[1];
-				const currentPath = [...pathStack, key].join('.');
-
-				// Check if this matches the target path
-				const targetPathNormalized = pathParts.map((p) => p.replace(/\]$/, '')).join('.');
-				if (currentPath === targetPathNormalized) {
-					return lineNum;
-				}
-
-				// Track nested objects
-				if (line.endsWith('{') || line.endsWith('[')) {
-					pathStack.push(key);
-					if (line.endsWith('[')) {
-						currentArrayIndex = 0;
-					}
-				}
-			}
-
-			// Track array items
-			if (line === '{' && currentArrayIndex >= 0) {
-				const arrayPath = [...pathStack, `${currentArrayIndex}]`].join('.');
-				const targetPathNormalized = pathParts.map((p) => p.replace(/\]$/, '')).join('.');
-				if (arrayPath.replace(/\]$/, '') === targetPathNormalized) {
-					return lineNum;
-				}
-				currentArrayIndex++;
-			}
-
-			// Track closing brackets
-			if (line.startsWith('}') || line === '},') {
-				if (pathStack.length > 0 && !line.includes('[')) {
-					pathStack.pop();
-				}
-			}
-			if (line.startsWith(']') || line === '],') {
-				currentArrayIndex = -1;
-				if (pathStack.length > 0) {
-					pathStack.pop();
-				}
-			}
+		interface ParseState {
+			pathStack: string[];
+			currentArrayIndex: number;
+			foundLine: number | null;
 		}
 
-		return null;
+		const result = lines.reduce<ParseState>(
+			(acc, rawLine, i) => {
+				if (acc.foundLine !== null) return acc;
+
+				const line = rawLine.trim();
+				const lineNum = i + 1;
+
+				// Match object key
+				const keyMatch = line.match(/^"([^"]+)"\s*:/);
+				if (keyMatch) {
+					const key = keyMatch[1];
+					const currentPath = [...acc.pathStack, key].join('.');
+
+					// Check if this matches the target path
+					if (currentPath === targetPathNormalized) {
+						return { ...acc, foundLine: lineNum };
+					}
+
+					// Track nested objects
+					if (line.endsWith('{') || line.endsWith('[')) {
+						const newStack = [...acc.pathStack, key];
+						const newArrayIndex = line.endsWith('[') ? 0 : acc.currentArrayIndex;
+						return { ...acc, pathStack: newStack, currentArrayIndex: newArrayIndex };
+					}
+				}
+
+				// Track array items
+				if (line === '{' && acc.currentArrayIndex >= 0) {
+					const arrayPath = [...acc.pathStack, `${acc.currentArrayIndex}]`].join('.');
+					if (arrayPath.replace(/\]$/, '') === targetPathNormalized) {
+						return { ...acc, foundLine: lineNum };
+					}
+					return { ...acc, currentArrayIndex: acc.currentArrayIndex + 1 };
+				}
+
+				// Track closing brackets
+				if (line.startsWith('}') || line === '},') {
+					if (acc.pathStack.length > 0 && !line.includes('[')) {
+						return { ...acc, pathStack: acc.pathStack.slice(0, -1) };
+					}
+				}
+				if (line.startsWith(']') || line === '],') {
+					const newStack = acc.pathStack.length > 0 ? acc.pathStack.slice(0, -1) : acc.pathStack;
+					return { ...acc, currentArrayIndex: -1, pathStack: newStack };
+				}
+
+				return acc;
+			},
+			{ pathStack: [], currentArrayIndex: -1, foundLine: null }
+		);
+
+		return result.foundLine;
 	};
 
 	// Compute highlight lines for both editors
@@ -219,7 +236,11 @@
 </script>
 
 <div class="flex flex-1 overflow-hidden">
-	<OptionsPanel show={showOptions} onclose={() => (showOptions = false)} onopen={() => (showOptions = true)}>
+	<OptionsPanel
+		show={showOptions}
+		onclose={() => (showOptions = false)}
+		onopen={() => (showOptions = true)}
+	>
 		<OptionsSection title="Actions">
 			<Button variant="outline" size="sm" class="w-full gap-1.5 text-xs" onclick={handleSwap}>
 				<ArrowRightLeft class="h-3.5 w-3.5" />
@@ -241,7 +262,8 @@
 			<div class="space-y-1 pt-1">
 				<Label class="text-[10px] uppercase tracking-wide text-muted-foreground">Ignore Keys</Label>
 				<Input bind:value={compareIgnoreKeys} placeholder="key1, key2, key3" class="h-7 text-xs" />
-				<span class="text-[10px] text-muted-foreground">Comma-separated list of keys to ignore</span>
+				<span class="text-[10px] text-muted-foreground">Comma-separated list of keys to ignore</span
+				>
 			</div>
 		</OptionsSection>
 
@@ -273,7 +295,10 @@
 					editorMode="json"
 					placeholder="Original JSON..."
 					highlightLines={highlightLinesOriginal}
-					onpaste={async () => { compareJson1 = await navigator.clipboard.readText(); toast.success('Pasted'); }}
+					onpaste={async () => {
+						compareJson1 = await navigator.clipboard.readText();
+						toast.success('Pasted');
+					}}
 					onclear={() => (compareJson1 = '{}')}
 				/>
 			{/snippet}
@@ -285,7 +310,10 @@
 					editorMode="json"
 					placeholder="Modified JSON..."
 					highlightLines={highlightLinesModified}
-					onpaste={async () => { compareJson2 = await navigator.clipboard.readText(); toast.success('Pasted'); }}
+					onpaste={async () => {
+						compareJson2 = await navigator.clipboard.readText();
+						toast.success('Pasted');
+					}}
 					onclear={() => (compareJson2 = '{}')}
 				/>
 			{/snippet}
@@ -294,7 +322,9 @@
 		{#if diffResults.length > 0}
 			<!-- Diff Summary -->
 			<div class="flex items-center gap-4 border-t bg-muted/30 px-3 py-1.5 text-xs">
-				<span class="font-medium">{diffSummary.total} difference{diffSummary.total !== 1 ? 's' : ''}</span>
+				<span class="font-medium"
+					>{diffSummary.total} difference{diffSummary.total !== 1 ? 's' : ''}</span
+				>
 				{#if diffSummary.added > 0}
 					<span class="flex items-center gap-1 text-green-600 dark:text-green-400">
 						<Plus class="h-3 w-3" />
@@ -341,7 +371,9 @@
 				</div>
 			</div>
 		{:else if compareJson1.trim() !== '{}' && compareJson2.trim() !== '{}' && !compareError}
-			<div class="flex h-8 items-center justify-center border-t bg-green-500/20 text-xs font-medium text-green-600 dark:text-green-400">
+			<div
+				class="flex h-8 items-center justify-center border-t bg-green-500/20 text-xs font-medium text-green-600 dark:text-green-400"
+			>
 				✓ Identical
 			</div>
 		{/if}

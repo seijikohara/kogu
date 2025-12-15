@@ -11,7 +11,12 @@
 	import { downloadTextFile, copyToClipboard, pasteFromClipboard } from '../utils.js';
 
 	interface Props {
-		onStatsChange?: (stats: { input: string; valid: boolean | null; error: string; format: JsonInputFormat | null }) => void;
+		onStatsChange?: (stats: {
+			input: string;
+			valid: boolean | null;
+			error: string;
+			format: JsonInputFormat | null;
+		}) => void;
 	}
 
 	let { onStatsChange }: Props = $props();
@@ -31,7 +36,8 @@
 
 	// Validation
 	const inputValidation = $derived.by(() => {
-		if (!queryInput.trim()) return { valid: null as boolean | null, format: null as JsonInputFormat | null };
+		if (!queryInput.trim())
+			return { valid: null as boolean | null, format: null as JsonInputFormat | null };
 		const result = validateJson(queryInput);
 		return { valid: result.valid, format: result.detectedFormat };
 	});
@@ -121,10 +127,16 @@
 </script>
 
 <div class="flex flex-1 overflow-hidden">
-	<OptionsPanel show={showOptions} onclose={() => (showOptions = false)} onopen={() => (showOptions = true)}>
+	<OptionsPanel
+		show={showOptions}
+		onclose={() => (showOptions = false)}
+		onopen={() => (showOptions = true)}
+	>
 		<OptionsSection title="JSONPath Query">
 			<div class="space-y-1">
-				<Label class="text-[10px] uppercase tracking-wide text-muted-foreground">Path Expression</Label>
+				<Label class="text-[10px] uppercase tracking-wide text-muted-foreground"
+					>Path Expression</Label
+				>
 				<Input bind:value={queryPath} placeholder="$.path.to.value" class="h-7 font-mono text-xs" />
 			</div>
 		</OptionsSection>
@@ -134,12 +146,22 @@
 				<OptionSelect
 					label="Format"
 					bind:value={queryOutputFormat}
-					options={[{ value: 'formatted', label: 'Formatted' }, { value: 'compact', label: 'Compact' }]}
+					options={[
+						{ value: 'formatted', label: 'Formatted' },
+						{ value: 'compact', label: 'Compact' },
+					]}
 				/>
 				<OptionSelect
 					label="Max Results"
 					bind:value={queryMaxResultsStr}
-					options={[{ value: '0', label: 'Unlimited' }, { value: '1', label: '1' }, { value: '5', label: '5' }, { value: '10', label: '10' }, { value: '50', label: '50' }, { value: '100', label: '100' }]}
+					options={[
+						{ value: '0', label: 'Unlimited' },
+						{ value: '1', label: '1' },
+						{ value: '5', label: '5' },
+						{ value: '10', label: '10' },
+						{ value: '50', label: '50' },
+						{ value: '100', label: '100' },
+					]}
 				/>
 			</div>
 			<div class="space-y-1.5 pt-1">
@@ -151,7 +173,9 @@
 		</OptionsSection>
 
 		<OptionsSection title="JSONPath Examples">
-			<div class="space-y-1.5 rounded-md bg-muted/50 p-2 font-mono text-[11px] text-muted-foreground">
+			<div
+				class="space-y-1.5 rounded-md bg-muted/50 p-2 font-mono text-[11px] text-muted-foreground"
+			>
 				<div class="truncate" title="All books">$.store.book[*]</div>
 				<div class="truncate" title="All authors">$..author</div>
 				<div class="truncate" title="Books under $10">$.store.book[?(@.price&lt;10)]</div>

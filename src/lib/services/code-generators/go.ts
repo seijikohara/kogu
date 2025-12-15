@@ -69,9 +69,8 @@ ${fields}
 
 export const goGenerator: CodeGenerator<GoOptions> = {
 	generate(data: unknown, options: GoOptions): string {
-		return generateWithNestedTypes(
-			inferType(data as JsonValue, options.rootName),
-			(typeInfo) => generateStructDefinition(typeInfo, options)
+		return generateWithNestedTypes(inferType(data as JsonValue, options.rootName), (typeInfo) =>
+			generateStructDefinition(typeInfo, options)
 		)
 			.filter(Boolean)
 			.join('\n\n');

@@ -128,8 +128,16 @@ export function getDefaultOptions(language: TargetLanguage): AllLanguageOptions 
 	return DEFAULT_OPTIONS_MAP[language]();
 }
 
-export function generateCode(data: unknown, language: 'typescript', options: TypeScriptOptions): string;
-export function generateCode(data: unknown, language: 'javascript', options: JavaScriptOptions): string;
+export function generateCode(
+	data: unknown,
+	language: 'typescript',
+	options: TypeScriptOptions
+): string;
+export function generateCode(
+	data: unknown,
+	language: 'javascript',
+	options: JavaScriptOptions
+): string;
 export function generateCode(data: unknown, language: 'go', options: GoOptions): string;
 export function generateCode(data: unknown, language: 'python', options: PythonOptions): string;
 export function generateCode(data: unknown, language: 'rust', options: RustOptions): string;
@@ -138,8 +146,16 @@ export function generateCode(data: unknown, language: 'csharp', options: CSharpO
 export function generateCode(data: unknown, language: 'kotlin', options: KotlinOptions): string;
 export function generateCode(data: unknown, language: 'swift', options: SwiftOptions): string;
 export function generateCode(data: unknown, language: 'php', options: PhpOptions): string;
-export function generateCode(data: unknown, language: TargetLanguage, options: AllLanguageOptions): string;
-export function generateCode(data: unknown, language: TargetLanguage, options: AllLanguageOptions): string {
+export function generateCode(
+	data: unknown,
+	language: TargetLanguage,
+	options: AllLanguageOptions
+): string;
+export function generateCode(
+	data: unknown,
+	language: TargetLanguage,
+	options: AllLanguageOptions
+): string {
 	return GENERATOR_MAP[language].generate(data, options);
 }
 

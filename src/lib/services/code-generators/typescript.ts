@@ -48,8 +48,7 @@ const resolveType = (typeInfo: TypeInfo, options: TypeScriptOptions): string => 
 
 const isValidIdentifier = (key: string): boolean => /^[a-zA-Z_$][a-zA-Z0-9_$]*$/.test(key);
 
-const formatPropertyName = (key: string): string =>
-	isValidIdentifier(key) ? key : `'${key}'`;
+const formatPropertyName = (key: string): string => (isValidIdentifier(key) ? key : `'${key}'`);
 
 const generateProperty = (key: string, childType: TypeInfo, options: TypeScriptOptions): string => {
 	const baseType = resolveType(childType, options);
@@ -84,9 +83,8 @@ ${properties}
 
 export const typeScriptGenerator: CodeGenerator<TypeScriptOptions> = {
 	generate(data: unknown, options: TypeScriptOptions): string {
-		return generateWithNestedTypes(
-			inferType(data as JsonValue, options.rootName),
-			(typeInfo) => generateTypeDefinition(typeInfo, options)
+		return generateWithNestedTypes(inferType(data as JsonValue, options.rootName), (typeInfo) =>
+			generateTypeDefinition(typeInfo, options)
 		)
 			.filter(Boolean)
 			.join('\n\n');

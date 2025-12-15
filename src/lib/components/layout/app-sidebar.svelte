@@ -56,10 +56,15 @@
 	<Sidebar.Header>
 		<Sidebar.Menu>
 			<Sidebar.MenuItem>
-				<Sidebar.MenuButton size="lg" class="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground">
+				<Sidebar.MenuButton
+					size="lg"
+					class="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
+				>
 					{#snippet child({ props })}
 						<a href="/" {...props}>
-							<div class="bg-sidebar-primary text-sidebar-primary-foreground flex aspect-square size-8 items-center justify-center rounded-lg">
+							<div
+								class="bg-sidebar-primary text-sidebar-primary-foreground flex aspect-square size-8 items-center justify-center rounded-lg"
+							>
 								<FileCode2 class="size-4" />
 							</div>
 							<div class="grid flex-1 text-left text-sm leading-tight">
@@ -81,10 +86,7 @@
 			<Sidebar.GroupContent>
 				<Sidebar.Menu>
 					<Sidebar.MenuItem>
-						<Sidebar.MenuButton
-							isActive={page.url.pathname === '/'}
-							tooltipContent="Dashboard"
-						>
+						<Sidebar.MenuButton isActive={page.url.pathname === '/'} tooltipContent="Dashboard">
 							{#snippet child({ props })}
 								<a href="/" {...props}>
 									<Home />
@@ -101,11 +103,15 @@
 		{#each menuGroups as group}
 			<Collapsible.Root bind:open={openGroups[group.label]} class="group/collapsible">
 				<Sidebar.Group>
-					<Sidebar.GroupLabel class="group/label text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground p-0">
+					<Sidebar.GroupLabel
+						class="group/label text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground p-0"
+					>
 						<Collapsible.Trigger class="flex w-full items-center gap-2 px-2 py-1.5">
 							<group.icon class="size-4" />
 							<span class="flex-1 text-left">{group.label}</span>
-							<ChevronRight class="size-4 transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
+							<ChevronRight
+								class="size-4 transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90"
+							/>
 						</Collapsible.Trigger>
 					</Sidebar.GroupLabel>
 					<Collapsible.Content>
@@ -138,10 +144,7 @@
 	<Sidebar.Footer>
 		<Sidebar.Menu>
 			<Sidebar.MenuItem>
-				<Sidebar.MenuButton
-					onclick={toggleMode}
-					tooltipContent="Toggle theme"
-				>
+				<Sidebar.MenuButton onclick={toggleMode} tooltipContent="Toggle theme">
 					{#if mode.current === 'dark'}
 						<Moon class="size-4" />
 						<span>Dark Mode</span>

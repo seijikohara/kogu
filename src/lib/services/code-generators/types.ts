@@ -6,7 +6,13 @@ export type { EditorMode };
 // Core Types
 // ============================================================================
 
-export type JsonValue = string | number | boolean | null | JsonValue[] | { [key: string]: JsonValue };
+export type JsonValue =
+	| string
+	| number
+	| boolean
+	| null
+	| JsonValue[]
+	| { [key: string]: JsonValue };
 
 export interface TypeInfo {
 	name: string;
@@ -150,8 +156,18 @@ export interface CodeGenerator<T extends BaseGeneratorOptions> {
 // ============================================================================
 
 export const LANGUAGE_INFO = {
-	typescript: { value: 'typescript', label: 'TypeScript', extension: 'ts', editorMode: 'typescript' },
-	javascript: { value: 'javascript', label: 'JavaScript', extension: 'js', editorMode: 'javascript' },
+	typescript: {
+		value: 'typescript',
+		label: 'TypeScript',
+		extension: 'ts',
+		editorMode: 'typescript',
+	},
+	javascript: {
+		value: 'javascript',
+		label: 'JavaScript',
+		extension: 'js',
+		editorMode: 'javascript',
+	},
 	go: { value: 'go', label: 'Go', extension: 'go', editorMode: 'go' },
 	python: { value: 'python', label: 'Python', extension: 'py', editorMode: 'python' },
 	rust: { value: 'rust', label: 'Rust', extension: 'rs', editorMode: 'rust' },
@@ -181,7 +197,11 @@ export const JAVA_SERIALIZATION_OPTIONS = [
 	{ value: 'jackson', label: 'Jackson', description: '@JsonProperty annotations' },
 	{ value: 'gson', label: 'Gson', description: '@SerializedName annotations' },
 	{ value: 'moshi', label: 'Moshi', description: '@Json annotations' },
-] as const satisfies ReadonlyArray<{ value: JavaSerializationLibrary; label: string; description: string }>;
+] as const satisfies ReadonlyArray<{
+	value: JavaSerializationLibrary;
+	label: string;
+	description: string;
+}>;
 
 export const KOTLIN_SERIALIZATION_OPTIONS = [
 	{ value: 'none', label: 'None', description: 'No serialization annotations' },
@@ -189,4 +209,8 @@ export const KOTLIN_SERIALIZATION_OPTIONS = [
 	{ value: 'gson', label: 'Gson', description: '@SerializedName annotations' },
 	{ value: 'moshi', label: 'Moshi', description: '@Json annotations' },
 	{ value: 'jackson', label: 'Jackson', description: '@JsonProperty annotations' },
-] as const satisfies ReadonlyArray<{ value: KotlinSerializationLibrary; label: string; description: string }>;
+] as const satisfies ReadonlyArray<{
+	value: KotlinSerializationLibrary;
+	label: string;
+	description: string;
+}>;

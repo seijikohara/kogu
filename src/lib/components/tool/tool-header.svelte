@@ -48,7 +48,9 @@
 			<span class="max-w-md truncate text-destructive" title={error}>{error}</span>
 		{:else if stats.length > 0}
 			{#if formatBadge}
-				<span class="rounded bg-primary/10 px-1.5 py-0.5 font-medium text-primary">{formatBadge}</span>
+				<span class="rounded bg-primary/10 px-1.5 py-0.5 font-medium text-primary"
+					>{formatBadge}</span
+				>
 			{/if}
 			{#each stats as stat}
 				<span class="text-muted-foreground">

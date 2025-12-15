@@ -38,13 +38,7 @@
 	</aside>
 {:else if onopen}
 	<aside class="flex w-8 shrink-0 flex-col border-r bg-muted/20">
-		<Button
-			variant="ghost"
-			size="icon"
-			class="m-1 h-8 w-6"
-			onclick={onopen}
-			title="Show options"
-		>
+		<Button variant="ghost" size="icon" class="m-1 h-8 w-6" onclick={onopen} title="Show options">
 			<Settings2 class="h-4 w-4" />
 		</Button>
 	</aside>

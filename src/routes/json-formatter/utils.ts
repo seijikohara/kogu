@@ -59,7 +59,11 @@ export const getFileTypeInfo = (filename: string): FileTypeInfo => {
 
 const hasFileSystemAccessAPI = (): boolean => 'showSaveFilePicker' in window;
 
-const saveWithFileSystemAPI = async (content: string, filename: string, fileInfo: FileTypeInfo): Promise<void> => {
+const saveWithFileSystemAPI = async (
+	content: string,
+	filename: string,
+	fileInfo: FileTypeInfo
+): Promise<void> => {
 	const options = {
 		suggestedName: filename,
 		types: [

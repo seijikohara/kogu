@@ -59,8 +59,8 @@ const getDefaultValue = (typeInfo: TypeInfo): string => {
 const generateClassJSDoc = (name: string, entries: [string, TypeInfo][]): string[] => [
 	'/**',
 	` * @class ${name}`,
-	...entries.map(([key, childType]) =>
-		` * @property {${resolveJSDocType(childType)}} ${toCamelCase(key)}`
+	...entries.map(
+		([key, childType]) => ` * @property {${resolveJSDocType(childType)}} ${toCamelCase(key)}`
 	),
 	' */',
 ];
@@ -68,8 +68,8 @@ const generateClassJSDoc = (name: string, entries: [string, TypeInfo][]): string
 const generateTypedefJSDoc = (name: string, entries: [string, TypeInfo][]): string[] => [
 	'/**',
 	` * @typedef {Object} ${name}`,
-	...entries.map(([key, childType]) =>
-		` * @property {${resolveJSDocType(childType)}} ${toCamelCase(key)}`
+	...entries.map(
+		([key, childType]) => ` * @property {${resolveJSDocType(childType)}} ${toCamelCase(key)}`
 	),
 	' */',
 ];
@@ -98,7 +98,11 @@ const generateValidatorDoc = (name: string): string => `/**
  */
 `;
 
-const generateValidator = (name: string, entries: [string, TypeInfo][], useJSDoc: boolean): string => {
+const generateValidator = (
+	name: string,
+	entries: [string, TypeInfo][],
+	useJSDoc: boolean
+): string => {
 	const validatorDoc = useJSDoc ? generateValidatorDoc(name) : '';
 	const checks = entries
 		.map(([key, childType]) => generateValidatorCheck(key, childType))
@@ -130,7 +134,9 @@ const generateClassDefinition = (typeInfo: TypeInfo, options: JavaScriptOptions)
 
 	const jsDoc = options.useJSDoc ? `${generateClassJSDoc(name, entries).join('\n')}\n` : '';
 	const params = entries.map(([key]) => toCamelCase(key)).join(', ');
-	const body = entries.map(([key]) => `    this.${toCamelCase(key)} = ${toCamelCase(key)};`).join('\n');
+	const body = entries
+		.map(([key]) => `    this.${toCamelCase(key)} = ${toCamelCase(key)};`)
+		.join('\n');
 
 	const classBody = options.useES6
 		? `class ${name} {\n  constructor(${params}) {\n${body}\n  }\n}`
@@ -140,7 +146,9 @@ const generateClassDefinition = (typeInfo: TypeInfo, options: JavaScriptOptions)
 		? `${options.useJSDoc ? generateFactoryDoc(name) : ''}function create${name}(${params}) {\n  return new ${name}(${params});\n}`
 		: null;
 
-	const validator = options.generateValidator ? generateValidator(name, entries, options.useJSDoc) : null;
+	const validator = options.generateValidator
+		? generateValidator(name, entries, options.useJSDoc)
+		: null;
 
 	return [`${jsDoc}${classBody}`, factory, validator].filter((x): x is string => x !== null);
 };
@@ -155,8 +163,10 @@ const generateObjectLiteral = (typeInfo: TypeInfo, options: JavaScriptOptions): 
 	const entries = Object.entries(typeInfo.children);
 	const { name } = typeInfo;
 
-	const jsDoc = options.useJSDoc ? `${generateTypedefJSDoc(name, entries).join('\n')}
-` : '';
+	const jsDoc = options.useJSDoc
+		? `${generateTypedefJSDoc(name, entries).join('\n')}
+`
+		: '';
 
 	const props = entries
 		.map(([key, childType]) => `  ${toCamelCase(key)}: ${getDefaultValue(childType)},`)
@@ -182,9 +192,8 @@ const generateSingleType = (typeInfo: TypeInfo, options: JavaScriptOptions): str
 
 export const javaScriptGenerator: CodeGenerator<JavaScriptOptions> = {
 	generate(data: unknown, options: JavaScriptOptions): string {
-		return generateWithNestedTypes(
-			inferType(data as JsonValue, options.rootName),
-			(typeInfo) => generateSingleType(typeInfo, options)
+		return generateWithNestedTypes(inferType(data as JsonValue, options.rootName), (typeInfo) =>
+			generateSingleType(typeInfo, options)
 		)
 			.flat()
 			.join('\n\n');

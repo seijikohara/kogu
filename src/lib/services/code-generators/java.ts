@@ -69,14 +69,19 @@ const buildFieldType = (childType: TypeInfo, options: JavaOptions): string => {
 // Annotation Helpers
 // ============================================================================
 
-const getFieldAnnotation = (key: string, fieldName: string, library: JavaOptions['serializationLibrary']): string =>
-	key === fieldName ? '' : ANNOTATION_MAP[library]?.(key) ?? '';
+const getFieldAnnotation = (
+	key: string,
+	fieldName: string,
+	library: JavaOptions['serializationLibrary']
+): string => (key === fieldName ? '' : (ANNOTATION_MAP[library]?.(key) ?? ''));
 
 const getValidationAnnotation = (typeInfo: TypeInfo, useValidation: boolean): string => {
 	if (!useValidation) return '';
-	if (typeInfo.name === 'string') return `    @NotBlank
+	if (typeInfo.name === 'string')
+		return `    @NotBlank
 `;
-	if (!typeInfo.isPrimitive) return `    @NotNull
+	if (!typeInfo.isPrimitive)
+		return `    @NotNull
 `;
 	return '';
 };
@@ -107,7 +112,11 @@ const generateLombokDefinition = (typeInfo: TypeInfo, options: JavaOptions): str
 	const fields = Object.entries(typeInfo.children)
 		.map(([key, childType]) => {
 			const fieldName = toCamelCase(key);
-			const serializationAnnotation = getFieldAnnotation(key, fieldName, options.serializationLibrary);
+			const serializationAnnotation = getFieldAnnotation(
+				key,
+				fieldName,
+				options.serializationLibrary
+			);
 			const validationAnnotation = getValidationAnnotation(childType, options.useValidation);
 			return `${serializationAnnotation}${validationAnnotation}    private ${buildFieldType(childType, options)} ${fieldName};`;
 		})
@@ -166,7 +175,11 @@ const generatePojoDefinition = (typeInfo: TypeInfo, options: JavaOptions): strin
 
 	const fields = entries.map(([key, childType]) => {
 		const fieldName = toCamelCase(key);
-		const serializationAnnotation = getFieldAnnotation(key, fieldName, options.serializationLibrary);
+		const serializationAnnotation = getFieldAnnotation(
+			key,
+			fieldName,
+			options.serializationLibrary
+		);
 		const validationAnnotation = getValidationAnnotation(childType, options.useValidation);
 		return `${serializationAnnotation}${validationAnnotation}    private ${buildFieldType(childType, options)} ${fieldName};`;
 	});
@@ -186,7 +199,9 @@ const generatePojoDefinition = (typeInfo: TypeInfo, options: JavaOptions): strin
 	});
 
 	const fieldNames = entries.map(([key]) => toCamelCase(key));
-	const equalsHashCode = options.generateEquals ? generateEqualsHashCode(typeInfo.name, fieldNames) : [];
+	const equalsHashCode = options.generateEquals
+		? generateEqualsHashCode(typeInfo.name, fieldNames)
+		: [];
 
 	return `public class ${typeInfo.name} {
 ${[...fields, '', ...gettersSetters, ...equalsHashCode].join('\n')}
@@ -218,7 +233,8 @@ const generateImports = (options: JavaOptions): string[] => {
 	imports.push('import java.util.List;');
 
 	if (options.useOptional && options.optionalProperties) imports.push('import java.util.Optional;');
-	if (options.generateEquals && options.classStyle === 'pojo') imports.push('import java.util.Objects;');
+	if (options.generateEquals && options.classStyle === 'pojo')
+		imports.push('import java.util.Objects;');
 
 	const serializationImports: Record<string, string> = {
 		jackson: 'import com.fasterxml.jackson.annotation.JsonProperty;',
@@ -230,14 +246,21 @@ const generateImports = (options: JavaOptions): string[] => {
 	}
 
 	if (options.classStyle === 'lombok') {
-		imports.push('import lombok.Data;', 'import lombok.NoArgsConstructor;', 'import lombok.AllArgsConstructor;');
+		imports.push(
+			'import lombok.Data;',
+			'import lombok.NoArgsConstructor;',
+			'import lombok.AllArgsConstructor;'
+		);
 		if (options.generateBuilder) imports.push('import lombok.Builder;');
 	}
 
 	if (options.classStyle === 'immutables') imports.push('import org.immutables.value.Value;');
 
 	if (options.useValidation) {
-		imports.push('import javax.validation.constraints.NotNull;', 'import javax.validation.constraints.NotBlank;');
+		imports.push(
+			'import javax.validation.constraints.NotNull;',
+			'import javax.validation.constraints.NotBlank;'
+		);
 	}
 
 	return imports;

@@ -7,11 +7,7 @@
 		invalidLabel?: string;
 	}
 
-	let {
-		valid,
-		validLabel = 'Valid',
-		invalidLabel = 'Invalid',
-	}: Props = $props();
+	let { valid, validLabel = 'Valid', invalidLabel = 'Invalid' }: Props = $props();
 </script>
 
 {#if valid === true}

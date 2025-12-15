@@ -20,7 +20,12 @@
 	import { downloadTextFile, copyToClipboard, pasteFromClipboard } from '../utils.js';
 
 	interface Props {
-		onStatsChange?: (stats: { input: string; valid: boolean | null; error: string; format: JsonInputFormat | null }) => void;
+		onStatsChange?: (stats: {
+			input: string;
+			valid: boolean | null;
+			error: string;
+			format: JsonInputFormat | null;
+		}) => void;
 	}
 
 	let { onStatsChange }: Props = $props();
@@ -54,7 +59,8 @@
 
 	// Validation
 	const inputValidation = $derived.by(() => {
-		if (!inputJson.trim()) return { valid: null as boolean | null, format: null as JsonInputFormat | null };
+		if (!inputJson.trim())
+			return { valid: null as boolean | null, format: null as JsonInputFormat | null };
 		const result = validateJson(inputJson);
 		return { valid: result.valid, format: result.detectedFormat };
 	});
@@ -100,8 +106,9 @@
 
 				// Apply additional formatting options
 				if (formatOptions.escapeUnicode) {
-					output = output.replace(/[\u0080-\uFFFF]/g, (char) =>
-						'\\u' + ('0000' + char.charCodeAt(0).toString(16)).slice(-4)
+					output = output.replace(
+						/[\u0080-\uFFFF]/g,
+						(char) => '\\u' + ('0000' + char.charCodeAt(0).toString(16)).slice(-4)
 					);
 				}
 				if (formatOptions.arrayBracketSpacing) {
@@ -161,27 +168,31 @@
 </script>
 
 <div class="flex flex-1 overflow-hidden">
-	<OptionsPanel show={showOptions} onclose={() => (showOptions = false)} onopen={() => (showOptions = true)}>
+	<OptionsPanel
+		show={showOptions}
+		onclose={() => (showOptions = false)}
+		onopen={() => (showOptions = true)}
+	>
 		<OptionsSection title="Mode">
 			<OptionCheckbox label="Minify output" bind:checked={minifyMode} />
 			{#if inputValidation.format && inputValidation.format !== 'json'}
 				<div class="mt-2 rounded-md bg-muted/50 p-2 text-[11px] text-muted-foreground">
-					<span class="font-medium text-foreground">Detected:</span> {JSON_FORMAT_INFO[inputValidation.format].label}
+					<span class="font-medium text-foreground">Detected:</span>
+					{JSON_FORMAT_INFO[inputValidation.format].label}
 				</div>
 			{/if}
 		</OptionsSection>
 
 		<OptionsSection title="Indentation">
 			<div class="grid grid-cols-2 gap-2">
-				<OptionSelect
-					label="Size"
-					bind:value={indentSizeStr}
-					options={['1', '2', '3', '4', '8']}
-				/>
+				<OptionSelect label="Size" bind:value={indentSizeStr} options={['1', '2', '3', '4', '8']} />
 				<OptionSelect
 					label="Type"
 					bind:value={indentType}
-					options={[{ value: 'spaces', label: 'Spaces' }, { value: 'tabs', label: 'Tabs' }]}
+					options={[
+						{ value: 'spaces', label: 'Spaces' },
+						{ value: 'tabs', label: 'Tabs' },
+					]}
 				/>
 			</div>
 		</OptionsSection>
@@ -191,12 +202,22 @@
 				<OptionSelect
 					label="Quotes"
 					bind:value={quoteStyle}
-					options={[{ value: 'double', label: '"..."' }, { value: 'single', label: "'...'" }]}
+					options={[
+						{ value: 'double', label: '"..."' },
+						{ value: 'single', label: "'...'" },
+					]}
 				/>
 				<OptionSelect
 					label="Max Depth"
 					bind:value={maxDepthStr}
-					options={[{ value: '0', label: '∞' }, { value: '1', label: '1' }, { value: '2', label: '2' }, { value: '3', label: '3' }, { value: '5', label: '5' }, { value: '10', label: '10' }]}
+					options={[
+						{ value: '0', label: '∞' },
+						{ value: '1', label: '1' },
+						{ value: '2', label: '2' },
+						{ value: '3', label: '3' },
+						{ value: '5', label: '5' },
+						{ value: '10', label: '10' },
+					]}
 				/>
 			</div>
 			<div class="space-y-1.5 pt-1">

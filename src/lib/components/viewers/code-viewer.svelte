@@ -1,11 +1,25 @@
 <script lang="ts">
 	import { Button } from '$lib/components/ui/button/index.js';
 	import * as Resizable from '$lib/components/ui/resizable/index.js';
-	import CodeEditor, { type EditorMode, type CursorPosition } from '$lib/components/editors/code-editor.svelte';
+	import CodeEditor, {
+		type EditorMode,
+		type CursorPosition,
+	} from '$lib/components/editors/code-editor.svelte';
 	import JsonTreeView from './json-tree-view.svelte';
-	import { Braces, ListTree, FileCode, FileJson2, TextCursorInput, Rows3, Type, HardDrive, Columns2 } from '@lucide/svelte';
+	import {
+		Braces,
+		ListTree,
+		FileCode,
+		FileJson2,
+		TextCursorInput,
+		Rows3,
+		Type,
+		HardDrive,
+		Columns2,
+	} from '@lucide/svelte';
 	import * as yaml from 'yaml';
 	import { xmlToJson } from '$lib/services/formatters.js';
+	import { untrack } from 'svelte';
 	import type { Snippet } from 'svelte';
 
 	type ViewMode = 'code' | 'tree' | 'split';
@@ -38,7 +52,8 @@
 		actions,
 	}: Props = $props();
 
-	let viewMode = $state<ViewMode>(defaultViewMode);
+	// Capture initial value only - viewMode is user-controlled after mount
+	let viewMode = $state<ViewMode>(untrack(() => defaultViewMode));
 	let cursorPosition = $state<CursorPosition>({ line: 1, column: 1, selection: 0 });
 	let selectedTreePath = $state<string | null>(null);
 	let editorGotoLine = $state<number | null>(null);
@@ -74,9 +89,7 @@
 	const supportsTreeView = $derived(mode === 'json' || mode === 'yaml' || mode === 'xml');
 
 	// Get the appropriate icon for code view based on mode
-	const CodeIcon = $derived(
-		mode === 'xml' ? FileCode : mode === 'yaml' ? FileJson2 : Braces
-	);
+	const CodeIcon = $derived(mode === 'xml' ? FileCode : mode === 'yaml' ? FileJson2 : Braces);
 
 	// Parse value for tree view
 	const parsedValue = $derived.by(() => {
@@ -115,66 +128,75 @@
 
 		try {
 			const lines = value.split('\n');
-			const pathStack: string[] = ['$'];
-			const arrayIndexStack: number[] = [];
-			let inArray = false;
 
-			for (let i = 0; i < lines.length; i++) {
-				const line = lines[i];
-				const lineNum = i + 1;
-				const trimmedLine = line.trim();
-
-				// Track array indices
-				if (trimmedLine.startsWith('[') || (trimmedLine.includes(':') && trimmedLine.endsWith('['))) {
-					inArray = true;
-					arrayIndexStack.push(0);
-				}
-
-				// Match key: value pattern
-				const keyMatch = trimmedLine.match(/^"([^"]+)"\s*:/);
-				if (keyMatch) {
-					const key = keyMatch[1];
-					const parentPath = pathStack[pathStack.length - 1];
-					const currentPath = `${parentPath}.${key}`;
-					map.set(currentPath, lineNum);
-
-					// Check if value is object or array (starts on same or next line)
-					if (trimmedLine.endsWith('{')) {
-						pathStack.push(currentPath);
-					} else if (trimmedLine.endsWith('[')) {
-						pathStack.push(currentPath);
-						inArray = true;
-						arrayIndexStack.push(0);
-					}
-				}
-
-				// Handle array elements (objects in arrays)
-				if (inArray && trimmedLine === '{') {
-					const parentPath = pathStack[pathStack.length - 1];
-					const idx = arrayIndexStack[arrayIndexStack.length - 1];
-					const currentPath = `${parentPath}[${idx}]`;
-					map.set(currentPath, lineNum);
-					pathStack.push(currentPath);
-					arrayIndexStack[arrayIndexStack.length - 1]++;
-				}
-
-				// Track closing brackets
-				if (trimmedLine.startsWith('}') || trimmedLine === '},') {
-					if (pathStack.length > 1) {
-						pathStack.pop();
-					}
-				}
-
-				if (trimmedLine.startsWith(']') || trimmedLine === '],') {
-					if (arrayIndexStack.length > 0) {
-						arrayIndexStack.pop();
-						inArray = arrayIndexStack.length > 0;
-					}
-					if (pathStack.length > 1 && !trimmedLine.includes('}')) {
-						// Don't pop if we already popped for }
-					}
-				}
+			interface ParseState {
+				pathStack: string[];
+				arrayIndexStack: number[];
+				inArray: boolean;
 			}
+
+			lines.reduce<ParseState>(
+				(acc, line, i) => {
+					const lineNum = i + 1;
+					const trimmedLine = line.trim();
+
+					let { pathStack, arrayIndexStack, inArray } = acc;
+
+					// Track array indices
+					if (
+						trimmedLine.startsWith('[') ||
+						(trimmedLine.includes(':') && trimmedLine.endsWith('['))
+					) {
+						inArray = true;
+						arrayIndexStack = [...arrayIndexStack, 0];
+					}
+
+					// Match key: value pattern
+					const keyMatch = trimmedLine.match(/^"([^"]+)"\s*:/);
+					if (keyMatch) {
+						const key = keyMatch[1];
+						const parentPath = pathStack[pathStack.length - 1];
+						const currentPath = `${parentPath}.${key}`;
+						map.set(currentPath, lineNum);
+
+						// Check if value is object or array (starts on same or next line)
+						if (trimmedLine.endsWith('{')) {
+							pathStack = [...pathStack, currentPath];
+						} else if (trimmedLine.endsWith('[')) {
+							pathStack = [...pathStack, currentPath];
+							inArray = true;
+							arrayIndexStack = [...arrayIndexStack, 0];
+						}
+					}
+
+					// Handle array elements (objects in arrays)
+					if (inArray && trimmedLine === '{') {
+						const parentPath = pathStack[pathStack.length - 1];
+						const idx = arrayIndexStack[arrayIndexStack.length - 1];
+						const currentPath = `${parentPath}[${idx}]`;
+						map.set(currentPath, lineNum);
+						pathStack = [...pathStack, currentPath];
+						arrayIndexStack = [...arrayIndexStack.slice(0, -1), idx + 1];
+					}
+
+					// Track closing brackets
+					if (trimmedLine.startsWith('}') || trimmedLine === '},') {
+						if (pathStack.length > 1) {
+							pathStack = pathStack.slice(0, -1);
+						}
+					}
+
+					if (trimmedLine.startsWith(']') || trimmedLine === '],') {
+						if (arrayIndexStack.length > 0) {
+							arrayIndexStack = arrayIndexStack.slice(0, -1);
+							inArray = arrayIndexStack.length > 0;
+						}
+					}
+
+					return { pathStack, arrayIndexStack, inArray };
+				},
+				{ pathStack: ['$'], arrayIndexStack: [], inArray: false }
+			);
 		} catch {
 			// Ignore parsing errors
 		}
@@ -183,26 +205,18 @@
 	});
 
 	// Build line to path map (reverse of above)
-	const lineToPathMap = $derived.by(() => {
-		const map = new Map<number, string>();
-		for (const [path, line] of pathToLineMap) {
-			map.set(line, path);
-		}
-		return map;
-	});
+	const lineToPathMap = $derived(
+		new Map(Array.from(pathToLineMap, ([path, line]) => [line, path]))
+	);
 
 	// Update selected path based on cursor line
 	const updateSelectedPathFromCursor = (line: number) => {
 		// Find the closest path for this line
-		let closestPath: string | null = null;
-		let closestLine = 0;
-
-		for (const [l, path] of lineToPathMap) {
-			if (l <= line && l > closestLine) {
-				closestLine = l;
-				closestPath = path;
-			}
-		}
+		const closestPath =
+			Array.from(lineToPathMap.entries())
+				.filter(([l]) => l <= line)
+				.sort(([a], [b]) => b - a)
+				.at(0)?.[1] ?? null;
 
 		if (closestPath) {
 			selectedTreePath = closestPath;
@@ -214,47 +228,57 @@
 		selectedTreePath = path;
 
 		// Find the line number for this path and scroll editor to it
-		let lineNum = pathToLineMap.get(path);
-
-		// If exact match not found, try to find by searching for the key
-		if (!lineNum && path.includes('.')) {
-			const key = path.split('.').pop() || '';
-			const lines = value.split('\n');
-			for (let i = 0; i < lines.length; i++) {
-				if (lines[i].includes(`"${key}"`)) {
-					lineNum = i + 1;
-					break;
-				}
-			}
-		}
-
-		// For array paths like $[0], search for array start
-		if (!lineNum && path.match(/\[\d+\]$/)) {
-			const match = path.match(/\[(\d+)\]$/);
-			if (match) {
-				const index = parseInt(match[1]);
-				const lines = value.split('\n');
-				let bracketCount = 0;
-				let arrayItemCount = 0;
-				for (let i = 0; i < lines.length; i++) {
-					const line = lines[i].trim();
-					if (line.startsWith('{') && bracketCount === 1) {
-						if (arrayItemCount === index) {
-							lineNum = i + 1;
-							break;
-						}
-						arrayItemCount++;
-					}
-					if (line.includes('[')) bracketCount++;
-					if (line.includes(']')) bracketCount--;
-				}
-			}
-		}
+		const lineNum = pathToLineMap.get(path) ?? findLineByKey(path) ?? findLineByArrayIndex(path);
 
 		if (lineNum) {
 			editorGotoLine = lineNum;
 			gotoLineCounter++; // Force re-trigger
 		}
+	};
+
+	// Find line number by key name in path
+	const findLineByKey = (path: string): number | null => {
+		if (!path.includes('.')) return null;
+
+		const key = path.split('.').pop() ?? '';
+		const lines = value.split('\n');
+		const lineIndex = lines.findIndex((line) => line.includes(`"${key}"`));
+		return lineIndex >= 0 ? lineIndex + 1 : null;
+	};
+
+	// Find line number by array index in path
+	const findLineByArrayIndex = (path: string): number | null => {
+		const match = path.match(/\[(\d+)\]$/);
+		if (!match) return null;
+
+		const targetIndex = parseInt(match[1]);
+		const lines = value.split('\n');
+
+		const result = lines.reduce<{
+			bracketCount: number;
+			arrayItemCount: number;
+			foundLine: number | null;
+		}>(
+			(acc, line, i) => {
+				if (acc.foundLine !== null) return acc;
+
+				const trimmed = line.trim();
+				const newBracketCount =
+					acc.bracketCount + (trimmed.includes('[') ? 1 : 0) - (trimmed.includes(']') ? 1 : 0);
+
+				if (trimmed.startsWith('{') && acc.bracketCount === 1) {
+					if (acc.arrayItemCount === targetIndex) {
+						return { ...acc, foundLine: i + 1 };
+					}
+					return { ...acc, bracketCount: newBracketCount, arrayItemCount: acc.arrayItemCount + 1 };
+				}
+
+				return { ...acc, bracketCount: newBracketCount };
+			},
+			{ bracketCount: 0, arrayItemCount: 0, foundLine: null }
+		);
+
+		return result.foundLine;
 	};
 
 	// Cycle through view modes
@@ -337,7 +361,17 @@
 		{:else if viewMode === 'split' && canShowTree}
 			<Resizable.PaneGroup direction="horizontal" class="h-full">
 				<Resizable.Pane defaultSize={50} minSize={20}>
-					<CodeEditor bind:value {mode} height="100%" {readonly} {placeholder} {onchange} oncursorchange={handleCursorChange} gotoLine={editorGotoLine} gotoLineTrigger={gotoLineCounter} />
+					<CodeEditor
+						bind:value
+						{mode}
+						height="100%"
+						{readonly}
+						{placeholder}
+						{onchange}
+						oncursorchange={handleCursorChange}
+						gotoLine={editorGotoLine}
+						gotoLineTrigger={gotoLineCounter}
+					/>
 				</Resizable.Pane>
 				<Resizable.Handle withHandle />
 				<Resizable.Pane defaultSize={50} minSize={20}>
@@ -352,11 +386,23 @@
 				</Resizable.Pane>
 			</Resizable.PaneGroup>
 		{:else}
-			<CodeEditor bind:value {mode} height="100%" {readonly} {placeholder} {onchange} oncursorchange={handleCursorChange} gotoLine={editorGotoLine} gotoLineTrigger={gotoLineCounter} />
+			<CodeEditor
+				bind:value
+				{mode}
+				height="100%"
+				{readonly}
+				{placeholder}
+				{onchange}
+				oncursorchange={handleCursorChange}
+				gotoLine={editorGotoLine}
+				gotoLineTrigger={gotoLineCounter}
+			/>
 		{/if}
 	</div>
 	{#if showStatusBar}
-		<div class="flex h-5 shrink-0 items-center justify-between border-t bg-muted/20 px-2 font-mono text-[10px] text-muted-foreground/80">
+		<div
+			class="flex h-5 shrink-0 items-center justify-between border-t bg-muted/20 px-2 font-mono text-[10px] text-muted-foreground/80"
+		>
 			<div class="flex items-center divide-x divide-border/50">
 				<div class="flex items-center gap-1 pr-2" title="Cursor Position">
 					<TextCursorInput class="h-3 w-3 opacity-60" />

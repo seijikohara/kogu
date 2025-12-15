@@ -9,15 +9,13 @@
 		children?: Snippet;
 	}
 
-	let {
-		title,
-		open = true,
-		children,
-	}: Props = $props();
+	let { title, open = true, children }: Props = $props();
 </script>
 
 <Collapsible.Root {open} class="group">
-	<Collapsible.Trigger class="flex h-8 w-full items-center justify-between px-3 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground">
+	<Collapsible.Trigger
+		class="flex h-8 w-full items-center justify-between px-3 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground"
+	>
 		{title}
 		<ChevronDown class="h-3.5 w-3.5 transition-transform group-data-[state=closed]:-rotate-90" />
 	</Collapsible.Trigger>

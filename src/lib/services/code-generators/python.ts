@@ -27,11 +27,12 @@ const PYTHON_TYPE_MAP: Record<string, string> = {
 // ============================================================================
 
 const resolveType = (typeInfo: TypeInfo, useOptional: boolean): string => {
-	const baseType = typeInfo.isArray && typeInfo.arrayItemType
-		? `list[${resolveType(typeInfo.arrayItemType, false)}]`
-		: typeInfo.isObject
-			? `'${typeInfo.name}'`
-			: PYTHON_TYPE_MAP[typeInfo.name] ?? 'Any';
+	const baseType =
+		typeInfo.isArray && typeInfo.arrayItemType
+			? `list[${resolveType(typeInfo.arrayItemType, false)}]`
+			: typeInfo.isObject
+				? `'${typeInfo.name}'`
+				: (PYTHON_TYPE_MAP[typeInfo.name] ?? 'Any');
 
 	return useOptional ? `${baseType} | None` : baseType;
 };

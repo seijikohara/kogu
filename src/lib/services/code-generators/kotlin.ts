@@ -66,7 +66,7 @@ const getSerializationAnnotation = (
 	propName: string,
 	library: KotlinOptions['serializationLibrary']
 ): string | null =>
-	propName === key ? null : SERIALIZATION_ANNOTATION_MAP[library]?.(key) ?? null;
+	propName === key ? null : (SERIALIZATION_ANNOTATION_MAP[library]?.(key) ?? null);
 
 const generateClassDefinitionKotlin = (typeInfo: TypeInfo, options: KotlinOptions): string => {
 	if (!typeInfo.isObject || !typeInfo.children) return '';
@@ -78,16 +78,21 @@ const generateClassDefinitionKotlin = (typeInfo: TypeInfo, options: KotlinOption
 			const propType = options.optionalProperties ? `${baseType}?` : baseType;
 
 			const annotation = getSerializationAnnotation(key, propName, options.serializationLibrary);
-			const annotationStr = annotation ? `${annotation}
-    ` : '';
+			const annotationStr = annotation
+				? `${annotation}
+    `
+				: '';
 			const defaultValue = options.useDefaultValues ? ` = ${getDefaultValue(childType)}` : '';
 
 			return `${annotationStr}val ${propName}: ${propType}${defaultValue}`;
 		})
 		.join(',\n    ');
 
-	const classAnnotations = options.serializationLibrary === 'kotlinx' ? `@Serializable
-` : '';
+	const classAnnotations =
+		options.serializationLibrary === 'kotlinx'
+			? `@Serializable
+`
+			: '';
 	const classKeyword = options.useDataClass ? 'data class' : 'class';
 
 	return `${classAnnotations}${classKeyword} ${typeInfo.name}(
@@ -109,9 +114,12 @@ export const kotlinGenerator: CodeGenerator<KotlinOptions> = {
 			.join('\n\n');
 
 		const imports = SERIALIZATION_IMPORTS[options.serializationLibrary] ?? [];
-		const importStr = imports.length > 0 ? `${imports.join('\n')}
+		const importStr =
+			imports.length > 0
+				? `${imports.join('\n')}
 
-` : '';
+`
+				: '';
 
 		return `${importStr}${classes}`;
 	},

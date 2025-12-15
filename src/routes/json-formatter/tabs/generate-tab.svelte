@@ -32,7 +32,12 @@
 	import { downloadTextFile, copyToClipboard, pasteFromClipboard } from '../utils.js';
 
 	interface Props {
-		onStatsChange?: (stats: { input: string; valid: boolean | null; error: string; format: JsonInputFormat | null }) => void;
+		onStatsChange?: (stats: {
+			input: string;
+			valid: boolean | null;
+			error: string;
+			format: JsonInputFormat | null;
+		}) => void;
 	}
 
 	let { onStatsChange }: Props = $props();
@@ -128,7 +133,8 @@
 
 	// Validation
 	const inputValidation = $derived.by(() => {
-		if (!generateInput.trim()) return { valid: null as boolean | null, format: null as JsonInputFormat | null };
+		if (!generateInput.trim())
+			return { valid: null as boolean | null, format: null as JsonInputFormat | null };
 		const result = validateJson(generateInput);
 		return { valid: result.valid, format: result.detectedFormat };
 	});
@@ -236,16 +242,26 @@
 	// Get current root name based on language
 	const getCurrentRootName = () => {
 		switch (generateLanguage) {
-			case 'typescript': return tsRootName;
-			case 'javascript': return jsRootName;
-			case 'go': return goRootName;
-			case 'python': return pyRootName;
-			case 'rust': return rsRootName;
-			case 'java': return javaRootName;
-			case 'csharp': return csRootName;
-			case 'kotlin': return ktRootName;
-			case 'swift': return swiftRootName;
-			case 'php': return phpRootName;
+			case 'typescript':
+				return tsRootName;
+			case 'javascript':
+				return jsRootName;
+			case 'go':
+				return goRootName;
+			case 'python':
+				return pyRootName;
+			case 'rust':
+				return rsRootName;
+			case 'java':
+				return javaRootName;
+			case 'csharp':
+				return csRootName;
+			case 'kotlin':
+				return ktRootName;
+			case 'swift':
+				return swiftRootName;
+			case 'php':
+				return phpRootName;
 		}
 	};
 
@@ -295,7 +311,11 @@
 </script>
 
 <div class="flex flex-1 overflow-hidden">
-	<OptionsPanel show={showOptions} onclose={() => (showOptions = false)} onopen={() => (showOptions = true)}>
+	<OptionsPanel
+		show={showOptions}
+		onclose={() => (showOptions = false)}
+		onopen={() => (showOptions = true)}
+	>
 		<OptionsSection title="Target Language">
 			<div class="grid grid-cols-2 gap-1">
 				{#each LANGUAGE_OPTIONS as lang}
@@ -314,7 +334,9 @@
 		{#if generateLanguage === 'typescript'}
 			<OptionsSection title="TypeScript Options">
 				<div class="space-y-1">
-					<Label class="text-[10px] uppercase tracking-wide text-muted-foreground">Root Type Name</Label>
+					<Label class="text-[10px] uppercase tracking-wide text-muted-foreground"
+						>Root Type Name</Label
+					>
 					<Input bind:value={tsRootName} placeholder="Root" class="h-7 text-xs" />
 				</div>
 				<div class="space-y-1.5 pt-1">
@@ -328,7 +350,9 @@
 		{:else if generateLanguage === 'javascript'}
 			<OptionsSection title="JavaScript Options">
 				<div class="space-y-1">
-					<Label class="text-[10px] uppercase tracking-wide text-muted-foreground">Root Type Name</Label>
+					<Label class="text-[10px] uppercase tracking-wide text-muted-foreground"
+						>Root Type Name</Label
+					>
 					<Input bind:value={jsRootName} placeholder="Root" class="h-7 text-xs" />
 				</div>
 				<div class="space-y-1.5 pt-1">
@@ -343,7 +367,9 @@
 		{:else if generateLanguage === 'go'}
 			<OptionsSection title="Go Options">
 				<div class="space-y-1">
-					<Label class="text-[10px] uppercase tracking-wide text-muted-foreground">Root Type Name</Label>
+					<Label class="text-[10px] uppercase tracking-wide text-muted-foreground"
+						>Root Type Name</Label
+					>
 					<Input bind:value={goRootName} placeholder="Root" class="h-7 text-xs" />
 				</div>
 				<div class="space-y-1.5 pt-1">
@@ -356,13 +382,15 @@
 		{:else if generateLanguage === 'python'}
 			<OptionsSection title="Python Options">
 				<div class="space-y-1">
-					<Label class="text-[10px] uppercase tracking-wide text-muted-foreground">Root Type Name</Label>
+					<Label class="text-[10px] uppercase tracking-wide text-muted-foreground"
+						>Root Type Name</Label
+					>
 					<Input bind:value={pyRootName} placeholder="Root" class="h-7 text-xs" />
 				</div>
 				<OptionSelect
 					label="Style"
 					bind:value={pyStyle}
-					options={PYTHON_STYLE_OPTIONS.map(o => ({ value: o.value, label: o.label }))}
+					options={PYTHON_STYLE_OPTIONS.map((o) => ({ value: o.value, label: o.label }))}
 				/>
 				{#if pyStyle === 'dataclass'}
 					<div class="space-y-1.5 pt-1">
@@ -380,7 +408,9 @@
 		{:else if generateLanguage === 'rust'}
 			<OptionsSection title="Rust Options">
 				<div class="space-y-1">
-					<Label class="text-[10px] uppercase tracking-wide text-muted-foreground">Root Type Name</Label>
+					<Label class="text-[10px] uppercase tracking-wide text-muted-foreground"
+						>Root Type Name</Label
+					>
 					<Input bind:value={rsRootName} placeholder="Root" class="h-7 text-xs" />
 				</div>
 				<div class="space-y-1.5 pt-1">
@@ -395,22 +425,26 @@
 		{:else if generateLanguage === 'java'}
 			<OptionsSection title="Java Options">
 				<div class="space-y-1">
-					<Label class="text-[10px] uppercase tracking-wide text-muted-foreground">Root Type Name</Label>
+					<Label class="text-[10px] uppercase tracking-wide text-muted-foreground"
+						>Root Type Name</Label
+					>
 					<Input bind:value={javaRootName} placeholder="Root" class="h-7 text-xs" />
 				</div>
 				<div class="space-y-1">
-					<Label class="text-[10px] uppercase tracking-wide text-muted-foreground">Package Name</Label>
+					<Label class="text-[10px] uppercase tracking-wide text-muted-foreground"
+						>Package Name</Label
+					>
 					<Input bind:value={javaPackageName} placeholder="com.example" class="h-7 text-xs" />
 				</div>
 				<OptionSelect
 					label="Class Style"
 					bind:value={javaClassStyle}
-					options={JAVA_CLASS_STYLE_OPTIONS.map(o => ({ value: o.value, label: o.label }))}
+					options={JAVA_CLASS_STYLE_OPTIONS.map((o) => ({ value: o.value, label: o.label }))}
 				/>
 				<OptionSelect
 					label="Serialization"
 					bind:value={javaSerializationLibrary}
-					options={JAVA_SERIALIZATION_OPTIONS.map(o => ({ value: o.value, label: o.label }))}
+					options={JAVA_SERIALIZATION_OPTIONS.map((o) => ({ value: o.value, label: o.label }))}
 				/>
 				<div class="space-y-1.5 pt-1">
 					<OptionCheckbox label="Bean validation" bind:checked={javaUseValidation} />
@@ -427,12 +461,17 @@
 		{:else if generateLanguage === 'csharp'}
 			<OptionsSection title="C# Options">
 				<div class="space-y-1">
-					<Label class="text-[10px] uppercase tracking-wide text-muted-foreground">Root Type Name</Label>
+					<Label class="text-[10px] uppercase tracking-wide text-muted-foreground"
+						>Root Type Name</Label
+					>
 					<Input bind:value={csRootName} placeholder="Root" class="h-7 text-xs" />
 				</div>
 				<div class="space-y-1.5 pt-1">
 					<OptionCheckbox label="Use records (vs class)" bind:checked={csUseRecords} />
-					<OptionCheckbox label="Nullable reference types" bind:checked={csUseNullableReferenceTypes} />
+					<OptionCheckbox
+						label="Nullable reference types"
+						bind:checked={csUseNullableReferenceTypes}
+					/>
 					<OptionCheckbox label="System.Text.Json attributes" bind:checked={csUseSystemTextJson} />
 					<OptionCheckbox label="Newtonsoft.Json attributes" bind:checked={csUseNewtonsoft} />
 					<OptionCheckbox label="DataContract attributes" bind:checked={csGenerateDataContract} />
@@ -442,13 +481,15 @@
 		{:else if generateLanguage === 'kotlin'}
 			<OptionsSection title="Kotlin Options">
 				<div class="space-y-1">
-					<Label class="text-[10px] uppercase tracking-wide text-muted-foreground">Root Type Name</Label>
+					<Label class="text-[10px] uppercase tracking-wide text-muted-foreground"
+						>Root Type Name</Label
+					>
 					<Input bind:value={ktRootName} placeholder="Root" class="h-7 text-xs" />
 				</div>
 				<OptionSelect
 					label="Serialization"
 					bind:value={ktSerializationLibrary}
-					options={KOTLIN_SERIALIZATION_OPTIONS.map(o => ({ value: o.value, label: o.label }))}
+					options={KOTLIN_SERIALIZATION_OPTIONS.map((o) => ({ value: o.value, label: o.label }))}
 				/>
 				<div class="space-y-1.5 pt-1">
 					<OptionCheckbox label="Use data class" bind:checked={ktUseDataClass} />
@@ -459,7 +500,9 @@
 		{:else if generateLanguage === 'swift'}
 			<OptionsSection title="Swift Options">
 				<div class="space-y-1">
-					<Label class="text-[10px] uppercase tracking-wide text-muted-foreground">Root Type Name</Label>
+					<Label class="text-[10px] uppercase tracking-wide text-muted-foreground"
+						>Root Type Name</Label
+					>
 					<Input bind:value={swiftRootName} placeholder="Root" class="h-7 text-xs" />
 				</div>
 				<div class="space-y-1.5 pt-1">
@@ -472,7 +515,9 @@
 		{:else if generateLanguage === 'php'}
 			<OptionsSection title="PHP Options">
 				<div class="space-y-1">
-					<Label class="text-[10px] uppercase tracking-wide text-muted-foreground">Root Type Name</Label>
+					<Label class="text-[10px] uppercase tracking-wide text-muted-foreground"
+						>Root Type Name</Label
+					>
 					<Input bind:value={phpRootName} placeholder="Root" class="h-7 text-xs" />
 				</div>
 				<div class="space-y-1">
