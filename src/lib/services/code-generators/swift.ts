@@ -57,13 +57,14 @@ const generateStructDefinitionSwift = (typeInfo: TypeInfo, options: SwiftOptions
 		.join('\n');
 
 	const needsCodingKeys = entries.some(([key]) => toCamelCase(key) !== key);
-	const codingKeysSection = options.useCodingKeys && needsCodingKeys
-		? `
+	const codingKeysSection =
+		options.useCodingKeys && needsCodingKeys
+			? `
 
     enum CodingKeys: String, CodingKey {
 ${entries.map(([key]) => generateCodingKey(key, toCamelCase(key))).join('\n')}
     }`
-		: '';
+			: '';
 
 	const keyword = options.useStruct ? 'struct' : 'class';
 	const codable = options.useStruct ? 'Codable' : 'Codable, Equatable';
@@ -79,9 +80,8 @@ ${properties}${codingKeysSection}
 
 export const swiftGenerator: CodeGenerator<SwiftOptions> = {
 	generate(data: unknown, options: SwiftOptions): string {
-		return generateWithNestedTypes(
-			inferType(data as JsonValue, options.rootName),
-			(typeInfo) => generateStructDefinitionSwift(typeInfo, options)
+		return generateWithNestedTypes(inferType(data as JsonValue, options.rootName), (typeInfo) =>
+			generateStructDefinitionSwift(typeInfo, options)
 		)
 			.filter(Boolean)
 			.join('\n\n');

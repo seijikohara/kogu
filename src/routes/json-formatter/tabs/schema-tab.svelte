@@ -13,7 +13,12 @@
 	import addFormats from 'ajv-formats';
 
 	interface Props {
-		onStatsChange?: (stats: { input: string; valid: boolean | null; error: string; format: JsonInputFormat | null }) => void;
+		onStatsChange?: (stats: {
+			input: string;
+			valid: boolean | null;
+			error: string;
+			format: JsonInputFormat | null;
+		}) => void;
 	}
 
 	let { onStatsChange }: Props = $props();
@@ -36,7 +41,8 @@
 
 	// Validation
 	const inputValidation = $derived.by(() => {
-		if (!schemaInput.trim()) return { valid: null as boolean | null, format: null as JsonInputFormat | null };
+		if (!schemaInput.trim())
+			return { valid: null as boolean | null, format: null as JsonInputFormat | null };
 		const result = validateJson(schemaInput);
 		return { valid: result.valid, format: result.detectedFormat };
 	});
@@ -54,7 +60,12 @@
 	});
 
 	// Combined error
-	const combinedError = $derived(schemaError || (schemaValidationResult && !schemaValidationResult.valid ? `${schemaValidationResult.errors.length} validation error(s)` : ''));
+	const combinedError = $derived(
+		schemaError ||
+			(schemaValidationResult && !schemaValidationResult.valid
+				? `${schemaValidationResult.errors.length} validation error(s)`
+				: '')
+	);
 
 	// Report stats to parent
 	$effect(() => {
@@ -92,12 +103,13 @@
 				schemaValidationResult = { valid: true, errors: [] };
 				toast.success('Valid');
 			} else {
-				const errors = validate.errors?.map((err) => {
-					if (schemaVerboseErrors && err.data !== undefined) {
-						return `${err.instancePath || '/'}: ${err.message} (value: ${JSON.stringify(err.data)})`;
-					}
-					return `${err.instancePath || '/'}: ${err.message}`;
-				}) || [];
+				const errors =
+					validate.errors?.map((err) => {
+						if (schemaVerboseErrors && err.data !== undefined) {
+							return `${err.instancePath || '/'}: ${err.message} (value: ${JSON.stringify(err.data)})`;
+						}
+						return `${err.instancePath || '/'}: ${err.message}`;
+					}) || [];
 				schemaValidationResult = { valid: false, errors };
 				toast.error(`${errors.length} error(s)`);
 			}
@@ -138,23 +150,43 @@
 </script>
 
 <div class="flex flex-1 overflow-hidden">
-	<OptionsPanel show={showOptions} onclose={() => (showOptions = false)} onopen={() => (showOptions = true)}>
+	<OptionsPanel
+		show={showOptions}
+		onclose={() => (showOptions = false)}
+		onopen={() => (showOptions = true)}
+	>
 		<OptionsSection title="Actions">
 			<div class="flex flex-col gap-1.5">
-				<Button variant="secondary" size="sm" class="w-full gap-1.5 text-xs" onclick={handleValidateSchema}>
+				<Button
+					variant="secondary"
+					size="sm"
+					class="w-full gap-1.5 text-xs"
+					onclick={handleValidateSchema}
+				>
 					<FileCheck class="h-3.5 w-3.5" />
 					Validate against Schema
 				</Button>
 				{#if inferredSchema}
-					<Button variant="outline" size="sm" class="w-full gap-1.5 text-xs" onclick={handleUseInferredSchema}>
+					<Button
+						variant="outline"
+						size="sm"
+						class="w-full gap-1.5 text-xs"
+						onclick={handleUseInferredSchema}
+					>
 						<Wand2 class="h-3.5 w-3.5" />
 						Use Inferred Schema
 					</Button>
 				{/if}
 			</div>
 			{#if schemaValidationResult}
-				<div class="mt-2 rounded-md p-2 text-xs {schemaValidationResult.valid ? 'bg-green-500/10 text-green-600 dark:text-green-400' : 'bg-destructive/10 text-destructive'}">
-					{schemaValidationResult.valid ? 'Schema validation passed' : `${schemaValidationResult.errors.length} error(s) found`}
+				<div
+					class="mt-2 rounded-md p-2 text-xs {schemaValidationResult.valid
+						? 'bg-green-500/10 text-green-600 dark:text-green-400'
+						: 'bg-destructive/10 text-destructive'}"
+				>
+					{schemaValidationResult.valid
+						? 'Schema validation passed'
+						: `${schemaValidationResult.errors.length} error(s) found`}
 				</div>
 			{/if}
 		</OptionsSection>
@@ -212,7 +244,10 @@
 					mode="input"
 					editorMode="json"
 					placeholder="Paste JSON Schema here..."
-					onpaste={async () => { schemaDefinition = await navigator.clipboard.readText(); toast.success('Pasted'); }}
+					onpaste={async () => {
+						schemaDefinition = await navigator.clipboard.readText();
+						toast.success('Pasted');
+					}}
 					onclear={() => (schemaDefinition = '')}
 				/>
 			{/if}

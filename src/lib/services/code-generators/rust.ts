@@ -57,27 +57,36 @@ const generateField = (key: string, childType: TypeInfo, options: RustOptions): 
 	const baseType = resolveType(childType, options);
 	const fieldType = options.optionalProperties ? `Option<${baseType}>` : baseType;
 
-	const renameAttr = fieldName !== key && options.deriveSerde
-		? `    #[serde(rename = "${key}")]
+	const renameAttr =
+		fieldName !== key && options.deriveSerde
+			? `    #[serde(rename = "${key}")]
 `
-		: '';
-	const skipAttr = options.optionalProperties && options.deriveSerde
-		? `    #[serde(skip_serializing_if = "Option::is_none")]
+			: '';
+	const skipAttr =
+		options.optionalProperties && options.deriveSerde
+			? `    #[serde(skip_serializing_if = "Option::is_none")]
 `
-		: '';
+			: '';
 
 	return `${renameAttr}${skipAttr}    pub ${fieldName}: ${fieldType},`;
 };
 
-const generateStructDefinition = (typeInfo: TypeInfo, options: RustOptions, derives: string[]): string => {
+const generateStructDefinition = (
+	typeInfo: TypeInfo,
+	options: RustOptions,
+	derives: string[]
+): string => {
 	if (!typeInfo.isObject || !typeInfo.children) return '';
 
 	const fields = Object.entries(typeInfo.children)
 		.map(([key, childType]) => generateField(key, childType, options))
 		.join('\n');
 
-	const deriveAttr = derives.length > 0 ? `#[derive(${derives.join(', ')})]
-` : '';
+	const deriveAttr =
+		derives.length > 0
+			? `#[derive(${derives.join(', ')})]
+`
+			: '';
 	return `${deriveAttr}pub struct ${typeInfo.name} {
 ${fields}
 }`;

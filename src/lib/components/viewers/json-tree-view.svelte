@@ -1,5 +1,15 @@
 <script lang="ts">
-	import { ChevronRight, Braces, Brackets, Hash, ToggleLeft, Type, CircleSlash, Copy, Check } from '@lucide/svelte';
+	import {
+		ChevronRight,
+		Braces,
+		Brackets,
+		Hash,
+		ToggleLeft,
+		Type,
+		CircleSlash,
+		Copy,
+		Check,
+	} from '@lucide/svelte';
 	import { toast } from 'svelte-sonner';
 	import JsonTreeView from './json-tree-view.svelte';
 
@@ -75,13 +85,20 @@
 	// Get icon component for type
 	const TypeIcon = $derived.by(() => {
 		switch (type) {
-			case 'object': return Braces;
-			case 'array': return Brackets;
-			case 'number': return Hash;
-			case 'boolean': return ToggleLeft;
-			case 'string': return Type;
-			case 'null': return CircleSlash;
-			default: return Type;
+			case 'object':
+				return Braces;
+			case 'array':
+				return Brackets;
+			case 'number':
+				return Hash;
+			case 'boolean':
+				return ToggleLeft;
+			case 'string':
+				return Type;
+			case 'null':
+				return CircleSlash;
+			default:
+				return Type;
 		}
 	});
 
@@ -137,9 +154,7 @@
 
 	// Compute initial expanded states based on entries
 	const initialExpandedStates = $derived(
-		Object.fromEntries(
-			entries.map((entry) => [entry.key, level + 1 < maxInitialDepth])
-		)
+		Object.fromEntries(entries.map((entry) => [entry.key, level + 1 < maxInitialDepth]))
 	);
 
 	// Track expanded states
@@ -147,11 +162,11 @@
 
 	// Sync expanded states when entries change
 	$effect(() => {
-		for (const key of Object.keys(initialExpandedStates)) {
-			if (!(key in expandedStates)) {
+		Object.keys(initialExpandedStates)
+			.filter((key) => !(key in expandedStates))
+			.forEach((key) => {
 				expandedStates[key] = initialExpandedStates[key];
-			}
-		}
+			});
 	});
 
 	const getExpanded = (key: string): boolean => {
@@ -197,7 +212,9 @@
 	{#if isExpandable}
 		<!-- Expandable node (object/array) -->
 		<div
-			class="flex items-center gap-1 rounded-md px-1 py-0.5 transition-colors hover:bg-muted/60 {isSelected ? 'bg-primary/10 ring-1 ring-primary/30' : ''}"
+			class="flex items-center gap-1 rounded-md px-1 py-0.5 transition-colors hover:bg-muted/60 {isSelected
+				? 'bg-primary/10 ring-1 ring-primary/30'
+				: ''}"
 			onclick={handleClick}
 			onkeydown={(e) => e.key === 'Enter' && handleClick()}
 			role="button"
@@ -207,10 +224,15 @@
 			<button
 				type="button"
 				class="flex h-5 w-5 shrink-0 items-center justify-center rounded transition-all hover:bg-muted-foreground/20"
-				onclick={(e) => { e.stopPropagation(); expanded = !expanded; }}
+				onclick={(e) => {
+					e.stopPropagation();
+					expanded = !expanded;
+				}}
 			>
 				<ChevronRight
-					class="h-3.5 w-3.5 text-muted-foreground transition-transform duration-200 {expanded ? 'rotate-90' : ''}"
+					class="h-3.5 w-3.5 text-muted-foreground transition-transform duration-200 {expanded
+						? 'rotate-90'
+						: ''}"
 				/>
 			</button>
 
@@ -226,12 +248,16 @@
 			{/if}
 
 			<!-- Type badge -->
-			<span class="rounded px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide {styles.bg} {styles.text}">
+			<span
+				class="rounded px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide {styles.bg} {styles.text}"
+			>
 				{type === 'array' ? `array[${entries.length}]` : `object{${entries.length}}`}
 			</span>
 
 			<!-- Copy buttons (show on hover) -->
-			<div class="ml-auto flex items-center gap-0.5 opacity-0 transition-opacity group-hover/tree:opacity-100">
+			<div
+				class="ml-auto flex items-center gap-0.5 opacity-0 transition-opacity group-hover/tree:opacity-100"
+			>
 				<button
 					type="button"
 					class="flex h-5 w-5 items-center justify-center rounded text-muted-foreground hover:bg-muted hover:text-foreground"
@@ -274,9 +300,19 @@
 						/>
 					{:else}
 						{@const entryStyles = getTypeStyles(entryType)}
-						{@const EntryIcon = entryType === 'string' ? Type : entryType === 'number' ? Hash : entryType === 'boolean' ? ToggleLeft : CircleSlash}
+						{@const EntryIcon =
+							entryType === 'string'
+								? Type
+								: entryType === 'number'
+									? Hash
+									: entryType === 'boolean'
+										? ToggleLeft
+										: CircleSlash}
 						<div
-							class="group/leaf flex items-center gap-1 rounded-md px-1 py-0.5 transition-colors hover:bg-muted/60 {selectedPath === entry.path ? 'bg-primary/10 ring-1 ring-primary/30' : ''}"
+							class="group/leaf flex items-center gap-1 rounded-md px-1 py-0.5 transition-colors hover:bg-muted/60 {selectedPath ===
+							entry.path
+								? 'bg-primary/10 ring-1 ring-primary/30'
+								: ''}"
 							style:padding-left="16px"
 							onclick={() => onselect?.(entry.path, entry.value)}
 							onkeydown={(e) => e.key === 'Enter' && onselect?.(entry.path, entry.value)}
@@ -287,7 +323,9 @@
 							<span class="h-5 w-5 shrink-0"></span>
 
 							<!-- Type icon -->
-							<span class="flex h-5 w-5 shrink-0 items-center justify-center rounded {entryStyles.bg}">
+							<span
+								class="flex h-5 w-5 shrink-0 items-center justify-center rounded {entryStyles.bg}"
+							>
 								<EntryIcon class="h-3 w-3 {entryStyles.icon}" />
 							</span>
 
@@ -301,11 +339,17 @@
 							</span>
 
 							<!-- Copy buttons -->
-							<div class="ml-auto flex shrink-0 items-center gap-0.5 opacity-0 transition-opacity group-hover/leaf:opacity-100">
+							<div
+								class="ml-auto flex shrink-0 items-center gap-0.5 opacity-0 transition-opacity group-hover/leaf:opacity-100"
+							>
 								<button
 									type="button"
 									class="flex h-5 w-5 items-center justify-center rounded text-muted-foreground hover:bg-muted hover:text-foreground"
-									onclick={(e) => { e.stopPropagation(); navigator.clipboard.writeText(entry.path); toast.success(`Copied: ${entry.path}`); }}
+									onclick={(e) => {
+										e.stopPropagation();
+										navigator.clipboard.writeText(entry.path);
+										toast.success(`Copied: ${entry.path}`);
+									}}
 									title="Copy path"
 								>
 									<span class="text-[9px] font-mono">$</span>
@@ -313,7 +357,13 @@
 								<button
 									type="button"
 									class="flex h-5 w-5 items-center justify-center rounded text-muted-foreground hover:bg-muted hover:text-foreground"
-									onclick={(e) => { e.stopPropagation(); navigator.clipboard.writeText(typeof entry.value === 'string' ? entry.value : JSON.stringify(entry.value)); toast.success('Copied'); }}
+									onclick={(e) => {
+										e.stopPropagation();
+										navigator.clipboard.writeText(
+											typeof entry.value === 'string' ? entry.value : JSON.stringify(entry.value)
+										);
+										toast.success('Copied');
+									}}
 									title="Copy value"
 								>
 									<Copy class="h-3 w-3" />
@@ -327,7 +377,9 @@
 	{:else}
 		<!-- Leaf node (primitive value at root) -->
 		<div
-			class="group/leaf flex items-center gap-1 rounded-md px-1 py-0.5 transition-colors hover:bg-muted/60 {isSelected ? 'bg-primary/10 ring-1 ring-primary/30' : ''}"
+			class="group/leaf flex items-center gap-1 rounded-md px-1 py-0.5 transition-colors hover:bg-muted/60 {isSelected
+				? 'bg-primary/10 ring-1 ring-primary/30'
+				: ''}"
 			onclick={handleClick}
 			onkeydown={(e) => e.key === 'Enter' && handleClick()}
 			role="button"
@@ -342,7 +394,9 @@
 				<span class="text-muted-foreground">:</span>
 			{/if}
 			<span class="truncate {styles.text}">{formatValue(data)}</span>
-			<div class="ml-auto flex shrink-0 items-center gap-0.5 opacity-0 transition-opacity group-hover/leaf:opacity-100">
+			<div
+				class="ml-auto flex shrink-0 items-center gap-0.5 opacity-0 transition-opacity group-hover/leaf:opacity-100"
+			>
 				<button
 					type="button"
 					class="flex h-5 w-5 items-center justify-center rounded text-muted-foreground hover:bg-muted hover:text-foreground"

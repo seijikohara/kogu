@@ -27,7 +27,7 @@
 	}: Props = $props();
 </script>
 
-<PaneGroup direction={direction} class="flex-1 {className}">
+<PaneGroup {direction} class="flex-1 {className}">
 	{#if direction === 'horizontal'}
 		<Pane defaultSize={defaultSizes[0]} minSize={minSizes[0]} class="flex flex-col overflow-hidden">
 			{@render left?.()}

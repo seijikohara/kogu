@@ -15,19 +15,11 @@
 		onchange?: (value: string) => void;
 	}
 
-	let {
-		label,
-		value = $bindable(''),
-		options,
-		displayValue,
-		onchange,
-	}: Props = $props();
+	let { label, value = $bindable(''), options, displayValue, onchange }: Props = $props();
 
 	// Normalize options to SelectOption format
 	const normalizedOptions = $derived(
-		options.map((opt) =>
-			typeof opt === 'string' ? { value: opt, label: opt } : opt
-		)
+		options.map((opt) => (typeof opt === 'string' ? { value: opt, label: opt } : opt))
 	);
 
 	// Get display value

@@ -36,14 +36,21 @@ const resolveType = (typeInfo: TypeInfo, options: CSharpOptions): string => {
 
 const buildPropType = (childType: TypeInfo, options: CSharpOptions): string => {
 	const baseType = resolveType(childType, options);
-	return options.optionalProperties && options.useNullableReferenceTypes ? `${baseType}?` : baseType;
+	return options.optionalProperties && options.useNullableReferenceTypes
+		? `${baseType}?`
+		: baseType;
 };
 
 // ============================================================================
 // Annotation Helpers
 // ============================================================================
 
-const buildAnnotations = (key: string, propName: string, options: CSharpOptions, indent = ''): string[] =>
+const buildAnnotations = (
+	key: string,
+	propName: string,
+	options: CSharpOptions,
+	indent = ''
+): string[] =>
 	[
 		options.useSystemTextJson && propName !== key && `${indent}[JsonPropertyName("${key}")]`,
 		options.useNewtonsoft && propName !== key && `${indent}[JsonProperty("${key}")]`,
@@ -66,8 +73,10 @@ const generateRecordDefinition = (typeInfo: TypeInfo, options: CSharpOptions): s
 		})
 		.join(',\n');
 
-	const dataContractAttr = options.generateDataContract ? `[DataContract]
-` : '';
+	const dataContractAttr = options.generateDataContract
+		? `[DataContract]
+`
+		: '';
 	return `${dataContractAttr}public record ${typeInfo.name}(
 ${properties}
 );`;
@@ -80,14 +89,19 @@ const generateClassDefinitionCSharp = (typeInfo: TypeInfo, options: CSharpOption
 		.map(([key, childType]) => {
 			const propName = toPascalCase(key);
 			const annotations = buildAnnotations(key, propName, options, '    ');
-			const annotationStr = annotations.length > 0 ? `${annotations.join('\n')}
-` : '';
+			const annotationStr =
+				annotations.length > 0
+					? `${annotations.join('\n')}
+`
+					: '';
 			return `${annotationStr}    public ${buildPropType(childType, options)} ${propName} { get; set; }`;
 		})
 		.join('\n\n');
 
-	const dataContractAttr = options.generateDataContract ? `[DataContract]
-` : '';
+	const dataContractAttr = options.generateDataContract
+		? `[DataContract]
+`
+		: '';
 	return `${dataContractAttr}public class ${typeInfo.name}
 {
 ${properties}

@@ -343,9 +343,7 @@ const formatBytes = (bytes: number): string =>
 			: `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
 
 const getIndentString = (options: JsonFormatOptions): string =>
-	options.indentType === 'tabs' && options.indentSize > 0
-		? '\t'
-		: ' '.repeat(options.indentSize);
+	options.indentType === 'tabs' && options.indentSize > 0 ? '\t' : ' '.repeat(options.indentSize);
 
 // Generic deep key sorter - used by both YAML and XML converters
 const sortKeysDeep = (obj: unknown): unknown => {
@@ -364,9 +362,7 @@ const sortKeysDeep = (obj: unknown): unknown => {
 // ============================================================================
 
 const escapeUnicodeTransform = (s: string): string =>
-	s.replace(/[\u0080-\uFFFF]/g, (char) =>
-		`\\u${char.charCodeAt(0).toString(16).padStart(4, '0')}`
-	);
+	s.replace(/[\u0080-\uFFFF]/g, (char) => `\\u${char.charCodeAt(0).toString(16).padStart(4, '0')}`);
 
 const singleQuoteTransform = (s: string): string =>
 	s.replace(/"([^"\\]*)"/g, (match, content: string) =>
@@ -379,8 +375,7 @@ const arrayBracketSpacingTransform = (s: string): string =>
 const objectBracketSpacingTransform = (s: string): string =>
 	s.replace(/\{(?!\s*\n)/g, '{ ').replace(/(?<!\n\s*)\}/g, ' }');
 
-const removeColonSpacingTransform = (s: string): string =>
-	s.replace(/:\s+/g, ':');
+const removeColonSpacingTransform = (s: string): string => s.replace(/:\s+/g, ':');
 
 const compactArraysTransform = (s: string): string =>
 	s.replace(
@@ -388,8 +383,7 @@ const compactArraysTransform = (s: string): string =>
 		(_, _indent, content: string) => `[${content.split(/,\s*\n\s*/).join(', ')}]`
 	);
 
-const trailingCommaTransform = (s: string): string =>
-	s.replace(/([}\]])\n(\s*[}\]])/g, '$1,\n$2');
+const trailingCommaTransform = (s: string): string => s.replace(/([}\]])\n(\s*[}\]])/g, '$1,\n$2');
 
 // ============================================================================
 // JSON Formatter - Processing Functions
@@ -432,9 +426,7 @@ export const processJsonWithOptions = (
 				.filter(([, value]) => value !== undefined)
 		);
 
-		return opts.removeEmptyObjects && Object.keys(processed).length === 0
-			? undefined
-			: processed;
+		return opts.removeEmptyObjects && Object.keys(processed).length === 0 ? undefined : processed;
 	}
 
 	// String processing
@@ -468,8 +460,7 @@ export const formatJson = (input: string, options: Partial<JsonFormatOptions> = 
 	return transforms.reduce((result, transform) => transform(result), baseJson);
 };
 
-export const minifyJson = (input: string): string =>
-	JSON.stringify(JSON.parse(input));
+export const minifyJson = (input: string): string => JSON.stringify(JSON.parse(input));
 
 // ============================================================================
 // JSON Parser - Detection and Parsing
@@ -584,10 +575,7 @@ export const parseJsonAuto = (input: string): { data: unknown; format: JsonInput
 	// Try NDJSON for multi-line input
 	const lines = trimmed.split('\n').filter((line) => line.trim());
 	if (lines.length > 1) {
-		const ndjsonAttempt = tryParse(
-			() => lines.map((line) => JSON.parse(line.trim())),
-			'ndjson'
-		);
+		const ndjsonAttempt = tryParse(() => lines.map((line) => JSON.parse(line.trim())), 'ndjson');
 		if (ndjsonAttempt.success) {
 			return { data: ndjsonAttempt.data, format: 'ndjson' };
 		}
@@ -796,9 +784,7 @@ const findDifferences = (
 	if (!opts.deepCompare) {
 		const normalized1 = JSON.stringify(obj1);
 		const normalized2 = JSON.stringify(obj2);
-		return normalized1 !== normalized2
-			? [createDiffItem(path, 'changed', obj1, obj2)]
-			: [];
+		return normalized1 !== normalized2 ? [createDiffItem(path, 'changed', obj1, obj2)] : [];
 	}
 
 	// Type mismatch (with numeric type consideration)
@@ -884,7 +870,7 @@ export const jsonToYaml = (input: string, options: JsonToYamlOptions | number = 
 		? 'QUOTE_SINGLE'
 		: opts.forceQuotes && opts.defaultStringType === 'PLAIN'
 			? 'QUOTE_DOUBLE'
-			: opts.defaultStringType ?? 'PLAIN';
+			: (opts.defaultStringType ?? 'PLAIN');
 
 	return yaml.stringify(data, {
 		indent: opts.indent,
@@ -999,20 +985,14 @@ export const jsonToXml = (input: string, options: JsonToXmlOptions | string = {}
 		typeof parsed === 'object' && parsed !== null ? (parsed as Record<string, unknown>) : null;
 	const isSingleKeyObject = parsedObj !== null && Object.keys(parsedObj).length === 1;
 
-	const actualRootName = isSingleKeyObject
-		? Object.keys(parsedObj)[0]
-		: (opts.rootName ?? 'root');
+	const actualRootName = isSingleKeyObject ? Object.keys(parsedObj)[0] : (opts.rootName ?? 'root');
 
 	const content = isSingleKeyObject
 		? convertToXmlElement(parsedObj[actualRootName], actualRootName, opts)
 		: convertToXmlElement(parsed, opts.rootName ?? 'root', opts);
 
 	const indentation =
-		opts.indent === 0
-			? ''
-			: opts.indentType === 'tabs'
-				? '\t'
-				: ' '.repeat(opts.indent ?? 2);
+		opts.indent === 0 ? '' : opts.indentType === 'tabs' ? '\t' : ' '.repeat(opts.indent ?? 2);
 
 	const lineSep = opts.lineSeparator ?? '\n';
 
@@ -1065,7 +1045,8 @@ const inferSchema = (data: unknown): Record<string, unknown> => {
 	}
 
 	if (typeof data === 'string') return inferStringFormat(data);
-	if (typeof data === 'number') return Number.isInteger(data) ? { type: 'integer' } : { type: 'number' };
+	if (typeof data === 'number')
+		return Number.isInteger(data) ? { type: 'integer' } : { type: 'number' };
 	if (typeof data === 'boolean') return { type: 'boolean' };
 
 	return {};
@@ -1273,5 +1254,4 @@ export const formatSql = (input: string, options: Partial<SqlFormatOptions> = {}
 	});
 };
 
-export const minifySql = (input: string): string =>
-	input.replace(/\s+/g, ' ').trim();
+export const minifySql = (input: string): string => input.replace(/\s+/g, ' ').trim();

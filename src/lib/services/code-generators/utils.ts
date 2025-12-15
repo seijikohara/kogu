@@ -53,9 +53,7 @@ export const inferType = (value: JsonValue, name: string): TypeInfo => {
 	if (Array.isArray(value)) {
 		const [firstItem] = value;
 		const itemType =
-			firstItem !== undefined
-				? inferType(firstItem, `${name}Item`)
-				: createPrimitiveType('any');
+			firstItem !== undefined ? inferType(firstItem, `${name}Item`) : createPrimitiveType('any');
 		return createArrayType(name, itemType);
 	}
 

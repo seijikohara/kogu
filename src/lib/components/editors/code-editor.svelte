@@ -1,11 +1,31 @@
 <script lang="ts">
 	import { onMount, onDestroy } from 'svelte';
-	import { EditorView, lineNumbers, highlightActiveLine, highlightActiveLineGutter, highlightSpecialChars, drawSelection, dropCursor, rectangularSelection, crosshairCursor, placeholder as placeholderExtension, Decoration, type DecorationSet } from '@codemirror/view';
+	import {
+		EditorView,
+		lineNumbers,
+		highlightActiveLine,
+		highlightActiveLineGutter,
+		highlightSpecialChars,
+		drawSelection,
+		dropCursor,
+		rectangularSelection,
+		crosshairCursor,
+		placeholder as placeholderExtension,
+		Decoration,
+		type DecorationSet,
+	} from '@codemirror/view';
 	import { EditorState, StateField, StateEffect } from '@codemirror/state';
 	import { bracketMatching, foldGutter, foldKeymap, indentOnInput } from '@codemirror/language';
 	import { highlightSelectionMatches, searchKeymap } from '@codemirror/search';
 	import { closeBrackets, closeBracketsKeymap, autocompletion } from '@codemirror/autocomplete';
-	import { history, defaultKeymap, historyKeymap, undo, redo, selectAll } from '@codemirror/commands';
+	import {
+		history,
+		defaultKeymap,
+		historyKeymap,
+		undo,
+		redo,
+		selectAll,
+	} from '@codemirror/commands';
 	import { keymap } from '@codemirror/view';
 	import { linter, lintGutter } from '@codemirror/lint';
 	import { json, jsonParseLinter } from '@codemirror/lang-json';
@@ -18,7 +38,22 @@
 	import { Menu, MenuItem, PredefinedMenuItem } from '@tauri-apps/api/menu';
 	import { readText, writeText } from '@tauri-apps/plugin-clipboard-manager';
 
-	export type EditorMode = 'json' | 'xml' | 'yaml' | 'sql' | 'javascript' | 'typescript' | 'python' | 'go' | 'rust' | 'java' | 'csharp' | 'kotlin' | 'swift' | 'php' | 'plain';
+	export type EditorMode =
+		| 'json'
+		| 'xml'
+		| 'yaml'
+		| 'sql'
+		| 'javascript'
+		| 'typescript'
+		| 'python'
+		| 'go'
+		| 'rust'
+		| 'java'
+		| 'csharp'
+		| 'kotlin'
+		| 'swift'
+		| 'php'
+		| 'plain';
 	export type EditorTheme = 'dark' | 'light';
 
 	export interface CursorPosition {
@@ -294,7 +329,10 @@
 
 	const handleCopy = async () => {
 		if (!view) return;
-		const selection = view.state.sliceDoc(view.state.selection.main.from, view.state.selection.main.to);
+		const selection = view.state.sliceDoc(
+			view.state.selection.main.from,
+			view.state.selection.main.to
+		);
 		if (selection) await writeText(selection);
 	};
 
@@ -318,74 +356,109 @@
 			const text = view.state.doc.toString();
 			const beforeCursor = text.slice(0, pos);
 
-			const pathParts: string[] = ['$'];
-			const stack: Array<{ type: 'object' | 'array'; key?: string; index: number }> = [];
-			let inString = false;
-			let stringChar = '';
-			let currentKey = '';
-			let collectingKey = false;
-
-			for (let i = 0; i < beforeCursor.length; i++) {
-				const char = beforeCursor[i];
-
-				if (inString) {
-					if (char === stringChar && beforeCursor[i - 1] !== '\\') {
-						inString = false;
-						if (collectingKey) {
-							collectingKey = false;
-						}
-					} else if (collectingKey) {
-						currentKey += char;
-					}
-					continue;
-				}
-
-				if (char === '"' || char === "'") {
-					inString = true;
-					stringChar = char;
-					if (stack.length > 0 && stack[stack.length - 1].type === 'object') {
-						const next = beforeCursor.slice(i + 1).match(/^[^"]*"\s*:/);
-						if (next) {
-							collectingKey = true;
-							currentKey = '';
-						}
-					}
-					continue;
-				}
-
-				if (char === '{') {
-					stack.push({ type: 'object', key: currentKey, index: 0 });
-					if (currentKey) {
-						pathParts.push(currentKey);
-						currentKey = '';
-					}
-				} else if (char === '[') {
-					stack.push({ type: 'array', key: currentKey, index: 0 });
-					if (currentKey) {
-						pathParts.push(currentKey);
-						currentKey = '';
-					}
-				} else if (char === '}' || char === ']') {
-					if (stack.length > 0) {
-						stack.pop();
-						if (pathParts.length > 1) pathParts.pop();
-					}
-				} else if (char === ',') {
-					if (stack.length > 0 && stack[stack.length - 1].type === 'array') {
-						stack[stack.length - 1].index++;
-					}
-				} else if (char === ':' && currentKey && stack.length > 0) {
-					pathParts.push(currentKey);
-					currentKey = '';
-				}
+			interface JsonPathState {
+				pathParts: string[];
+				stack: Array<{ type: 'object' | 'array'; key?: string; index: number }>;
+				inString: boolean;
+				stringChar: string;
+				currentKey: string;
+				collectingKey: boolean;
 			}
+
+			const result = [...beforeCursor].reduce<JsonPathState>(
+				(acc, char, i) => {
+					if (acc.inString) {
+						if (char === acc.stringChar && beforeCursor[i - 1] !== '\\') {
+							return { ...acc, inString: false, collectingKey: false };
+						}
+						if (acc.collectingKey) {
+							return { ...acc, currentKey: acc.currentKey + char };
+						}
+						return acc;
+					}
+
+					if (char === '"' || char === "'") {
+						const isObjectContext =
+							acc.stack.length > 0 && acc.stack[acc.stack.length - 1].type === 'object';
+						const next = beforeCursor.slice(i + 1).match(/^[^"]*"\s*:/);
+						const shouldCollect = isObjectContext && !!next;
+						return {
+							...acc,
+							inString: true,
+							stringChar: char,
+							collectingKey: shouldCollect,
+							currentKey: shouldCollect ? '' : acc.currentKey,
+						};
+					}
+
+					if (char === '{') {
+						const newStack = [
+							...acc.stack,
+							{ type: 'object' as const, key: acc.currentKey, index: 0 },
+						];
+						const newPathParts = acc.currentKey
+							? [...acc.pathParts, acc.currentKey]
+							: acc.pathParts;
+						return { ...acc, stack: newStack, pathParts: newPathParts, currentKey: '' };
+					}
+
+					if (char === '[') {
+						const newStack = [
+							...acc.stack,
+							{ type: 'array' as const, key: acc.currentKey, index: 0 },
+						];
+						const newPathParts = acc.currentKey
+							? [...acc.pathParts, acc.currentKey]
+							: acc.pathParts;
+						return { ...acc, stack: newStack, pathParts: newPathParts, currentKey: '' };
+					}
+
+					if (char === '}' || char === ']') {
+						if (acc.stack.length > 0) {
+							const newStack = acc.stack.slice(0, -1);
+							const newPathParts =
+								acc.pathParts.length > 1 ? acc.pathParts.slice(0, -1) : acc.pathParts;
+							return { ...acc, stack: newStack, pathParts: newPathParts };
+						}
+						return acc;
+					}
+
+					if (char === ',') {
+						if (acc.stack.length > 0 && acc.stack[acc.stack.length - 1].type === 'array') {
+							const newStack = [
+								...acc.stack.slice(0, -1),
+								{
+									...acc.stack[acc.stack.length - 1],
+									index: acc.stack[acc.stack.length - 1].index + 1,
+								},
+							];
+							return { ...acc, stack: newStack };
+						}
+						return acc;
+					}
+
+					if (char === ':' && acc.currentKey && acc.stack.length > 0) {
+						return { ...acc, pathParts: [...acc.pathParts, acc.currentKey], currentKey: '' };
+					}
+
+					return acc;
+				},
+				{
+					pathParts: ['$'],
+					stack: [],
+					inString: false,
+					stringChar: '',
+					currentKey: '',
+					collectingKey: false,
+				}
+			);
 
 			// Add array index if in array
-			if (stack.length > 0 && stack[stack.length - 1].type === 'array') {
-				return `${pathParts.join('.')}[${stack[stack.length - 1].index}]`;
+			if (result.stack.length > 0 && result.stack[result.stack.length - 1].type === 'array') {
+				return `${result.pathParts.join('.')}[${result.stack[result.stack.length - 1].index}]`;
 			}
 
-			return pathParts.join('.');
+			return result.pathParts.join('.');
 		} catch {
 			return null;
 		}
@@ -399,51 +472,73 @@
 			const text = view.state.doc.toString();
 			const lines = text.slice(0, pos).split('\n');
 
-			const pathParts: string[] = [];
-			const indentStack: number[] = [-1];
+			interface YamlPathState {
+				pathParts: string[];
+				indentStack: number[];
+			}
 
-			for (const line of lines) {
-				const trimmed = line.trim();
-				if (!trimmed || trimmed.startsWith('#')) continue;
+			// Helper to pop stack for dedented lines
+			const popDedentedEntries = (state: YamlPathState, indent: number): YamlPathState => {
+				let { pathParts, indentStack } = state;
+				const popCount = indentStack.filter((i, idx) => idx > 0 && indent <= i).length;
+				return {
+					pathParts: pathParts.slice(0, pathParts.length - popCount),
+					indentStack: indentStack.slice(0, indentStack.length - popCount),
+				};
+			};
 
-				const indent = line.search(/\S/);
-				if (indent === -1) continue;
+			const result = lines.reduce<YamlPathState>(
+				(acc, line) => {
+					const trimmed = line.trim();
+					if (!trimmed || trimmed.startsWith('#')) return acc;
 
-				// Pop stack for dedented lines
-				while (indentStack.length > 1 && indent <= indentStack[indentStack.length - 1]) {
-					indentStack.pop();
-					pathParts.pop();
-				}
+					const indent = line.search(/\S/);
+					if (indent === -1) return acc;
 
-				// Check for array item
-				if (trimmed.startsWith('- ')) {
-					const content = trimmed.slice(2);
-					const keyMatch = content.match(/^([^:]+):/);
-					if (keyMatch) {
-						// Array item with key
-						const lastIdx = pathParts.length - 1;
-						if (lastIdx >= 0 && !pathParts[lastIdx].startsWith('[')) {
-							// Find array index
-							const arrayIndex = lines.filter(l => {
-								const li = l.search(/\S/);
-								return li === indent && l.trim().startsWith('- ');
-							}).length - 1;
-							pathParts.push(`[${Math.max(0, arrayIndex)}]`);
+					// Pop stack for dedented lines
+					const dedented = popDedentedEntries(acc, indent);
+
+					// Check for array item
+					if (trimmed.startsWith('- ')) {
+						const content = trimmed.slice(2);
+						const keyMatch = content.match(/^([^:]+):/);
+						if (keyMatch) {
+							const lastIdx = dedented.pathParts.length - 1;
+							const needsArrayIndex = lastIdx >= 0 && !dedented.pathParts[lastIdx].startsWith('[');
+							const arrayIndex = needsArrayIndex
+								? lines.filter((l) => {
+										const li = l.search(/\S/);
+										return li === indent && l.trim().startsWith('- ');
+									}).length - 1
+								: -1;
+
+							const newPathParts = needsArrayIndex
+								? [...dedented.pathParts, `[${Math.max(0, arrayIndex)}]`, keyMatch[1].trim()]
+								: [...dedented.pathParts, keyMatch[1].trim()];
+
+							return {
+								pathParts: newPathParts,
+								indentStack: [...dedented.indentStack, indent],
+							};
 						}
-						pathParts.push(keyMatch[1].trim());
-						indentStack.push(indent);
+						return dedented;
 					}
-				} else {
+
 					// Regular key: value
 					const keyMatch = trimmed.match(/^([^:]+):/);
 					if (keyMatch) {
-						pathParts.push(keyMatch[1].trim());
-						indentStack.push(indent);
+						return {
+							pathParts: [...dedented.pathParts, keyMatch[1].trim()],
+							indentStack: [...dedented.indentStack, indent],
+						};
 					}
-				}
-			}
 
-			return pathParts.length > 0 ? `$.${pathParts.join('.')}` : '$';
+					return dedented;
+				},
+				{ pathParts: [], indentStack: [-1] }
+			);
+
+			return result.pathParts.length > 0 ? `$.${result.pathParts.join('.')}` : '$';
 		} catch {
 			return null;
 		}
@@ -457,43 +552,59 @@
 			const text = view.state.doc.toString();
 			const beforeCursor = text.slice(0, pos);
 
-			const pathParts: string[] = [];
-			const tagStack: Array<{ name: string; index: number }> = [];
-			const siblingCount: Map<string, number>[] = [new Map()];
-
-			// Simple XML tag parsing
+			// Simple XML tag parsing - collect all matches
 			const tagRegex = /<\/?([a-zA-Z_][\w.-]*)[^>]*\/?>/g;
-			let match;
+			const matches = Array.from(beforeCursor.matchAll(tagRegex), (m) => ({
+				fullMatch: m[0],
+				tagName: m[1],
+			}));
 
-			while ((match = tagRegex.exec(beforeCursor)) !== null) {
-				const fullMatch = match[0];
-				const tagName = match[1];
-
-				if (fullMatch.startsWith('</')) {
-					// Closing tag
-					if (tagStack.length > 0 && tagStack[tagStack.length - 1].name === tagName) {
-						tagStack.pop();
-						siblingCount.pop();
-					}
-				} else if (fullMatch.endsWith('/>')) {
-					// Self-closing tag - count as sibling but don't push to stack
-					const currentSiblings = siblingCount[siblingCount.length - 1];
-					currentSiblings.set(tagName, (currentSiblings.get(tagName) || 0) + 1);
-				} else {
-					// Opening tag
-					const currentSiblings = siblingCount[siblingCount.length - 1];
-					const count = (currentSiblings.get(tagName) || 0) + 1;
-					currentSiblings.set(tagName, count);
-
-					tagStack.push({ name: tagName, index: count });
-					siblingCount.push(new Map());
-				}
+			interface XPathState {
+				tagStack: Array<{ name: string; index: number }>;
+				siblingCount: Map<string, number>[];
 			}
+
+			const result = matches.reduce<XPathState>(
+				(acc, { fullMatch, tagName }) => {
+					if (fullMatch.startsWith('</')) {
+						// Closing tag
+						if (acc.tagStack.length > 0 && acc.tagStack[acc.tagStack.length - 1].name === tagName) {
+							return {
+								tagStack: acc.tagStack.slice(0, -1),
+								siblingCount: acc.siblingCount.slice(0, -1),
+							};
+						}
+						return acc;
+					}
+
+					if (fullMatch.endsWith('/>')) {
+						// Self-closing tag - count as sibling but don't push to stack
+						const currentSiblings = new Map(acc.siblingCount[acc.siblingCount.length - 1]);
+						currentSiblings.set(tagName, (currentSiblings.get(tagName) ?? 0) + 1);
+						return {
+							tagStack: acc.tagStack,
+							siblingCount: [...acc.siblingCount.slice(0, -1), currentSiblings],
+						};
+					}
+
+					// Opening tag
+					const currentSiblings = acc.siblingCount[acc.siblingCount.length - 1];
+					const count = (currentSiblings.get(tagName) ?? 0) + 1;
+					const updatedSiblings = new Map(currentSiblings);
+					updatedSiblings.set(tagName, count);
+
+					return {
+						tagStack: [...acc.tagStack, { name: tagName, index: count }],
+						siblingCount: [...acc.siblingCount.slice(0, -1), updatedSiblings, new Map()],
+					};
+				},
+				{ tagStack: [], siblingCount: [new Map()] }
+			);
 
 			// Build XPath from stack
-			for (const tag of tagStack) {
-				pathParts.push(tag.index > 1 ? `${tag.name}[${tag.index}]` : tag.name);
-			}
+			const pathParts = result.tagStack.map((tag) =>
+				tag.index > 1 ? `${tag.name}[${tag.index}]` : tag.name
+			);
 
 			return pathParts.length > 0 ? `/${pathParts.join('/')}` : '/';
 		} catch {
@@ -547,8 +658,14 @@
 		path.length > maxLen ? `${path.slice(0, maxLen - 3)}...` : path;
 
 	// Build context menu items based on mode
-	const buildModeSpecificItems = async (): Promise<Array<Awaited<ReturnType<typeof MenuItem.new>> | Awaited<ReturnType<typeof PredefinedMenuItem.new>>>> => {
-		const items: Array<Awaited<ReturnType<typeof MenuItem.new>> | Awaited<ReturnType<typeof PredefinedMenuItem.new>>> = [];
+	const buildModeSpecificItems = async (): Promise<
+		Array<
+			Awaited<ReturnType<typeof MenuItem.new>> | Awaited<ReturnType<typeof PredefinedMenuItem.new>>
+		>
+	> => {
+		const items: Array<
+			Awaited<ReturnType<typeof MenuItem.new>> | Awaited<ReturnType<typeof PredefinedMenuItem.new>>
+		> = [];
 
 		if (mode === 'json') {
 			const jsonPath = getJsonPath();
@@ -603,7 +720,9 @@
 		e.preventDefault();
 		e.stopPropagation();
 
-		const hasSelection = view ? view.state.selection.main.from !== view.state.selection.main.to : false;
+		const hasSelection = view
+			? view.state.selection.main.from !== view.state.selection.main.to
+			: false;
 		const modeItems = await buildModeSpecificItems();
 
 		const menu = await Menu.new({
@@ -662,7 +781,12 @@
 </script>
 
 <!-- svelte-ignore a11y_no_static_element_interactions -->
-<div class="code-editor-wrapper" style:height bind:this={container} oncontextmenu={showContextMenu}></div>
+<div
+	class="code-editor-wrapper"
+	style:height
+	bind:this={container}
+	oncontextmenu={showContextMenu}
+></div>
 
 <style>
 	.code-editor-wrapper {
