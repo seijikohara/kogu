@@ -84,6 +84,8 @@
 		<!-- Search results dropdown -->
 		{#if isSearchOpen}
 			<div
+				role="listbox"
+				aria-label="Search results"
 				class="absolute left-0 right-0 top-full z-50 mt-1 max-h-80 overflow-y-auto rounded-md border bg-popover p-1 shadow-md"
 			>
 				{#if searchResults.length === 0}
@@ -92,6 +94,8 @@
 					{#each searchResults as result, index}
 						<button
 							type="button"
+							role="option"
+							aria-selected={index === selectedIndex}
 							class="flex w-full items-center gap-3 rounded-sm px-3 py-2 text-left text-sm transition-colors hover:bg-accent {index ===
 							selectedIndex
 								? 'bg-accent'
