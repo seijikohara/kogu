@@ -12,7 +12,7 @@
 	"app": {
 		"windows": [
 			{
-				"title": "Kogu - Developer Tools",
+				"title": "Kogu",
 				"width": 1200,
 				"height": 800,
 				"minWidth": 800,

@@ -133,3 +133,8 @@
 			sans-serif;
 	}
 }
+
+/* Add top border below native title bar for sidebar */
+[data-slot='sidebar-container'] {
+	border-top: 1px solid var(--border);
+}
