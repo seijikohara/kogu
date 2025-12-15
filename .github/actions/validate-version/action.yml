@@ -1,0 +1,87 @@
+name: Validate Version
+description: Validate semantic version format and ensure it is newer than the latest release
+
+inputs:
+  version:
+    description: "Version to validate (e.g., v1.0.0)"
+    required: true
+  github-token:
+    description: "GitHub token for API access"
+    required: true
+  repository:
+    description: "Repository in owner/repo format"
+    required: true
+
+outputs:
+  version:
+    description: "Validated version"
+    value: ${{ steps.set-version.outputs.version }}
+
+runs:
+  using: composite
+  steps:
+    - name: Validate version format
+      shell: bash
+      run: |
+        VERSION="${{ inputs.version }}"
+
+        if [[ ! "$VERSION" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+          echo "::error::Invalid version format: $VERSION. Expected format: v1.0.0"
+          exit 1
+        fi
+
+        echo "Version format is valid: $VERSION"
+
+    - name: Set version output
+      id: set-version
+      shell: bash
+      run: echo "version=${{ inputs.version }}" >> "$GITHUB_OUTPUT"
+
+    - name: Check version is newer than latest release
+      shell: bash
+      env:
+        GH_TOKEN: ${{ inputs.github-token }}
+      run: |
+        VERSION="${{ inputs.version }}"
+
+        # Get latest release tag (excluding nightly)
+        LATEST_TAG=$(gh api repos/${{ inputs.repository }}/releases \
+          --jq '[.[] | select(.tag_name != "nightly" and .prerelease == false)] | .[0].tag_name // empty')
+
+        if [[ -z "$LATEST_TAG" ]]; then
+          echo "No previous stable release found. Proceeding with $VERSION"
+          exit 0
+        fi
+
+        echo "Latest release: $LATEST_TAG"
+        echo "Requested version: $VERSION"
+
+        # Extract version numbers (remove 'v' prefix)
+        LATEST_NUMS="${LATEST_TAG#v}"
+        VERSION_NUMS="${VERSION#v}"
+
+        # Split into major.minor.patch
+        IFS='.' read -r LATEST_MAJOR LATEST_MINOR LATEST_PATCH <<< "$LATEST_NUMS"
+        IFS='.' read -r VERSION_MAJOR VERSION_MINOR VERSION_PATCH <<< "$VERSION_NUMS"
+
+        # Compare versions
+        is_newer=false
+
+        if [[ "$VERSION_MAJOR" -gt "$LATEST_MAJOR" ]]; then
+          is_newer=true
+        elif [[ "$VERSION_MAJOR" -eq "$LATEST_MAJOR" ]]; then
+          if [[ "$VERSION_MINOR" -gt "$LATEST_MINOR" ]]; then
+            is_newer=true
+          elif [[ "$VERSION_MINOR" -eq "$LATEST_MINOR" ]]; then
+            if [[ "$VERSION_PATCH" -gt "$LATEST_PATCH" ]]; then
+              is_newer=true
+            fi
+          fi
+        fi
+
+        if [[ "$is_newer" == "false" ]]; then
+          echo "::error::Version $VERSION is not newer than latest release $LATEST_TAG"
+          exit 1
+        fi
+
+        echo "Version $VERSION is newer than $LATEST_TAG. Proceeding with release."
