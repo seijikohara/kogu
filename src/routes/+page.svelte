@@ -1,18 +1,9 @@
 <script lang="ts">
 	import * as Card from '$lib/components/ui/card/index.js';
-	import * as Sidebar from '$lib/components/ui/sidebar/index.js';
-	import { Separator } from '$lib/components/ui/separator/index.js';
-	import { Braces, ArrowRight } from '@lucide/svelte';
+	import { ArrowRight } from '@lucide/svelte';
+	import { getToolPages } from '$lib/services/pages.js';
 
-	const tools = [
-		{
-			title: 'JSON Formatter',
-			description: 'Format, minify, query, compare, and convert JSON',
-			icon: Braces,
-			href: '/json-formatter',
-			color: 'text-yellow-500',
-		},
-	];
+	const tools = getToolPages();
 </script>
 
 <svelte:head>
@@ -20,15 +11,6 @@
 </svelte:head>
 
 <div class="flex h-full flex-col">
-	<!-- Header -->
-	<header class="flex h-12 shrink-0 items-center gap-4 border-b px-4">
-		<Sidebar.Trigger class="-ml-1" />
-		<Separator orientation="vertical" class="h-6" />
-		<div>
-			<h1 class="text-sm font-semibold">Dashboard</h1>
-		</div>
-	</header>
-
 	<!-- Main Content -->
 	<main class="flex-1 overflow-y-auto p-6">
 		<div class="mx-auto max-w-4xl space-y-6">
@@ -45,11 +27,11 @@
 				<h3 class="mb-3 text-sm font-medium text-muted-foreground">Available Tools</h3>
 				<div class="grid gap-3 sm:grid-cols-2">
 					{#each tools as tool}
-						<a href={tool.href} class="block">
+						<a href={tool.url} class="block">
 							<Card.Root class="transition-colors hover:bg-muted/50">
 								<Card.Content class="flex items-center gap-3 p-4">
 									<div class="rounded-lg bg-muted p-2">
-										<tool.icon class="h-5 w-5 {tool.color}" />
+										<tool.icon class="h-5 w-5 {tool.color ?? ''}" />
 									</div>
 									<div class="flex-1">
 										<div class="font-medium">{tool.title}</div>

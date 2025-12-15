@@ -1,7 +1,7 @@
 <script lang="ts">
 	import '../app.css';
 	import * as Sidebar from '$lib/components/ui/sidebar/index.js';
-	import AppSidebar from '$lib/components/layout/app-sidebar.svelte';
+	import { AppSidebar, TitleBar } from '$lib/components/layout/index.js';
 	import { Sonner } from '$lib/components/ui/sonner/index.js';
 	import { ModeWatcher } from 'mode-watcher';
 	import { onMount } from 'svelte';
@@ -31,11 +31,14 @@
 <ModeWatcher />
 <Sonner richColors />
 
-<div class="h-screen border-t border-border">
+<div class="flex h-screen flex-col">
 	<Sidebar.Provider>
-		<AppSidebar />
-		<Sidebar.Inset class="flex h-full flex-col overflow-hidden">
-			{@render children()}
-		</Sidebar.Inset>
+		<div class="flex flex-1 overflow-hidden">
+			<AppSidebar />
+			<Sidebar.Inset class="flex h-full flex-col overflow-hidden">
+				<TitleBar />
+				{@render children()}
+			</Sidebar.Inset>
+		</div>
 	</Sidebar.Provider>
 </div>

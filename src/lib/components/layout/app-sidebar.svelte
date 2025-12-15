@@ -1,31 +1,30 @@
 <script lang="ts">
 	import * as Sidebar from '$lib/components/ui/sidebar/index.js';
 	import * as Collapsible from '$lib/components/ui/collapsible/index.js';
-	import {
-		Home,
-		Braces,
-		FileCode2,
-		ChevronRight,
-		Sun,
-		Moon,
-		Monitor,
-		Wrench,
-		type Icon,
-	} from '@lucide/svelte';
+	import { FileCode2, ChevronRight, Sun, Moon, Monitor, Wrench, type Icon } from '@lucide/svelte';
 	import { page } from '$app/state';
 	import { toggleMode, mode } from 'mode-watcher';
+	import { onMount } from 'svelte';
+	import { getPlatform, type Platform } from '$lib/services/platform.js';
+	import { PAGES, getToolPages } from '$lib/services/pages.js';
 
-	interface MenuItem {
-		title: string;
-		url: string;
-		icon: typeof Icon;
-		description?: string;
-	}
+	let platform = $state<Platform>('unknown');
+
+	onMount(async () => {
+		platform = await getPlatform();
+	});
+
+	const isMacOS = $derived(platform === 'macos');
+
+	// Get dashboard page
+	const dashboardPage = $derived(PAGES.find((p) => p.id === 'dashboard'));
+
+	// Get tool pages for sidebar
+	const toolPages = $derived(getToolPages());
 
 	interface MenuGroup {
 		label: string;
 		icon: typeof Icon;
-		items: MenuItem[];
 		defaultOpen?: boolean;
 	}
 
@@ -34,14 +33,6 @@
 			label: 'Tools',
 			icon: Wrench,
 			defaultOpen: true,
-			items: [
-				{
-					title: 'JSON Formatter',
-					url: '/json-formatter',
-					icon: Braces,
-					description: 'Format, validate, and transform JSON',
-				},
-			],
 		},
 	];
 
@@ -53,7 +44,7 @@
 
 <Sidebar.Root collapsible="icon">
 	<!-- Header with Logo -->
-	<Sidebar.Header>
+	<Sidebar.Header class={isMacOS ? 'pt-12' : ''}>
 		<Sidebar.Menu>
 			<Sidebar.MenuItem>
 				<Sidebar.MenuButton
@@ -85,16 +76,21 @@
 			<Sidebar.GroupLabel>Quick Access</Sidebar.GroupLabel>
 			<Sidebar.GroupContent>
 				<Sidebar.Menu>
-					<Sidebar.MenuItem>
-						<Sidebar.MenuButton isActive={page.url.pathname === '/'} tooltipContent="Dashboard">
-							{#snippet child({ props })}
-								<a href="/" {...props}>
-									<Home />
-									<span>Dashboard</span>
-								</a>
-							{/snippet}
-						</Sidebar.MenuButton>
-					</Sidebar.MenuItem>
+					{#if dashboardPage}
+						<Sidebar.MenuItem>
+							<Sidebar.MenuButton
+								isActive={page.url.pathname === dashboardPage.url}
+								tooltipContent={dashboardPage.title}
+							>
+								{#snippet child({ props })}
+									<a href={dashboardPage.url} {...props}>
+										<dashboardPage.icon />
+										<span>{dashboardPage.title}</span>
+									</a>
+								{/snippet}
+							</Sidebar.MenuButton>
+						</Sidebar.MenuItem>
+					{/if}
 				</Sidebar.Menu>
 			</Sidebar.GroupContent>
 		</Sidebar.Group>
@@ -117,16 +113,16 @@
 					<Collapsible.Content>
 						<Sidebar.GroupContent>
 							<Sidebar.Menu>
-								{#each group.items as item}
+								{#each toolPages as tool}
 									<Sidebar.MenuItem>
 										<Sidebar.MenuButton
-											isActive={page.url.pathname === item.url}
-											tooltipContent={item.title}
+											isActive={page.url.pathname === tool.url}
+											tooltipContent={tool.title}
 										>
 											{#snippet child({ props })}
-												<a href={item.url} {...props}>
-													<item.icon />
-													<span>{item.title}</span>
+												<a href={tool.url} {...props}>
+													<tool.icon />
+													<span>{tool.title}</span>
 												</a>
 											{/snippet}
 										</Sidebar.MenuButton>

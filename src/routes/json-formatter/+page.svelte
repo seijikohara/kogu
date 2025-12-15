@@ -1,7 +1,5 @@
 <script lang="ts">
 	import * as Tabs from '$lib/components/ui/tabs/index.js';
-	import * as Sidebar from '$lib/components/ui/sidebar/index.js';
-	import { Separator } from '$lib/components/ui/separator/index.js';
 	import ValidityBadge from '$lib/components/feedback/validity-badge.svelte';
 	import {
 		FormatTab,
@@ -18,10 +16,56 @@
 		type JsonInputFormat,
 	} from '$lib/services/formatters.js';
 	import { Play, Search, GitCompare, ArrowRightLeft, FileCheck, Code2 } from '@lucide/svelte';
+	import { page } from '$app/state';
+	import { goto } from '$app/navigation';
+
+	// Valid tab types
+	type TabType = 'format' | 'query' | 'compare' | 'convert' | 'schema' | 'generate';
+	const VALID_TABS: readonly TabType[] = [
+		'format',
+		'query',
+		'compare',
+		'convert',
+		'schema',
+		'generate',
+	];
+
+	// Get initial tab from URL or default to 'format'
+	const getInitialTab = (): TabType => {
+		const tabParam = page.url.searchParams.get('tab');
+		if (tabParam && VALID_TABS.includes(tabParam as TabType)) {
+			return tabParam as TabType;
+		}
+		return 'format';
+	};
 
 	// Active tab tracking
-	type TabType = 'format' | 'query' | 'compare' | 'convert' | 'schema' | 'generate';
-	let activeTab = $state<TabType>('format');
+	let activeTab = $state<TabType>(getInitialTab());
+
+	// Sync activeTab with URL when it changes
+	const handleTabChange = (value: string | undefined): void => {
+		if (!value) return;
+		const newTab = value as TabType;
+		activeTab = newTab;
+		// Update URL without navigation
+		const url = new URL(page.url);
+		if (newTab === 'format') {
+			url.searchParams.delete('tab');
+		} else {
+			url.searchParams.set('tab', newTab);
+		}
+		goto(url.toString(), { replaceState: true, noScroll: true });
+	};
+
+	// React to URL changes (e.g., from search navigation)
+	$effect(() => {
+		const tabParam = page.url.searchParams.get('tab');
+		if (tabParam && VALID_TABS.includes(tabParam as TabType)) {
+			activeTab = tabParam as TabType;
+		} else if (!tabParam) {
+			activeTab = 'format';
+		}
+	});
 
 	// Stats from each tab
 	let tabStats = $state<
@@ -70,15 +114,13 @@
 </svelte:head>
 
 <Tabs.Root
-	value="format"
-	onValueChange={(v) => (activeTab = v as TabType)}
+	value={activeTab}
+	onValueChange={handleTabChange}
 	class="flex h-full flex-col overflow-hidden"
 >
-	<!-- Header with integrated tabs -->
-	<header class="flex h-12 shrink-0 items-center justify-between border-b px-4">
+	<!-- Page header with tabs and stats -->
+	<header class="flex h-10 shrink-0 items-center justify-between border-b px-4">
 		<div class="flex items-center gap-4">
-			<Sidebar.Trigger class="-ml-1" />
-			<Separator orientation="vertical" class="h-6" />
 			<h1 class="text-sm font-semibold">JSON Formatter</h1>
 			<Tabs.List class="h-8 rounded-md bg-muted p-1">
 				<Tabs.Trigger
@@ -119,6 +161,7 @@
 				</Tabs.Trigger>
 			</Tabs.List>
 		</div>
+
 		<div class="flex items-center gap-3 text-xs">
 			{#if currentStats.error}
 				<span class="max-w-md truncate text-destructive" title={currentStats.error}
