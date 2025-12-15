@@ -1,66 +1,88 @@
 <script lang="ts">
-	import { invoke } from '@tauri-apps/api/core';
-	import { Button } from '$lib/components/ui/button';
+	import * as Card from '$lib/components/ui/card/index.js';
+	import * as Sidebar from '$lib/components/ui/sidebar/index.js';
+	import { Separator } from '$lib/components/ui/separator/index.js';
+	import { Braces, ArrowRight } from '@lucide/svelte';
 
-	let name = $state('');
-	let greetMsg = $state('');
-
-	async function greet(event: Event) {
-		event.preventDefault();
-		greetMsg = await invoke('greet', { name });
-	}
+	const tools = [
+		{
+			title: 'JSON Formatter',
+			description: 'Format, minify, query, compare, and convert JSON',
+			icon: Braces,
+			href: '/json-formatter',
+			color: 'text-yellow-500',
+		},
+	];
 </script>
 
-<div
-	class="min-h-screen flex flex-col items-center justify-center gap-6 bg-background text-foreground p-8"
->
-	<h1 class="text-3xl font-bold">Welcome to Tauri + Svelte</h1>
+<svelte:head>
+	<title>Dashboard - Kogu</title>
+</svelte:head>
 
-	<div class="flex gap-4">
-		<a href="https://vite.dev" target="_blank">
-			<img
-				src="/vite.svg"
-				class="h-24 p-4 transition-all hover:drop-shadow-[0_0_2em_#747bff]"
-				alt="Vite Logo"
-			/>
-		</a>
-		<a href="https://tauri.app" target="_blank">
-			<img
-				src="/tauri.svg"
-				class="h-24 p-4 transition-all hover:drop-shadow-[0_0_2em_#24c8db]"
-				alt="Tauri Logo"
-			/>
-		</a>
-		<a href="https://svelte.dev" target="_blank">
-			<img
-				src="/svelte.svg"
-				class="h-24 p-4 transition-all hover:drop-shadow-[0_0_2em_#ff3e00]"
-				alt="Svelte Logo"
-			/>
-		</a>
-	</div>
+<div class="flex h-full flex-col">
+	<!-- Header -->
+	<header class="flex h-12 shrink-0 items-center gap-4 border-b px-4">
+		<Sidebar.Trigger class="-ml-1" />
+		<Separator orientation="vertical" class="h-6" />
+		<div>
+			<h1 class="text-sm font-semibold">Dashboard</h1>
+		</div>
+	</header>
 
-	<p class="text-muted-foreground">Click on the Tauri, Vite, and Svelte logos to learn more.</p>
+	<!-- Main Content -->
+	<main class="flex-1 overflow-y-auto p-6">
+		<div class="mx-auto max-w-4xl space-y-6">
+			<!-- Welcome Section -->
+			<section>
+				<h2 class="text-xl font-bold">Kogu</h2>
+				<p class="text-sm text-muted-foreground">
+					A collection of developer tools built with Tauri, Svelte 5, and shadcn-svelte.
+				</p>
+			</section>
 
-	<form class="flex gap-2" onsubmit={greet}>
-		<input
-			id="greet-input"
-			class="rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-			placeholder="Enter a name..."
-			bind:value={name}
-		/>
-		<Button type="submit">Greet</Button>
-	</form>
+			<!-- Tools Grid -->
+			<section>
+				<h3 class="mb-3 text-sm font-medium text-muted-foreground">Available Tools</h3>
+				<div class="grid gap-3 sm:grid-cols-2">
+					{#each tools as tool}
+						<a href={tool.href} class="block">
+							<Card.Root class="transition-colors hover:bg-muted/50">
+								<Card.Content class="flex items-center gap-3 p-4">
+									<div class="rounded-lg bg-muted p-2">
+										<tool.icon class="h-5 w-5 {tool.color}" />
+									</div>
+									<div class="flex-1">
+										<div class="font-medium">{tool.title}</div>
+										<p class="text-xs text-muted-foreground">{tool.description}</p>
+									</div>
+									<ArrowRight class="h-4 w-4 text-muted-foreground" />
+								</Card.Content>
+							</Card.Root>
+						</a>
+					{/each}
+				</div>
+			</section>
 
-	{#if greetMsg}
-		<p class="text-lg font-medium">{greetMsg}</p>
-	{/if}
+			<!-- Quick Tips -->
+			<section>
+				<h3 class="mb-3 text-sm font-medium text-muted-foreground">Quick Tips</h3>
+				<Card.Root>
+					<Card.Content class="p-4">
+						<ul class="space-y-1.5 text-sm text-muted-foreground">
+							<li>Use the sidebar to navigate between tools</li>
+							<li>Each tool supports paste and copy to clipboard</li>
+							<li>All processing is done locally</li>
+						</ul>
+					</Card.Content>
+				</Card.Root>
+			</section>
+		</div>
+	</main>
 
-	<div class="flex gap-2 mt-4">
-		<Button variant="default">Default</Button>
-		<Button variant="secondary">Secondary</Button>
-		<Button variant="outline">Outline</Button>
-		<Button variant="ghost">Ghost</Button>
-		<Button variant="destructive">Destructive</Button>
-	</div>
+	<!-- Footer -->
+	<footer class="border-t px-4 py-2">
+		<p class="text-xs text-muted-foreground">
+			Built with Tauri 2 + Svelte 5 + shadcn-svelte + Tailwind CSS v4
+		</p>
+	</footer>
 </div>
