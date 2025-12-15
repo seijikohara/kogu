@@ -134,7 +134,14 @@
 	}
 }
 
-/* Add top border below native title bar for sidebar */
-[data-slot='sidebar-container'] {
-	border-top: 1px solid var(--border);
+/* Custom titlebar drag region */
+[data-tauri-drag-region] {
+	-webkit-app-region: drag;
+}
+
+[data-tauri-drag-region] button,
+[data-tauri-drag-region] a,
+[data-tauri-drag-region] input,
+[data-tauri-drag-region] [role='button'] {
+	-webkit-app-region: no-drag;
 }
