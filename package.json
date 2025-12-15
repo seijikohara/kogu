@@ -1,6 +1,6 @@
 {
 	"name": "kogu",
-	"version": "0.0.1",
+	"version": "0.0.2",
 	"description": "Kogu - A collection of useful developer tools (小道具 - props for developers)",
 	"type": "module",
 	"author": "seijikohara",
