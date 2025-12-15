@@ -22,7 +22,8 @@
 		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
 		"format": "prettier --write .",
 		"format:check": "prettier --check .",
-		"tauri": "tauri"
+		"tauri": "tauri",
+		"release": "bun run scripts/release.ts"
 	},
 	"license": "MIT",
 	"dependencies": {

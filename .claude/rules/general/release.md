@@ -2,7 +2,11 @@
 
 ## Overview
 
-This project uses `bumpp` for version management and GitHub Actions for automated releases.
+This project uses an automated release workflow:
+
+1. `bun run release` creates a release PR
+2. Merge the PR
+3. GitHub Actions automatically creates a tag and triggers the release build
 
 ## Release Types
 
@@ -15,41 +19,70 @@ This project uses `bumpp` for version management and GitHub Actions for automate
 
 ### Prerequisites
 
-- All changes merged to main
+- On main branch
+- Working directory is clean
 - CI passing on main branch
 
 ### Steps
 
 ```bash
-# 1. Ensure you're on main and up to date
-git checkout main
-git pull origin main
+# Run the release script
+bun run release
 
-# 2. Run bumpp
-bunx bumpp
+# Select version type:
+#   - patch: 0.0.1 → 0.0.2 (bug fixes)
+#   - minor: 0.0.1 → 0.1.0 (new features)
+#   - major: 0.0.1 → 1.0.0 (breaking changes)
 
-# 3. Select version type
-#    - patch: 0.0.1 → 0.0.2 (bug fixes)
-#    - minor: 0.0.1 → 0.1.0 (new features)
-#    - major: 0.0.1 → 1.0.0 (breaking changes)
+# The script will:
+# 1. Update version in all config files
+# 2. Create release/vX.X.X branch
+# 3. Commit and push changes
+# 4. Create a PR automatically
 
-# 4. Confirm the changes
-#    bumpp will:
-#    - Update package.json
-#    - Update src-tauri/tauri.conf.json
-#    - Update src-tauri/Cargo.toml
-#    - Commit with message "chore: release vX.X.X"
-#    - Create git tag vX.X.X
-#    - Push to remote
+# Then:
+# 1. Review the PR
+# 2. Merge the PR
+# 3. Tag is created automatically (via GitHub Actions)
+# 4. Release build starts automatically
+```
 
-# 5. Wait for GitHub Actions to complete
-#    - Release workflow builds all platforms
-#    - Creates GitHub Release with auto-generated notes
+## Automated Workflow
+
+```
+bun run release
+       │
+       ▼
+┌─────────────────┐
+│ Select version  │  ← Interactive (patch/minor/major)
+└────────┬────────┘
+         │
+         ▼
+┌─────────────────┐
+│ Create branch   │  ← release/vX.X.X
+│ Update files    │
+│ Create PR       │
+└────────┬────────┘
+         │
+         ▼
+    (Review & Merge PR)
+         │
+         ▼
+┌─────────────────┐
+│ GitHub Actions  │  ← create-release-tag.yml
+│ Create tag      │
+└────────┬────────┘
+         │
+         ▼
+┌─────────────────┐
+│ GitHub Actions  │  ← release.yml
+│ Build & Release │
+└─────────────────┘
 ```
 
 ## Version Files
 
-bumpp updates these files automatically:
+The release script updates these files automatically:
 
 | File | Field |
 |------|-------|
@@ -59,7 +92,10 @@ bumpp updates these files automatically:
 
 ## Configuration
 
-See `bumpp.config.ts` for bumpp configuration.
+- `bumpp.config.ts` - Version bump configuration
+- `scripts/release.ts` - Release automation script
+- `.github/workflows/create-release-tag.yml` - Auto tag creation
+- `.github/workflows/release.yml` - Build and publish
 
 ## Build Artifacts
 
@@ -74,18 +110,27 @@ Releases include binaries for:
 
 ## Troubleshooting
 
-### Release workflow failed
+### Release script fails
 
-1. Check GitHub Actions logs for errors
-2. Fix the issue on main branch
-3. Delete the failed release and tag if needed:
-   ```bash
-   gh release delete vX.X.X --yes
-   git push --delete origin vX.X.X
-   git tag -d vX.X.X
-   ```
-4. Run `bunx bumpp` again
+1. Ensure you're on the main branch
+2. Ensure working directory is clean (`git status`)
+3. Ensure you have push access to the repository
 
-### Version mismatch
+### Tag creation fails
 
-If version files are out of sync, manually update all three files to the same version before running bumpp.
+1. Check GitHub Actions logs for `create-release-tag` workflow
+2. Verify GitHub App permissions are configured correctly
+3. Check tag protection rules allow the GitHub App
+
+### Release build fails
+
+1. Check GitHub Actions logs for `release` workflow
+2. Fix the issue and create a new release
+
+### Delete a failed release
+
+```bash
+# Delete release and tag
+gh release delete vX.X.X --yes
+git push --delete origin vX.X.X
+```
