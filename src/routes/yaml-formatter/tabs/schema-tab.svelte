@@ -7,20 +7,16 @@
 	import SplitPane from '$lib/components/layout/split-pane.svelte';
 	import { EditorPane } from '$lib/components/tool/index.js';
 	import { FileCheck, Wand2 } from '@lucide/svelte';
-	import { inferJsonSchema, validateJson, type JsonInputFormat } from '$lib/services/formatters.js';
+	import { inferJsonSchema } from '$lib/services/formatters.js';
 	import { downloadTextFile, copyToClipboard, pasteFromClipboard } from '../utils.js';
 	import Ajv from 'ajv';
 	import addFormats from 'ajv-formats';
+	import * as yaml from 'yaml';
 
 	interface Props {
 		input: string;
 		onInputChange: (value: string) => void;
-		onStatsChange?: (stats: {
-			input: string;
-			valid: boolean | null;
-			error: string;
-			format: JsonInputFormat | null;
-		}) => void;
+		onStatsChange?: (stats: { input: string; valid: boolean | null; error: string }) => void;
 	}
 
 	let { input, onInputChange, onStatsChange }: Props = $props();
@@ -39,22 +35,32 @@
 	let schemaRemoveAdditional = $state(false);
 	let schemaValidateFormats = $state(true);
 	let schemaVerboseErrors = $state(false);
+	let outputSchemaFormat = $state<'yaml' | 'json'>('yaml');
 
 	// Validation
 	const inputValidation = $derived.by(() => {
-		if (!input.trim())
-			return { valid: null as boolean | null, format: null as JsonInputFormat | null };
-		const result = validateJson(input);
-		return { valid: result.valid, format: result.detectedFormat };
+		if (!input.trim()) return { valid: null as boolean | null };
+		try {
+			yaml.parse(input);
+			return { valid: true };
+		} catch {
+			return { valid: false };
+		}
 	});
 
 	// Inferred schema
 	const inferredSchema = $derived.by(() => {
-		if (!input.trim() || input.trim() === '{}') {
+		if (!input.trim()) {
 			return '';
 		}
 		try {
-			return JSON.stringify(inferJsonSchema(input), null, 2);
+			const data = yaml.parse(input);
+			const jsonStr = JSON.stringify(data);
+			const schema = inferJsonSchema(jsonStr);
+			if (outputSchemaFormat === 'yaml') {
+				return yaml.stringify(schema, { indent: 2 });
+			}
+			return JSON.stringify(schema, null, 2);
 		} catch {
 			return '';
 		}
@@ -74,19 +80,26 @@
 			input,
 			valid: inputValidation.valid,
 			error: combinedError,
-			format: inputValidation.format,
 		});
 	});
 
 	// Handlers
 	const handleValidateSchema = () => {
 		if (!input.trim() || !schemaDefinition.trim()) {
-			schemaError = 'Please enter JSON and a schema';
+			schemaError = 'Please enter YAML and a schema';
 			return;
 		}
 		try {
-			const data = JSON.parse(input);
-			const schema = JSON.parse(schemaDefinition);
+			const data = yaml.parse(input);
+
+			// Parse schema (can be YAML or JSON)
+			let schema: unknown;
+			try {
+				schema = JSON.parse(schemaDefinition);
+			} catch {
+				schema = yaml.parse(schemaDefinition);
+			}
+
 			const ajv = new Ajv({
 				allErrors: schemaAllErrors,
 				strict: schemaStrictMode,
@@ -98,7 +111,7 @@
 			if (schemaValidateFormats) {
 				addFormats(ajv);
 			}
-			const validate = ajv.compile(schema);
+			const validate = ajv.compile(schema as object);
 			const valid = validate(data);
 			if (valid) {
 				schemaValidationResult = { valid: true, errors: [] };
@@ -134,7 +147,7 @@
 	};
 
 	const handleClear = () => {
-		onInputChange('{}');
+		onInputChange('');
 		schemaDefinition = '';
 		schemaValidationResult = null;
 		schemaError = '';
@@ -146,7 +159,8 @@
 	};
 
 	const handleDownload = () => {
-		downloadTextFile(inferredSchema, 'schema.json');
+		const ext = outputSchemaFormat === 'yaml' ? 'yaml' : 'json';
+		downloadTextFile(inferredSchema, `schema.${ext}`);
 	};
 </script>
 
@@ -192,6 +206,27 @@
 			{/if}
 		</OptionsSection>
 
+		<OptionsSection title="Schema Format">
+			<div class="flex gap-1">
+				<Button
+					variant={outputSchemaFormat === 'yaml' ? 'secondary' : 'ghost'}
+					size="sm"
+					class="h-7 flex-1 text-xs"
+					onclick={() => (outputSchemaFormat = 'yaml')}
+				>
+					YAML
+				</Button>
+				<Button
+					variant={outputSchemaFormat === 'json' ? 'secondary' : 'ghost'}
+					size="sm"
+					class="h-7 flex-1 text-xs"
+					onclick={() => (outputSchemaFormat = 'json')}
+				>
+					JSON
+				</Button>
+			</div>
+		</OptionsSection>
+
 		<OptionsSection title="Validation">
 			<OptionCheckbox label="Report all errors" bind:checked={schemaAllErrors} />
 			<OptionCheckbox label="Strict mode" bind:checked={schemaStrictMode} />
@@ -207,8 +242,8 @@
 
 		<OptionsSection title="Quick Help">
 			<div class="space-y-1.5 rounded-md bg-muted/50 p-2 text-[11px] text-muted-foreground">
-				<p><strong class="text-foreground">Validate:</strong> Check JSON against schema</p>
-				<p><strong class="text-foreground">Infer:</strong> Generate schema from JSON</p>
+				<p><strong class="text-foreground">Validate:</strong> Check YAML against JSON Schema</p>
+				<p><strong class="text-foreground">Infer:</strong> Generate schema from YAML</p>
 				<p><strong class="text-foreground">Strict:</strong> Enforce JSON Schema draft rules</p>
 				<p><strong class="text-foreground">Coerce:</strong> Auto-convert types (string→number)</p>
 			</div>
@@ -222,19 +257,19 @@
 				value={input}
 				onchange={onInputChange}
 				mode="input"
-				editorMode="json"
-				placeholder="Paste JSON here..."
+				editorMode="yaml"
+				placeholder="Paste YAML here..."
 				onpaste={handlePaste}
 				onclear={handleClear}
 			/>
 		{/snippet}
 		{#snippet right()}
-			{#if inferredSchema}
+			{#if inferredSchema && !schemaDefinition}
 				<EditorPane
 					title="Inferred Schema"
 					value={inferredSchema}
 					mode="readonly"
-					editorMode="json"
+					editorMode={outputSchemaFormat}
 					placeholder="Schema will appear here..."
 					oncopy={handleCopySchema}
 					ondownload={handleDownload}
@@ -245,7 +280,7 @@
 					bind:value={schemaDefinition}
 					mode="input"
 					editorMode="json"
-					placeholder="Paste JSON Schema here..."
+					placeholder="Paste JSON Schema here (JSON or YAML)..."
 					onpaste={async () => {
 						schemaDefinition = await navigator.clipboard.readText();
 						toast.success('Pasted');

@@ -1,3 +1,9 @@
 export { default as ToolPage } from './tool-page.svelte';
 export { default as ToolHeader } from './tool-header.svelte';
 export { default as EditorPane } from './editor-pane.svelte';
+export { default as DiffResultsPanel } from './diff-results-panel.svelte';
+export { default as DiffLegend } from './diff-legend.svelte';
+export { default as CompareTabBase } from './compare-tab-base.svelte';
+export { default as ConvertTabBase } from './convert-tab-base.svelte';
+export { default as FormatTabBase } from './format-tab-base.svelte';
+export { default as FormatterPage } from './formatter-page.svelte';

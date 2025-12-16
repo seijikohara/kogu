@@ -11,6 +11,8 @@ import {
 	ArrowRightLeft,
 	FileCheck,
 	Code2,
+	FileJson2,
+	FileCode,
 	type Icon,
 } from '@lucide/svelte';
 
@@ -52,6 +54,38 @@ export const PAGES: readonly PageDefinition[] = [
 		icon: Braces,
 		description: 'Format, minify, query, compare, and convert JSON',
 		color: 'text-yellow-500',
+		tabs: [
+			{ id: 'format', label: 'Format', icon: Play },
+			{ id: 'query', label: 'Query', icon: Search },
+			{ id: 'compare', label: 'Compare', icon: GitCompare },
+			{ id: 'convert', label: 'Convert', icon: ArrowRightLeft },
+			{ id: 'schema', label: 'Schema', icon: FileCheck },
+			{ id: 'generate', label: 'Generate', icon: Code2 },
+		],
+	},
+	{
+		id: 'yaml-formatter',
+		title: 'YAML Formatter',
+		url: '/yaml-formatter',
+		icon: FileJson2,
+		description: 'Format, validate, compare, and convert YAML',
+		color: 'text-red-500',
+		tabs: [
+			{ id: 'format', label: 'Format', icon: Play },
+			{ id: 'query', label: 'Query', icon: Search },
+			{ id: 'compare', label: 'Compare', icon: GitCompare },
+			{ id: 'convert', label: 'Convert', icon: ArrowRightLeft },
+			{ id: 'schema', label: 'Schema', icon: FileCheck },
+			{ id: 'generate', label: 'Generate', icon: Code2 },
+		],
+	},
+	{
+		id: 'xml-formatter',
+		title: 'XML Formatter',
+		url: '/xml-formatter',
+		icon: FileCode,
+		description: 'Format, validate, query, compare, and convert XML',
+		color: 'text-orange-500',
 		tabs: [
 			{ id: 'format', label: 'Format', icon: Play },
 			{ id: 'query', label: 'Query', icon: Search },

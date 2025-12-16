@@ -18,10 +18,11 @@
 		"dev": "vite dev",
 		"build": "vite build",
 		"preview": "vite preview",
-		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
+		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json && bun run validate:pages",
 		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
 		"format": "prettier --write .",
 		"format:check": "prettier --check .",
+		"validate:pages": "bun run scripts/validate-pages.ts",
 		"tauri": "tauri",
 		"release": "bun run scripts/release.ts"
 	},
