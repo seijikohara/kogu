@@ -6,24 +6,24 @@ changelog:
       - dependabot
       - dependabot[bot]
   categories:
-    - title: "🚀 Features"
+    - title: '🚀 Features'
       labels:
         - feature
         - enhancement
-    - title: "🐛 Bug Fixes"
+    - title: '🐛 Bug Fixes'
       labels:
         - bug
         - fix
-    - title: "🔧 Refactoring"
+    - title: '🔧 Refactoring'
       labels:
         - refactor
-    - title: "📦 Dependencies"
+    - title: '📦 Dependencies'
       labels:
         - dependencies
-    - title: "📝 Documentation"
+    - title: '📝 Documentation'
       labels:
         - documentation
         - docs
-    - title: "🔨 Other Changes"
+    - title: '🔨 Other Changes'
       labels:
-        - "*"
+        - '*'

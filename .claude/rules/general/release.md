@@ -10,10 +10,10 @@ This project uses an automated release workflow:
 
 ## Release Types
 
-| Type | Trigger | Description |
-|------|---------|-------------|
-| Nightly | Push to main | Automated pre-release build |
-| Stable | Push `v*.*.*` tag | Official release with changelog |
+| Type    | Trigger           | Description                     |
+| ------- | ----------------- | ------------------------------- |
+| Nightly | Push to main      | Automated pre-release build     |
+| Stable  | Push `v*.*.*` tag | Official release with changelog |
 
 ## How to Release
 
@@ -84,11 +84,11 @@ bun run release
 
 The release script updates these files automatically:
 
-| File | Field |
-|------|-------|
-| `package.json` | `version` |
+| File                        | Field     |
+| --------------------------- | --------- |
+| `package.json`              | `version` |
 | `src-tauri/tauri.conf.json` | `version` |
-| `src-tauri/Cargo.toml` | `version` |
+| `src-tauri/Cargo.toml`      | `version` |
 
 ## Configuration
 
@@ -101,12 +101,12 @@ The release script updates these files automatically:
 
 Releases include binaries for:
 
-| Platform | Formats |
-|----------|---------|
-| Linux | `.deb`, `.rpm`, `.AppImage` |
-| macOS (Intel) | `.dmg`, `.app.tar.gz` |
-| macOS (Apple Silicon) | `.dmg`, `.app.tar.gz` |
-| Windows | `.exe`, `.msi` |
+| Platform              | Formats                     |
+| --------------------- | --------------------------- |
+| Linux                 | `.deb`, `.rpm`, `.AppImage` |
+| macOS (Intel)         | `.dmg`, `.app.tar.gz`       |
+| macOS (Apple Silicon) | `.dmg`, `.app.tar.gz`       |
+| Windows               | `.exe`, `.msi`              |
 
 ## Troubleshooting
 

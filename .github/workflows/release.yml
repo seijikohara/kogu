@@ -4,7 +4,7 @@ on:
   push:
     branches: [main]
     tags:
-      - "v*.*.*"
+      - 'v*.*.*'
 
 env:
   CARGO_TERM_COLOR: always
@@ -65,7 +65,7 @@ jobs:
       - name: Setup Rust
         uses: ./.github/actions/setup-rust-tauri
         with:
-          components: ""
+          components: ''
 
       - name: Add Rust target
         run: rustup target add ${{ matrix.settings.target }}
@@ -77,7 +77,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           tagName: nightly
-          releaseName: "Nightly Build"
+          releaseName: 'Nightly Build'
           releaseBody: |
             This is an automated nightly build from the main branch.
 
@@ -95,7 +95,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           tagName: ${{ github.ref_name }}
-          releaseName: "Kogu ${{ github.ref_name }}"
+          releaseName: 'Kogu ${{ github.ref_name }}'
           generateReleaseNotes: true
           releaseDraft: false
           prerelease: false
