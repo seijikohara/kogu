@@ -159,6 +159,24 @@ export interface JsonToXmlOptions {
 	headerComment?: string;
 }
 
+export interface XmlToJsonOptions {
+	indent?: number;
+	sortKeys?: boolean;
+}
+
+export interface XmlToYamlOptions extends JsonToYamlOptions {
+	// Inherits all YAML formatting options from JsonToYamlOptions
+}
+
+export interface YamlToJsonOptions {
+	indent?: number;
+	sortKeys?: boolean;
+}
+
+export interface YamlToXmlOptions extends JsonToXmlOptions {
+	// Inherits all XML formatting options from JsonToXmlOptions
+}
+
 type ParseAttempt =
 	| { success: true; data: unknown; format: JsonInputFormat }
 	| { success: false; error: Error };
@@ -346,7 +364,7 @@ const getIndentString = (options: JsonFormatOptions): string =>
 	options.indentType === 'tabs' && options.indentSize > 0 ? '\t' : ' '.repeat(options.indentSize);
 
 // Generic deep key sorter - used by both YAML and XML converters
-const sortKeysDeep = (obj: unknown): unknown => {
+export const sortKeysDeep = (obj: unknown): unknown => {
 	if (Array.isArray(obj)) return obj.map(sortKeysDeep);
 	if (obj === null || typeof obj !== 'object') return obj;
 
@@ -1183,17 +1201,67 @@ const convertXmlElementToObject = (node: Element): unknown => {
 	return { ...attrs, ...childrenObj };
 };
 
-export const xmlToJson = (input: string): string => {
+export const xmlToJson = (input: string, options: XmlToJsonOptions = {}): string => {
 	const doc = new DOMParser().parseFromString(input, 'application/xml');
-	return JSON.stringify(
-		{ [doc.documentElement.nodeName]: convertXmlElementToObject(doc.documentElement) },
-		null,
-		2
-	);
+	const parserError = doc.querySelector('parsererror');
+	if (parserError) {
+		throw new Error('Invalid XML: ' + parserError.textContent);
+	}
+	const data = { [doc.documentElement.nodeName]: convertXmlElementToObject(doc.documentElement) };
+	const sortedData = options.sortKeys ? sortKeysDeep(data) : data;
+	return JSON.stringify(sortedData, null, options.indent ?? 2);
 };
 
-export const xmlToYaml = (input: string, indent = 2): string =>
-	yaml.stringify(JSON.parse(xmlToJson(input)), { indent });
+export const xmlToJsonObject = (input: string): unknown => {
+	const doc = new DOMParser().parseFromString(input, 'application/xml');
+	const parserError = doc.querySelector('parsererror');
+	if (parserError) {
+		throw new Error('Invalid XML: ' + parserError.textContent);
+	}
+	return { [doc.documentElement.nodeName]: convertXmlElementToObject(doc.documentElement) };
+};
+
+export const xmlToYaml = (input: string, options: XmlToYamlOptions | number = {}): string => {
+	const opts =
+		typeof options === 'number'
+			? { ...defaultJsonToYamlOptions, indent: options }
+			: { ...defaultJsonToYamlOptions, ...options };
+
+	const doc = new DOMParser().parseFromString(input, 'application/xml');
+	const parserError = doc.querySelector('parsererror');
+	if (parserError) {
+		throw new Error('Invalid XML: ' + parserError.textContent);
+	}
+
+	const data = { [doc.documentElement.nodeName]: convertXmlElementToObject(doc.documentElement) };
+	const sortedData = opts.sortKeys ? sortKeysDeep(data) : data;
+
+	// Determine string type
+	const stringType = opts.singleQuote
+		? 'QUOTE_SINGLE'
+		: opts.forceQuotes && opts.defaultStringType === 'PLAIN'
+			? 'QUOTE_DOUBLE'
+			: (opts.defaultStringType ?? 'PLAIN');
+
+	return yaml.stringify(sortedData, {
+		indent: opts.indent,
+		lineWidth: opts.lineWidth === 0 ? 0 : opts.lineWidth,
+		minContentWidth: opts.minContentWidth,
+		defaultStringType: stringType,
+		doubleQuotedAsJSON: opts.doubleQuotedAsJSON,
+		doubleQuotedMinMultiLineLength: opts.doubleQuotedMinMultiLineLength,
+		collectionStyle: opts.collectionStyle,
+		flowCollectionPadding: opts.flowCollectionPadding,
+		indentSeq: opts.indentSeq,
+		simpleKeys: opts.simpleKeys,
+		defaultKeyType: opts.defaultKeyType,
+		aliasDuplicateObjects: !opts.noRefs,
+		anchorPrefix: opts.anchorPrefix,
+		nullStr: opts.nullStr,
+		trueStr: opts.trueStr,
+		falseStr: opts.falseStr,
+	});
+};
 
 // ============================================================================
 // YAML Formatter
@@ -1228,11 +1296,25 @@ export const calculateYamlStats = (input: string): YamlStats => {
 // YAML Conversion
 // ============================================================================
 
-export const yamlToJson = (input: string, indent = 2): string =>
-	JSON.stringify(yaml.parse(input), null, indent);
+export const yamlToJson = (input: string, options: YamlToJsonOptions | number = {}): string => {
+	const opts =
+		typeof options === 'number' ? { indent: options, sortKeys: false } : { indent: 2, ...options };
+	const data = yaml.parse(input);
+	const sortedData = opts.sortKeys ? sortKeysDeep(data) : data;
+	return JSON.stringify(sortedData, null, opts.indent);
+};
 
-export const yamlToXml = (input: string, rootName = 'root'): string =>
-	jsonToXml(yamlToJson(input), rootName);
+export const yamlToXml = (input: string, options: YamlToXmlOptions | string = {}): string => {
+	const opts =
+		typeof options === 'string'
+			? { ...defaultJsonToXmlOptions, rootName: options }
+			: { ...defaultJsonToXmlOptions, ...options };
+
+	const data = yaml.parse(input);
+	const sortedData = opts.sortKeys ? sortKeysDeep(data) : data;
+	const jsonStr = JSON.stringify(sortedData);
+	return jsonToXml(jsonStr, opts);
+};
 
 // ============================================================================
 // SQL Formatter
@@ -1255,3 +1337,48 @@ export const formatSql = (input: string, options: Partial<SqlFormatOptions> = {}
 };
 
 export const minifySql = (input: string): string => input.replace(/\s+/g, ' ').trim();
+
+// ============================================================================
+// YAML Validation
+// ============================================================================
+
+/**
+ * Check if input is JSON format (not pure YAML).
+ * JSON is a valid subset of YAML, but we want to reject it in YAML formatter.
+ */
+const isJsonFormat = (input: string): boolean => {
+	const trimmed = input.trim();
+
+	// Check if it looks like JSON (starts with { or [)
+	if (trimmed.startsWith('{') || trimmed.startsWith('[')) {
+		try {
+			JSON.parse(trimmed);
+			return true;
+		} catch {
+			// Not valid JSON, might be YAML flow style
+			return false;
+		}
+	}
+
+	return false;
+};
+
+export const validateYaml = (input: string): { valid: boolean; error?: string } => {
+	// Reject JSON input - YAML formatter should only accept pure YAML
+	if (isJsonFormat(input)) {
+		return {
+			valid: false,
+			error: 'JSON format detected. Please use JSON Formatter for JSON input.',
+		};
+	}
+
+	try {
+		yaml.parse(input);
+		return { valid: true };
+	} catch (e) {
+		return {
+			valid: false,
+			error: e instanceof Error ? e.message : 'Invalid YAML',
+		};
+	}
+};

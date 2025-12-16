@@ -2,12 +2,10 @@
 	import { Button } from '$lib/components/ui/button/index.js';
 	import { Label } from '$lib/components/ui/label/index.js';
 	import { Input } from '$lib/components/ui/input/index.js';
-	import OptionsPanel from '$lib/components/options/options-panel.svelte';
 	import OptionsSection from '$lib/components/options/options-section.svelte';
 	import OptionCheckbox from '$lib/components/options/option-checkbox.svelte';
 	import OptionSelect from '$lib/components/options/option-select.svelte';
-	import SplitPane from '$lib/components/layout/split-pane.svelte';
-	import { EditorPane } from '$lib/components/tool/index.js';
+	import { ConvertTabBase } from '$lib/components/tool/index.js';
 	import {
 		jsonToYaml,
 		jsonToXml,
@@ -19,6 +17,8 @@
 	import { downloadTextFile, copyToClipboard, pasteFromClipboard } from '../utils.js';
 
 	interface Props {
+		input: string;
+		onInputChange: (value: string) => void;
 		onStatsChange?: (stats: {
 			input: string;
 			valid: boolean | null;
@@ -27,12 +27,10 @@
 		}) => void;
 	}
 
-	let { onStatsChange }: Props = $props();
+	let { input, onInputChange, onStatsChange }: Props = $props();
 
 	// State
-	let convertInput = $state('{}');
 	let convertFormat = $state<'yaml' | 'xml'>('yaml');
-	let showOptions = $state(true);
 
 	// YAML options - Basic formatting
 	let yamlIndentStr = $state('2');
@@ -101,14 +99,6 @@
 	const xmlIndent = $derived(parseInt(xmlIndentStr) || 2);
 	const xmlCdataThreshold = $derived(parseInt(xmlCdataThresholdStr) || 0);
 
-	// Validation
-	const inputValidation = $derived.by(() => {
-		if (!convertInput.trim())
-			return { valid: null as boolean | null, format: null as JsonInputFormat | null };
-		const result = validateJson(convertInput);
-		return { valid: result.valid, format: result.detectedFormat };
-	});
-
 	// YAML options object
 	const yamlOptions = $derived<JsonToYamlOptions>({
 		// Basic formatting
@@ -163,58 +153,60 @@
 		headerComment: xmlHeaderComment || undefined,
 	});
 
-	// Convert result
-	const convertResultData = $derived.by(() => {
-		if (!convertInput.trim()) {
-			return { output: '', error: '' };
-		}
+	// Validation function
+	const validate = (input: string) => {
+		if (!input.trim()) return { valid: null as boolean | null, format: null as JsonInputFormat | null };
+		const result = validateJson(input);
+		return { valid: result.valid, format: result.detectedFormat };
+	};
+
+	// Convert function
+	const convert = (input: string) => {
 		try {
 			const output =
 				convertFormat === 'yaml'
-					? jsonToYaml(convertInput, yamlOptions)
-					: jsonToXml(convertInput, xmlOptions);
+					? jsonToYaml(input, yamlOptions)
+					: jsonToXml(input, xmlOptions);
 			return { output, error: '' };
 		} catch (e) {
 			return { output: '', error: e instanceof Error ? e.message : 'Conversion failed' };
 		}
-	});
+	};
 
-	const convertOutput = $derived(convertResultData.output);
-	const convertError = $derived(convertResultData.error);
-
-	// Report stats to parent
-	$effect(() => {
+	// Stats handler wrapper to include format
+	const handleStatsChange = (stats: { input: string; valid: boolean | null; error: string; format?: JsonInputFormat | null }) => {
 		onStatsChange?.({
-			input: convertInput,
-			valid: inputValidation.valid,
-			error: convertError,
-			format: inputValidation.format,
+			...stats,
+			format: stats.format ?? null,
 		});
-	});
-
-	// Handlers
-	const handlePaste = async () => {
-		const text = await pasteFromClipboard();
-		if (text) convertInput = text;
 	};
 
-	const handleClear = () => {
-		convertInput = '{}';
-	};
+	// Output editor mode based on format
+	const outputEditorMode = $derived(convertFormat === 'yaml' ? 'yaml' : 'xml');
 
-	const handleCopyOutput = () => copyToClipboard(convertOutput);
+	// Download filename
+	const downloadFilename = $derived(`converted.${convertFormat}`);
 
-	const handleDownload = () => {
-		downloadTextFile(convertOutput, `converted.${convertFormat}`);
-	};
+	// Output title
+	const outputTitle = $derived(`Output (${convertFormat.toUpperCase()})`);
 </script>
 
-<div class="flex flex-1 overflow-hidden">
-	<OptionsPanel
-		show={showOptions}
-		onclose={() => (showOptions = false)}
-		onopen={() => (showOptions = true)}
-	>
+<ConvertTabBase
+	inputEditorMode="json"
+	{outputEditorMode}
+	{input}
+	{onInputChange}
+	placeholder="Paste JSON here..."
+	{validate}
+	{convert}
+	onStatsChange={handleStatsChange}
+	{downloadFilename}
+	{copyToClipboard}
+	{pasteFromClipboard}
+	{downloadTextFile}
+	{outputTitle}
+>
+	{#snippet options()}
 		<OptionsSection title="Output Format">
 			<div class="flex gap-1">
 				<Button
@@ -262,10 +254,7 @@
 				/>
 				<div class="space-y-1.5 pt-1">
 					<OptionCheckbox label="Indent sequences" bind:checked={yamlIndentSeq} />
-					<OptionCheckbox
-						label="Flow collection padding"
-						bind:checked={yamlFlowCollectionPadding}
-					/>
+					<OptionCheckbox label="Flow collection padding" bind:checked={yamlFlowCollectionPadding} />
 				</div>
 			</OptionsSection>
 
@@ -284,10 +273,7 @@
 				<div class="space-y-1.5 pt-1">
 					<OptionCheckbox label="Force quotes on all strings" bind:checked={yamlForceQuotes} />
 					<OptionCheckbox label="Prefer single quotes" bind:checked={yamlSingleQuote} />
-					<OptionCheckbox
-						label="Double-quoted as JSON style"
-						bind:checked={yamlDoubleQuotedAsJSON}
-					/>
+					<OptionCheckbox label="Double-quoted as JSON style" bind:checked={yamlDoubleQuotedAsJSON} />
 				</div>
 			</OptionsSection>
 
@@ -332,22 +318,16 @@
 			<OptionsSection title="Structure">
 				<div class="grid grid-cols-2 gap-2">
 					<div class="space-y-1">
-						<Label class="text-[10px] uppercase tracking-wide text-muted-foreground"
-							>Root Element</Label
-						>
+						<Label class="text-[10px] uppercase tracking-wide text-muted-foreground">Root Element</Label>
 						<Input bind:value={xmlRootName} placeholder="root" class="h-7 text-xs" />
 					</div>
 					<div class="space-y-1">
-						<Label class="text-[10px] uppercase tracking-wide text-muted-foreground"
-							>Array Item</Label
-						>
+						<Label class="text-[10px] uppercase tracking-wide text-muted-foreground">Array Item</Label>
 						<Input bind:value={xmlArrayItemName} placeholder="item" class="h-7 text-xs" />
 					</div>
 				</div>
 				<div class="space-y-1">
-					<Label class="text-[10px] uppercase tracking-wide text-muted-foreground"
-						>Attribute Prefix</Label
-					>
+					<Label class="text-[10px] uppercase tracking-wide text-muted-foreground">Attribute Prefix</Label>
 					<Input bind:value={xmlAttributePrefix} placeholder="@" class="h-7 text-xs font-mono" />
 				</div>
 			</OptionsSection>
@@ -382,10 +362,7 @@
 					]}
 				/>
 				<div class="space-y-1.5 pt-1">
-					<OptionCheckbox
-						label="Collapse content on single line"
-						bind:checked={xmlCollapseContent}
-					/>
+					<OptionCheckbox label="Collapse content on single line" bind:checked={xmlCollapseContent} />
 				</div>
 			</OptionsSection>
 
@@ -394,24 +371,12 @@
 				{#if xmlDeclaration}
 					<div class="grid grid-cols-2 gap-2 pt-1">
 						<div class="space-y-1">
-							<Label class="text-[10px] uppercase tracking-wide text-muted-foreground"
-								>Version</Label
-							>
-							<Input
-								bind:value={xmlDeclarationVersion}
-								placeholder="1.0"
-								class="h-7 text-xs font-mono"
-							/>
+							<Label class="text-[10px] uppercase tracking-wide text-muted-foreground">Version</Label>
+							<Input bind:value={xmlDeclarationVersion} placeholder="1.0" class="h-7 text-xs font-mono" />
 						</div>
 						<div class="space-y-1">
-							<Label class="text-[10px] uppercase tracking-wide text-muted-foreground"
-								>Encoding</Label
-							>
-							<Input
-								bind:value={xmlDeclarationEncoding}
-								placeholder="UTF-8"
-								class="h-7 text-xs font-mono"
-							/>
+							<Label class="text-[10px] uppercase tracking-wide text-muted-foreground">Encoding</Label>
+							<Input bind:value={xmlDeclarationEncoding} placeholder="UTF-8" class="h-7 text-xs font-mono" />
 						</div>
 					</div>
 				{/if}
@@ -419,24 +384,15 @@
 
 			<OptionsSection title="Tags">
 				<OptionCheckbox label="Use self-closing tags" bind:checked={xmlSelfClosing} />
-				<OptionCheckbox
-					label="Space before self-closing />"
-					bind:checked={xmlWhiteSpaceAtEndOfSelfclosingTag}
-				/>
+				<OptionCheckbox label="Space before self-closing />" bind:checked={xmlWhiteSpaceAtEndOfSelfclosingTag} />
 			</OptionsSection>
 
 			<OptionsSection title="Content">
 				<OptionCheckbox label="Wrap text in CDATA" bind:checked={xmlCdata} />
 				{#if xmlCdata}
 					<div class="space-y-1 pt-1">
-						<Label class="text-[10px] uppercase tracking-wide text-muted-foreground"
-							>CDATA Threshold (chars)</Label
-						>
-						<Input
-							bind:value={xmlCdataThresholdStr}
-							placeholder="0"
-							class="h-7 text-xs font-mono"
-						/>
+						<Label class="text-[10px] uppercase tracking-wide text-muted-foreground">CDATA Threshold (chars)</Label>
+						<Input bind:value={xmlCdataThresholdStr} placeholder="0" class="h-7 text-xs font-mono" />
 						<span class="text-[10px] text-muted-foreground">0 = always use CDATA</span>
 					</div>
 				{/if}
@@ -450,41 +406,10 @@
 
 			<OptionsSection title="Comments">
 				<div class="space-y-1">
-					<Label class="text-[10px] uppercase tracking-wide text-muted-foreground"
-						>Header Comment</Label
-					>
-					<Input
-						bind:value={xmlHeaderComment}
-						placeholder="Optional comment..."
-						class="h-7 text-xs"
-					/>
+					<Label class="text-[10px] uppercase tracking-wide text-muted-foreground">Header Comment</Label>
+					<Input bind:value={xmlHeaderComment} placeholder="Optional comment..." class="h-7 text-xs" />
 				</div>
 			</OptionsSection>
 		{/if}
-	</OptionsPanel>
-
-	<SplitPane class="flex-1">
-		{#snippet left()}
-			<EditorPane
-				title="Input"
-				bind:value={convertInput}
-				mode="input"
-				editorMode="json"
-				placeholder="Paste JSON here..."
-				onpaste={handlePaste}
-				onclear={handleClear}
-			/>
-		{/snippet}
-		{#snippet right()}
-			<EditorPane
-				title="Output ({convertFormat.toUpperCase()})"
-				value={convertOutput}
-				mode="readonly"
-				editorMode={convertFormat === 'yaml' ? 'yaml' : 'xml'}
-				placeholder="Converted output..."
-				oncopy={handleCopyOutput}
-				ondownload={handleDownload}
-			/>
-		{/snippet}
-	</SplitPane>
-</div>
+	{/snippet}
+</ConvertTabBase>

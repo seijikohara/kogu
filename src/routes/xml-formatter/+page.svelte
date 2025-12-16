@@ -1,0 +1,67 @@
+<script lang="ts">
+	import { FormatterPage } from '$lib/components/tool/index.js';
+	import {
+		FormatTab,
+		QueryTab,
+		CompareTab,
+		ConvertTab,
+		SchemaTab,
+		GenerateTab,
+	} from './tabs/index.js';
+	import { calculateXmlStats, type XmlStats } from '$lib/services/formatters.js';
+	import { Play, Search, GitCompare, ArrowRightLeft, FileCheck, Code2 } from '@lucide/svelte';
+
+	type TabType = 'format' | 'query' | 'compare' | 'convert' | 'schema' | 'generate';
+
+	const tabs = [
+		{ value: 'format' as const, label: 'Format', icon: Play },
+		{ value: 'query' as const, label: 'Query', icon: Search },
+		{ value: 'compare' as const, label: 'Compare', icon: GitCompare },
+		{ value: 'convert' as const, label: 'Convert', icon: ArrowRightLeft },
+		{ value: 'schema' as const, label: 'Schema', icon: FileCheck },
+		{ value: 'generate' as const, label: 'Generate', icon: Code2 },
+	] as const;
+</script>
+
+<svelte:head>
+	<title>XML Formatter - Kogu</title>
+</svelte:head>
+
+<FormatterPage
+	title="XML Formatter"
+	{tabs}
+	defaultTab="format"
+	defaultInput=""
+	calculateStats={(input: string) => calculateXmlStats(input) as XmlStats | null}
+>
+	{#snippet statsSnippet(stats: XmlStats)}
+		<span class="text-muted-foreground"
+			>Elements: <strong class="text-foreground">{stats.elements}</strong></span
+		>
+		<span class="text-muted-foreground"
+			>Attributes: <strong class="text-foreground">{stats.attributes}</strong></span
+		>
+		<span class="text-muted-foreground"
+			>Depth: <strong class="text-foreground">{stats.depth}</strong></span
+		>
+		<span class="text-muted-foreground"
+			>Size: <strong class="text-foreground">{stats.size}</strong></span
+		>
+	{/snippet}
+
+	{#snippet tabContents(tab: TabType, sharedInput: string, setSharedInput: (value: string) => void, onStatsChange: (stats: { input: string; valid: boolean | null; error: string }) => void)}
+		{#if tab === 'format'}
+			<FormatTab input={sharedInput} onInputChange={setSharedInput} {onStatsChange} />
+		{:else if tab === 'query'}
+			<QueryTab input={sharedInput} onInputChange={setSharedInput} {onStatsChange} />
+		{:else if tab === 'compare'}
+			<CompareTab input={sharedInput} onInputChange={setSharedInput} {onStatsChange} />
+		{:else if tab === 'convert'}
+			<ConvertTab input={sharedInput} onInputChange={setSharedInput} {onStatsChange} />
+		{:else if tab === 'schema'}
+			<SchemaTab input={sharedInput} onInputChange={setSharedInput} {onStatsChange} />
+		{:else if tab === 'generate'}
+			<GenerateTab input={sharedInput} onInputChange={setSharedInput} {onStatsChange} />
+		{/if}
+	{/snippet}
+</FormatterPage>

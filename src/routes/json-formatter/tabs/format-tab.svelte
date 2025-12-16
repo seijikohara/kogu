@@ -1,10 +1,8 @@
 <script lang="ts">
-	import OptionsPanel from '$lib/components/options/options-panel.svelte';
 	import OptionsSection from '$lib/components/options/options-section.svelte';
 	import OptionCheckbox from '$lib/components/options/option-checkbox.svelte';
 	import OptionSelect from '$lib/components/options/option-select.svelte';
-	import SplitPane from '$lib/components/layout/split-pane.svelte';
-	import { EditorPane } from '$lib/components/tool/index.js';
+	import { FormatTabBase } from '$lib/components/tool/index.js';
 	import {
 		parseJsonAuto,
 		stringifyJson,
@@ -20,6 +18,8 @@
 	import { downloadTextFile, copyToClipboard, pasteFromClipboard } from '../utils.js';
 
 	interface Props {
+		input: string;
+		onInputChange: (value: string) => void;
 		onStatsChange?: (stats: {
 			input: string;
 			valid: boolean | null;
@@ -28,12 +28,9 @@
 		}) => void;
 	}
 
-	let { onStatsChange }: Props = $props();
+	let { input, onInputChange, onStatsChange }: Props = $props();
 
-	// State
-	let inputJson = $state('{}');
-	let minifyMode = $state(false);
-	let showOptions = $state(true);
+	// Output format
 	let outputFormat = $state<JsonOutputFormat>('json');
 
 	// Format options
@@ -57,14 +54,6 @@
 	const indentSize = $derived(parseInt(indentSizeStr) || 2);
 	const maxDepth = $derived(parseInt(maxDepthStr) || 0);
 
-	// Validation
-	const inputValidation = $derived.by(() => {
-		if (!inputJson.trim())
-			return { valid: null as boolean | null, format: null as JsonInputFormat | null };
-		const result = validateJson(inputJson);
-		return { valid: result.valid, format: result.detectedFormat };
-	});
-
 	// Format options object
 	const formatOptions = $derived<Partial<JsonFormatOptions>>({
 		indentSize,
@@ -84,17 +73,25 @@
 		maxDepth,
 	});
 
-	// Format result
-	const formatResult = $derived.by(() => {
-		if (!inputJson.trim()) return { output: '', error: '' };
+	// Validation function - returns format as extra property instead of setting state
+	const validate = (input: string) => {
+		if (!input.trim()) {
+			return { valid: null as boolean | null, format: null as JsonInputFormat | null };
+		}
+		const result = validateJson(input);
+		return { valid: result.valid, format: result.detectedFormat };
+	};
+
+	// Format function
+	const format = (input: string, minify: boolean) => {
 		try {
-			const { data } = parseJsonAuto(inputJson);
+			const { data } = parseJsonAuto(input);
 
 			// Apply filtering options (removeNulls, removeEmptyStrings, etc.)
 			const processedData = processJsonWithOptions(data, formatOptions);
 
 			let output: string;
-			if (minifyMode) {
+			if (minify) {
 				output = stringifyJson(processedData, outputFormat, { indent: 0 });
 			} else {
 				output = stringifyJson(processedData, outputFormat, {
@@ -135,54 +132,59 @@
 		} catch (e) {
 			return { output: '', error: e instanceof Error ? e.message : 'Invalid JSON' };
 		}
-	});
+	};
 
-	const outputJson = $derived(formatResult.output);
-	const jsonError = $derived(formatResult.error);
+	// Detected format from stats (derived from onStatsChange callback)
+	let detectedFormat = $state<JsonInputFormat | null>(null);
 
-	// Report stats to parent
-	$effect(() => {
+	// Custom stats handler to extract format from stats
+	const handleStatsChange = (stats: {
+		input: string;
+		valid: boolean | null;
+		error: string;
+		format?: JsonInputFormat | null;
+	}) => {
+		// Update local state for modeExtra display
+		detectedFormat = stats.format ?? null;
+		// Pass to parent
 		onStatsChange?.({
-			input: inputJson,
-			valid: inputValidation.valid,
-			error: jsonError,
-			format: inputValidation.format,
+			input: stats.input,
+			valid: stats.valid,
+			error: stats.error,
+			format: stats.format ?? null,
 		});
-	});
-
-	// Handlers
-	const handlePaste = async () => {
-		const text = await pasteFromClipboard();
-		if (text) inputJson = text;
 	};
 
-	const handleClear = () => {
-		inputJson = '{}';
-	};
-
-	const handleCopy = () => copyToClipboard(outputJson);
-
-	const handleDownload = () => {
-		downloadTextFile(outputJson, `formatted.${JSON_FORMAT_INFO[outputFormat].extension}`);
-	};
+	// Download filename based on output format
+	const downloadFilename = $derived(`formatted.${JSON_FORMAT_INFO[outputFormat].extension}`);
 </script>
 
-<div class="flex flex-1 overflow-hidden">
-	<OptionsPanel
-		show={showOptions}
-		onclose={() => (showOptions = false)}
-		onopen={() => (showOptions = true)}
-	>
-		<OptionsSection title="Mode">
-			<OptionCheckbox label="Minify output" bind:checked={minifyMode} />
-			{#if inputValidation.format && inputValidation.format !== 'json'}
-				<div class="mt-2 rounded-md bg-muted/50 p-2 text-[11px] text-muted-foreground">
-					<span class="font-medium text-foreground">Detected:</span>
-					{JSON_FORMAT_INFO[inputValidation.format].label}
-				</div>
-			{/if}
-		</OptionsSection>
+<FormatTabBase
+	editorMode="json"
+	{input}
+	{onInputChange}
+	placeholder="Paste JSON here..."
+	{validate}
+	{format}
+	onStatsChange={handleStatsChange}
+	outputFormatOptions={JSON_FORMAT_OPTIONS}
+	selectedOutputFormat={outputFormat}
+	onOutputFormatChange={(f) => (outputFormat = f as JsonOutputFormat)}
+	{downloadFilename}
+	{copyToClipboard}
+	{pasteFromClipboard}
+	{downloadTextFile}
+>
+	{#snippet modeExtra()}
+		{#if detectedFormat && detectedFormat !== 'json'}
+			<div class="mt-2 rounded-md bg-muted/50 p-2 text-[11px] text-muted-foreground">
+				<span class="font-medium text-foreground">Detected:</span>
+				{JSON_FORMAT_INFO[detectedFormat].label}
+			</div>
+		{/if}
+	{/snippet}
 
+	{#snippet options()}
 		<OptionsSection title="Indentation">
 			<div class="grid grid-cols-2 gap-2">
 				<OptionSelect label="Size" bind:value={indentSizeStr} options={['1', '2', '3', '4', '8']} />
@@ -240,33 +242,5 @@
 			<OptionCheckbox label="Remove empty arrays" bind:checked={removeEmptyArrays} />
 			<OptionCheckbox label="Remove empty objects" bind:checked={removeEmptyObjects} />
 		</OptionsSection>
-	</OptionsPanel>
-
-	<SplitPane class="flex-1">
-		{#snippet left()}
-			<EditorPane
-				title="Input"
-				bind:value={inputJson}
-				mode="input"
-				editorMode="json"
-				placeholder="Paste JSON here..."
-				onpaste={handlePaste}
-				onclear={handleClear}
-			/>
-		{/snippet}
-		{#snippet right()}
-			<EditorPane
-				title="Output"
-				value={outputJson}
-				mode="output"
-				editorMode="json"
-				placeholder="Formatted output..."
-				formatOptions={JSON_FORMAT_OPTIONS}
-				selectedFormat={outputFormat}
-				onformatchange={(f) => (outputFormat = f as JsonOutputFormat)}
-				oncopy={handleCopy}
-				ondownload={handleDownload}
-			/>
-		{/snippet}
-	</SplitPane>
-</div>
+	{/snippet}
+</FormatTabBase>

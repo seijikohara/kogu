@@ -8,7 +8,6 @@
 	import OptionSelect from '$lib/components/options/option-select.svelte';
 	import SplitPane from '$lib/components/layout/split-pane.svelte';
 	import { EditorPane } from '$lib/components/tool/index.js';
-	import { validateJson, type JsonInputFormat } from '$lib/services/formatters.js';
 	import {
 		generateCode,
 		LANGUAGE_INFO,
@@ -30,16 +29,12 @@
 		type PhpOptions,
 	} from '$lib/services/code-generators/index.js';
 	import { downloadTextFile, copyToClipboard, pasteFromClipboard } from '../utils.js';
+	import { xmlToJsonObject } from '$lib/services/formatters.js';
 
 	interface Props {
 		input: string;
 		onInputChange: (value: string) => void;
-		onStatsChange?: (stats: {
-			input: string;
-			valid: boolean | null;
-			error: string;
-			format: JsonInputFormat | null;
-		}) => void;
+		onStatsChange?: (stats: { input: string; valid: boolean | null; error: string }) => void;
 	}
 
 	let { input, onInputChange, onStatsChange }: Props = $props();
@@ -134,10 +129,15 @@
 
 	// Validation
 	const inputValidation = $derived.by(() => {
-		if (!input.trim())
-			return { valid: null as boolean | null, format: null as JsonInputFormat | null };
-		const result = validateJson(input);
-		return { valid: result.valid, format: result.detectedFormat };
+		if (!input.trim()) return { valid: null as boolean | null };
+		try {
+			const parser = new DOMParser();
+			const doc = parser.parseFromString(input, 'application/xml');
+			const parserError = doc.querySelector('parsererror');
+			return { valid: parserError === null };
+		} catch {
+			return { valid: false };
+		}
 	});
 
 	// Get current language options
@@ -270,7 +270,8 @@
 	const generateResult = $derived.by(() => {
 		if (!input.trim()) return { code: '', error: '' };
 		try {
-			const data = JSON.parse(input);
+			// Convert XML to JSON object first
+			const data = xmlToJsonObject(input);
 			const options = getCurrentLanguageOptions();
 			return { code: generateCode(data, generateLanguage, options), error: '' };
 		} catch (e) {
@@ -288,7 +289,6 @@
 			input,
 			valid: inputValidation.valid,
 			error: generateError,
-			format: inputValidation.format,
 		});
 	});
 
@@ -299,7 +299,7 @@
 	};
 
 	const handleClear = () => {
-		onInputChange('{}');
+		onInputChange('');
 	};
 
 	const handleCopy = () => copyToClipboard(generatedCode);
@@ -538,12 +538,12 @@
 	<SplitPane class="flex-1">
 		{#snippet left()}
 			<EditorPane
-				title="Input JSON"
+				title="Input XML"
 				value={input}
 				onchange={onInputChange}
 				mode="input"
-				editorMode="json"
-				placeholder="Paste JSON here..."
+				editorMode="xml"
+				placeholder="Paste XML here..."
 				onpaste={handlePaste}
 				onclear={handleClear}
 			/>

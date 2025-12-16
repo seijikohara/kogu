@@ -7,18 +7,14 @@
 	import OptionSelect from '$lib/components/options/option-select.svelte';
 	import SplitPane from '$lib/components/layout/split-pane.svelte';
 	import { EditorPane } from '$lib/components/tool/index.js';
-	import { executeJsonPath, validateJson, type JsonInputFormat } from '$lib/services/formatters.js';
+	import { executeJsonPath } from '$lib/services/formatters.js';
 	import { downloadTextFile, copyToClipboard, pasteFromClipboard } from '../utils.js';
+	import * as yaml from 'yaml';
 
 	interface Props {
 		input: string;
 		onInputChange: (value: string) => void;
-		onStatsChange?: (stats: {
-			input: string;
-			valid: boolean | null;
-			error: string;
-			format: JsonInputFormat | null;
-		}) => void;
+		onStatsChange?: (stats: { input: string; valid: boolean | null; error: string }) => void;
 	}
 
 	let { input, onInputChange, onStatsChange }: Props = $props();
@@ -28,7 +24,7 @@
 	let showOptions = $state(true);
 
 	// Options
-	let queryOutputFormat = $state<'formatted' | 'compact'>('formatted');
+	let queryOutputFormat = $state<'yaml' | 'json'>('yaml');
 	let queryFirstMatchOnly = $state(false);
 	let queryMaxResultsStr = $state('0');
 	let queryShowPaths = $state(false);
@@ -37,10 +33,13 @@
 
 	// Validation
 	const inputValidation = $derived.by(() => {
-		if (!input.trim())
-			return { valid: null as boolean | null, format: null as JsonInputFormat | null };
-		const result = validateJson(input);
-		return { valid: result.valid, format: result.detectedFormat };
+		if (!input.trim()) return { valid: null as boolean | null };
+		try {
+			yaml.parse(input);
+			return { valid: true };
+		} catch {
+			return { valid: false };
+		}
 	});
 
 	// Derived numeric values
@@ -52,7 +51,11 @@
 			return { result: '', error: '' };
 		}
 		try {
-			let result: unknown = executeJsonPath(input, queryPath);
+			// Parse YAML to JSON for JSONPath query
+			const yamlData = yaml.parse(input);
+			const jsonInput = JSON.stringify(yamlData);
+
+			let result: unknown = executeJsonPath(jsonInput, queryPath);
 
 			// Apply options for array results
 			if (Array.isArray(result)) {
@@ -81,16 +84,17 @@
 				}
 			}
 
-			// Format output
-			const indent = queryOutputFormat === 'compact' ? 0 : 2;
-
 			// Show paths in results
 			if (queryShowPaths && result !== undefined) {
-				const output = { path: queryPath, value: result };
-				return { result: JSON.stringify(output, null, indent), error: '' };
+				result = { path: queryPath, value: result };
 			}
 
-			return { result: JSON.stringify(result, null, indent), error: '' };
+			// Format output
+			if (queryOutputFormat === 'yaml') {
+				return { result: yaml.stringify(result, { indent: 2 }), error: '' };
+			} else {
+				return { result: JSON.stringify(result, null, 2), error: '' };
+			}
 		} catch (e) {
 			return { result: '', error: e instanceof Error ? e.message : 'Query failed' };
 		}
@@ -105,7 +109,6 @@
 			input,
 			valid: inputValidation.valid,
 			error: queryError,
-			format: inputValidation.format,
 		});
 	});
 
@@ -116,14 +119,15 @@
 	};
 
 	const handleClear = () => {
-		onInputChange('{}');
+		onInputChange('');
 		queryPath = '$.';
 	};
 
 	const handleCopyResult = () => copyToClipboard(queryResult);
 
 	const handleDownload = () => {
-		downloadTextFile(queryResult, 'query-result.json');
+		const ext = queryOutputFormat === 'yaml' ? 'yaml' : 'json';
+		downloadTextFile(queryResult, `query-result.${ext}`);
 	};
 </script>
 
@@ -148,8 +152,8 @@
 					label="Format"
 					bind:value={queryOutputFormat}
 					options={[
-						{ value: 'formatted', label: 'Formatted' },
-						{ value: 'compact', label: 'Compact' },
+						{ value: 'yaml', label: 'YAML' },
+						{ value: 'json', label: 'JSON' },
 					]}
 				/>
 				<OptionSelect
@@ -177,11 +181,11 @@
 			<div
 				class="space-y-1.5 rounded-md bg-muted/50 p-2 font-mono text-[11px] text-muted-foreground"
 			>
-				<div class="truncate" title="All books">$.store.book[*]</div>
+				<div class="truncate" title="All items">$.store.book[*]</div>
 				<div class="truncate" title="All authors">$..author</div>
-				<div class="truncate" title="Books under $10">$.store.book[?(@.price&lt;10)]</div>
-				<div class="truncate" title="First two books">$.store.book[0:2]</div>
-				<div class="truncate" title="Last book">$.store.book[-1:]</div>
+				<div class="truncate" title="Items with condition">$.store.book[?(@.price&lt;10)]</div>
+				<div class="truncate" title="First two items">$.store.book[0:2]</div>
+				<div class="truncate" title="Last item">$.store.book[-1:]</div>
 			</div>
 		</OptionsSection>
 	</OptionsPanel>
@@ -193,8 +197,8 @@
 				value={input}
 				onchange={onInputChange}
 				mode="input"
-				editorMode="json"
-				placeholder="Paste JSON here..."
+				editorMode="yaml"
+				placeholder="Paste YAML here..."
 				onpaste={handlePaste}
 				onclear={handleClear}
 			/>
@@ -204,7 +208,7 @@
 				title="Result"
 				value={queryResult}
 				mode="readonly"
-				editorMode="json"
+				editorMode={queryOutputFormat}
 				placeholder="Query result..."
 				oncopy={handleCopyResult}
 				ondownload={handleDownload}

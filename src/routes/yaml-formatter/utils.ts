@@ -1,4 +1,4 @@
-// Re-export shared utilities for backward compatibility
+// Re-export shared utilities
 export {
 	downloadTextFile,
 	copyToClipboard,
