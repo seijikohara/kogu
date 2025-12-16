@@ -3,18 +3,18 @@ description: Validate semantic version format and ensure it is newer than the la
 
 inputs:
   version:
-    description: "Version to validate (e.g., v1.0.0)"
+    description: 'Version to validate (e.g., v1.0.0)'
     required: true
   github-token:
-    description: "GitHub token for API access"
+    description: 'GitHub token for API access'
     required: true
   repository:
-    description: "Repository in owner/repo format"
+    description: 'Repository in owner/repo format'
     required: true
 
 outputs:
   version:
-    description: "Validated version"
+    description: 'Validated version'
     value: ${{ steps.set-version.outputs.version }}
 
 runs:
