@@ -62,7 +62,10 @@
 	});
 </script>
 
-<header class="flex h-8 shrink-0 items-center justify-center gap-2 border-b bg-background px-4">
+<header
+	data-tauri-drag-region
+	class="flex h-8 shrink-0 items-center justify-center gap-2 border-b bg-background px-4"
+>
 	<!-- Navigation buttons and Search box - centered together -->
 	<NavButtons />
 	<div class="relative w-full max-w-md">
