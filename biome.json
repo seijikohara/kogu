@@ -44,7 +44,6 @@
 				"useEnumInitializers": "off",
 				"useDefaultParameterLast": "error",
 				"noUselessElse": "error",
-				"noEnum": "error",
 				"useForOf": "off",
 				"useNumberNamespace": "error",
 				"useThrowOnlyError": "error"
