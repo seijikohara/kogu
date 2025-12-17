@@ -9,27 +9,29 @@
 		CircleSlash,
 		Copy,
 		Check,
+		Code,
+		Tag,
+		FileCode,
+		Database,
+		Terminal,
 	} from '@lucide/svelte';
 	import { toast } from 'svelte-sonner';
-	import JsonTreeView from './json-tree-view.svelte';
+	import type { AstNode, AstNodeType } from '$lib/services/ast/index.js';
+	import AstTreeView from './ast-tree-view.svelte';
 
 	interface Props {
-		data: unknown;
+		node: AstNode;
 		expanded?: boolean;
 		level?: number;
-		keyName?: string;
-		path?: string;
 		maxInitialDepth?: number;
 		selectedPath?: string | null;
-		onselect?: (path: string, value: unknown) => void;
+		onselect?: (path: string, node: AstNode) => void;
 	}
 
 	let {
-		data,
+		node,
 		expanded = $bindable(true),
 		level = 0,
-		keyName,
-		path = '$',
 		maxInitialDepth = 3,
 		selectedPath = null,
 		onselect,
@@ -38,80 +40,73 @@
 	// Track if copy was just performed
 	let justCopied = $state<string | null>(null);
 
-	// Determine the type of the data
-	const getType = (value: unknown): string => {
-		if (value === null) return 'null';
-		if (Array.isArray(value)) return 'array';
-		return typeof value;
-	};
+	// Check if node has children
+	const hasChildren = $derived(node.children && node.children.length > 0);
 
-	const type = $derived(getType(data));
-	const isExpandable = $derived(type === 'object' || type === 'array');
-
-	// Get array/object entries
-	const entries = $derived.by(() => {
-		if (type === 'array') {
-			return (data as unknown[]).map((value, index) => ({
-				key: String(index),
-				value,
-				path: `${path}[${index}]`,
-			}));
-		}
-		if (type === 'object' && data !== null) {
-			return Object.entries(data as Record<string, unknown>).map(([key, value]) => ({
-				key,
-				value,
-				path: `${path}.${key}`,
-			}));
-		}
-		return [];
-	});
-
-	// Format primitive values
-	const formatValue = (value: unknown): string => {
-		if (value === null) return 'null';
-		if (typeof value === 'string') {
-			// Truncate long strings
-			const maxLen = 100;
-			if (value.length > maxLen) {
-				return `"${value.slice(0, maxLen)}…"`;
-			}
-			return `"${value}"`;
-		}
-		if (typeof value === 'undefined') return 'undefined';
-		return String(value);
-	};
-
-	// Get icon component for type
+	// Get icon component for AST node type
 	const TypeIcon = $derived.by(() => {
-		switch (type) {
+		switch (node.type) {
+			// Common types
+			case 'root':
+				return FileCode;
 			case 'object':
 				return Braces;
 			case 'array':
 				return Brackets;
+			case 'property':
+				return Code;
+			case 'string':
+				return Type;
 			case 'number':
 				return Hash;
 			case 'boolean':
 				return ToggleLeft;
-			case 'string':
-				return Type;
 			case 'null':
 				return CircleSlash;
-			default:
+			// XML specific
+			case 'element':
+				return Tag;
+			case 'attribute':
+				return Code;
+			case 'text':
 				return Type;
+			case 'comment':
+				return Code;
+			// SQL specific
+			case 'statement':
+				return Database;
+			case 'clause':
+				return Terminal;
+			case 'expression':
+				return Code;
+			case 'identifier':
+				return Type;
+			case 'literal':
+				return Hash;
+			case 'operator':
+				return Code;
+			case 'keyword':
+				return Terminal;
+			case 'function':
+				return Code;
+			default:
+				return Code;
 		}
 	});
 
-	// Get CSS classes for value type
-	const getTypeStyles = (t: string) => {
+	// Get CSS classes for AST node type
+	const getTypeStyles = (t: AstNodeType) => {
 		switch (t) {
+			// Value types
 			case 'string':
+			case 'text':
 				return {
 					text: 'text-emerald-600 dark:text-emerald-400',
 					bg: 'bg-emerald-500/10',
 					icon: 'text-emerald-500',
 				};
 			case 'number':
+			case 'literal':
 				return {
 					text: 'text-blue-600 dark:text-blue-400',
 					bg: 'bg-blue-500/10',
@@ -129,7 +124,9 @@
 					bg: 'bg-gray-500/10',
 					icon: 'text-gray-400',
 				};
+			// Container types
 			case 'object':
+			case 'element':
 				return {
 					text: 'text-amber-600 dark:text-amber-400',
 					bg: 'bg-amber-500/10',
@@ -141,6 +138,48 @@
 					bg: 'bg-cyan-500/10',
 					icon: 'text-cyan-500',
 				};
+			case 'root':
+				return {
+					text: 'text-purple-600 dark:text-purple-400',
+					bg: 'bg-purple-500/10',
+					icon: 'text-purple-500',
+				};
+			// SQL types
+			case 'statement':
+				return {
+					text: 'text-rose-600 dark:text-rose-400',
+					bg: 'bg-rose-500/10',
+					icon: 'text-rose-500',
+				};
+			case 'clause':
+			case 'keyword':
+				return {
+					text: 'text-indigo-600 dark:text-indigo-400',
+					bg: 'bg-indigo-500/10',
+					icon: 'text-indigo-500',
+				};
+			case 'expression':
+			case 'operator':
+				return {
+					text: 'text-orange-600 dark:text-orange-400',
+					bg: 'bg-orange-500/10',
+					icon: 'text-orange-500',
+				};
+			case 'identifier':
+			case 'function':
+				return {
+					text: 'text-teal-600 dark:text-teal-400',
+					bg: 'bg-teal-500/10',
+					icon: 'text-teal-500',
+				};
+			// Property and attribute
+			case 'property':
+			case 'attribute':
+				return {
+					text: 'text-sky-600 dark:text-sky-400',
+					bg: 'bg-sky-500/10',
+					icon: 'text-sky-500',
+				};
 			default:
 				return {
 					text: 'text-foreground',
@@ -150,17 +189,56 @@
 		}
 	};
 
-	const styles = $derived(getTypeStyles(type));
+	const styles = $derived(getTypeStyles(node.type));
 
-	// Compute initial expanded states based on entries
+	// Format value for display
+	const formatValue = (value: unknown): string | null => {
+		if (value === undefined) return null;
+		if (value === null) return 'null';
+		if (typeof value === 'string') {
+			const maxLen = 100;
+			if (value.length > maxLen) {
+				return `"${value.slice(0, maxLen)}…"`;
+			}
+			return `"${value}"`;
+		}
+		return String(value);
+	};
+
+	const displayValue = $derived(formatValue(node.value));
+
+	// Get badge text for expandable nodes
+	const getBadgeText = (): string => {
+		const childCount = node.children?.length ?? 0;
+		switch (node.type) {
+			case 'array':
+				return `array[${childCount}]`;
+			case 'object':
+				return `object{${childCount}}`;
+			case 'element':
+				return `<${node.label}>`;
+			case 'statement':
+				return node.label;
+			case 'clause':
+				return node.label.toUpperCase();
+			case 'root':
+				return `root(${childCount})`;
+			default:
+				return hasChildren ? `${node.type}(${childCount})` : node.type;
+		}
+	};
+
+	// Compute initial expanded states based on children
 	const initialExpandedStates = $derived(
-		Object.fromEntries(entries.map((entry) => [entry.key, level + 1 < maxInitialDepth]))
+		Object.fromEntries(
+			(node.children ?? []).map((child, i) => [String(i), level + 1 < maxInitialDepth])
+		)
 	);
 
 	// Track expanded states
 	let expandedStates = $state<Record<string, boolean>>({});
 
-	// Sync expanded states when entries change
+	// Sync expanded states when children change
 	$effect(() => {
 		Object.keys(initialExpandedStates)
 			.filter((key) => !(key in expandedStates))
@@ -169,20 +247,25 @@
 			});
 	});
 
-	const getExpanded = (key: string): boolean => {
-		return expandedStates[key] ?? level + 1 < maxInitialDepth;
+	const getExpanded = (index: number): boolean => {
+		return expandedStates[String(index)] ?? level + 1 < maxInitialDepth;
 	};
 
 	const handleClick = () => {
-		onselect?.(path, data);
+		onselect?.(node.path, node);
 	};
 
 	const handleCopyValue = async (e: Event) => {
 		e.stopPropagation();
 		try {
-			const text = typeof data === 'string' ? data : JSON.stringify(data, null, 2);
+			const text =
+				node.value !== undefined
+					? typeof node.value === 'string'
+						? node.value
+						: JSON.stringify(node.value, null, 2)
+					: node.label;
 			await navigator.clipboard.writeText(text);
-			justCopied = path;
+			justCopied = node.path;
 			setTimeout(() => (justCopied = null), 1500);
 		} catch {
 			toast.error('Copy failed');
@@ -192,14 +275,14 @@
 	const handleCopyPath = async (e: Event) => {
 		e.stopPropagation();
 		try {
-			await navigator.clipboard.writeText(path);
-			toast.success(`Copied: ${path}`);
+			await navigator.clipboard.writeText(node.path);
+			toast.success(`Copied: ${node.path}`);
 		} catch {
 			toast.error('Copy failed');
 		}
 	};
 
-	const isSelected = $derived(selectedPath === path);
+	const isSelected = $derived(selectedPath === node.path);
 </script>
 
 <div
@@ -207,10 +290,10 @@
 	style:padding-left="{level > 0 ? 16 : 0}px"
 	role="treeitem"
 	aria-selected={isSelected}
-	aria-expanded={isExpandable ? expanded : undefined}
+	aria-expanded={hasChildren ? expanded : undefined}
 >
-	{#if isExpandable}
-		<!-- Expandable node (object/array) -->
+	{#if hasChildren}
+		<!-- Expandable node -->
 		<div
 			class="flex items-center gap-1 rounded-md px-1 py-0.5 transition-colors hover:bg-muted/60 {isSelected
 				? 'bg-primary/10 ring-1 ring-primary/30'
@@ -241,9 +324,9 @@
 				<TypeIcon class="h-3 w-3 {styles.icon}" />
 			</span>
 
-			<!-- Key name -->
-			{#if keyName !== undefined}
-				<span class="font-medium text-foreground">{keyName}</span>
+			<!-- Label -->
+			{#if node.label && node.type !== 'root'}
+				<span class="font-medium text-foreground">{node.label}</span>
 				<span class="text-muted-foreground">:</span>
 			{/if}
 
@@ -251,7 +334,7 @@
 			<span
 				class="rounded px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide {styles.bg} {styles.text}"
 			>
-				{type === 'array' ? `array[${entries.length}]` : `object{${entries.length}}`}
+				{getBadgeText()}
 			</span>
 
 			<!-- Copy buttons (show on hover) -->
@@ -272,7 +355,7 @@
 					onclick={handleCopyValue}
 					title="Copy value"
 				>
-					{#if justCopied === path}
+					{#if justCopied === node.path}
 						<Check class="h-3 w-3 text-green-500" />
 					{:else}
 						<Copy class="h-3 w-3" />
@@ -284,98 +367,20 @@
 		<!-- Children -->
 		{#if expanded}
 			<div class="relative ml-2.5 border-l border-border/50 pl-0.5">
-				{#each entries as entry (entry.key)}
-					{@const entryType = getType(entry.value)}
-					{@const entryExpandable = entryType === 'object' || entryType === 'array'}
-					{#if entryExpandable}
-						<JsonTreeView
-							data={entry.value}
-							keyName={entry.key}
-							path={entry.path}
-							level={level + 1}
-							{maxInitialDepth}
-							{selectedPath}
-							{onselect}
-							expanded={getExpanded(entry.key)}
-						/>
-					{:else}
-						{@const entryStyles = getTypeStyles(entryType)}
-						{@const EntryIcon =
-							entryType === 'string'
-								? Type
-								: entryType === 'number'
-									? Hash
-									: entryType === 'boolean'
-										? ToggleLeft
-										: CircleSlash}
-						<div
-							class="group/leaf flex items-center gap-1 rounded-md px-1 py-0.5 transition-colors hover:bg-muted/60 {selectedPath ===
-							entry.path
-								? 'bg-primary/10 ring-1 ring-primary/30'
-								: ''}"
-							style:padding-left="16px"
-							onclick={() => onselect?.(entry.path, entry.value)}
-							onkeydown={(e) => e.key === 'Enter' && onselect?.(entry.path, entry.value)}
-							role="button"
-							tabindex="0"
-						>
-							<!-- Spacer for alignment -->
-							<span class="h-5 w-5 shrink-0"></span>
-
-							<!-- Type icon -->
-							<span
-								class="flex h-5 w-5 shrink-0 items-center justify-center rounded {entryStyles.bg}"
-							>
-								<EntryIcon class="h-3 w-3 {entryStyles.icon}" />
-							</span>
-
-							<!-- Key -->
-							<span class="font-medium text-foreground">{entry.key}</span>
-							<span class="text-muted-foreground">:</span>
-
-							<!-- Value -->
-							<span class="truncate {entryStyles.text}" title={formatValue(entry.value)}>
-								{formatValue(entry.value)}
-							</span>
-
-							<!-- Copy buttons -->
-							<div
-								class="ml-auto flex shrink-0 items-center gap-0.5 opacity-0 transition-opacity group-hover/leaf:opacity-100"
-							>
-								<button
-									type="button"
-									class="flex h-5 w-5 items-center justify-center rounded text-muted-foreground hover:bg-muted hover:text-foreground"
-									onclick={(e) => {
-										e.stopPropagation();
-										navigator.clipboard.writeText(entry.path);
-										toast.success(`Copied: ${entry.path}`);
-									}}
-									title="Copy path"
-								>
-									<span class="text-[9px] font-mono">$</span>
-								</button>
-								<button
-									type="button"
-									class="flex h-5 w-5 items-center justify-center rounded text-muted-foreground hover:bg-muted hover:text-foreground"
-									onclick={(e) => {
-										e.stopPropagation();
-										navigator.clipboard.writeText(
-											typeof entry.value === 'string' ? entry.value : JSON.stringify(entry.value)
-										);
-										toast.success('Copied');
-									}}
-									title="Copy value"
-								>
-									<Copy class="h-3 w-3" />
-								</button>
-							</div>
-						</div>
-					{/if}
+				{#each node.children ?? [] as child, index (child.path)}
+					<AstTreeView
+						node={child}
+						level={level + 1}
+						{maxInitialDepth}
+						{selectedPath}
+						{onselect}
+						expanded={getExpanded(index)}
+					/>
 				{/each}
 			</div>
 		{/if}
 	{:else}
-		<!-- Leaf node (primitive value at root) -->
+		<!-- Leaf node -->
 		<div
 			class="group/leaf flex items-center gap-1 rounded-md px-1 py-0.5 transition-colors hover:bg-muted/60 {isSelected
 				? 'bg-primary/10 ring-1 ring-primary/30'
@@ -389,21 +394,47 @@
 			<span class="flex h-5 w-5 shrink-0 items-center justify-center rounded {styles.bg}">
 				<TypeIcon class="h-3 w-3 {styles.icon}" />
 			</span>
-			{#if keyName !== undefined}
-				<span class="font-medium text-foreground">{keyName}</span>
-				<span class="text-muted-foreground">:</span>
+
+			<!-- Label -->
+			{#if node.label}
+				<span class="font-medium text-foreground">{node.label}</span>
+				{#if displayValue}
+					<span class="text-muted-foreground">:</span>
+				{/if}
 			{/if}
-			<span class="truncate {styles.text}">{formatValue(data)}</span>
+
+			<!-- Value -->
+			{#if displayValue}
+				<span class="truncate {styles.text}" title={displayValue}>
+					{displayValue}
+				</span>
+			{:else}
+				<span
+					class="rounded px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide {styles.bg} {styles.text}"
+				>
+					{node.type}
+				</span>
+			{/if}
+
+			<!-- Copy buttons -->
 			<div
 				class="ml-auto flex shrink-0 items-center gap-0.5 opacity-0 transition-opacity group-hover/leaf:opacity-100"
 			>
 				<button
 					type="button"
 					class="flex h-5 w-5 items-center justify-center rounded text-muted-foreground hover:bg-muted hover:text-foreground"
+					onclick={handleCopyPath}
+					title="Copy path"
+				>
+					<span class="text-[9px] font-mono">$</span>
+				</button>
+				<button
+					type="button"
+					class="flex h-5 w-5 items-center justify-center rounded text-muted-foreground hover:bg-muted hover:text-foreground"
 					onclick={handleCopyValue}
 					title="Copy value"
 				>
-					{#if justCopied === path}
+					{#if justCopied === node.path}
 						<Check class="h-3 w-3 text-green-500" />
 					{:else}
 						<Copy class="h-3 w-3" />

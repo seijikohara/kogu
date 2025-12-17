@@ -345,7 +345,6 @@
 					editorMode="xml"
 					placeholder="Schema will appear here..."
 					oncopy={handleCopySchema}
-					ondownload={handleDownload}
 				/>
 			{:else}
 				<EditorPane

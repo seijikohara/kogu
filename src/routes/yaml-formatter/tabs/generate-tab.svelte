@@ -554,7 +554,6 @@
 				editorMode={generateEditorMode}
 				placeholder="Generated code will appear here..."
 				oncopy={handleCopy}
-				ondownload={handleDownload}
 			/>
 		{/snippet}
 	</SplitPane>

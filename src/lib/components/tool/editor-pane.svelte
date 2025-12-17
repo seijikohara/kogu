@@ -6,8 +6,16 @@
 		type EditorMode,
 		type CursorPosition,
 		type HighlightLine,
+		type ContextMenuItem,
+		type EditorContext,
 	} from '$lib/components/editors/code-editor.svelte';
-	import JsonTreeView from '$lib/components/viewers/json-tree-view.svelte';
+	import { Menu, MenuItem, PredefinedMenuItem } from '@tauri-apps/api/menu';
+	import { LogicalPosition } from '@tauri-apps/api/dpi';
+	import { readText, writeText } from '@tauri-apps/plugin-clipboard-manager';
+	import { open as openDialog, save as saveDialog } from '@tauri-apps/plugin-dialog';
+	import { readTextFile, writeTextFile } from '@tauri-apps/plugin-fs';
+	import AstTreeView from '$lib/components/viewers/ast-tree-view.svelte';
+	import { toast } from 'svelte-sonner';
 	import {
 		Clipboard,
 		Trash2,
@@ -21,11 +29,25 @@
 		Columns2,
 		FileCode,
 		FileJson2,
+		Database,
 		FlaskConical,
+		CircleAlert,
+		FolderOpen,
 	} from '@lucide/svelte';
-	import * as yaml from 'yaml';
-	import { xmlToJson } from '$lib/services/formatters.js';
+	import {
+		parseToAst,
+		buildPathToLineMap,
+		buildLineToPathMap,
+		findPathByLine,
+		findLineByPath,
+		type AstLanguage,
+		type AstNode,
+		type AstParseError,
+		type PathToLineMap,
+		type LineToPathMap,
+	} from '$lib/services/ast/index.js';
 	import type { Snippet } from 'svelte';
+	import { cn } from '$lib/utils.js';
 
 	type PaneMode = 'input' | 'output' | 'readonly';
 	type ViewMode = 'code' | 'tree' | 'split';
@@ -47,13 +69,14 @@
 		showViewToggle?: boolean;
 		maxTreeDepth?: number;
 		highlightLines?: HighlightLine[];
+		contextMenuItems?: ContextMenuItem[];
+		defaultFileName?: string;
 		onformatchange?: (format: string) => void;
 		onchange?: (value: string) => void;
 		onpaste?: () => void;
 		onclear?: () => void;
 		onsample?: () => void;
 		oncopy?: () => void;
-		ondownload?: () => void;
 		actions?: Snippet;
 		class?: string;
 	}
@@ -70,13 +93,14 @@
 		showViewToggle = true,
 		maxTreeDepth = 3,
 		highlightLines = [],
+		contextMenuItems = [],
+		defaultFileName = 'untitled',
 		onformatchange,
 		onchange,
 		onpaste,
 		onclear,
 		onsample,
 		oncopy,
-		ondownload,
 		actions,
 		class: className = '',
 	}: Props = $props();
@@ -86,128 +110,74 @@
 	let selectedTreePath = $state<string | null>(null);
 	let editorGotoLine = $state<number | null>(null);
 	let gotoLineCounter = $state(0);
+	let isDragOver = $state(false);
+	let dragCounter = $state(0);
 
 	const isInput = $derived(mode === 'input');
 	const isOutput = $derived(mode === 'output' || mode === 'readonly');
 	const isReadonly = $derived(mode === 'output' || mode === 'readonly');
 
-	// Check if tree view is supported for current mode
+	// Check if tree view is supported for current mode (AST-supported languages)
 	const supportsTreeView = $derived(
-		editorMode === 'json' || editorMode === 'yaml' || editorMode === 'xml'
+		editorMode === 'json' || editorMode === 'yaml' || editorMode === 'xml' || editorMode === 'sql'
 	);
 
-	// Parse value for tree view
-	const parsedValue = $derived.by(() => {
-		if (!supportsTreeView || !value?.trim()) return null;
-		try {
-			if (editorMode === 'json') {
-				return JSON.parse(value);
-			} else if (editorMode === 'yaml') {
-				return yaml.parse(value);
-			} else if (editorMode === 'xml') {
-				const jsonStr = xmlToJson(value);
-				return JSON.parse(jsonStr);
-			}
-			return null;
-		} catch {
-			return null;
-		}
-	});
+	// AST and path maps state
+	let currentAst = $state<AstNode | null>(null);
+	let parseErrors = $state<readonly AstParseError[]>([]);
+	let pathToLineMap = $state<PathToLineMap>(new Map());
+	let lineToPathMap = $state<LineToPathMap>(new Map());
 
-	// Can show tree view only if supported and data is valid
-	const canShowTree = $derived(supportsTreeView && parsedValue !== null);
+	// Can show tree view if AST is available OR there are parse errors
+	const canShowTree = $derived(supportsTreeView && (currentAst !== null || parseErrors.length > 0));
 
-	// Reset to code view if tree view becomes unavailable
+	// Track if tree/split view was manually selected (to maintain view on errors)
+	let hasContent = $state(false);
+
+	// Only reset to code view when content is cleared completely
 	$effect(() => {
-		if ((viewMode === 'tree' || viewMode === 'split') && !canShowTree) {
+		const contentExists = !!value?.trim();
+		if (!contentExists && hasContent) {
 			viewMode = 'code';
 		}
+		hasContent = contentExists;
 	});
 
-	// Build a map of JSON paths to line numbers for synchronization
-	const pathToLineMap = $derived.by(() => {
-		if (!value?.trim() || editorMode !== 'json') return new Map<string, number>();
+	// Map editor mode to AST language
+	const getAstLanguage = (mode: EditorMode): AstLanguage | null => {
+		const languageMap: Record<string, AstLanguage> = {
+			json: 'json',
+			yaml: 'yaml',
+			xml: 'xml',
+			sql: 'sql',
+		};
+		return languageMap[mode] ?? null;
+	};
 
-		const map = new Map<string, number>();
-		map.set('$', 1);
-
-		try {
-			const lines = value.split('\n');
-
-			interface ParseState {
-				pathStack: string[];
-				arrayIndexStack: number[];
-				inArray: boolean;
-			}
-
-			lines.reduce<ParseState>(
-				(acc, line, i) => {
-					const lineNum = i + 1;
-					const trimmedLine = line.trim();
-
-					let { pathStack, arrayIndexStack, inArray } = acc;
-
-					if (
-						trimmedLine.startsWith('[') ||
-						(trimmedLine.includes(':') && trimmedLine.endsWith('['))
-					) {
-						inArray = true;
-						arrayIndexStack = [...arrayIndexStack, 0];
-					}
-
-					const keyMatch = trimmedLine.match(/^"([^"]+)"\s*:/);
-					if (keyMatch) {
-						const key = keyMatch[1];
-						const parentPath = pathStack[pathStack.length - 1];
-						const currentPath = `${parentPath}.${key}`;
-						map.set(currentPath, lineNum);
-
-						if (trimmedLine.endsWith('{')) {
-							pathStack = [...pathStack, currentPath];
-						} else if (trimmedLine.endsWith('[')) {
-							pathStack = [...pathStack, currentPath];
-							inArray = true;
-							arrayIndexStack = [...arrayIndexStack, 0];
-						}
-					}
-
-					if (inArray && trimmedLine === '{') {
-						const parentPath = pathStack[pathStack.length - 1];
-						const idx = arrayIndexStack[arrayIndexStack.length - 1];
-						const currentPath = `${parentPath}[${idx}]`;
-						map.set(currentPath, lineNum);
-						pathStack = [...pathStack, currentPath];
-						arrayIndexStack = [...arrayIndexStack.slice(0, -1), idx + 1];
-					}
-
-					if (trimmedLine.startsWith('}') || trimmedLine === '},') {
-						if (pathStack.length > 1) {
-							pathStack = pathStack.slice(0, -1);
-						}
-					}
-
-					if (trimmedLine.startsWith(']') || trimmedLine === '],') {
-						if (arrayIndexStack.length > 0) {
-							arrayIndexStack = arrayIndexStack.slice(0, -1);
-							inArray = arrayIndexStack.length > 0;
-						}
-					}
-
-					return { pathStack, arrayIndexStack, inArray };
-				},
-				{ pathStack: ['$'], arrayIndexStack: [], inArray: false }
-			);
-		} catch {
-			// Ignore parsing errors
+	// Parse AST and build path maps when value or editor mode changes
+	$effect(() => {
+		const language = getAstLanguage(editorMode);
+		if (!language || !value?.trim()) {
+			currentAst = null;
+			parseErrors = [];
+			pathToLineMap = new Map();
+			lineToPathMap = new Map();
+			return;
 		}
 
-		return map;
+		// Parse AST asynchronously
+		parseToAst(value, language).then((result) => {
+			currentAst = result.ast;
+			parseErrors = result.errors;
+			if (result.ast) {
+				pathToLineMap = buildPathToLineMap(result.ast);
+				lineToPathMap = buildLineToPathMap(result.ast);
+			} else {
+				pathToLineMap = new Map();
+				lineToPathMap = new Map();
+			}
+		});
 	});
-
-	// Build line to path map (reverse of above)
-	const lineToPathMap = $derived(
-		new Map(Array.from(pathToLineMap, ([path, line]) => [line, path]))
-	);
 
 	// Calculate text statistics
 	const stats = $derived.by(() => {
@@ -233,74 +203,23 @@
 		updateSelectedPathFromCursor(position.line);
 	};
 
-	// Update selected path based on cursor line
+	// Update selected path based on cursor line (using AST-based line map)
 	const updateSelectedPathFromCursor = (line: number) => {
-		const closestPath =
-			Array.from(lineToPathMap.entries())
-				.filter(([l]) => l <= line)
-				.sort(([a], [b]) => b - a)
-				.at(0)?.[1] ?? null;
-
+		const closestPath = findPathByLine(lineToPathMap, line);
 		if (closestPath) {
 			selectedTreePath = closestPath;
 		}
 	};
 
-	// Handle tree node selection - scroll to line in editor
-	const handleTreeSelect = (path: string, _value: unknown) => {
+	// Handle tree node selection - scroll to line in editor (using AST-based path map)
+	const handleTreeSelect = (path: string, _node: AstNode) => {
 		selectedTreePath = path;
 
-		const lineNum = pathToLineMap.get(path) ?? findLineByKey(path) ?? findLineByArrayIndex(path);
-
+		const lineNum = findLineByPath(pathToLineMap, path);
 		if (lineNum) {
 			editorGotoLine = lineNum;
 			gotoLineCounter++;
 		}
-	};
-
-	// Find line number by key name in path
-	const findLineByKey = (path: string): number | null => {
-		if (!path.includes('.')) return null;
-
-		const key = path.split('.').pop() ?? '';
-		const lines = value.split('\n');
-		const lineIndex = lines.findIndex((line) => line.includes(`"${key}"`));
-		return lineIndex >= 0 ? lineIndex + 1 : null;
-	};
-
-	// Find line number by array index in path
-	const findLineByArrayIndex = (path: string): number | null => {
-		const match = path.match(/\[(\d+)\]$/);
-		if (!match) return null;
-
-		const targetIndex = parseInt(match[1]);
-		const lines = value.split('\n');
-
-		const result = lines.reduce<{
-			bracketCount: number;
-			arrayItemCount: number;
-			foundLine: number | null;
-		}>(
-			(acc, line, i) => {
-				if (acc.foundLine !== null) return acc;
-
-				const trimmed = line.trim();
-				const newBracketCount =
-					acc.bracketCount + (trimmed.includes('[') ? 1 : 0) - (trimmed.includes(']') ? 1 : 0);
-
-				if (trimmed.startsWith('{') && acc.bracketCount === 1) {
-					if (acc.arrayItemCount === targetIndex) {
-						return { ...acc, foundLine: i + 1 };
-					}
-					return { ...acc, bracketCount: newBracketCount, arrayItemCount: acc.arrayItemCount + 1 };
-				}
-
-				return { ...acc, bracketCount: newBracketCount };
-			},
-			{ bracketCount: 0, arrayItemCount: 0, foundLine: null }
-		);
-
-		return result.foundLine;
 	};
 
 	// Handle format selection change
@@ -309,9 +228,231 @@
 			onformatchange(newFormat);
 		}
 	};
+
+	// File extension mapping for editor modes
+	const FILE_EXTENSIONS: Record<string, { extensions: string[]; name: string }> = {
+		json: { extensions: ['json'], name: 'JSON' },
+		yaml: { extensions: ['yaml', 'yml'], name: 'YAML' },
+		xml: { extensions: ['xml'], name: 'XML' },
+		sql: { extensions: ['sql'], name: 'SQL' },
+		text: { extensions: ['txt'], name: 'Text' },
+		markdown: { extensions: ['md', 'markdown'], name: 'Markdown' },
+		html: { extensions: ['html', 'htm'], name: 'HTML' },
+		css: { extensions: ['css'], name: 'CSS' },
+		javascript: { extensions: ['js', 'mjs'], name: 'JavaScript' },
+		typescript: { extensions: ['ts', 'mts'], name: 'TypeScript' },
+	};
+
+	// Get file filters for dialog based on editor mode
+	const getFileFilters = () => {
+		const config = FILE_EXTENSIONS[editorMode];
+		if (!config) return [{ name: 'All Files', extensions: ['*'] }];
+		return [
+			{ name: config.name, extensions: config.extensions },
+			{ name: 'All Files', extensions: ['*'] },
+		];
+	};
+
+	// Get default file extension for current editor mode
+	const getDefaultExtension = (): string => {
+		const config = FILE_EXTENSIONS[editorMode];
+		return config?.extensions[0] ?? 'txt';
+	};
+
+	// Handle file open dialog
+	const handleOpenFile = async () => {
+		try {
+			const selected = await openDialog({
+				multiple: false,
+				filters: getFileFilters(),
+			});
+
+			if (!selected) return;
+
+			const filePath = typeof selected === 'string' ? selected : selected[0];
+			if (!filePath) return;
+
+			const content = await readTextFile(filePath);
+			value = content;
+			onchange?.(content);
+			toast.success('File loaded');
+		} catch (error) {
+			console.error('Failed to open file:', error);
+			toast.error('Failed to open file');
+		}
+	};
+
+	// Handle file drag enter (counter-based to handle child elements)
+	const handleDragEnter = (e: DragEvent) => {
+		e.preventDefault();
+		e.stopPropagation();
+		dragCounter++;
+		// Only show drop zone if dragging files
+		if (e.dataTransfer?.types.includes('Files')) {
+			isDragOver = true;
+		}
+	};
+
+	// Handle file drag over
+	const handleDragOver = (e: DragEvent) => {
+		e.preventDefault();
+		e.stopPropagation();
+		if (e.dataTransfer) {
+			e.dataTransfer.dropEffect = 'copy';
+		}
+	};
+
+	// Handle file drag leave (counter-based)
+	const handleDragLeave = (e: DragEvent) => {
+		e.preventDefault();
+		e.stopPropagation();
+		dragCounter--;
+		// Only hide when truly leaving the container
+		if (dragCounter === 0) {
+			isDragOver = false;
+		}
+	};
+
+	// Handle file drop
+	const handleDrop = async (e: DragEvent) => {
+		e.preventDefault();
+		e.stopPropagation();
+		dragCounter = 0;
+		isDragOver = false;
+
+		if (!isInput) return;
+
+		const files = e.dataTransfer?.files;
+		if (!files || files.length === 0) return;
+
+		const file = files[0];
+		try {
+			const content = await file.text();
+			value = content;
+			onchange?.(content);
+			toast.success(`Loaded: ${file.name}`);
+		} catch (error) {
+			console.error('Failed to read dropped file:', error);
+			toast.error('Failed to read file');
+		}
+	};
+
+	// Handle file save/download
+	const handleSaveFile = async () => {
+		try {
+			const ext = getDefaultExtension();
+			const selected = await saveDialog({
+				defaultPath: `${defaultFileName}.${ext}`,
+				filters: getFileFilters(),
+			});
+
+			if (!selected) return;
+
+			await writeTextFile(selected, value);
+			toast.success('File saved');
+		} catch (error) {
+			console.error('Failed to save file:', error);
+			toast.error('Failed to save file');
+		}
+	};
+
+	// Build and show Tauri context menu
+	const handleContextMenu = async (event: MouseEvent, context: EditorContext) => {
+		const separator = await PredefinedMenuItem.new({ item: 'Separator' });
+
+		const standardItems = [
+			await MenuItem.new({
+				text: 'Undo',
+				enabled: !context.readonly,
+				action: context.undo,
+			}),
+			await MenuItem.new({
+				text: 'Redo',
+				enabled: !context.readonly,
+				action: context.redo,
+			}),
+			separator,
+			await MenuItem.new({
+				text: 'Cut',
+				enabled: !context.readonly && context.hasSelection,
+				action: async () => {
+					const text = context.getSelectedText();
+					if (text) {
+						await writeText(text);
+						context.cut();
+					}
+				},
+			}),
+			await MenuItem.new({
+				text: 'Copy',
+				enabled: context.hasSelection,
+				action: async () => {
+					const text = context.getSelectedText();
+					if (text) {
+						await writeText(text);
+					}
+				},
+			}),
+			await MenuItem.new({
+				text: 'Paste',
+				enabled: !context.readonly,
+				action: async () => {
+					const text = await readText();
+					if (text) {
+						context.paste(text);
+					}
+				},
+			}),
+			separator,
+			await MenuItem.new({
+				text: 'Select All',
+				action: context.selectAll,
+			}),
+		];
+
+		// Add custom menu items if provided
+		const customItems = await Promise.all(
+			contextMenuItems.map(async (item) =>
+				MenuItem.new({
+					text: item.text,
+					enabled: item.enabled ?? true,
+					action: item.action,
+				})
+			)
+		);
+
+		const allItems =
+			customItems.length > 0 ? [...customItems, separator, ...standardItems] : standardItems;
+
+		const menu = await Menu.new({ items: allItems });
+		await menu.popup(new LogicalPosition(event.clientX, event.clientY));
+	};
 </script>
 
-<div class="flex h-full flex-col overflow-hidden {className}">
+<div
+	class={cn('relative flex h-full flex-col overflow-hidden', className)}
+	ondragenter={isInput ? handleDragEnter : undefined}
+	ondragover={isInput ? handleDragOver : undefined}
+	ondragleave={isInput ? handleDragLeave : undefined}
+	ondrop={isInput ? handleDrop : undefined}
+	role={isInput ? 'region' : undefined}
+	aria-label={isInput ? 'Drop files here' : undefined}
+>
+	<!-- Drop zone overlay -->
+	{#if isDragOver && isInput}
+		<div
+			class="absolute inset-0 z-50 flex items-center justify-center bg-primary/10 ring-2 ring-inset ring-primary"
+			role="region"
+			aria-label="File drop zone"
+			ondragover={handleDragOver}
+			ondrop={handleDrop}
+			ondragleave={handleDragLeave}
+		>
+			<div class="rounded-lg bg-background/90 px-6 py-4 shadow-lg">
+				<p class="text-sm font-medium text-primary">Drop file here</p>
+			</div>
+		</div>
+	{/if}
 	<!-- Pane Header -->
 	<div
 		class="relative z-10 flex h-9 shrink-0 items-center justify-between border-b bg-muted/30 px-3"
@@ -322,7 +463,7 @@
 			{/if}
 
 			{#if isInput}
-				<!-- Input actions: Paste, Clear, Sample (all on left side) -->
+				<!-- Input actions: Paste, Open, Clear, Sample (all on left side) -->
 				<div class="flex items-center gap-0.5">
 					{#if onpaste}
 						<Button
@@ -336,6 +477,16 @@
 							<span class="hidden sm:inline">Paste</span>
 						</Button>
 					{/if}
+					<Button
+						variant="ghost"
+						size="sm"
+						class="h-6 gap-1 px-2 text-xs"
+						onclick={handleOpenFile}
+						title="Open file"
+					>
+						<FolderOpen class="h-3 w-3" />
+						<span class="hidden sm:inline">Open</span>
+					</Button>
 					{#if onclear}
 						<Button
 							variant="ghost"
@@ -364,7 +515,7 @@
 			{/if}
 
 			{#if isOutput}
-				<!-- Output actions: Copy, Download (all on left side) -->
+				<!-- Output actions: Copy, Save (all on left side) -->
 				<div class="flex items-center gap-0.5">
 					{#if oncopy}
 						<Button
@@ -378,18 +529,16 @@
 							<span class="hidden sm:inline">Copy</span>
 						</Button>
 					{/if}
-					{#if ondownload}
-						<Button
-							variant="ghost"
-							size="sm"
-							class="h-6 gap-1 px-2 text-xs"
-							onclick={ondownload}
-							title="Download file"
-						>
-							<Download class="h-3 w-3" />
-							<span class="hidden sm:inline">Download</span>
-						</Button>
-					{/if}
+					<Button
+						variant="ghost"
+						size="sm"
+						class="h-6 gap-1 px-2 text-xs"
+						onclick={handleSaveFile}
+						title="Save to file"
+					>
+						<Download class="h-3 w-3" />
+						<span class="hidden sm:inline">Save</span>
+					</Button>
 				</div>
 			{/if}
 
@@ -435,6 +584,8 @@
 							<FileCode class="h-3.5 w-3.5" />
 						{:else if editorMode === 'yaml'}
 							<FileJson2 class="h-3.5 w-3.5" />
+						{:else if editorMode === 'sql'}
+							<Database class="h-3.5 w-3.5" />
 						{:else}
 							<Braces class="h-3.5 w-3.5" />
 						{/if}
@@ -468,12 +619,33 @@
 	<div class="flex-1 overflow-hidden">
 		{#if viewMode === 'tree' && canShowTree}
 			<div class="h-full overflow-auto p-3">
-				<JsonTreeView
-					data={parsedValue}
-					maxInitialDepth={maxTreeDepth}
-					selectedPath={selectedTreePath}
-					onselect={handleTreeSelect}
-				/>
+				{#if currentAst}
+					<AstTreeView
+						node={currentAst}
+						maxInitialDepth={maxTreeDepth}
+						selectedPath={selectedTreePath}
+						onselect={handleTreeSelect}
+					/>
+				{:else if parseErrors.length > 0}
+					<div class="flex flex-col gap-2">
+						{#each parseErrors as error}
+							<div
+								class="flex items-start gap-2 rounded-md border border-destructive/50 bg-destructive/10 p-3 text-sm text-destructive"
+							>
+								<CircleAlert class="mt-0.5 h-4 w-4 shrink-0" />
+								<div class="flex flex-col gap-1">
+									<span class="font-medium">Syntax Error</span>
+									<span class="text-destructive/80">{error.message}</span>
+									{#if error.range}
+										<span class="text-xs text-muted-foreground">
+											Line {error.range.start.line}, Column {error.range.start.column}
+										</span>
+									{/if}
+								</div>
+							</div>
+						{/each}
+					</div>
+				{/if}
 			</div>
 		{:else if viewMode === 'split' && canShowTree}
 			<Resizable.PaneGroup direction="horizontal" class="h-full">
@@ -486,6 +658,7 @@
 						{placeholder}
 						{onchange}
 						oncursorchange={handleCursorChange}
+						oncontextmenu={handleContextMenu}
 						gotoLine={editorGotoLine}
 						gotoLineTrigger={gotoLineCounter}
 						{highlightLines}
@@ -494,12 +667,33 @@
 				<Resizable.Handle withHandle />
 				<Resizable.Pane defaultSize={50} minSize={20}>
 					<div class="h-full overflow-auto border-l bg-muted/10 p-3">
-						<JsonTreeView
-							data={parsedValue}
-							maxInitialDepth={maxTreeDepth}
-							selectedPath={selectedTreePath}
-							onselect={handleTreeSelect}
-						/>
+						{#if currentAst}
+							<AstTreeView
+								node={currentAst}
+								maxInitialDepth={maxTreeDepth}
+								selectedPath={selectedTreePath}
+								onselect={handleTreeSelect}
+							/>
+						{:else if parseErrors.length > 0}
+							<div class="flex flex-col gap-2">
+								{#each parseErrors as error}
+									<div
+										class="flex items-start gap-2 rounded-md border border-destructive/50 bg-destructive/10 p-3 text-sm text-destructive"
+									>
+										<CircleAlert class="mt-0.5 h-4 w-4 shrink-0" />
+										<div class="flex flex-col gap-1">
+											<span class="font-medium">Syntax Error</span>
+											<span class="text-destructive/80">{error.message}</span>
+											{#if error.range}
+												<span class="text-xs text-muted-foreground">
+													Line {error.range.start.line}, Column {error.range.start.column}
+												</span>
+											{/if}
+										</div>
+									</div>
+								{/each}
+							</div>
+						{/if}
 					</div>
 				</Resizable.Pane>
 			</Resizable.PaneGroup>
@@ -512,6 +706,7 @@
 				{placeholder}
 				{onchange}
 				oncursorchange={handleCursorChange}
+				oncontextmenu={handleContextMenu}
 				gotoLine={editorGotoLine}
 				gotoLineTrigger={gotoLineCounter}
 				{highlightLines}

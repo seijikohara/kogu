@@ -136,7 +136,6 @@
 				editorMode={outputEditorMode}
 				placeholder="Converted output..."
 				oncopy={handleCopyOutput}
-				ondownload={handleDownload}
 			/>
 		{/snippet}
 	</SplitPane>

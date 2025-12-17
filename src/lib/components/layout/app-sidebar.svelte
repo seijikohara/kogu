@@ -13,17 +13,7 @@
 	} from '@lucide/svelte';
 	import { page } from '$app/state';
 	import { toggleMode, mode } from 'mode-watcher';
-	import { onMount } from 'svelte';
-	import { getPlatform, type Platform } from '$lib/services/platform.js';
 	import { PAGES, CATEGORIES, getPagesByCategory } from '$lib/services/pages.js';
-
-	let platform = $state<Platform>('unknown');
-
-	onMount(async () => {
-		platform = await getPlatform();
-	});
-
-	const isMacOS = $derived(platform === 'macos');
 
 	// Get dashboard page
 	const dashboardPage = $derived(PAGES.find((p) => p.id === 'dashboard'));
@@ -43,7 +33,7 @@
 
 <Sidebar.Root collapsible="icon">
 	<!-- Header with Logo -->
-	<Sidebar.Header class={isMacOS ? 'pt-12' : ''}>
+	<Sidebar.Header>
 		<Sidebar.Menu>
 			<Sidebar.MenuItem>
 				<Sidebar.MenuButton

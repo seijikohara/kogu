@@ -156,7 +156,6 @@
 					editorMode="plain"
 					placeholder={mode === 'encode' ? 'Encoded output...' : 'Decoded output...'}
 					oncopy={handleCopy}
-					ondownload={handleDownload}
 					showViewToggle={false}
 				/>
 			{/snippet}

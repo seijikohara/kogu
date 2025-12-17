@@ -32,11 +32,13 @@
 <Sonner richColors />
 
 <div class="flex h-screen flex-col">
-	<Sidebar.Provider>
-		<div class="flex flex-1 overflow-hidden">
+	<TitleBar />
+	<Sidebar.Provider
+		class="flex-1 !min-h-0 [&_[data-slot=sidebar-container]]:top-8 [&_[data-slot=sidebar-container]]:h-[calc(100svh-2rem)]"
+	>
+		<div class="flex h-full w-full overflow-hidden">
 			<AppSidebar />
 			<Sidebar.Inset class="flex h-full flex-col overflow-hidden">
-				<TitleBar />
 				{@render children()}
 			</Sidebar.Inset>
 		</div>

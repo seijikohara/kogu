@@ -207,7 +207,6 @@
 				editorMode="json"
 				placeholder="Query result..."
 				oncopy={handleCopyResult}
-				ondownload={handleDownload}
 			/>
 		{/snippet}
 	</SplitPane>

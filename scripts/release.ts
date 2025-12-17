@@ -104,7 +104,9 @@ const getGitStatus = (): string => exec('git status --porcelain');
 
 const getRecentCommits = (since: string): string => {
 	try {
-		return exec(`git log v${since}..HEAD --oneline --no-decorate 2>/dev/null || git log --oneline -10`);
+		return exec(
+			`git log v${since}..HEAD --oneline --no-decorate 2>/dev/null || git log --oneline -10`
+		);
 	} catch {
 		return exec('git log --oneline -10');
 	}
@@ -173,7 +175,9 @@ const buildPrBody = (
 	files: readonly string[]
 ): string => {
 	const changelogLines = commits.split('\n').map(formatChangelogLine).join('\n');
-	const versionUpdates = files.map((file) => formatVersionUpdate(file, currentVersion, newVersion)).join('\n');
+	const versionUpdates = files
+		.map((file) => formatVersionUpdate(file, currentVersion, newVersion))
+		.join('\n');
 
 	return `## Release v${newVersion}
 

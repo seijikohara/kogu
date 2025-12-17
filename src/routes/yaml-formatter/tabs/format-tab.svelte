@@ -5,6 +5,7 @@
 	import OptionCheckbox from '$lib/components/options/option-checkbox.svelte';
 	import OptionSelect from '$lib/components/options/option-select.svelte';
 	import { FormatTabBase } from '$lib/components/tool/index.js';
+	import type { ContextMenuItem } from '$lib/components/editors/code-editor.svelte';
 	import { sortKeysDeep, validateYaml, SAMPLE_YAML } from '$lib/services/formatters.js';
 	import { downloadTextFile, copyToClipboard, pasteFromClipboard } from '../utils.js';
 	import * as yaml from 'yaml';
@@ -103,6 +104,42 @@
 			return { output: '', error: e instanceof Error ? e.message : 'Invalid YAML' };
 		}
 	};
+
+	// Format input YAML
+	const handleFormatInput = () => {
+		try {
+			const parsed = yaml.parse(input);
+			const formatted = yaml.stringify(parsed, { indent: 2 });
+			onInputChange(formatted);
+		} catch {
+			// Invalid YAML
+		}
+	};
+
+	// Minify input YAML
+	const handleMinifyInput = () => {
+		try {
+			const parsed = yaml.parse(input);
+			const minified = yaml.stringify(parsed, { indent: 0 });
+			onInputChange(minified);
+		} catch {
+			// Invalid YAML
+		}
+	};
+
+	// Context menu items for input editor
+	const inputContextMenuItems = $derived<ContextMenuItem[]>([
+		{
+			text: 'Format YAML',
+			enabled: !!input.trim(),
+			action: handleFormatInput,
+		},
+		{
+			text: 'Minify YAML',
+			enabled: !!input.trim(),
+			action: handleMinifyInput,
+		},
+	]);
 </script>
 
 <FormatTabBase
@@ -118,6 +155,7 @@
 	{copyToClipboard}
 	{pasteFromClipboard}
 	{downloadTextFile}
+	{inputContextMenuItems}
 >
 	{#snippet options()}
 		<OptionsSection title="Formatting">

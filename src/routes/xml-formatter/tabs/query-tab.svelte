@@ -163,7 +163,6 @@
 				editorMode="xml"
 				placeholder="Query results will appear here..."
 				oncopy={handleCopyOutput}
-				ondownload={handleDownload}
 			/>
 		{/snippet}
 	</SplitPane>
