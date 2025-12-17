@@ -702,6 +702,20 @@ fn truncate_string(s: &str, max_len: usize) -> String {
 mod tests {
     use super::*;
 
+    fn find_where_node(node: &AstNode) -> Option<&AstNode> {
+        if node.path.contains("where") {
+            return Some(node);
+        }
+        if let Some(children) = &node.children {
+            for child in children {
+                if let Some(found) = find_where_node(child) {
+                    return Some(found);
+                }
+            }
+        }
+        None
+    }
+
     #[test]
     fn test_parse_simple_select() {
         let sql = "SELECT id, name FROM users WHERE age > 18";
@@ -792,21 +806,6 @@ mod tests {
 
         assert!(result.ast.is_some());
         let ast = result.ast.unwrap();
-
-        // Find the WHERE clause
-        fn find_where_node(node: &AstNode) -> Option<&AstNode> {
-            if node.path.contains("where") {
-                return Some(node);
-            }
-            if let Some(children) = &node.children {
-                for child in children {
-                    if let Some(found) = find_where_node(child) {
-                        return Some(found);
-                    }
-                }
-            }
-            None
-        }
 
         if let Some(where_node) = find_where_node(&ast) {
             // WHERE clause should be on line 3
