@@ -258,7 +258,7 @@
 				onchange={onInputChange}
 				mode="input"
 				editorMode="yaml"
-				placeholder="Paste YAML here..."
+				placeholder="Enter YAML here..."
 				onpaste={handlePaste}
 				onclear={handleClear}
 			/>
@@ -280,7 +280,7 @@
 					bind:value={schemaDefinition}
 					mode="input"
 					editorMode="json"
-					placeholder="Paste JSON Schema here (JSON or YAML)..."
+					placeholder="Enter JSON Schema here (JSON or YAML)..."
 					onpaste={async () => {
 						schemaDefinition = await navigator.clipboard.readText();
 						toast.success('Pasted');

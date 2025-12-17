@@ -155,7 +155,8 @@
 
 	// Validation function
 	const validate = (input: string) => {
-		if (!input.trim()) return { valid: null as boolean | null, format: null as JsonInputFormat | null };
+		if (!input.trim())
+			return { valid: null as boolean | null, format: null as JsonInputFormat | null };
 		const result = validateJson(input);
 		return { valid: result.valid, format: result.detectedFormat };
 	};
@@ -164,9 +165,7 @@
 	const convert = (input: string) => {
 		try {
 			const output =
-				convertFormat === 'yaml'
-					? jsonToYaml(input, yamlOptions)
-					: jsonToXml(input, xmlOptions);
+				convertFormat === 'yaml' ? jsonToYaml(input, yamlOptions) : jsonToXml(input, xmlOptions);
 			return { output, error: '' };
 		} catch (e) {
 			return { output: '', error: e instanceof Error ? e.message : 'Conversion failed' };
@@ -174,7 +173,12 @@
 	};
 
 	// Stats handler wrapper to include format
-	const handleStatsChange = (stats: { input: string; valid: boolean | null; error: string; format?: JsonInputFormat | null }) => {
+	const handleStatsChange = (stats: {
+		input: string;
+		valid: boolean | null;
+		error: string;
+		format?: JsonInputFormat | null;
+	}) => {
 		onStatsChange?.({
 			...stats,
 			format: stats.format ?? null,
@@ -196,7 +200,7 @@
 	{outputEditorMode}
 	{input}
 	{onInputChange}
-	placeholder="Paste JSON here..."
+	placeholder="Enter JSON here..."
 	{validate}
 	{convert}
 	onStatsChange={handleStatsChange}
@@ -254,7 +258,10 @@
 				/>
 				<div class="space-y-1.5 pt-1">
 					<OptionCheckbox label="Indent sequences" bind:checked={yamlIndentSeq} />
-					<OptionCheckbox label="Flow collection padding" bind:checked={yamlFlowCollectionPadding} />
+					<OptionCheckbox
+						label="Flow collection padding"
+						bind:checked={yamlFlowCollectionPadding}
+					/>
 				</div>
 			</OptionsSection>
 
@@ -273,7 +280,10 @@
 				<div class="space-y-1.5 pt-1">
 					<OptionCheckbox label="Force quotes on all strings" bind:checked={yamlForceQuotes} />
 					<OptionCheckbox label="Prefer single quotes" bind:checked={yamlSingleQuote} />
-					<OptionCheckbox label="Double-quoted as JSON style" bind:checked={yamlDoubleQuotedAsJSON} />
+					<OptionCheckbox
+						label="Double-quoted as JSON style"
+						bind:checked={yamlDoubleQuotedAsJSON}
+					/>
 				</div>
 			</OptionsSection>
 
@@ -318,16 +328,22 @@
 			<OptionsSection title="Structure">
 				<div class="grid grid-cols-2 gap-2">
 					<div class="space-y-1">
-						<Label class="text-[10px] uppercase tracking-wide text-muted-foreground">Root Element</Label>
+						<Label class="text-[10px] uppercase tracking-wide text-muted-foreground"
+							>Root Element</Label
+						>
 						<Input bind:value={xmlRootName} placeholder="root" class="h-7 text-xs" />
 					</div>
 					<div class="space-y-1">
-						<Label class="text-[10px] uppercase tracking-wide text-muted-foreground">Array Item</Label>
+						<Label class="text-[10px] uppercase tracking-wide text-muted-foreground"
+							>Array Item</Label
+						>
 						<Input bind:value={xmlArrayItemName} placeholder="item" class="h-7 text-xs" />
 					</div>
 				</div>
 				<div class="space-y-1">
-					<Label class="text-[10px] uppercase tracking-wide text-muted-foreground">Attribute Prefix</Label>
+					<Label class="text-[10px] uppercase tracking-wide text-muted-foreground"
+						>Attribute Prefix</Label
+					>
 					<Input bind:value={xmlAttributePrefix} placeholder="@" class="h-7 text-xs font-mono" />
 				</div>
 			</OptionsSection>
@@ -362,7 +378,10 @@
 					]}
 				/>
 				<div class="space-y-1.5 pt-1">
-					<OptionCheckbox label="Collapse content on single line" bind:checked={xmlCollapseContent} />
+					<OptionCheckbox
+						label="Collapse content on single line"
+						bind:checked={xmlCollapseContent}
+					/>
 				</div>
 			</OptionsSection>
 
@@ -371,12 +390,24 @@
 				{#if xmlDeclaration}
 					<div class="grid grid-cols-2 gap-2 pt-1">
 						<div class="space-y-1">
-							<Label class="text-[10px] uppercase tracking-wide text-muted-foreground">Version</Label>
-							<Input bind:value={xmlDeclarationVersion} placeholder="1.0" class="h-7 text-xs font-mono" />
+							<Label class="text-[10px] uppercase tracking-wide text-muted-foreground"
+								>Version</Label
+							>
+							<Input
+								bind:value={xmlDeclarationVersion}
+								placeholder="1.0"
+								class="h-7 text-xs font-mono"
+							/>
 						</div>
 						<div class="space-y-1">
-							<Label class="text-[10px] uppercase tracking-wide text-muted-foreground">Encoding</Label>
-							<Input bind:value={xmlDeclarationEncoding} placeholder="UTF-8" class="h-7 text-xs font-mono" />
+							<Label class="text-[10px] uppercase tracking-wide text-muted-foreground"
+								>Encoding</Label
+							>
+							<Input
+								bind:value={xmlDeclarationEncoding}
+								placeholder="UTF-8"
+								class="h-7 text-xs font-mono"
+							/>
 						</div>
 					</div>
 				{/if}
@@ -384,15 +415,24 @@
 
 			<OptionsSection title="Tags">
 				<OptionCheckbox label="Use self-closing tags" bind:checked={xmlSelfClosing} />
-				<OptionCheckbox label="Space before self-closing />" bind:checked={xmlWhiteSpaceAtEndOfSelfclosingTag} />
+				<OptionCheckbox
+					label="Space before self-closing />"
+					bind:checked={xmlWhiteSpaceAtEndOfSelfclosingTag}
+				/>
 			</OptionsSection>
 
 			<OptionsSection title="Content">
 				<OptionCheckbox label="Wrap text in CDATA" bind:checked={xmlCdata} />
 				{#if xmlCdata}
 					<div class="space-y-1 pt-1">
-						<Label class="text-[10px] uppercase tracking-wide text-muted-foreground">CDATA Threshold (chars)</Label>
-						<Input bind:value={xmlCdataThresholdStr} placeholder="0" class="h-7 text-xs font-mono" />
+						<Label class="text-[10px] uppercase tracking-wide text-muted-foreground"
+							>CDATA Threshold (chars)</Label
+						>
+						<Input
+							bind:value={xmlCdataThresholdStr}
+							placeholder="0"
+							class="h-7 text-xs font-mono"
+						/>
 						<span class="text-[10px] text-muted-foreground">0 = always use CDATA</span>
 					</div>
 				{/if}
@@ -406,8 +446,14 @@
 
 			<OptionsSection title="Comments">
 				<div class="space-y-1">
-					<Label class="text-[10px] uppercase tracking-wide text-muted-foreground">Header Comment</Label>
-					<Input bind:value={xmlHeaderComment} placeholder="Optional comment..." class="h-7 text-xs" />
+					<Label class="text-[10px] uppercase tracking-wide text-muted-foreground"
+						>Header Comment</Label
+					>
+					<Input
+						bind:value={xmlHeaderComment}
+						placeholder="Optional comment..."
+						class="h-7 text-xs"
+					/>
 				</div>
 			</OptionsSection>
 		{/if}

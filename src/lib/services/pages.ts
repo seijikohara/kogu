@@ -3,18 +3,28 @@
  * Update this file when adding new pages or tabs.
  */
 import {
-	Home,
+	House,
 	Braces,
 	Play,
 	Search,
 	GitCompare,
 	ArrowRightLeft,
 	FileCheck,
-	Code2,
+	CodeXml,
 	FileJson2,
 	FileCode,
+	Database,
+	Binary,
+	Link,
+	Key,
+	Hash,
 	type Icon,
 } from '@lucide/svelte';
+
+/**
+ * Page categories for sidebar grouping.
+ */
+export type PageCategory = 'formatters' | 'encoders' | 'generators';
 
 export interface PageTab {
 	readonly id: string;
@@ -29,6 +39,7 @@ export interface PageDefinition {
 	readonly icon: typeof Icon;
 	readonly description: string;
 	readonly color?: string;
+	readonly category?: PageCategory;
 	readonly tabs?: readonly PageTab[];
 }
 
@@ -44,7 +55,7 @@ export const PAGES: readonly PageDefinition[] = [
 		id: 'dashboard',
 		title: 'Dashboard',
 		url: '/',
-		icon: Home,
+		icon: House,
 		description: 'Home page',
 	},
 	{
@@ -54,13 +65,14 @@ export const PAGES: readonly PageDefinition[] = [
 		icon: Braces,
 		description: 'Format, minify, query, compare, and convert JSON',
 		color: 'text-yellow-500',
+		category: 'formatters',
 		tabs: [
 			{ id: 'format', label: 'Format', icon: Play },
 			{ id: 'query', label: 'Query', icon: Search },
 			{ id: 'compare', label: 'Compare', icon: GitCompare },
 			{ id: 'convert', label: 'Convert', icon: ArrowRightLeft },
 			{ id: 'schema', label: 'Schema', icon: FileCheck },
-			{ id: 'generate', label: 'Generate', icon: Code2 },
+			{ id: 'generate', label: 'Generate', icon: CodeXml },
 		],
 	},
 	{
@@ -70,13 +82,14 @@ export const PAGES: readonly PageDefinition[] = [
 		icon: FileJson2,
 		description: 'Format, validate, compare, and convert YAML',
 		color: 'text-red-500',
+		category: 'formatters',
 		tabs: [
 			{ id: 'format', label: 'Format', icon: Play },
 			{ id: 'query', label: 'Query', icon: Search },
 			{ id: 'compare', label: 'Compare', icon: GitCompare },
 			{ id: 'convert', label: 'Convert', icon: ArrowRightLeft },
 			{ id: 'schema', label: 'Schema', icon: FileCheck },
-			{ id: 'generate', label: 'Generate', icon: Code2 },
+			{ id: 'generate', label: 'Generate', icon: CodeXml },
 		],
 	},
 	{
@@ -86,14 +99,60 @@ export const PAGES: readonly PageDefinition[] = [
 		icon: FileCode,
 		description: 'Format, validate, query, compare, and convert XML',
 		color: 'text-orange-500',
+		category: 'formatters',
 		tabs: [
 			{ id: 'format', label: 'Format', icon: Play },
 			{ id: 'query', label: 'Query', icon: Search },
 			{ id: 'compare', label: 'Compare', icon: GitCompare },
 			{ id: 'convert', label: 'Convert', icon: ArrowRightLeft },
 			{ id: 'schema', label: 'Schema', icon: FileCheck },
-			{ id: 'generate', label: 'Generate', icon: Code2 },
+			{ id: 'generate', label: 'Generate', icon: CodeXml },
 		],
+	},
+	{
+		id: 'sql-formatter',
+		title: 'SQL Formatter',
+		url: '/sql-formatter',
+		icon: Database,
+		description: 'Format and beautify SQL queries with support for 18+ dialects',
+		color: 'text-blue-500',
+		category: 'formatters',
+	},
+	{
+		id: 'base64-encoder',
+		title: 'Base64 Encoder',
+		url: '/base64-encoder',
+		icon: Binary,
+		description: 'Encode and decode Base64 text with UTF-8 support',
+		color: 'text-emerald-500',
+		category: 'encoders',
+	},
+	{
+		id: 'url-encoder',
+		title: 'URL Encoder',
+		url: '/url-encoder',
+		icon: Link,
+		description: 'Encode, decode, parse, and build URLs',
+		color: 'text-sky-500',
+		category: 'encoders',
+	},
+	{
+		id: 'jwt-decoder',
+		title: 'JWT Decoder',
+		url: '/jwt-decoder',
+		icon: Key,
+		description: 'Decode and inspect JWT tokens',
+		color: 'text-purple-500',
+		category: 'encoders',
+	},
+	{
+		id: 'hash-generator',
+		title: 'Hash Generator',
+		url: '/hash-generator',
+		icon: Hash,
+		description: 'Generate MD5, SHA1, SHA256, SHA512 hashes for text and files',
+		color: 'text-pink-500',
+		category: 'generators',
 	},
 ];
 
@@ -114,6 +173,30 @@ export const getPageByUrl = (url: string): PageDefinition | undefined =>
  */
 export const getToolPages = (): readonly PageDefinition[] =>
 	PAGES.filter((page) => page.id !== 'dashboard');
+
+/**
+ * Get pages by category.
+ */
+export const getPagesByCategory = (category: PageCategory): readonly PageDefinition[] =>
+	PAGES.filter((page) => page.category === category);
+
+/**
+ * Category display information.
+ */
+export interface CategoryInfo {
+	readonly id: PageCategory;
+	readonly label: string;
+	readonly defaultOpen: boolean;
+}
+
+/**
+ * All categories with display info.
+ */
+export const CATEGORIES: readonly CategoryInfo[] = [
+	{ id: 'formatters', label: 'Formatters', defaultOpen: true },
+	{ id: 'encoders', label: 'Encoders', defaultOpen: true },
+	{ id: 'generators', label: 'Generators', defaultOpen: true },
+];
 
 /**
  * Search pages and tabs by query.

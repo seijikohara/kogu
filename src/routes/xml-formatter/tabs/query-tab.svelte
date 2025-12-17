@@ -107,11 +107,7 @@
 				<Label class="text-[10px] uppercase tracking-wide text-muted-foreground"
 					>Path Expression</Label
 				>
-				<Input
-					bind:value={xpathExpression}
-					placeholder="//element"
-					class="h-7 font-mono text-xs"
-				/>
+				<Input bind:value={xpathExpression} placeholder="//element" class="h-7 font-mono text-xs" />
 			</div>
 			{#if resultCount > 0}
 				<div class="rounded-md bg-primary/10 p-2 text-[11px] text-primary">
@@ -154,7 +150,7 @@
 				onchange={onInputChange}
 				mode="input"
 				editorMode="xml"
-				placeholder="Paste XML here..."
+				placeholder="Enter XML here..."
 				onpaste={handlePaste}
 				onclear={handleClear}
 			/>

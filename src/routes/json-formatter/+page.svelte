@@ -14,7 +14,7 @@
 		type JsonStats,
 		type JsonInputFormat,
 	} from '$lib/services/formatters.js';
-	import { Play, Search, GitCompare, ArrowRightLeft, FileCheck, Code2 } from '@lucide/svelte';
+	import { Play, Search, GitCompare, ArrowRightLeft, FileCheck, CodeXml } from '@lucide/svelte';
 
 	// Valid tab types
 	type TabType = 'format' | 'query' | 'compare' | 'convert' | 'schema' | 'generate';
@@ -26,7 +26,7 @@
 		{ value: 'compare' as const, label: 'Compare', icon: GitCompare },
 		{ value: 'convert' as const, label: 'Convert', icon: ArrowRightLeft },
 		{ value: 'schema' as const, label: 'Schema', icon: FileCheck },
-		{ value: 'generate' as const, label: 'Generate', icon: Code2 },
+		{ value: 'generate' as const, label: 'Generate', icon: CodeXml },
 	] as const;
 
 	// Extended stats type for JSON formatter
@@ -56,7 +56,7 @@
 	title="JSON Formatter"
 	{tabs}
 	defaultTab="format"
-	defaultInput={'{}'}
+	defaultInput=""
 	calculateStats={calculateJsonStats}
 >
 	{#snippet formatBadge()}
@@ -84,17 +84,41 @@
 
 	{#snippet tabContents(tab: TabType, sharedInput: string, setSharedInput: (value: string) => void, statsHandler: (stats: { input: string; valid: boolean | null; error: string }) => void)}
 		{#if tab === 'format'}
-			<FormatTab input={sharedInput} onInputChange={setSharedInput} onStatsChange={handleStatsChange(statsHandler)} />
+			<FormatTab
+				input={sharedInput}
+				onInputChange={setSharedInput}
+				onStatsChange={handleStatsChange(statsHandler)}
+			/>
 		{:else if tab === 'query'}
-			<QueryTab input={sharedInput} onInputChange={setSharedInput} onStatsChange={handleStatsChange(statsHandler)} />
+			<QueryTab
+				input={sharedInput}
+				onInputChange={setSharedInput}
+				onStatsChange={handleStatsChange(statsHandler)}
+			/>
 		{:else if tab === 'compare'}
-			<CompareTab input={sharedInput} onInputChange={setSharedInput} onStatsChange={handleStatsChange(statsHandler)} />
+			<CompareTab
+				input={sharedInput}
+				onInputChange={setSharedInput}
+				onStatsChange={handleStatsChange(statsHandler)}
+			/>
 		{:else if tab === 'convert'}
-			<ConvertTab input={sharedInput} onInputChange={setSharedInput} onStatsChange={handleStatsChange(statsHandler)} />
+			<ConvertTab
+				input={sharedInput}
+				onInputChange={setSharedInput}
+				onStatsChange={handleStatsChange(statsHandler)}
+			/>
 		{:else if tab === 'schema'}
-			<SchemaTab input={sharedInput} onInputChange={setSharedInput} onStatsChange={handleStatsChange(statsHandler)} />
+			<SchemaTab
+				input={sharedInput}
+				onInputChange={setSharedInput}
+				onStatsChange={handleStatsChange(statsHandler)}
+			/>
 		{:else if tab === 'generate'}
-			<GenerateTab input={sharedInput} onInputChange={setSharedInput} onStatsChange={handleStatsChange(statsHandler)} />
+			<GenerateTab
+				input={sharedInput}
+				onInputChange={setSharedInput}
+				onStatsChange={handleStatsChange(statsHandler)}
+			/>
 		{/if}
 	{/snippet}
 </FormatterPage>

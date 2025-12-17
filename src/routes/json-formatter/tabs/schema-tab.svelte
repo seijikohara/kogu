@@ -223,7 +223,7 @@
 				onchange={onInputChange}
 				mode="input"
 				editorMode="json"
-				placeholder="Paste JSON here..."
+				placeholder="Enter JSON here..."
 				onpaste={handlePaste}
 				onclear={handleClear}
 			/>
@@ -245,7 +245,7 @@
 					bind:value={schemaDefinition}
 					mode="input"
 					editorMode="json"
-					placeholder="Paste JSON Schema here..."
+					placeholder="Enter JSON Schema here..."
 					onpaste={async () => {
 						schemaDefinition = await navigator.clipboard.readText();
 						toast.success('Pasted');

@@ -60,14 +60,14 @@ bun run tauri build
 
 ### Commands
 
-| Command | Description |
-|---------|-------------|
-| `bun run dev` | Start Vite dev server |
-| `bun run tauri dev` | Start Tauri dev mode |
-| `bun run build` | Build frontend |
-| `bun run tauri build` | Build desktop app |
-| `bun run check` | TypeScript/Svelte check |
-| `bun run format` | Format with Prettier |
+| Command               | Description             |
+| --------------------- | ----------------------- |
+| `bun run dev`         | Start Vite dev server   |
+| `bun run tauri dev`   | Start Tauri dev mode    |
+| `bun run build`       | Build frontend          |
+| `bun run tauri build` | Build desktop app       |
+| `bun run check`       | TypeScript/Svelte check |
+| `bun run format`      | Format with Prettier    |
 
 ## Recommended IDE Setup
 

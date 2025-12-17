@@ -543,7 +543,7 @@
 				onchange={onInputChange}
 				mode="input"
 				editorMode="xml"
-				placeholder="Paste XML here..."
+				placeholder="Enter XML here..."
 				onpaste={handlePaste}
 				onclear={handleClear}
 			/>

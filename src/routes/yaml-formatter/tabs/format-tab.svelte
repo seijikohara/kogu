@@ -5,7 +5,7 @@
 	import OptionCheckbox from '$lib/components/options/option-checkbox.svelte';
 	import OptionSelect from '$lib/components/options/option-select.svelte';
 	import { FormatTabBase } from '$lib/components/tool/index.js';
-	import { sortKeysDeep, validateYaml } from '$lib/services/formatters.js';
+	import { sortKeysDeep, validateYaml, SAMPLE_YAML } from '$lib/services/formatters.js';
 	import { downloadTextFile, copyToClipboard, pasteFromClipboard } from '../utils.js';
 	import * as yaml from 'yaml';
 
@@ -109,11 +109,12 @@
 	editorMode="yaml"
 	{input}
 	{onInputChange}
-	placeholder="Paste YAML here..."
+	placeholder="Enter YAML here..."
 	{validate}
 	{format}
 	{onStatsChange}
 	downloadFilename="formatted.yaml"
+	sampleData={SAMPLE_YAML}
 	{copyToClipboard}
 	{pasteFromClipboard}
 	{downloadTextFile}

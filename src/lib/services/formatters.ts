@@ -1338,6 +1338,77 @@ export const formatSql = (input: string, options: Partial<SqlFormatOptions> = {}
 
 export const minifySql = (input: string): string => input.replace(/\s+/g, ' ').trim();
 
+export interface SqlStats {
+	statements: number;
+	size: string;
+}
+
+export const calculateSqlStats = (input: string): SqlStats => {
+	// Count statements by semicolons (excluding those in strings/comments)
+	const statements = input.split(';').filter((s) => s.trim().length > 0).length;
+
+	return {
+		statements,
+		size: formatBytes(new Blob([input]).size),
+	};
+};
+
+export const SQL_LANGUAGE_OPTIONS = [
+	{ value: 'sql', label: 'Standard SQL' },
+	{ value: 'bigquery', label: 'BigQuery' },
+	{ value: 'db2', label: 'IBM DB2' },
+	{ value: 'db2i', label: 'IBM DB2i' },
+	{ value: 'duckdb', label: 'DuckDB' },
+	{ value: 'hive', label: 'Apache Hive' },
+	{ value: 'mariadb', label: 'MariaDB' },
+	{ value: 'mysql', label: 'MySQL' },
+	{ value: 'n1ql', label: 'Couchbase N1QL' },
+	{ value: 'plsql', label: 'Oracle PL/SQL' },
+	{ value: 'postgresql', label: 'PostgreSQL' },
+	{ value: 'redshift', label: 'Amazon Redshift' },
+	{ value: 'singlestoredb', label: 'SingleStoreDB' },
+	{ value: 'snowflake', label: 'Snowflake' },
+	{ value: 'spark', label: 'Apache Spark' },
+	{ value: 'sqlite', label: 'SQLite' },
+	{ value: 'tidb', label: 'TiDB' },
+	{ value: 'transactsql', label: 'SQL Server (T-SQL)' },
+	{ value: 'trino', label: 'Trino/Presto' },
+] as const;
+
+export const SQL_KEYWORD_CASE_OPTIONS = [
+	{ value: 'upper', label: 'UPPER' },
+	{ value: 'lower', label: 'lower' },
+	{ value: 'preserve', label: 'Preserve' },
+] as const;
+
+export const SQL_INDENT_STYLE_OPTIONS = [
+	{ value: 'standard', label: 'Standard' },
+	{ value: 'tabularLeft', label: 'Tabular Left' },
+	{ value: 'tabularRight', label: 'Tabular Right' },
+] as const;
+
+export const SQL_LOGICAL_OPERATOR_OPTIONS = [
+	{ value: 'before', label: 'Before' },
+	{ value: 'after', label: 'After' },
+] as const;
+
+export const validateSql = (input: string): { valid: boolean; error?: string } => {
+	if (!input.trim()) {
+		return { valid: false, error: 'Empty input' };
+	}
+
+	try {
+		// Try to format as a basic validation
+		sqlFormat(input, { language: 'sql' });
+		return { valid: true };
+	} catch (e) {
+		return {
+			valid: false,
+			error: e instanceof Error ? e.message : 'Invalid SQL',
+		};
+	}
+};
+
 // ============================================================================
 // YAML Validation
 // ============================================================================
@@ -1382,3 +1453,61 @@ export const validateYaml = (input: string): { valid: boolean; error?: string } 
 		};
 	}
 };
+
+// ============================================================================
+// Sample Data
+// ============================================================================
+
+export const SAMPLE_JSON = `{
+  "name": "John Doe",
+  "age": 30,
+  "email": "john.doe@example.com",
+  "address": {
+    "street": "123 Main St",
+    "city": "New York",
+    "country": "USA"
+  },
+  "hobbies": ["reading", "gaming", "hiking"],
+  "active": true,
+  "balance": 1234.56
+}`;
+
+export const SAMPLE_YAML = `name: John Doe
+age: 30
+email: john.doe@example.com
+address:
+  street: 123 Main St
+  city: New York
+  country: USA
+hobbies:
+  - reading
+  - gaming
+  - hiking
+active: true
+balance: 1234.56`;
+
+export const SAMPLE_XML = `<?xml version="1.0" encoding="UTF-8"?>
+<person>
+  <name>John Doe</name>
+  <age>30</age>
+  <email>john.doe@example.com</email>
+  <address>
+    <street>123 Main St</street>
+    <city>New York</city>
+    <country>USA</country>
+  </address>
+  <hobbies>
+    <hobby>reading</hobby>
+    <hobby>gaming</hobby>
+    <hobby>hiking</hobby>
+  </hobbies>
+  <active>true</active>
+  <balance>1234.56</balance>
+</person>`;
+
+export const SAMPLE_SQL = `SELECT u.id, u.name, u.email, o.order_id, o.total
+FROM users u
+LEFT JOIN orders o ON u.id = o.user_id
+WHERE u.active = true AND o.created_at >= '2024-01-01'
+ORDER BY o.total DESC
+LIMIT 100;`;

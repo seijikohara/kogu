@@ -132,7 +132,7 @@
 	{outputEditorMode}
 	{input}
 	{onInputChange}
-	placeholder="Paste XML here..."
+	placeholder="Enter XML here..."
 	{validate}
 	{convert}
 	{onStatsChange}
@@ -209,7 +209,10 @@
 				/>
 				<div class="space-y-1.5 pt-1">
 					<OptionCheckbox label="Indent sequences" bind:checked={yamlIndentSeq} />
-					<OptionCheckbox label="Flow collection padding" bind:checked={yamlFlowCollectionPadding} />
+					<OptionCheckbox
+						label="Flow collection padding"
+						bind:checked={yamlFlowCollectionPadding}
+					/>
 				</div>
 			</OptionsSection>
 
@@ -228,7 +231,10 @@
 				<div class="space-y-1.5 pt-1">
 					<OptionCheckbox label="Force quotes on all strings" bind:checked={yamlForceQuotes} />
 					<OptionCheckbox label="Prefer single quotes" bind:checked={yamlSingleQuote} />
-					<OptionCheckbox label="Double-quoted as JSON style" bind:checked={yamlDoubleQuotedAsJSON} />
+					<OptionCheckbox
+						label="Double-quoted as JSON style"
+						bind:checked={yamlDoubleQuotedAsJSON}
+					/>
 				</div>
 			</OptionsSection>
 

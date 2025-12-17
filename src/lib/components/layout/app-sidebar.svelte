@@ -1,12 +1,21 @@
 <script lang="ts">
 	import * as Sidebar from '$lib/components/ui/sidebar/index.js';
 	import * as Collapsible from '$lib/components/ui/collapsible/index.js';
-	import { FileCode2, ChevronRight, Sun, Moon, Monitor, Wrench, type Icon } from '@lucide/svelte';
+	import {
+		FileCode2,
+		ChevronRight,
+		Sun,
+		Moon,
+		Monitor,
+		FileText,
+		Lock,
+		Sparkles,
+	} from '@lucide/svelte';
 	import { page } from '$app/state';
 	import { toggleMode, mode } from 'mode-watcher';
 	import { onMount } from 'svelte';
 	import { getPlatform, type Platform } from '$lib/services/platform.js';
-	import { PAGES, getToolPages } from '$lib/services/pages.js';
+	import { PAGES, CATEGORIES, getPagesByCategory } from '$lib/services/pages.js';
 
 	let platform = $state<Platform>('unknown');
 
@@ -19,26 +28,16 @@
 	// Get dashboard page
 	const dashboardPage = $derived(PAGES.find((p) => p.id === 'dashboard'));
 
-	// Get tool pages for sidebar
-	const toolPages = $derived(getToolPages());
-
-	interface MenuGroup {
-		label: string;
-		icon: typeof Icon;
-		defaultOpen?: boolean;
-	}
-
-	const menuGroups: MenuGroup[] = [
-		{
-			label: 'Tools',
-			icon: Wrench,
-			defaultOpen: true,
-		},
-	];
+	// Category icons
+	const categoryIcons = {
+		formatters: FileText,
+		encoders: Lock,
+		generators: Sparkles,
+	} as const;
 
 	// Track open state for each collapsible group
 	let openGroups = $state<Record<string, boolean>>(
-		Object.fromEntries(menuGroups.map((g) => [g.label, g.defaultOpen ?? true]))
+		Object.fromEntries(CATEGORIES.map((c) => [c.id, c.defaultOpen]))
 	);
 </script>
 
@@ -95,16 +94,18 @@
 			</Sidebar.GroupContent>
 		</Sidebar.Group>
 
-		<!-- Tool Groups -->
-		{#each menuGroups as group}
-			<Collapsible.Root bind:open={openGroups[group.label]} class="group/collapsible">
+		<!-- Category Groups -->
+		{#each CATEGORIES as category}
+			{@const CategoryIcon = categoryIcons[category.id]}
+			{@const categoryPages = getPagesByCategory(category.id)}
+			<Collapsible.Root bind:open={openGroups[category.id]} class="group/collapsible">
 				<Sidebar.Group>
 					<Sidebar.GroupLabel
 						class="group/label text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground p-0"
 					>
 						<Collapsible.Trigger class="flex w-full items-center gap-2 px-2 py-1.5">
-							<group.icon class="size-4" />
-							<span class="flex-1 text-left">{group.label}</span>
+							<CategoryIcon class="size-4" />
+							<span class="flex-1 text-left">{category.label}</span>
 							<ChevronRight
 								class="size-4 transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90"
 							/>
@@ -113,7 +114,7 @@
 					<Collapsible.Content>
 						<Sidebar.GroupContent>
 							<Sidebar.Menu>
-								{#each toolPages as tool}
+								{#each categoryPages as tool}
 									<Sidebar.MenuItem>
 										<Sidebar.MenuButton
 											isActive={page.url.pathname === tool.url}

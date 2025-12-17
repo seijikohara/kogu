@@ -198,7 +198,7 @@
 				onchange={onInputChange}
 				mode="input"
 				editorMode="yaml"
-				placeholder="Paste YAML here..."
+				placeholder="Enter YAML here..."
 				onpaste={handlePaste}
 				onclear={handleClear}
 			/>

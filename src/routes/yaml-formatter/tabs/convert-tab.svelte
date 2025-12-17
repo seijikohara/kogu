@@ -132,7 +132,7 @@
 	{outputEditorMode}
 	{input}
 	{onInputChange}
-	placeholder="Paste YAML here..."
+	placeholder="Enter YAML here..."
 	{validate}
 	{convert}
 	{onStatsChange}
@@ -237,7 +237,10 @@
 					]}
 				/>
 				<div class="space-y-1.5 pt-1">
-					<OptionCheckbox label="Collapse content on single line" bind:checked={xmlCollapseContent} />
+					<OptionCheckbox
+						label="Collapse content on single line"
+						bind:checked={xmlCollapseContent}
+					/>
 				</div>
 			</OptionsSection>
 
@@ -246,7 +249,8 @@
 				{#if xmlDeclaration}
 					<div class="grid grid-cols-2 gap-2 pt-1">
 						<div class="space-y-1">
-							<Label class="text-[10px] uppercase tracking-wide text-muted-foreground">Version</Label
+							<Label class="text-[10px] uppercase tracking-wide text-muted-foreground"
+								>Version</Label
 							>
 							<Input
 								bind:value={xmlDeclarationVersion}
@@ -304,7 +308,11 @@
 					<Label class="text-[10px] uppercase tracking-wide text-muted-foreground"
 						>Header Comment</Label
 					>
-					<Input bind:value={xmlHeaderComment} placeholder="Optional comment..." class="h-7 text-xs" />
+					<Input
+						bind:value={xmlHeaderComment}
+						placeholder="Optional comment..."
+						class="h-7 text-xs"
+					/>
 				</div>
 			</OptionsSection>
 		{/if}

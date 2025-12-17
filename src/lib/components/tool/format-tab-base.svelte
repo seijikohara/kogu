@@ -40,6 +40,8 @@
 		onOutputFormatChange?: (format: string) => void;
 		/** Download filename */
 		downloadFilename?: string;
+		/** Sample data for the sample button */
+		sampleData?: string;
 		/** File operations */
 		copyToClipboard: (text: string) => void;
 		pasteFromClipboard: () => Promise<string | null>;
@@ -54,7 +56,7 @@
 		editorMode,
 		input,
 		onInputChange,
-		placeholder = 'Paste content here...',
+		placeholder = 'Enter content here...',
 		validate,
 		format,
 		onStatsChange,
@@ -62,6 +64,7 @@
 		selectedOutputFormat,
 		onOutputFormatChange,
 		downloadFilename = 'formatted.txt',
+		sampleData,
 		copyToClipboard,
 		pasteFromClipboard,
 		downloadTextFile,
@@ -98,6 +101,12 @@
 	});
 
 	// Handlers
+	const handleSample = () => {
+		if (sampleData) {
+			onInputChange(sampleData);
+		}
+	};
+
 	const handlePaste = async () => {
 		const text = await pasteFromClipboard();
 		if (text) onInputChange(text);
@@ -145,6 +154,7 @@
 				mode="input"
 				{editorMode}
 				{placeholder}
+				onsample={sampleData ? handleSample : undefined}
 				onpaste={handlePaste}
 				onclear={handleClear}
 			/>

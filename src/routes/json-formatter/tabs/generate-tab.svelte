@@ -543,7 +543,7 @@
 				onchange={onInputChange}
 				mode="input"
 				editorMode="json"
-				placeholder="Paste JSON here..."
+				placeholder="Enter JSON here..."
 				onpaste={handlePaste}
 				onclear={handleClear}
 			/>
