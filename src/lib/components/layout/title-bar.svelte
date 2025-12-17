@@ -59,21 +59,19 @@
 	});
 </script>
 
-<header class="flex h-12 shrink-0 items-center justify-center gap-4 border-b bg-background px-4">
-	<!-- Navigation buttons - left side -->
-	<div class="absolute left-4">
-		<NavButtons />
-	</div>
-
-	<!-- Search box - centered -->
+<header class="flex h-8 shrink-0 items-center justify-center gap-2 border-b bg-background px-4">
+	<!-- Navigation buttons and Search box - centered together -->
+	<NavButtons />
 	<div class="relative w-full max-w-md">
 		<div class="relative">
-			<Search class="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+			<Search
+				class="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground"
+			/>
 			<Input
 				bind:ref={inputElement}
 				type="text"
 				placeholder="Search pages and tabs..."
-				class="h-8 pl-9 pr-4"
+				class="h-6 pl-8 pr-3 text-xs"
 				bind:value={searchQuery}
 				onfocus={openSearch}
 				onblur={() => setTimeout(closeSearch, 150)}

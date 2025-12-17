@@ -211,7 +211,6 @@
 				editorMode={queryOutputFormat}
 				placeholder="Query result..."
 				oncopy={handleCopyResult}
-				ondownload={handleDownload}
 			/>
 		{/snippet}
 	</SplitPane>

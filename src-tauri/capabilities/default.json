@@ -17,6 +17,10 @@
 		"opener:default",
 		"clipboard-manager:allow-read-text",
 		"clipboard-manager:allow-write-text",
+		"dialog:allow-open",
+		"dialog:allow-save",
+		"fs:allow-read-text-file",
+		"fs:allow-write-text-file",
 		"decorum:allow-show-snap-overlay"
 	]
 }

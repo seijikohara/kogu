@@ -3,6 +3,7 @@
 	import OptionCheckbox from '$lib/components/options/option-checkbox.svelte';
 	import OptionSelect from '$lib/components/options/option-select.svelte';
 	import { FormatTabBase } from '$lib/components/tool/index.js';
+	import type { ContextMenuItem } from '$lib/components/editors/code-editor.svelte';
 	import {
 		parseJsonAuto,
 		stringifyJson,
@@ -158,6 +159,42 @@
 
 	// Download filename based on output format
 	const downloadFilename = $derived(`formatted.${JSON_FORMAT_INFO[outputFormat].extension}`);
+
+	// Format input JSON
+	const handleFormatInput = () => {
+		try {
+			const { data } = parseJsonAuto(input);
+			const formatted = JSON.stringify(data, null, 2);
+			onInputChange(formatted);
+		} catch {
+			// Invalid JSON
+		}
+	};
+
+	// Minify input JSON
+	const handleMinifyInput = () => {
+		try {
+			const { data } = parseJsonAuto(input);
+			const minified = JSON.stringify(data);
+			onInputChange(minified);
+		} catch {
+			// Invalid JSON
+		}
+	};
+
+	// Context menu items for input editor
+	const inputContextMenuItems = $derived<ContextMenuItem[]>([
+		{
+			text: 'Format JSON',
+			enabled: !!input.trim(),
+			action: handleFormatInput,
+		},
+		{
+			text: 'Minify JSON',
+			enabled: !!input.trim(),
+			action: handleMinifyInput,
+		},
+	]);
 </script>
 
 <FormatTabBase
@@ -176,6 +213,7 @@
 	{copyToClipboard}
 	{pasteFromClipboard}
 	{downloadTextFile}
+	{inputContextMenuItems}
 >
 	{#snippet modeExtra()}
 		{#if detectedFormat && detectedFormat !== 'json'}

@@ -3,6 +3,7 @@
 	import OptionCheckbox from '$lib/components/options/option-checkbox.svelte';
 	import OptionSelect from '$lib/components/options/option-select.svelte';
 	import { FormatTabBase } from '$lib/components/tool/index.js';
+	import type { ContextMenuItem } from '$lib/components/editors/code-editor.svelte';
 	import {
 		formatXml,
 		minifyXml,
@@ -75,6 +76,40 @@
 			return { output: '', error: e instanceof Error ? e.message : 'Invalid XML' };
 		}
 	};
+
+	// Format input XML
+	const handleFormatInput = () => {
+		try {
+			const formatted = formatXml(input, { indentSize: 2, indentType: 'spaces' });
+			onInputChange(formatted);
+		} catch {
+			// Invalid XML
+		}
+	};
+
+	// Minify input XML
+	const handleMinifyInput = () => {
+		try {
+			const minified = minifyXml(input);
+			onInputChange(minified);
+		} catch {
+			// Invalid XML
+		}
+	};
+
+	// Context menu items for input editor
+	const inputContextMenuItems = $derived<ContextMenuItem[]>([
+		{
+			text: 'Format XML',
+			enabled: !!input.trim(),
+			action: handleFormatInput,
+		},
+		{
+			text: 'Minify XML',
+			enabled: !!input.trim(),
+			action: handleMinifyInput,
+		},
+	]);
 </script>
 
 <FormatTabBase
@@ -90,6 +125,7 @@
 	{copyToClipboard}
 	{pasteFromClipboard}
 	{downloadTextFile}
+	{inputContextMenuItems}
 >
 	{#snippet options()}
 		<OptionsSection title="Indentation">

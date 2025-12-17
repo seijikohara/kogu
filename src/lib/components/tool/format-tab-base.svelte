@@ -1,6 +1,6 @@
 <script lang="ts">
 	import type { Snippet } from 'svelte';
-	import type { EditorMode } from '$lib/components/editors/code-editor.svelte';
+	import type { EditorMode, ContextMenuItem } from '$lib/components/editors/code-editor.svelte';
 	import OptionsPanel from '$lib/components/options/options-panel.svelte';
 	import OptionsSection from '$lib/components/options/options-section.svelte';
 	import OptionCheckbox from '$lib/components/options/option-checkbox.svelte';
@@ -46,6 +46,10 @@
 		copyToClipboard: (text: string) => void;
 		pasteFromClipboard: () => Promise<string | null>;
 		downloadTextFile: (content: string, filename: string) => void;
+		/** Custom context menu items for input editor */
+		inputContextMenuItems?: ContextMenuItem[];
+		/** Custom context menu items for output editor */
+		outputContextMenuItems?: ContextMenuItem[];
 		/** Mode section additional content (e.g., detected format badge) */
 		modeExtra?: Snippet;
 		/** Options panel sections */
@@ -68,6 +72,8 @@
 		copyToClipboard,
 		pasteFromClipboard,
 		downloadTextFile,
+		inputContextMenuItems = [],
+		outputContextMenuItems = [],
 		modeExtra,
 		options,
 	}: Props = $props();
@@ -157,6 +163,7 @@
 				onsample={sampleData ? handleSample : undefined}
 				onpaste={handlePaste}
 				onclear={handleClear}
+				contextMenuItems={inputContextMenuItems}
 			/>
 		{/snippet}
 		{#snippet right()}
@@ -170,7 +177,7 @@
 				selectedFormat={selectedOutputFormat}
 				onformatchange={handleFormatChange}
 				oncopy={handleCopy}
-				ondownload={handleDownload}
+				contextMenuItems={outputContextMenuItems}
 			/>
 		{/snippet}
 	</SplitPane>

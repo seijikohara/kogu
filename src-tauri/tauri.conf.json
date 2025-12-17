@@ -10,6 +10,7 @@
 		"frontendDist": "../build"
 	},
 	"app": {
+		"withGlobalTauri": true,
 		"windows": [
 			{
 				"title": "Kogu",
@@ -18,7 +19,8 @@
 				"minWidth": 800,
 				"minHeight": 600,
 				"hiddenTitle": true,
-				"titleBarStyle": "Overlay"
+				"titleBarStyle": "Overlay",
+				"dragDropEnabled": false
 			}
 		],
 		"security": {

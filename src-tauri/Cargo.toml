@@ -29,3 +29,13 @@ tauri-plugin-clipboard-manager = "2.3.2"
 tauri-plugin-os = "2.3.2"
 tauri-plugin-decorum = "1.1.1"
 
+# AST Parsers
+thiserror = "2"
+roxmltree = "0.20"
+serde_yaml = "0.9"
+yaml-rust2 = "0.9"
+sqlparser = "0.53"
+tauri-plugin-mcp-bridge = "0.4.0"
+tauri-plugin-dialog = "2.4.2"
+tauri-plugin-fs = "2.4.4"
+
