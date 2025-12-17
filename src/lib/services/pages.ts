@@ -3,22 +3,22 @@
  * Update this file when adding new pages or tabs.
  */
 import {
-	House,
+	ArrowRightLeft,
+	Binary,
 	Braces,
+	CodeXml,
+	Database,
+	FileCheck,
+	FileCode,
+	FileJson2,
+	GitCompare,
+	Hash,
+	House,
+	type Icon,
+	Key,
+	Link,
 	Play,
 	Search,
-	GitCompare,
-	ArrowRightLeft,
-	FileCheck,
-	CodeXml,
-	FileJson2,
-	FileCode,
-	Database,
-	Binary,
-	Link,
-	Key,
-	Hash,
-	type Icon,
 } from '@lucide/svelte';
 
 /**

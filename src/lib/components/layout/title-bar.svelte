@@ -1,10 +1,11 @@
 <script lang="ts">
-	import NavButtons from './nav-buttons.svelte';
-	import { Input } from '$lib/components/ui/input/index.js';
-	import { goto } from '$app/navigation';
-	import { initNavigationHistory } from '$lib/services/navigation-history.svelte.js';
-	import { searchPages, type SearchResult } from '$lib/services/pages.js';
+	
 	import { Search } from '@lucide/svelte';
+	import { goto } from '$app/navigation';
+	import { Input } from '$lib/components/ui/input/index.js';
+	import { initNavigationHistory } from '$lib/services/navigation-history.svelte.js';
+	import { type SearchResult, searchPages } from '$lib/services/pages.js';
+import NavButtons from './nav-buttons.svelte';
 
 	let searchQuery = $state('');
 	let isSearchOpen = $state(false);
@@ -25,9 +26,12 @@
 		} else if (e.key === 'ArrowUp') {
 			e.preventDefault();
 			selectedIndex = Math.max(selectedIndex - 1, 0);
-		} else if (e.key === 'Enter' && searchResults[selectedIndex]) {
-			e.preventDefault();
-			navigateToResult(searchResults[selectedIndex]);
+		} else if (e.key === 'Enter') {
+			const selectedResult = searchResults[selectedIndex];
+			if (selectedResult) {
+				e.preventDefault();
+				navigateToResult(selectedResult);
+			}
 		} else if (e.key === 'Escape') {
 			e.preventDefault();
 			closeSearch();

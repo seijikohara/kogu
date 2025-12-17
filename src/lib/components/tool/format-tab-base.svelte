@@ -1,10 +1,10 @@
 <script lang="ts">
 	import type { Snippet } from 'svelte';
-	import type { EditorMode, ContextMenuItem } from '$lib/components/editors/code-editor.svelte';
+	import type { ContextMenuItem, EditorMode } from '$lib/components/editors/code-editor.svelte';
+	import SplitPane from '$lib/components/layout/split-pane.svelte';
+	import OptionCheckbox from '$lib/components/options/option-checkbox.svelte';
 	import OptionsPanel from '$lib/components/options/options-panel.svelte';
 	import OptionsSection from '$lib/components/options/options-section.svelte';
-	import OptionCheckbox from '$lib/components/options/option-checkbox.svelte';
-	import SplitPane from '$lib/components/layout/split-pane.svelte';
 	import { EditorPane } from '$lib/components/tool/index.js';
 
 	interface FormatOption {
@@ -12,10 +12,8 @@
 		label: string;
 	}
 
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	type ValidationResult = { valid: boolean | null } & Record<string, any>;
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	type StatsResult = { input: string; valid: boolean | null; error: string } & Record<string, any>;
+	type ValidationResult = { valid: boolean | null } & Record<string, unknown>;
+	type StatsResult = { input: string; valid: boolean | null; error: string } & Record<string, unknown>;
 
 	interface Props {
 		/** Editor mode for syntax highlighting */

@@ -1,0 +1,131 @@
+{
+	"$schema": "https://biomejs.dev/schemas/2.3.9/schema.json",
+	"vcs": {
+		"enabled": true,
+		"clientKind": "git",
+		"useIgnoreFile": true
+	},
+	"files": {
+		"includes": ["src/**/*.ts", "src/**/*.svelte", "scripts/**/*.ts", "vite.config.js"]
+	},
+	"formatter": {
+		"enabled": false
+	},
+	"linter": {
+		"enabled": true,
+		"rules": {
+			"recommended": true,
+			"complexity": {
+				"noForEach": "off",
+				"useFlatMap": "error",
+				"useOptionalChain": "error",
+				"useLiteralKeys": "off",
+				"noExcessiveCognitiveComplexity": {
+					"level": "warn",
+					"options": {
+						"maxAllowedComplexity": 20
+					}
+				},
+				"noVoid": "error"
+			},
+			"style": {
+				"noNonNullAssertion": "error",
+				"useTemplate": "error",
+				"useConst": "error",
+				"useConsistentArrayType": {
+					"level": "error",
+					"options": {
+						"syntax": "shorthand"
+					}
+				},
+				"useExportType": "error",
+				"useImportType": "error",
+				"noParameterAssign": "error",
+				"useEnumInitializers": "off",
+				"useDefaultParameterLast": "error",
+				"noUselessElse": "error",
+				"noEnum": "error",
+				"useForOf": "off",
+				"useNumberNamespace": "error",
+				"useThrowOnlyError": "error"
+			},
+			"performance": {
+				"noAccumulatingSpread": "off"
+			},
+			"suspicious": {
+				"noExplicitAny": "error",
+				"noConsole": "warn",
+				"noDebugger": "error",
+				"noDoubleEquals": "error",
+				"noImplicitAnyLet": "error",
+				"useAwait": "error",
+				"useIterableCallbackReturn": "off",
+				"noConfusingVoidType": "error"
+			},
+			"correctness": {
+				"noUnusedImports": "error",
+				"noUnusedVariables": "error",
+				"noUnusedFunctionParameters": "warn",
+				"useExhaustiveDependencies": "off",
+				"useHookAtTopLevel": "off",
+				"noUndeclaredDependencies": "error"
+			}
+		}
+	},
+	"javascript": {
+		"globals": ["$$Generic"]
+	},
+	"overrides": [
+		{
+			"includes": ["**/*.test.ts", "**/*.spec.ts"],
+			"linter": {
+				"rules": {
+					"suspicious": {
+						"noExplicitAny": "off"
+					}
+				}
+			}
+		},
+		{
+			"includes": ["scripts/**/*.ts"],
+			"linter": {
+				"rules": {
+					"suspicious": {
+						"noConsole": "off"
+					}
+				}
+			}
+		},
+		{
+			"includes": ["**/*.svelte"],
+			"linter": {
+				"rules": {
+					"correctness": {
+						"noUnusedVariables": "off",
+						"noUnusedImports": "off",
+						"noUnusedFunctionParameters": "off"
+					},
+					"style": {
+						"useConst": "off"
+					}
+				}
+			}
+		},
+		{
+			"includes": ["vite.config.js"],
+			"linter": {
+				"rules": {
+					"complexity": {
+						"useLiteralKeys": "off"
+					}
+				}
+			}
+		},
+		{
+			"includes": ["src/lib/components/ui/**/*.svelte", "src/lib/components/ui/**/*.ts"],
+			"linter": {
+				"enabled": false
+			}
+		}
+	]
+}

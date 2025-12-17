@@ -1,19 +1,20 @@
 <script lang="ts">
-	import { Button } from '$lib/components/ui/button/index.js';
-	import { Label } from '$lib/components/ui/label/index.js';
-	import { Input } from '$lib/components/ui/input/index.js';
-	import OptionsSection from '$lib/components/options/options-section.svelte';
+	
+	import * as yaml from 'yaml';
 	import OptionCheckbox from '$lib/components/options/option-checkbox.svelte';
 	import OptionSelect from '$lib/components/options/option-select.svelte';
+	import OptionsSection from '$lib/components/options/options-section.svelte';
 	import { ConvertTabBase } from '$lib/components/tool/index.js';
+import { Button } from '$lib/components/ui/button/index.js';
+	import { Input } from '$lib/components/ui/input/index.js';
+	import { Label } from '$lib/components/ui/label/index.js';
 	import {
-		yamlToJson,
-		yamlToXml,
 		type YamlToJsonOptions,
 		type YamlToXmlOptions,
+		yamlToJson,
+		yamlToXml,
 	} from '$lib/services/formatters.js';
-	import { downloadTextFile, copyToClipboard, pasteFromClipboard } from '../utils.js';
-	import * as yaml from 'yaml';
+	import { copyToClipboard, downloadTextFile, pasteFromClipboard } from '../utils.js';
 
 	interface Props {
 		input: string;
@@ -61,9 +62,9 @@
 	let xmlHeaderComment = $state('');
 
 	// Derived values
-	const jsonIndent = $derived(parseInt(jsonIndentStr) || 2);
-	const xmlIndent = $derived(parseInt(xmlIndentStr) || 2);
-	const xmlCdataThreshold = $derived(parseInt(xmlCdataThresholdStr) || 0);
+	const jsonIndent = $derived(Number.parseInt(jsonIndentStr, 10) || 2);
+	const xmlIndent = $derived(Number.parseInt(xmlIndentStr, 10) || 2);
+	const xmlCdataThreshold = $derived(Number.parseInt(xmlCdataThresholdStr, 10) || 0);
 
 	// JSON options object
 	const jsonOptions = $derived<YamlToJsonOptions>({

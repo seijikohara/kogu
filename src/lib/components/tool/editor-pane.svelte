@@ -1,52 +1,53 @@
 <script lang="ts">
-	import { Button } from '$lib/components/ui/button/index.js';
-	import * as Select from '$lib/components/ui/select/index.js';
-	import * as Resizable from '$lib/components/ui/resizable/index.js';
-	import CodeEditor, {
-		type EditorMode,
-		type CursorPosition,
-		type HighlightLine,
-		type ContextMenuItem,
-		type EditorContext,
-	} from '$lib/components/editors/code-editor.svelte';
-	import { Menu, MenuItem, PredefinedMenuItem } from '@tauri-apps/api/menu';
+	
+	import {
+		Braces,
+		CircleAlert,
+		Clipboard,
+		Columns2,
+		Copy,
+		Database,
+		Download,
+		FileCode,
+		FileJson2,
+		FlaskConical,
+		FolderOpen,
+		HardDrive,
+		ListTree,
+		Rows3,
+		TextCursorInput,
+		Trash2,
+	} from '@lucide/svelte';
 	import { LogicalPosition } from '@tauri-apps/api/dpi';
+	import { Menu, MenuItem, PredefinedMenuItem } from '@tauri-apps/api/menu';
 	import { readText, writeText } from '@tauri-apps/plugin-clipboard-manager';
 	import { open as openDialog, save as saveDialog } from '@tauri-apps/plugin-dialog';
 	import { readTextFile, writeTextFile } from '@tauri-apps/plugin-fs';
-	import AstTreeView from '$lib/components/viewers/ast-tree-view.svelte';
+	import type { Snippet } from 'svelte';
 	import { toast } from 'svelte-sonner';
+	import CodeEditor, {
+		type ContextMenuItem,
+		type CursorPosition,
+		type EditorContext,
+		type EditorMode,
+		type HighlightLine,
+	} from '$lib/components/editors/code-editor.svelte';
+import { Button } from '$lib/components/ui/button/index.js';
+	import * as Resizable from '$lib/components/ui/resizable/index.js';
+	import * as Select from '$lib/components/ui/select/index.js';
+	import AstTreeView from '$lib/components/viewers/ast-tree-view.svelte';
 	import {
-		Clipboard,
-		Trash2,
-		Copy,
-		Download,
-		TextCursorInput,
-		Rows3,
-		HardDrive,
-		Braces,
-		ListTree,
-		Columns2,
-		FileCode,
-		FileJson2,
-		Database,
-		FlaskConical,
-		CircleAlert,
-		FolderOpen,
-	} from '@lucide/svelte';
-	import {
-		parseToAst,
-		buildPathToLineMap,
-		buildLineToPathMap,
-		findPathByLine,
-		findLineByPath,
 		type AstLanguage,
 		type AstNode,
 		type AstParseError,
-		type PathToLineMap,
+		buildLineToPathMap,
+		buildPathToLineMap,
+		findLineByPath,
+		findPathByLine,
 		type LineToPathMap,
+		type PathToLineMap,
+		parseToAst,
 	} from '$lib/services/ast/index.js';
-	import type { Snippet } from 'svelte';
 	import { cn } from '$lib/utils.js';
 
 	type PaneMode = 'input' | 'output' | 'readonly';
@@ -277,7 +278,6 @@
 			onchange?.(content);
 			toast.success('File loaded');
 		} catch (error) {
-			console.error('Failed to open file:', error);
 			toast.error('Failed to open file');
 		}
 	};
@@ -326,13 +326,14 @@
 		if (!files || files.length === 0) return;
 
 		const file = files[0];
+		if (!file) return;
+
 		try {
 			const content = await file.text();
 			value = content;
 			onchange?.(content);
 			toast.success(`Loaded: ${file.name}`);
-		} catch (error) {
-			console.error('Failed to read dropped file:', error);
+		} catch {
 			toast.error('Failed to read file');
 		}
 	};
@@ -351,7 +352,6 @@
 			await writeTextFile(selected, value);
 			toast.success('File saved');
 		} catch (error) {
-			console.error('Failed to save file:', error);
 			toast.error('Failed to save file');
 		}
 	};

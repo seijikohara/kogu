@@ -1,32 +1,33 @@
 <script lang="ts">
-	import OptionsPanel from '$lib/components/options/options-panel.svelte';
-	import OptionsSection from '$lib/components/options/options-section.svelte';
-	import OptionSelect from '$lib/components/options/option-select.svelte';
+	
+	import {
+		ArrowRightLeft,
+		BookOpen,
+		Copy,
+		ExternalLink,
+		Hammer,
+		Link2,
+		Plus,
+		Trash2,
+	} from '@lucide/svelte';
 	import { PageHeader, SplitPane } from '$lib/components/layout/index.js';
+	import OptionSelect from '$lib/components/options/option-select.svelte';
+import OptionsPanel from '$lib/components/options/options-panel.svelte';
+	import OptionsSection from '$lib/components/options/options-section.svelte';
 	import { EditorPane } from '$lib/components/tool/index.js';
 	import { Button } from '$lib/components/ui/button/index.js';
 	import { Input } from '$lib/components/ui/input/index.js';
 	import {
-		Plus,
-		Trash2,
-		Copy,
-		ExternalLink,
-		ArrowRightLeft,
-		Link2,
-		Hammer,
-		BookOpen,
-	} from '@lucide/svelte';
-	import {
-		encodeUrlComponent,
+		buildUrl,
+		decodeUrl,
 		decodeUrlComponent,
 		encodeUrl,
-		decodeUrl,
+		encodeUrlComponent,
 		parseUrl,
-		buildUrl,
-		URL_ENCODING_EXAMPLES,
-		SAMPLE_URL,
-		type UrlEncodeMode,
 		type QueryParameter,
+		SAMPLE_URL,
+		URL_ENCODING_EXAMPLES,
+		type UrlEncodeMode,
 	} from '$lib/services/encoders.js';
 
 	type Tab = 'encode' | 'parse' | 'build' | 'reference';

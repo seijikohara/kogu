@@ -1,19 +1,19 @@
 <script lang="ts">
 	import {
-		ChevronRight,
 		Braces,
 		Brackets,
+		Check,
+		ChevronRight,
+		CircleSlash,
+		Code,
+		Copy,
+		Database,
+		FileCode,
 		Hash,
+		Tag,
+		Terminal,
 		ToggleLeft,
 		Type,
-		CircleSlash,
-		Copy,
-		Check,
-		Code,
-		Tag,
-		FileCode,
-		Database,
-		Terminal,
 	} from '@lucide/svelte';
 	import { toast } from 'svelte-sonner';
 	import type { AstNode, AstNodeType } from '$lib/services/ast/index.js';
@@ -243,7 +243,7 @@
 		Object.keys(initialExpandedStates)
 			.filter((key) => !(key in expandedStates))
 			.forEach((key) => {
-				expandedStates[key] = initialExpandedStates[key];
+				expandedStates[key] = initialExpandedStates[key] ?? false;
 			});
 	});
 
@@ -266,7 +266,9 @@
 					: node.label;
 			await navigator.clipboard.writeText(text);
 			justCopied = node.path;
-			setTimeout(() => (justCopied = null), 1500);
+			setTimeout(() => {
+				justCopied = null;
+			}, 1500);
 		} catch {
 			toast.error('Copy failed');
 		}

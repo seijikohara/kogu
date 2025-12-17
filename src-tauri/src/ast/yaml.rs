@@ -37,7 +37,7 @@ fn create_empty_root(text: &str) -> AstNode {
     )
 }
 
-/// Convert yaml-rust2 Yaml to AstNode
+/// Convert yaml-rust2 Yaml to `AstNode`
 fn yaml_to_ast(text: &str, yaml: &Yaml, path: &str, start_line: usize) -> AstNode {
     // Since yaml-rust2 doesn't provide position info after parsing,
     // we need to estimate positions based on content
@@ -50,7 +50,7 @@ fn yaml_to_ast(text: &str, yaml: &Yaml, path: &str, start_line: usize) -> AstNod
 
             for (key, value) in map {
                 let key_str = yaml_key_to_string(key);
-                let child_path = format!("{}.{}", path, key_str);
+                let child_path = format!("{path}.{key_str}");
 
                 // Find the line where this key appears
                 let key_line = find_key_line(text, &key_str, start_line);
@@ -71,7 +71,7 @@ fn yaml_to_ast(text: &str, yaml: &Yaml, path: &str, start_line: usize) -> AstNod
                         prop_node = prop_node.with_children(vec![child_ast]);
                     }
                     _ => {
-                        prop_node.value = child_ast.value.clone();
+                        prop_node.value.clone_from(&child_ast.value);
                         prop_node.node_type = child_ast.node_type.clone();
                     }
                 }
@@ -91,7 +91,7 @@ fn yaml_to_ast(text: &str, yaml: &Yaml, path: &str, start_line: usize) -> AstNod
             let mut current_line = start_line;
 
             for (index, item) in arr.iter().enumerate() {
-                let child_path = format!("{}[{}]", path, index);
+                let child_path = format!("{path}[{index}]");
                 let child_ast = yaml_to_ast(text, item, &child_path, current_line);
                 current_line = child_ast.range.end.line;
                 children.push(child_ast);
@@ -108,7 +108,7 @@ fn yaml_to_ast(text: &str, yaml: &Yaml, path: &str, start_line: usize) -> AstNod
             let label = if s.len() > 50 {
                 format!("\"{}...\"", &s[..47])
             } else {
-                format!("\"{}\"", s)
+                format!("\"{s}\"")
             };
 
             AstNode::new(AstNodeType::String, path.to_string(), label, range)
@@ -165,9 +165,8 @@ fn yaml_to_ast(text: &str, yaml: &Yaml, path: &str, start_line: usize) -> AstNod
 
 fn yaml_key_to_string(yaml: &Yaml) -> String {
     match yaml {
-        Yaml::String(s) => s.clone(),
         Yaml::Integer(n) => n.to_string(),
-        Yaml::Real(s) => s.clone(),
+        Yaml::String(s) | Yaml::Real(s) => s.clone(),
         Yaml::Boolean(b) => b.to_string(),
         _ => "?".to_string(),
     }
@@ -176,9 +175,9 @@ fn yaml_key_to_string(yaml: &Yaml) -> String {
 fn find_key_line(text: &str, key: &str, start_line: usize) -> usize {
     let lines: Vec<&str> = text.lines().collect();
     let key_patterns = [
-        format!("{}:", key),
-        format!("\"{}\":", key),
-        format!("'{}':", key),
+        format!("{key}:"),
+        format!("\"{key}\":"),
+        format!("'{key}':"),
     ];
 
     for (i, line) in lines.iter().enumerate().skip(start_line.saturating_sub(1)) {
@@ -217,7 +216,7 @@ fn calculate_range(text: &str, children: &[AstNode], start_line: usize) -> AstRa
     }
 
     let start = AstPosition::new(start_line, 1, 0);
-    let end = children.last().map(|c| c.range.end).unwrap_or(start);
+    let end = children.last().map_or(start, |c| c.range.end);
 
     AstRange::new(start, end)
 }

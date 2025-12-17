@@ -2,49 +2,47 @@
 // Re-exports
 // ============================================================================
 
-export * from './types.js';
-export * from './utils.js';
-
-export { typeScriptGenerator, defaultTypeScriptOptions } from './typescript.js';
-export { javaScriptGenerator, defaultJavaScriptOptions } from './javascript.js';
-export { goGenerator, defaultGoOptions } from './go.js';
-export { pythonGenerator, defaultPythonOptions } from './python.js';
-export { rustGenerator, defaultRustOptions } from './rust.js';
-export { javaGenerator, defaultJavaOptions } from './java.js';
 export { csharpGenerator, defaultCSharpOptions } from './csharp.js';
-export { kotlinGenerator, defaultKotlinOptions } from './kotlin.js';
-export { swiftGenerator, defaultSwiftOptions } from './swift.js';
-export { phpGenerator, defaultPhpOptions } from './php.js';
+export { defaultGoOptions, goGenerator } from './go.js';
+export { defaultJavaOptions, javaGenerator } from './java.js';
+export { defaultJavaScriptOptions, javaScriptGenerator } from './javascript.js';
+export { defaultKotlinOptions, kotlinGenerator } from './kotlin.js';
+export { defaultPhpOptions, phpGenerator } from './php.js';
+export { defaultPythonOptions, pythonGenerator } from './python.js';
+export { defaultRustOptions, rustGenerator } from './rust.js';
+export { defaultSwiftOptions, swiftGenerator } from './swift.js';
+export * from './types.js';
+export { defaultTypeScriptOptions, typeScriptGenerator } from './typescript.js';
+export * from './utils.js';
 
 // ============================================================================
 // Imports
 // ============================================================================
 
+import { csharpGenerator, defaultCSharpOptions } from './csharp.js';
+import { defaultGoOptions, goGenerator } from './go.js';
+import { defaultJavaOptions, javaGenerator } from './java.js';
+import { defaultJavaScriptOptions, javaScriptGenerator } from './javascript.js';
+import { defaultKotlinOptions, kotlinGenerator } from './kotlin.js';
+import { defaultPhpOptions, phpGenerator } from './php.js';
+import { defaultPythonOptions, pythonGenerator } from './python.js';
+import { defaultRustOptions, rustGenerator } from './rust.js';
+import { defaultSwiftOptions, swiftGenerator } from './swift.js';
 import type {
-	TargetLanguage,
-	TypeScriptOptions,
-	JavaScriptOptions,
+	CodeGenerator,
+	CSharpOptions,
 	GoOptions,
+	JavaOptions,
+	JavaScriptOptions,
+	KotlinOptions,
+	PhpOptions,
 	PythonOptions,
 	RustOptions,
-	JavaOptions,
-	CSharpOptions,
-	KotlinOptions,
 	SwiftOptions,
-	PhpOptions,
-	CodeGenerator,
+	TargetLanguage,
+	TypeScriptOptions,
 } from './types.js';
-
-import { typeScriptGenerator, defaultTypeScriptOptions } from './typescript.js';
-import { javaScriptGenerator, defaultJavaScriptOptions } from './javascript.js';
-import { goGenerator, defaultGoOptions } from './go.js';
-import { pythonGenerator, defaultPythonOptions } from './python.js';
-import { rustGenerator, defaultRustOptions } from './rust.js';
-import { javaGenerator, defaultJavaOptions } from './java.js';
-import { csharpGenerator, defaultCSharpOptions } from './csharp.js';
-import { kotlinGenerator, defaultKotlinOptions } from './kotlin.js';
-import { swiftGenerator, defaultSwiftOptions } from './swift.js';
-import { phpGenerator, defaultPhpOptions } from './php.js';
+import { defaultTypeScriptOptions, typeScriptGenerator } from './typescript.js';
 
 // ============================================================================
 // Types

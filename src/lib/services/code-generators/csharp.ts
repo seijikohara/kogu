@@ -1,5 +1,5 @@
 import type { CodeGenerator, CSharpOptions, JsonValue, TypeInfo } from './types.js';
-import { inferType, toPascalCase, generateWithNestedTypes } from './utils.js';
+import { generateWithNestedTypes, inferType, toPascalCase } from './utils.js';
 
 // ============================================================================
 // Constants

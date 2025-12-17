@@ -53,6 +53,63 @@ const sortArray = (arr: unknown[], options: YamlDiffOptions): unknown[] =>
 		return strA.localeCompare(strB);
 	});
 
+/** Compare two arrays and return differences */
+const compareArrays = (
+	arr1: unknown[],
+	arr2: unknown[],
+	path: string,
+	options: YamlDiffOptions,
+	compareFn: (a: unknown, b: unknown, p: string, o: YamlDiffOptions) => GenericDiffItem[]
+): GenericDiffItem[] => {
+	const sorted1 = options.ignoreArrayOrder ? sortArray(arr1, options) : arr1;
+	const sorted2 = options.ignoreArrayOrder ? sortArray(arr2, options) : arr2;
+	const maxLen = Math.max(sorted1.length, sorted2.length);
+
+	return Array.from({ length: maxLen }).flatMap((_, i) => {
+		const itemPath = `${path}[${i}]`;
+		if (i >= sorted1.length) return [{ path: itemPath, type: 'added' as const, newValue: JSON.stringify(sorted2[i]) }];
+		if (i >= sorted2.length) return [{ path: itemPath, type: 'removed' as const, oldValue: JSON.stringify(sorted1[i]) }];
+		return compareFn(sorted1[i], sorted2[i], itemPath, options);
+	});
+};
+
+/** Process a single key in object comparison */
+const processObjectKey = (
+	key: string,
+	o1: Record<string, unknown>,
+	o2: Record<string, unknown>,
+	path: string,
+	options: YamlDiffOptions,
+	compareFn: (a: unknown, b: unknown, p: string, o: YamlDiffOptions) => GenericDiffItem[]
+): GenericDiffItem[] => {
+	const keyPath = path ? `${path}.${key}` : key;
+	const inO1 = key in o1;
+	const inO2 = key in o2;
+
+	if (options.ignoreEmpty && !inO1 && isEmpty(o2[key])) return [];
+	if (options.ignoreEmpty && !inO2 && isEmpty(o1[key])) return [];
+	if (!inO1) return [{ path: keyPath, type: 'added' as const, newValue: JSON.stringify(o2[key]) }];
+	if (!inO2) return [{ path: keyPath, type: 'removed' as const, oldValue: JSON.stringify(o1[key]) }];
+
+	return compareFn(o1[key], o2[key], keyPath, options);
+};
+
+/** Compare two objects and return differences */
+const compareObjects = (
+	o1: Record<string, unknown>,
+	o2: Record<string, unknown>,
+	path: string,
+	options: YamlDiffOptions,
+	compareFn: (a: unknown, b: unknown, p: string, o: YamlDiffOptions) => GenericDiffItem[]
+): GenericDiffItem[] => {
+	const ignoreKeysSet = new Set(options.ignoreKeys || []);
+	const keys1 = Object.keys(o1).filter((k) => !ignoreKeysSet.has(k));
+	const keys2 = Object.keys(o2).filter((k) => !ignoreKeysSet.has(k));
+	const allKeys = [...new Set([...keys1, ...keys2])];
+
+	return allKeys.flatMap((key) => processObjectKey(key, o1, o2, path, options, compareFn));
+};
+
 /**
  * Find differences between two objects.
  */
@@ -65,71 +122,25 @@ const findDifferences = (
 	if (options.ignoreEmpty && isEmpty(obj1) && isEmpty(obj2)) return [];
 
 	if (!options.deepCompare) {
-		const normalized1 = JSON.stringify(obj1);
-		const normalized2 = JSON.stringify(obj2);
-		return normalized1 !== normalized2
-			? [
-					{
-						path,
-						type: 'changed',
-						oldValue: JSON.stringify(obj1),
-						newValue: JSON.stringify(obj2),
-					},
-				]
-			: [];
+		const str1 = JSON.stringify(obj1);
+		const str2 = JSON.stringify(obj2);
+		return str1 !== str2 ? [{ path, type: 'changed', oldValue: str1, newValue: str2 }] : [];
 	}
 
 	if (typeof obj1 !== typeof obj2) {
-		return [
-			{ path, type: 'changed', oldValue: JSON.stringify(obj1), newValue: JSON.stringify(obj2) },
-		];
+		return [{ path, type: 'changed', oldValue: JSON.stringify(obj1), newValue: JSON.stringify(obj2) }];
 	}
 
 	if (Array.isArray(obj1) && Array.isArray(obj2)) {
-		const arr1 = options.ignoreArrayOrder ? sortArray(obj1, options) : obj1;
-		const arr2 = options.ignoreArrayOrder ? sortArray(obj2, options) : obj2;
-		const maxLen = Math.max(arr1.length, arr2.length);
-
-		return Array.from({ length: maxLen }).flatMap((_, i) => {
-			const itemPath = `${path}[${i}]`;
-			if (i >= arr1.length)
-				return [{ path: itemPath, type: 'added' as const, newValue: JSON.stringify(arr2[i]) }];
-			if (i >= arr2.length)
-				return [{ path: itemPath, type: 'removed' as const, oldValue: JSON.stringify(arr1[i]) }];
-			return findDifferences(arr1[i], arr2[i], itemPath, options);
-		});
+		return compareArrays(obj1, obj2, path, options, findDifferences);
 	}
 
 	if (obj1 !== null && obj2 !== null && typeof obj1 === 'object' && typeof obj2 === 'object') {
-		const o1 = obj1 as Record<string, unknown>;
-		const o2 = obj2 as Record<string, unknown>;
-		const ignoreKeysSet = new Set(options.ignoreKeys || []);
-
-		const keys1 = Object.keys(o1).filter((k) => !ignoreKeysSet.has(k));
-		const keys2 = Object.keys(o2).filter((k) => !ignoreKeysSet.has(k));
-		const allKeys = [...new Set([...keys1, ...keys2])];
-
-		return allKeys.flatMap((key) => {
-			const keyPath = path ? `${path}.${key}` : key;
-			const inO1 = key in o1;
-			const inO2 = key in o2;
-
-			if (options.ignoreEmpty) {
-				if (!inO1 && isEmpty(o2[key])) return [];
-				if (!inO2 && isEmpty(o1[key])) return [];
-			}
-
-			if (!inO1)
-				return [{ path: keyPath, type: 'added' as const, newValue: JSON.stringify(o2[key]) }];
-			if (!inO2)
-				return [{ path: keyPath, type: 'removed' as const, oldValue: JSON.stringify(o1[key]) }];
-			return findDifferences(o1[key], o2[key], keyPath, options);
-		});
+		return compareObjects(obj1 as Record<string, unknown>, obj2 as Record<string, unknown>, path, options, findDifferences);
 	}
 
 	const norm1 = normalizeValue(obj1, options);
 	const norm2 = normalizeValue(obj2, options);
-
 	return norm1 !== norm2
 		? [{ path, type: 'changed', oldValue: JSON.stringify(obj1), newValue: JSON.stringify(obj2) }]
 		: [];

@@ -1,13 +1,14 @@
 <script lang="ts">
-	import { onMount, onDestroy } from 'svelte';
+	
 	import * as monaco from 'monaco-editor';
-	import { configureMonacoYaml } from 'monaco-yaml';
-	import { browser } from '$app/environment';
 	import editorWorker from 'monaco-editor/esm/vs/editor/editor.worker?worker';
-	import jsonWorker from 'monaco-editor/esm/vs/language/json/json.worker?worker';
-	import tsWorker from 'monaco-editor/esm/vs/language/typescript/ts.worker?worker';
 	import cssWorker from 'monaco-editor/esm/vs/language/css/css.worker?worker';
 	import htmlWorker from 'monaco-editor/esm/vs/language/html/html.worker?worker';
+	import jsonWorker from 'monaco-editor/esm/vs/language/json/json.worker?worker';
+	import tsWorker from 'monaco-editor/esm/vs/language/typescript/ts.worker?worker';
+	import { configureMonacoYaml } from 'monaco-yaml';
+import { onDestroy, onMount } from 'svelte';
+	import { browser } from '$app/environment';
 	import yamlWorker from '$lib/workers/yaml.worker.js?worker';
 
 	// Configure Monaco Environment to use workers (Vite official approach)
@@ -282,8 +283,8 @@
 	// Go to line when gotoLine prop changes
 	$effect(() => {
 		// Include gotoLineTrigger as dependency to force re-trigger
-		void gotoLineTrigger;
-		if (gotoLine && editor) {
+		const _trigger = gotoLineTrigger;
+		if (gotoLine && editor && _trigger !== undefined) {
 			const model = editor.getModel();
 			if (!model) return;
 

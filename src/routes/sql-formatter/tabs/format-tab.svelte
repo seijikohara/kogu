@@ -1,22 +1,23 @@
 <script lang="ts">
-	import OptionsSection from '$lib/components/options/options-section.svelte';
+	
+	import type { SqlLanguage } from 'sql-formatter';
 	import OptionCheckbox from '$lib/components/options/option-checkbox.svelte';
 	import OptionSelect from '$lib/components/options/option-select.svelte';
+import OptionsSection from '$lib/components/options/options-section.svelte';
 	import { FormatTabBase } from '$lib/components/tool/index.js';
 	import {
+		defaultSqlFormatOptions,
 		formatSql,
 		minifySql,
-		validateSql,
-		SQL_LANGUAGE_OPTIONS,
-		SQL_KEYWORD_CASE_OPTIONS,
-		SQL_INDENT_STYLE_OPTIONS,
-		SQL_LOGICAL_OPERATOR_OPTIONS,
-		defaultSqlFormatOptions,
 		SAMPLE_SQL,
+		SQL_INDENT_STYLE_OPTIONS,
+		SQL_KEYWORD_CASE_OPTIONS,
+		SQL_LANGUAGE_OPTIONS,
+		SQL_LOGICAL_OPERATOR_OPTIONS,
 		type SqlFormatOptions,
+		validateSql,
 	} from '$lib/services/formatters.js';
-	import type { SqlLanguage } from 'sql-formatter';
-	import { downloadTextFile, copyToClipboard, pasteFromClipboard } from '../utils.js';
+	import { copyToClipboard, downloadTextFile, pasteFromClipboard } from '../utils.js';
 
 	interface Props {
 		input: string;
@@ -43,9 +44,9 @@
 	let newlineBeforeSemicolon = $state(defaultSqlFormatOptions.newlineBeforeSemicolon);
 
 	// Derived numeric values
-	const tabWidth = $derived(parseInt(tabWidthStr) || 2);
-	const expressionWidth = $derived(parseInt(expressionWidthStr) || 50);
-	const linesBetweenQueries = $derived(parseInt(linesBetweenQueriesStr) || 1);
+	const tabWidth = $derived(Number.parseInt(tabWidthStr, 10) || 2);
+	const expressionWidth = $derived(Number.parseInt(expressionWidthStr, 10) || 50);
+	const linesBetweenQueries = $derived(Number.parseInt(linesBetweenQueriesStr, 10) || 1);
 
 	// Format options object
 	const formatOptions = $derived<Partial<SqlFormatOptions>>({

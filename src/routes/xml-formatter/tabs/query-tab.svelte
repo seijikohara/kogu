@@ -1,12 +1,13 @@
 <script lang="ts">
-	import { Input } from '$lib/components/ui/input/index.js';
-	import { Label } from '$lib/components/ui/label/index.js';
+	
+	import SplitPane from '$lib/components/layout/split-pane.svelte';
 	import OptionsPanel from '$lib/components/options/options-panel.svelte';
 	import OptionsSection from '$lib/components/options/options-section.svelte';
-	import SplitPane from '$lib/components/layout/split-pane.svelte';
 	import { EditorPane } from '$lib/components/tool/index.js';
+import { Input } from '$lib/components/ui/input/index.js';
+	import { Label } from '$lib/components/ui/label/index.js';
 	import { executeXPath, formatXml } from '$lib/services/formatters.js';
-	import { downloadTextFile, copyToClipboard, pasteFromClipboard } from '../utils.js';
+	import { copyToClipboard, downloadTextFile, pasteFromClipboard } from '../utils.js';
 
 	interface Props {
 		input: string;

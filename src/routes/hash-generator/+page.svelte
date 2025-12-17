@@ -1,28 +1,29 @@
 <script lang="ts">
-	import { PageHeader } from '$lib/components/layout/index.js';
+	
+	import {
+		CheckCircle,
+		Copy,
+		File as FileIcon,
+		FileUp,
+		GitCompare,
+		ShieldAlert,
+		ShieldCheck,
+		Text,
+		Trash2,
+		XCircle,
+	} from '@lucide/svelte';
+import { PageHeader } from '$lib/components/layout/index.js';
 	import { EditorPane } from '$lib/components/tool/index.js';
 	import { Button } from '$lib/components/ui/button/index.js';
 	import { Input } from '$lib/components/ui/input/index.js';
 	import {
-		Copy,
-		FileUp,
-		CheckCircle,
-		XCircle,
-		ShieldAlert,
-		ShieldCheck,
-		Trash2,
-		Text,
-		File as FileIcon,
-		GitCompare,
-	} from '@lucide/svelte';
-	import {
-		generateAllHashes,
-		generateAllFileHashes,
 		compareHashes,
-		HASH_ALGORITHMS,
-		SAMPLE_TEXT_FOR_HASH,
 		formatBytes,
+		generateAllFileHashes,
+		generateAllHashes,
+		HASH_ALGORITHMS,
 		type HashResult,
+		SAMPLE_TEXT_FOR_HASH,
 	} from '$lib/services/encoders.js';
 
 	type Tab = 'text' | 'file' | 'compare';
@@ -111,7 +112,6 @@
 		try {
 			fileHashes = await generateAllFileHashes(file);
 		} catch (e) {
-			console.error('Failed to generate file hashes:', e);
 			fileHashes = [];
 		} finally {
 			isProcessingFile = false;

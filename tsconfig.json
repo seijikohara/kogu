@@ -8,7 +8,24 @@
 		"resolveJsonModule": true,
 		"skipLibCheck": true,
 		"sourceMap": true,
+		"moduleResolution": "bundler",
+
+		// Strict mode
 		"strict": true,
-		"moduleResolution": "bundler"
+
+		// Additional strict checks (from .claude/rules/typescript.md)
+		"noUncheckedIndexedAccess": true,
+		// Note: exactOptionalPropertyTypes disabled due to incompatibility with shadcn-svelte patterns
+		"noImplicitOverride": true,
+		"noPropertyAccessFromIndexSignature": true,
+		"noFallthroughCasesInSwitch": true,
+
+		// Additional strict checks
+		"noImplicitReturns": true,
+		"allowUnreachableCode": false,
+		"allowUnusedLabels": false,
+
+		// Enforce explicit import type
+		"verbatimModuleSyntax": true
 	}
 }

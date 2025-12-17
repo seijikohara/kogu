@@ -1,8 +1,8 @@
-import xmlFormatter from 'xml-formatter';
-import * as yaml from 'yaml';
-import { format as sqlFormat, type SqlLanguage } from 'sql-formatter';
 import JSON5 from 'json5';
 import * as jsonc from 'jsonc-parser';
+import { type SqlLanguage, format as sqlFormat } from 'sql-formatter';
+import xmlFormatter from 'xml-formatter';
+import * as yaml from 'yaml';
 
 // ============================================================================
 // Types
@@ -407,6 +407,44 @@ const trailingCommaTransform = (s: string): string => s.replace(/([}\]])\n(\s*[}
 // JSON Formatter - Processing Functions
 // ============================================================================
 
+/** Process array with options */
+const processArray = (
+	arr: unknown[],
+	opts: JsonFormatOptions,
+	depth: number,
+	processFn: (obj: unknown, opts: JsonFormatOptions, depth: number) => unknown
+): unknown => {
+	const processed = arr.map((item) => processFn(item, opts, depth + 1)).filter((item) => item !== undefined);
+	return opts.removeEmptyArrays && processed.length === 0 ? undefined : processed;
+};
+
+/** Process object with options */
+const processObject = (
+	obj: Record<string, unknown>,
+	opts: JsonFormatOptions,
+	depth: number,
+	processFn: (obj: unknown, opts: JsonFormatOptions, depth: number) => unknown
+): unknown => {
+	const entries = Object.entries(obj);
+	const sortedEntries = opts.sortKeys
+		? [...entries].sort(([a], [b]) => a.localeCompare(b))
+		: entries;
+
+	const processed = Object.fromEntries(
+		sortedEntries
+			.map(([key, value]) => [key, processFn(value, opts, depth + 1)] as const)
+			.filter(([, value]) => value !== undefined)
+	);
+
+	return opts.removeEmptyObjects && Object.keys(processed).length === 0 ? undefined : processed;
+};
+
+/** Handle max depth truncation */
+const handleMaxDepth = (obj: unknown): unknown => {
+	if (obj === null || typeof obj !== 'object') return obj;
+	return Array.isArray(obj) ? '[...]' : '{...}';
+};
+
 export const processJsonWithOptions = (
 	obj: unknown,
 	options: Partial<JsonFormatOptions>,
@@ -414,43 +452,11 @@ export const processJsonWithOptions = (
 ): unknown => {
 	const opts = { ...defaultJsonFormatOptions, ...options };
 
-	// Early return: max depth reached
-	if (opts.maxDepth > 0 && depth >= opts.maxDepth) {
-		if (obj === null || typeof obj !== 'object') return obj;
-		return Array.isArray(obj) ? '[...]' : '{...}';
-	}
-
-	// Early return: null handling
+	if (opts.maxDepth > 0 && depth >= opts.maxDepth) return handleMaxDepth(obj);
 	if (obj === null) return opts.removeNulls ? undefined : null;
-
-	// Array processing
-	if (Array.isArray(obj)) {
-		const processed = obj
-			.map((item) => processJsonWithOptions(item, opts, depth + 1))
-			.filter((item) => item !== undefined);
-		return opts.removeEmptyArrays && processed.length === 0 ? undefined : processed;
-	}
-
-	// Object processing
-	if (typeof obj === 'object') {
-		const entries = Object.entries(obj);
-		const sortedEntries = opts.sortKeys
-			? [...entries].sort(([a], [b]) => a.localeCompare(b))
-			: entries;
-
-		const processed = Object.fromEntries(
-			sortedEntries
-				.map(([key, value]) => [key, processJsonWithOptions(value, opts, depth + 1)] as const)
-				.filter(([, value]) => value !== undefined)
-		);
-
-		return opts.removeEmptyObjects && Object.keys(processed).length === 0 ? undefined : processed;
-	}
-
-	// String processing
-	if (typeof obj === 'string') {
-		return opts.removeEmptyStrings && obj === '' ? undefined : obj;
-	}
+	if (Array.isArray(obj)) return processArray(obj, opts, depth, processJsonWithOptions);
+	if (typeof obj === 'object') return processObject(obj as Record<string, unknown>, opts, depth, processJsonWithOptions);
+	if (typeof obj === 'string') return opts.removeEmptyStrings && obj === '' ? undefined : obj;
 
 	return obj;
 };
@@ -548,9 +554,10 @@ export const parseJson = (input: string, format?: JsonInputFormat): unknown => {
 	if (detectedFormat === 'jsonc') {
 		const errors: jsonc.ParseError[] = [];
 		const result = jsonc.parse(trimmed, errors, { allowTrailingComma: true });
-		if (errors.length > 0) {
+		const firstError = errors[0];
+		if (firstError) {
 			throw new Error(
-				`JSONC parse error at offset ${errors[0].offset}: ${jsonc.printParseErrorCode(errors[0].error)}`
+				`JSONC parse error at offset ${firstError.offset}: ${jsonc.printParseErrorCode(firstError.error)}`
 			);
 		}
 		return result;
@@ -729,8 +736,8 @@ export const executeJsonPath = (input: string, path: string): unknown => {
 		}
 
 		if (Array.isArray(current)) {
-			const index = parseInt(part);
-			if (isNaN(index)) throw new Error(`Invalid array index: ${part}`);
+			const index = Number.parseInt(part, 10);
+			if (Number.isNaN(index)) throw new Error(`Invalid array index: ${part}`);
 			return current[index];
 		}
 
@@ -789,76 +796,95 @@ const createDiffItem = (
 	...(newValue !== undefined && { newValue: JSON.stringify(newValue) }),
 });
 
+/** Check if types are equivalent considering numeric type option */
+const areTypesEquivalent = (obj1: unknown, obj2: unknown, opts: JsonDiffOptions): boolean => {
+	if (typeof obj1 === typeof obj2) return true;
+	if (!opts.ignoreNumericType) return false;
+	if (typeof obj1 === 'number' && typeof obj2 === 'string' && String(obj1) === obj2) return true;
+	if (typeof obj1 === 'string' && typeof obj2 === 'number' && obj1 === String(obj2)) return true;
+	return false;
+};
+
+/** Compare two arrays and return differences */
+const compareArrays = (
+	arr1: unknown[],
+	arr2: unknown[],
+	path: string,
+	opts: JsonDiffOptions,
+	findDiffsFn: (a: unknown, b: unknown, p: string, o: JsonDiffOptions) => DiffItem[]
+): DiffItem[] => {
+	const sorted1 = opts.ignoreArrayOrder ? sortArray(arr1, opts) : arr1;
+	const sorted2 = opts.ignoreArrayOrder ? sortArray(arr2, opts) : arr2;
+	const maxLen = Math.max(sorted1.length, sorted2.length);
+
+	return Array.from({ length: maxLen }).flatMap((_, i) => {
+		const itemPath = `${path}[${i}]`;
+		if (i >= sorted1.length) return [createDiffItem(itemPath, 'added', undefined, sorted2[i])];
+		if (i >= sorted2.length) return [createDiffItem(itemPath, 'removed', sorted1[i], undefined)];
+		return findDiffsFn(sorted1[i], sorted2[i], itemPath, opts);
+	});
+};
+
+/** Compare two objects and return differences */
+const compareObjects = (
+	o1: Record<string, unknown>,
+	o2: Record<string, unknown>,
+	path: string,
+	opts: JsonDiffOptions,
+	findDiffsFn: (a: unknown, b: unknown, p: string, o: JsonDiffOptions) => DiffItem[]
+): DiffItem[] => {
+	const ignoreKeysSet = new Set(opts.ignoreKeys ?? []);
+	const keys1 = Object.keys(o1).filter((k) => !ignoreKeysSet.has(k));
+	const keys2 = Object.keys(o2).filter((k) => !ignoreKeysSet.has(k));
+	const allKeys = [...new Set([...keys1, ...keys2])];
+
+	return allKeys.flatMap((key) => {
+		const keyPath = `${path}.${key}`;
+		const inO1 = key in o1;
+		const inO2 = key in o2;
+
+		if (opts.ignoreEmpty && !inO1 && isEmpty(o2[key])) return [];
+		if (opts.ignoreEmpty && !inO2 && isEmpty(o1[key])) return [];
+		if (!inO1) return [createDiffItem(keyPath, 'added', undefined, o2[key])];
+		if (!inO2) return [createDiffItem(keyPath, 'removed', o1[key], undefined)];
+		return findDiffsFn(o1[key], o2[key], keyPath, opts);
+	});
+};
+
 const findDifferences = (
 	obj1: unknown,
 	obj2: unknown,
 	path: string,
 	opts: JsonDiffOptions
 ): DiffItem[] => {
-	// Check for ignored empty values
 	if (opts.ignoreEmpty && isEmpty(obj1) && isEmpty(obj2)) return [];
 
-	// Shallow compare mode
 	if (!opts.deepCompare) {
-		const normalized1 = JSON.stringify(obj1);
-		const normalized2 = JSON.stringify(obj2);
-		return normalized1 !== normalized2 ? [createDiffItem(path, 'changed', obj1, obj2)] : [];
+		const norm1 = JSON.stringify(obj1);
+		const norm2 = JSON.stringify(obj2);
+		return norm1 !== norm2 ? [createDiffItem(path, 'changed', obj1, obj2)] : [];
 	}
 
-	// Type mismatch (with numeric type consideration)
-	if (typeof obj1 !== typeof obj2) {
-		if (opts.ignoreNumericType) {
-			if (typeof obj1 === 'number' && typeof obj2 === 'string' && String(obj1) === obj2) return [];
-			if (typeof obj1 === 'string' && typeof obj2 === 'number' && obj1 === String(obj2)) return [];
-		}
+	if (!areTypesEquivalent(obj1, obj2, opts)) {
 		return [createDiffItem(path, 'changed', obj1, obj2)];
 	}
 
-	// Array comparison
 	if (Array.isArray(obj1) && Array.isArray(obj2)) {
-		const arr1 = opts.ignoreArrayOrder ? sortArray(obj1, opts) : obj1;
-		const arr2 = opts.ignoreArrayOrder ? sortArray(obj2, opts) : obj2;
-		const maxLen = Math.max(arr1.length, arr2.length);
-
-		return Array.from({ length: maxLen }).flatMap((_, i) => {
-			const itemPath = `${path}[${i}]`;
-			if (i >= arr1.length) return [createDiffItem(itemPath, 'added', undefined, arr2[i])];
-			if (i >= arr2.length) return [createDiffItem(itemPath, 'removed', arr1[i], undefined)];
-			return findDifferences(arr1[i], arr2[i], itemPath, opts);
-		});
+		return compareArrays(obj1, obj2, path, opts, findDifferences);
 	}
 
-	// Object comparison
 	if (obj1 !== null && obj2 !== null && typeof obj1 === 'object' && typeof obj2 === 'object') {
-		const o1 = obj1 as Record<string, unknown>;
-		const o2 = obj2 as Record<string, unknown>;
-		const ignoreKeysSet = new Set(opts.ignoreKeys ?? []);
-
-		const keys1 = Object.keys(o1).filter((k) => !ignoreKeysSet.has(k));
-		const keys2 = Object.keys(o2).filter((k) => !ignoreKeysSet.has(k));
-		const allKeys = [...new Set([...keys1, ...keys2])];
-
-		return allKeys.flatMap((key) => {
-			const keyPath = `${path}.${key}`;
-			const inO1 = key in o1;
-			const inO2 = key in o2;
-
-			// Handle ignored empty values
-			if (opts.ignoreEmpty) {
-				if (!inO1 && isEmpty(o2[key])) return [];
-				if (!inO2 && isEmpty(o1[key])) return [];
-			}
-
-			if (!inO1) return [createDiffItem(keyPath, 'added', undefined, o2[key])];
-			if (!inO2) return [createDiffItem(keyPath, 'removed', o1[key], undefined)];
-			return findDifferences(o1[key], o2[key], keyPath, opts);
-		});
+		return compareObjects(
+			obj1 as Record<string, unknown>,
+			obj2 as Record<string, unknown>,
+			path,
+			opts,
+			findDifferences
+		);
 	}
 
-	// Primitive comparison with normalization
 	const norm1 = normalizeValue(obj1, opts);
 	const norm2 = normalizeValue(obj2, opts);
-
 	return norm1 !== norm2 ? [createDiffItem(path, 'changed', obj1, obj2)] : [];
 };
 
@@ -922,56 +948,55 @@ const escapeXmlText = (text: string): string =>
 		.replace(/"/g, '&quot;')
 		.replace(/'/g, '&apos;');
 
-const convertToXmlElement = (data: unknown, name: string, options: JsonToXmlOptions): string => {
+/** Create empty XML element */
+const createEmptyXmlElement = (name: string, options: JsonToXmlOptions): string => {
 	const selfCloseEnd = options.whiteSpaceAtEndOfSelfclosingTag ? ' />' : '/>';
+	return options.selfClosing ? `<${name}${selfCloseEnd}` : `<${name}></${name}>`;
+};
+
+/** Convert object to XML element */
+const convertObjectToXml = (
+	data: Record<string, unknown>,
+	name: string,
+	options: JsonToXmlOptions,
+	convertFn: (d: unknown, n: string, o: JsonToXmlOptions) => string
+): string => {
 	const attributePrefix = options.attributePrefix ?? '@';
 	const textNodeName = options.textNodeName ?? '#text';
+	const selfCloseEnd = options.whiteSpaceAtEndOfSelfclosingTag ? ' />' : '/>';
 
-	// Null/undefined handling
-	if (data === null || data === undefined) {
-		return options.selfClosing ? `<${name}${selfCloseEnd}` : `<${name}></${name}>`;
+	const entries = options.sortKeys
+		? Object.entries(data).sort(([a], [b]) => a.localeCompare(b))
+		: Object.entries(data);
+
+	const attributeEntries = entries.filter(([key]) => key.startsWith(attributePrefix));
+	const sortedAttrEntries = options.sortAttributes
+		? [...attributeEntries].sort(([a], [b]) => a.localeCompare(b))
+		: attributeEntries;
+
+	const attributes = sortedAttrEntries
+		.map(([key, value]) => ` ${key.slice(attributePrefix.length)}="${value}"`)
+		.join('');
+
+	const textEntry = entries.find(([key]) => key === textNodeName);
+	const textContent = textEntry ? String(textEntry[1]) : '';
+
+	const children = entries
+		.filter(([key]) => !key.startsWith(attributePrefix) && key !== textNodeName)
+		.map(([key, value]) => convertFn(value, key, options))
+		.join('');
+
+	if (!children && !textContent) {
+		return options.selfClosing
+			? `<${name}${attributes}${selfCloseEnd}`
+			: `<${name}${attributes}></${name}>`;
 	}
 
-	// Array handling
-	if (Array.isArray(data)) {
-		const itemName = options.arrayItemName ?? 'item';
-		const elementName = name === options.rootName ? itemName : name;
-		return data.map((item) => convertToXmlElement(item, elementName, options)).join('');
-	}
+	return `<${name}${attributes}>${textContent}${children}</${name}>`;
+};
 
-	// Object handling
-	if (typeof data === 'object') {
-		const entries = options.sortKeys
-			? Object.entries(data as Record<string, unknown>).sort(([a], [b]) => a.localeCompare(b))
-			: Object.entries(data as Record<string, unknown>);
-
-		const attributeEntries = entries.filter(([key]) => key.startsWith(attributePrefix));
-		const sortedAttrEntries = options.sortAttributes
-			? [...attributeEntries].sort(([a], [b]) => a.localeCompare(b))
-			: attributeEntries;
-
-		const attributes = sortedAttrEntries
-			.map(([key, value]) => ` ${key.slice(attributePrefix.length)}="${value}"`)
-			.join('');
-
-		const textEntry = entries.find(([key]) => key === textNodeName);
-		const textContent = textEntry ? String(textEntry[1]) : '';
-
-		const children = entries
-			.filter(([key]) => !key.startsWith(attributePrefix) && key !== textNodeName)
-			.map(([key, value]) => convertToXmlElement(value, key, options))
-			.join('');
-
-		if (!children && !textContent) {
-			return options.selfClosing
-				? `<${name}${attributes}${selfCloseEnd}`
-				: `<${name}${attributes}></${name}>`;
-		}
-
-		return `<${name}${attributes}>${textContent}${children}</${name}>`;
-	}
-
-	// Primitive handling
+/** Convert primitive to XML element */
+const convertPrimitiveToXml = (data: unknown, name: string, options: JsonToXmlOptions): string => {
 	const rawContent = typeof data === 'string' ? data : JSON.stringify(data);
 	const cdataThreshold = options.cdataThreshold ?? 0;
 	const shouldUseCdata =
@@ -985,8 +1010,58 @@ const convertToXmlElement = (data: unknown, name: string, options: JsonToXmlOpti
 
 	const textContent =
 		options.escapeText && typeof data === 'string' ? escapeXmlText(rawContent) : rawContent;
-
 	return `<${name}>${textContent}</${name}>`;
+};
+
+const convertToXmlElement = (data: unknown, name: string, options: JsonToXmlOptions): string => {
+	if (data === null || data === undefined) {
+		return createEmptyXmlElement(name, options);
+	}
+
+	if (Array.isArray(data)) {
+		const itemName = options.arrayItemName ?? 'item';
+		const elementName = name === options.rootName ? itemName : name;
+		return data.map((item) => convertToXmlElement(item, elementName, options)).join('');
+	}
+
+	if (typeof data === 'object') {
+		return convertObjectToXml(
+			data as Record<string, unknown>,
+			name,
+			options,
+			convertToXmlElement
+		);
+	}
+
+	return convertPrimitiveToXml(data, name, options);
+};
+
+/** Build XML declaration string */
+const buildXmlDeclaration = (opts: JsonToXmlOptions, lineSep: string): string => {
+	if (!opts.declaration) return '';
+	const version = opts.declarationVersion ?? '1.0';
+	const encoding = opts.declarationEncoding ?? 'UTF-8';
+	const standalone = opts.declarationStandalone ? ` standalone="${opts.declarationStandalone}"` : '';
+	return `<?xml version="${version}" encoding="${encoding}"${standalone}?>${lineSep}`;
+};
+
+/** Determine XML content and root name */
+const determineXmlContent = (
+	parsed: unknown,
+	opts: JsonToXmlOptions
+): { content: string; rootName: string } => {
+	const parsedObj =
+		typeof parsed === 'object' && parsed !== null ? (parsed as Record<string, unknown>) : null;
+	const parsedObjKeys = parsedObj !== null ? Object.keys(parsedObj) : [];
+	const singleKey = parsedObjKeys.length === 1 ? parsedObjKeys[0] : undefined;
+	const actualRootName = singleKey ?? opts.rootName ?? 'root';
+
+	const content =
+		singleKey && parsedObj
+			? convertToXmlElement(parsedObj[singleKey], actualRootName, opts)
+			: convertToXmlElement(parsed, opts.rootName ?? 'root', opts);
+
+	return { content, rootName: actualRootName };
 };
 
 export const jsonToXml = (input: string, options: JsonToXmlOptions | string = {}): string => {
@@ -999,25 +1074,12 @@ export const jsonToXml = (input: string, options: JsonToXmlOptions | string = {}
 		? sortKeysDeep(parseJsonAuto(input).data)
 		: parseJsonAuto(input).data;
 
-	const parsedObj =
-		typeof parsed === 'object' && parsed !== null ? (parsed as Record<string, unknown>) : null;
-	const isSingleKeyObject = parsedObj !== null && Object.keys(parsedObj).length === 1;
-
-	const actualRootName = isSingleKeyObject ? Object.keys(parsedObj)[0] : (opts.rootName ?? 'root');
-
-	const content = isSingleKeyObject
-		? convertToXmlElement(parsedObj[actualRootName], actualRootName, opts)
-		: convertToXmlElement(parsed, opts.rootName ?? 'root', opts);
-
+	const { content } = determineXmlContent(parsed, opts);
+	const lineSep = opts.lineSeparator ?? '\n';
 	const indentation =
 		opts.indent === 0 ? '' : opts.indentType === 'tabs' ? '\t' : ' '.repeat(opts.indent ?? 2);
 
-	const lineSep = opts.lineSeparator ?? '\n';
-
-	const declaration = opts.declaration
-		? `<?xml version="${opts.declarationVersion ?? '1.0'}" encoding="${opts.declarationEncoding ?? 'UTF-8'}"${opts.declarationStandalone ? ` standalone="${opts.declarationStandalone}"` : ''}?>${lineSep}`
-		: '';
-
+	const declaration = buildXmlDeclaration(opts, lineSep);
 	const headerComment = opts.headerComment ? `<!-- ${opts.headerComment} -->${lineSep}` : '';
 
 	const formattedXml = xmlFormatter(content, {
@@ -1132,26 +1194,26 @@ export const calculateXmlStats = (input: string): XmlStats => {
 // XPath Query
 // ============================================================================
 
-const collectXPathResults = (result: XPathResult): string[] => {
-	const results: string[] = [];
+const iterateXPathResult = function* (result: XPathResult): Generator<Node> {
 	let node = result.iterateNext();
-
 	while (node !== null) {
-		const content =
+		yield node;
+		node = result.iterateNext();
+	}
+};
+
+const collectXPathResults = (result: XPathResult): string[] =>
+	Array.from(iterateXPathResult(result))
+		.map((node) =>
 			node.nodeType === Node.ELEMENT_NODE
 				? new XMLSerializer().serializeToString(node)
 				: node.nodeType === Node.ATTRIBUTE_NODE
 					? (node as Attr).value
 					: node.nodeType === Node.TEXT_NODE
 						? (node.textContent ?? '')
-						: null;
-
-		if (content !== null) results.push(content);
-		node = result.iterateNext();
-	}
-
-	return results;
-};
+						: null
+		)
+		.filter((content): content is string => content !== null);
 
 export const executeXPath = (input: string, xpath: string): string[] => {
 	const doc = new DOMParser().parseFromString(input, 'application/xml');
@@ -1205,7 +1267,7 @@ export const xmlToJson = (input: string, options: XmlToJsonOptions = {}): string
 	const doc = new DOMParser().parseFromString(input, 'application/xml');
 	const parserError = doc.querySelector('parsererror');
 	if (parserError) {
-		throw new Error('Invalid XML: ' + parserError.textContent);
+		throw new Error(`Invalid XML: ${parserError.textContent}`);
 	}
 	const data = { [doc.documentElement.nodeName]: convertXmlElementToObject(doc.documentElement) };
 	const sortedData = options.sortKeys ? sortKeysDeep(data) : data;
@@ -1216,7 +1278,7 @@ export const xmlToJsonObject = (input: string): unknown => {
 	const doc = new DOMParser().parseFromString(input, 'application/xml');
 	const parserError = doc.querySelector('parsererror');
 	if (parserError) {
-		throw new Error('Invalid XML: ' + parserError.textContent);
+		throw new Error(`Invalid XML: ${parserError.textContent}`);
 	}
 	return { [doc.documentElement.nodeName]: convertXmlElementToObject(doc.documentElement) };
 };
@@ -1230,7 +1292,7 @@ export const xmlToYaml = (input: string, options: XmlToYamlOptions | number = {}
 	const doc = new DOMParser().parseFromString(input, 'application/xml');
 	const parserError = doc.querySelector('parsererror');
 	if (parserError) {
-		throw new Error('Invalid XML: ' + parserError.textContent);
+		throw new Error(`Invalid XML: ${parserError.textContent}`);
 	}
 
 	const data = { [doc.documentElement.nodeName]: convertXmlElementToObject(doc.documentElement) };

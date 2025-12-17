@@ -1,17 +1,18 @@
 <script lang="ts">
-	import OptionsSection from '$lib/components/options/options-section.svelte';
+	
+	import type { ContextMenuItem } from '$lib/components/editors/code-editor.svelte';
 	import OptionCheckbox from '$lib/components/options/option-checkbox.svelte';
 	import OptionSelect from '$lib/components/options/option-select.svelte';
+import OptionsSection from '$lib/components/options/options-section.svelte';
 	import { FormatTabBase } from '$lib/components/tool/index.js';
-	import type { ContextMenuItem } from '$lib/components/editors/code-editor.svelte';
 	import {
+		defaultXmlFormatOptions,
 		formatXml,
 		minifyXml,
-		defaultXmlFormatOptions,
 		SAMPLE_XML,
 		type XmlFormatOptions,
 	} from '$lib/services/formatters.js';
-	import { downloadTextFile, copyToClipboard, pasteFromClipboard } from '../utils.js';
+	import { copyToClipboard, downloadTextFile, pasteFromClipboard } from '../utils.js';
 
 	interface Props {
 		input: string;
@@ -40,7 +41,7 @@
 	let sortAttributes = $state(defaultXmlFormatOptions.sortAttributes);
 
 	// Derived numeric values
-	const indentSize = $derived(parseInt(indentSizeStr) || 2);
+	const indentSize = $derived(Number.parseInt(indentSizeStr, 10) || 2);
 
 	// Format options object
 	const formatOptions = $derived<Partial<XmlFormatOptions>>({

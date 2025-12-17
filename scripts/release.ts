@@ -134,7 +134,7 @@ const checkoutMain = (): void => {
 };
 
 // User interaction
-const prompt = async (question: string): Promise<string> => {
+const prompt = (question: string): Promise<string> => {
 	const rl = readline.createInterface({
 		input: process.stdin,
 		output: process.stdout,
@@ -157,7 +157,7 @@ const selectReleaseType = async (currentVersion: string): Promise<ReleaseType> =
 	});
 
 	const answer = await prompt('\nEnter choice (1-3): ');
-	const choice = parseInt(answer, 10);
+	const choice = Number.parseInt(answer, 10);
 
 	if (choice < 1 || choice > 3) {
 		console.error('Invalid choice. Aborting.');

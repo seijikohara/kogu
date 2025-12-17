@@ -1,5 +1,5 @@
-import { toast } from 'svelte-sonner';
 import { readText, writeText } from '@tauri-apps/plugin-clipboard-manager';
+import { toast } from 'svelte-sonner';
 
 // ============================================================================
 // Types
@@ -9,6 +9,31 @@ interface FileTypeInfo {
 	description: string;
 	mimeType: string;
 	extensions: string[];
+}
+
+// File System Access API types
+interface FilePickerAcceptType {
+	description: string;
+	accept: Record<string, string[]>;
+}
+
+interface SaveFilePickerOptions {
+	suggestedName?: string;
+	types?: FilePickerAcceptType[];
+}
+
+interface FileSystemWritableFileStream extends WritableStream {
+	write(data: string | BufferSource | Blob): Promise<void>;
+	close(): Promise<void>;
+}
+
+interface FileSystemFileHandle {
+	readonly name: string;
+	createWritable(): Promise<FileSystemWritableFileStream>;
+}
+
+interface WindowWithFileSystemAccess extends Window {
+	showSaveFilePicker?: (options?: SaveFilePickerOptions) => Promise<FileSystemFileHandle>;
 }
 
 // ============================================================================
@@ -56,14 +81,20 @@ export const getFileTypeInfo = (filename: string): FileTypeInfo => {
 // File System Access API Helpers
 // ============================================================================
 
-const hasFileSystemAccessAPI = (): boolean => 'showSaveFilePicker' in window;
+const typedWindow = window as WindowWithFileSystemAccess;
+
+const hasFileSystemAccessAPI = (): boolean => typedWindow.showSaveFilePicker !== undefined;
 
 const saveWithFileSystemAPI = async (
 	content: string,
 	filename: string,
 	fileInfo: FileTypeInfo
 ): Promise<void> => {
-	const options = {
+	if (!typedWindow.showSaveFilePicker) {
+		throw new Error('File System Access API not available');
+	}
+
+	const options: SaveFilePickerOptions = {
 		suggestedName: filename,
 		types: [
 			{
@@ -72,8 +103,7 @@ const saveWithFileSystemAPI = async (
 			},
 		],
 	};
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	const handle = await (window as any).showSaveFilePicker(options);
+	const handle = await typedWindow.showSaveFilePicker(options);
 	const writable = await handle.createWritable();
 	await writable.write(content);
 	await writable.close();

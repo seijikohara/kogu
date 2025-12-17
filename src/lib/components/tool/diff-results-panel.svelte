@@ -1,10 +1,10 @@
 <script lang="ts">
-	import { Plus, Minus, RefreshCw } from '@lucide/svelte';
+	import { Minus, Plus, RefreshCw } from '@lucide/svelte';
 	import {
-		type DiffType,
-		type DiffSummary,
-		getDiffTypeClass,
 		calculateDiffSummary,
+		type DiffSummary,
+		type DiffType,
+		getDiffTypeClass,
 	} from '$lib/constants/diff.js';
 
 	interface DiffItem {

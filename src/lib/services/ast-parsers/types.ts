@@ -91,11 +91,11 @@ export const findNodeByPath = (root: AstNode | null, targetPath: string): AstNod
 	if (root.path === targetPath) return root;
 	if (!root.children) return null;
 
-	for (const child of root.children) {
-		const found = findNodeByPath(child, targetPath);
-		if (found) return found;
-	}
-	return null;
+	return (
+		root.children
+			.map((child) => findNodeByPath(child, targetPath))
+			.find((found) => found !== null) ?? null
+	);
 };
 
 /** Helper to find node containing a line number */

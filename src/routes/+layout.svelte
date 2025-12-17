@@ -1,10 +1,10 @@
 <script lang="ts">
 	import '../app.css';
-	import * as Sidebar from '$lib/components/ui/sidebar/index.js';
-	import { AppSidebar, TitleBar } from '$lib/components/layout/index.js';
-	import { Sonner } from '$lib/components/ui/sonner/index.js';
 	import { ModeWatcher } from 'mode-watcher';
 	import { onMount } from 'svelte';
+	import { AppSidebar, TitleBar } from '$lib/components/layout/index.js';
+	import * as Sidebar from '$lib/components/ui/sidebar/index.js';
+	import { Sonner } from '$lib/components/ui/sonner/index.js';
 
 	let { children } = $props();
 

@@ -12,10 +12,16 @@ Always use Svelte 5 runes. Never use legacy `$:` or `export let`:
 
 ```svelte
 <script lang="ts">
-	// Reactive state
+	// Reactive state (deep reactivity by default)
 	let count = $state(0);
 	let items = $state<string[]>([]);
 	let user = $state<User | null>(null);
+
+	// Raw state (no deep reactivity, better performance for large arrays)
+	let largeList = $state.raw<Item[]>([]);
+
+	// Snapshot (for external libraries that don't expect proxies)
+	const plainData = $state.snapshot(items);
 
 	// Bindable state (for two-way binding)
 	let { value = $bindable('') }: Props = $props();
@@ -73,7 +79,7 @@ Always use Svelte 5 runes. Never use legacy `$:` or `export let`:
 
 ```svelte
 <script lang="ts">
-	// Side effects
+	// Side effects (for external libraries, canvas, network requests)
 	$effect(() => {
 		console.log(`Count changed: ${count}`);
 
@@ -83,12 +89,14 @@ Always use Svelte 5 runes. Never use legacy `$:` or `export let`:
 		};
 	});
 
-	// Pre-effect (runs before DOM updates)
+	// Pre-effect (runs before DOM updates, useful for autoscroll)
 	$effect.pre(() => {
 		// ...
 	});
 </script>
 ```
+
+> **Warning**: Do NOT update `$state` inside `$effect`. This leads to convoluted code and infinite update cycles. Use `$derived` instead for computed values.
 
 ## Component Structure
 
@@ -292,22 +300,27 @@ Import from `$lib/components/ui/`:
 Always include proper ARIA attributes:
 
 ```svelte
-<button
-	type="button"
-	role="button"
-	tabindex="0"
-	aria-label="Close dialog"
-	aria-expanded={isOpen}
-	onclick={handleClick}
-	onkeydown={(e) => e.key === 'Enter' && handleClick()}
->
+<script lang="ts">
+	// Generate unique ID for form associations
+	const uid = $props.id();
+</script>
+
+<!-- Form accessibility with $props.id() -->
+<label for={uid}>Email</label>
+<input id={uid} type="email" />
+
+<!-- Button with icon (needs aria-label) -->
+<button type="button" aria-label="Close dialog" aria-expanded={isOpen} onclick={handleClick}>
 	<XIcon />
 </button>
 
+<!-- Custom interactive elements need explicit roles -->
 <div role="treeitem" aria-selected={isSelected} aria-expanded={isExpandable ? expanded : undefined}>
 	<!-- tree item content -->
 </div>
 ```
+
+> **Note**: Native HTML elements like `<button>` have implicit roles. Don't add `role="button"` to `<button>` elements.
 
 ## User Feedback
 

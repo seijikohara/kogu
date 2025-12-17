@@ -1,6 +1,7 @@
 <script lang="ts">
-	import ValidityBadge from '$lib/components/feedback/validity-badge.svelte';
+	
 	import type { Snippet } from 'svelte';
+import ValidityBadge from '$lib/components/feedback/validity-badge.svelte';
 
 	interface StatItem {
 		label: string;

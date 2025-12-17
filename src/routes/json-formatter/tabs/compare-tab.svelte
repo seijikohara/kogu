@@ -1,15 +1,16 @@
 <script lang="ts">
-	import { Label } from '$lib/components/ui/label/index.js';
-	import { Input } from '$lib/components/ui/input/index.js';
+	
 	import OptionCheckbox from '$lib/components/options/option-checkbox.svelte';
 	import { CompareTabBase } from '$lib/components/tool/index.js';
+	import { Input } from '$lib/components/ui/input/index.js';
+import { Label } from '$lib/components/ui/label/index.js';
+	import type { GenericDiffItem } from '$lib/constants/diff.js';
 	import {
 		findJsonDifferences,
-		validateJson,
-		type JsonInputFormat,
 		type JsonDiffOptions,
+		type JsonInputFormat,
+		validateJson,
 	} from '$lib/services/formatters.js';
-	import type { GenericDiffItem } from '$lib/constants/diff.js';
 	import { pasteFromClipboard } from '../utils.js';
 
 	interface Props {
@@ -65,73 +66,92 @@
 		return findJsonDifferences(input1, input2, diffOptions);
 	};
 
+	// Types for line search state
+	interface SearchState {
+		found: number | null;
+		pathStack: string[];
+		currentArrayIndex: number;
+	}
+
+	/** Handle key match in JSON line */
+	const handleKeyMatch = (
+		key: string,
+		line: string,
+		lineNum: number,
+		state: SearchState,
+		targetPath: string
+	): SearchState | null => {
+		const currentPath = [...state.pathStack, key].join('.');
+		if (currentPath === targetPath) return { ...state, found: lineNum };
+
+		if (line.endsWith('{') || line.endsWith('[')) {
+			return {
+				...state,
+				pathStack: [...state.pathStack, key],
+				currentArrayIndex: line.endsWith('[') ? 0 : state.currentArrayIndex,
+			};
+		}
+		return null;
+	};
+
+	/** Handle array element start */
+	const handleArrayStart = (lineNum: number, state: SearchState, targetPath: string): SearchState => {
+		const arrayPath = [...state.pathStack, String(state.currentArrayIndex)].join('.');
+		if (arrayPath === targetPath) return { ...state, found: lineNum };
+		return { ...state, currentArrayIndex: state.currentArrayIndex + 1 };
+	};
+
+	/** Handle closing bracket */
+	const handleClosingBracket = (line: string, state: SearchState): SearchState => {
+		const isArrayClose = line.startsWith(']') || line === '],';
+		const isObjectClose = line.startsWith('}') || line === '},';
+
+		if (isArrayClose) {
+			return state.pathStack.length > 0
+				? { ...state, pathStack: state.pathStack.slice(0, -1), currentArrayIndex: -1 }
+				: { ...state, currentArrayIndex: -1 };
+		}
+		if (isObjectClose && state.pathStack.length > 0 && !line.includes('[')) {
+			return { ...state, pathStack: state.pathStack.slice(0, -1) };
+		}
+		return state;
+	};
+
+	/** Process a single line in JSON search */
+	const processSearchLine = (state: SearchState, line: string, lineNum: number, targetPath: string): SearchState => {
+		if (state.found !== null) return state;
+
+		const keyMatch = line.match(/^"([^"]+)"\s*:/);
+		if (keyMatch?.[1] !== undefined) {
+			const result = handleKeyMatch(keyMatch[1], line, lineNum, state, targetPath);
+			if (result) return result;
+		}
+
+		if (line === '{' && state.currentArrayIndex >= 0) {
+			return handleArrayStart(lineNum, state, targetPath);
+		}
+
+		return handleClosingBracket(line, state);
+	};
+
 	// Find line number for a JSON path in a JSON string
 	const findLineForPath = (jsonStr: string, targetPath: string): number | null => {
 		if (!jsonStr?.trim() || !targetPath) return null;
 
-		const lines = jsonStr.split('\n');
-		const pathParts = targetPath
-			.replace(/^\$\.?/, '')
-			.split(/\.|\[/)
-			.filter(Boolean);
-
+		const pathParts = targetPath.replace(/^\$\.?/, '').split(/\.|\[/).filter(Boolean);
 		if (pathParts.length === 0) return 1;
 
 		const targetPathNormalized = pathParts.map((p) => p.replace(/\]$/, '')).join('.');
+		const lines = jsonStr.split('\n');
+		const initialState: SearchState = { found: null, pathStack: [], currentArrayIndex: -1 };
 
-		interface ParseState {
-			pathStack: string[];
-			currentArrayIndex: number;
-			foundLine: number | null;
-		}
-
-		const result = lines.reduce<ParseState>(
-			(acc, rawLine, i) => {
-				if (acc.foundLine !== null) return acc;
-
-				const line = rawLine.trim();
-				const lineNum = i + 1;
-
-				const keyMatch = line.match(/^"([^"]+)"\s*:/);
-				if (keyMatch) {
-					const key = keyMatch[1];
-					const currentPath = [...acc.pathStack, key].join('.');
-
-					if (currentPath === targetPathNormalized) {
-						return { ...acc, foundLine: lineNum };
-					}
-
-					if (line.endsWith('{') || line.endsWith('[')) {
-						const newStack = [...acc.pathStack, key];
-						const newArrayIndex = line.endsWith('[') ? 0 : acc.currentArrayIndex;
-						return { ...acc, pathStack: newStack, currentArrayIndex: newArrayIndex };
-					}
-				}
-
-				if (line === '{' && acc.currentArrayIndex >= 0) {
-					const arrayPath = [...acc.pathStack, `${acc.currentArrayIndex}]`].join('.');
-					if (arrayPath.replace(/\]$/, '') === targetPathNormalized) {
-						return { ...acc, foundLine: lineNum };
-					}
-					return { ...acc, currentArrayIndex: acc.currentArrayIndex + 1 };
-				}
-
-				if (line.startsWith('}') || line === '},') {
-					if (acc.pathStack.length > 0 && !line.includes('[')) {
-						return { ...acc, pathStack: acc.pathStack.slice(0, -1) };
-					}
-				}
-				if (line.startsWith(']') || line === '],') {
-					const newStack = acc.pathStack.length > 0 ? acc.pathStack.slice(0, -1) : acc.pathStack;
-					return { ...acc, currentArrayIndex: -1, pathStack: newStack };
-				}
-
-				return acc;
-			},
-			{ pathStack: [], currentArrayIndex: -1, foundLine: null }
+		const result = lines.reduce<SearchState>(
+			(acc, rawLine, i) =>
+				rawLine === undefined ? acc : processSearchLine(acc, rawLine.trim(), i + 1, targetPathNormalized),
+			initialState
 		);
 
-		return result.foundLine;
+		return result.found;
 	};
 
 	// Stats handler wrapper to include format

@@ -1,13 +1,14 @@
 <script lang="ts">
-	import { toast } from 'svelte-sonner';
-	import { Button } from '$lib/components/ui/button/index.js';
+	
+	import { FileCheck, Wand2 } from '@lucide/svelte';
+import { toast } from 'svelte-sonner';
+	import SplitPane from '$lib/components/layout/split-pane.svelte';
+	import OptionCheckbox from '$lib/components/options/option-checkbox.svelte';
 	import OptionsPanel from '$lib/components/options/options-panel.svelte';
 	import OptionsSection from '$lib/components/options/options-section.svelte';
-	import OptionCheckbox from '$lib/components/options/option-checkbox.svelte';
-	import SplitPane from '$lib/components/layout/split-pane.svelte';
 	import { EditorPane } from '$lib/components/tool/index.js';
-	import { FileCheck, Wand2 } from '@lucide/svelte';
-	import { downloadTextFile, copyToClipboard, pasteFromClipboard } from '../utils.js';
+	import { Button } from '$lib/components/ui/button/index.js';
+	import { copyToClipboard, downloadTextFile, pasteFromClipboard } from '../utils.js';
 
 	interface Props {
 		input: string;
@@ -59,60 +60,71 @@
 				if (!elements.has(tagName)) {
 					elements.set(tagName, { attributes: new Set(), children: new Set() });
 				}
-				const info = elements.get(tagName)!;
+				const info = elements.get(tagName);
+				if (!info) return;
 
 				// Collect attributes
-				for (const attr of element.attributes) {
-					info.attributes.add(attr.name);
-				}
+				Array.from(element.attributes).forEach((attr) => info.attributes.add(attr.name));
 
 				// Collect child elements
-				for (const child of element.children) {
+				Array.from(element.children).forEach((child) => {
 					info.children.add(child.tagName);
 					analyzeElement(child);
-				}
+				});
 			};
 
 			analyzeElement(rootElement);
 
 			// Generate XSD
-			let xsd = `<?xml version="1.0" encoding="UTF-8"?>
+			const header = `<?xml version="1.0" encoding="UTF-8"?>
 <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
 
 `;
 
 			// Generate element definitions
-			for (const [tagName, info] of elements) {
-				xsd += `  <xs:element name="${tagName}">\n`;
-				xsd += `    <xs:complexType>\n`;
+			const elementDefs = Array.from(elements.entries())
+				.map(([tagName, info]) => {
+					const childrenSeq =
+						info.children.size > 0
+							? [
+									'      <xs:sequence>',
+									...Array.from(info.children).map(
+										(child) =>
+											`        <xs:element ref="${child}" minOccurs="0" maxOccurs="unbounded"/>`
+									),
+									'      </xs:sequence>',
+								].join('\n')
+							: [
+									'      <xs:simpleContent>',
+									'        <xs:extension base="xs:string">',
+									...Array.from(info.attributes).map(
+										(attr) => `          <xs:attribute name="${attr}" type="xs:string"/>`
+									),
+									'        </xs:extension>',
+									'      </xs:simpleContent>',
+								].join('\n');
 
-				if (info.children.size > 0) {
-					xsd += `      <xs:sequence>\n`;
-					for (const child of info.children) {
-						xsd += `        <xs:element ref="${child}" minOccurs="0" maxOccurs="unbounded"/>\n`;
-					}
-					xsd += `      </xs:sequence>\n`;
-				} else {
-					xsd += `      <xs:simpleContent>\n`;
-					xsd += `        <xs:extension base="xs:string">\n`;
-					for (const attr of info.attributes) {
-						xsd += `          <xs:attribute name="${attr}" type="xs:string"/>\n`;
-					}
-					xsd += `        </xs:extension>\n`;
-					xsd += `      </xs:simpleContent>\n`;
-				}
+					const topLevelAttrs =
+						info.children.size > 0 && info.attributes.size > 0
+							? Array.from(info.attributes)
+									.map((attr) => `      <xs:attribute name="${attr}" type="xs:string"/>`)
+									.join('\n')
+							: '';
 
-				if (info.children.size > 0 && info.attributes.size > 0) {
-					for (const attr of info.attributes) {
-						xsd += `      <xs:attribute name="${attr}" type="xs:string"/>\n`;
-					}
-				}
+					return [
+						`  <xs:element name="${tagName}">`,
+						'    <xs:complexType>',
+						childrenSeq,
+						topLevelAttrs,
+						'    </xs:complexType>',
+						'  </xs:element>',
+					]
+						.filter(Boolean)
+						.join('\n');
+				})
+				.join('\n\n');
 
-				xsd += `    </xs:complexType>\n`;
-				xsd += `  </xs:element>\n\n`;
-			}
-
-			xsd += `</xs:schema>`;
+			const xsd = `${header}${elementDefs}\n\n</xs:schema>`;
 
 			return xsd;
 		} catch (e) {
@@ -163,7 +175,7 @@
 			const xmlDoc = parser.parseFromString(input, 'application/xml');
 			const xmlError = xmlDoc.querySelector('parsererror');
 			if (xmlError) {
-				schemaError = 'Invalid XML: ' + xmlError.textContent;
+				schemaError = `Invalid XML: ${xmlError.textContent}`;
 				schemaValidationResult = null;
 				return;
 			}
@@ -172,7 +184,7 @@
 			const xsdDoc = parser.parseFromString(schemaDefinition, 'application/xml');
 			const xsdError = xsdDoc.querySelector('parsererror');
 			if (xsdError) {
-				schemaError = 'Invalid XSD schema: ' + xsdError.textContent;
+				schemaError = `Invalid XSD schema: ${xsdError.textContent}`;
 				schemaValidationResult = null;
 				return;
 			}
@@ -183,12 +195,11 @@
 			// Check if root element is defined in schema
 			const rootElement = xmlDoc.documentElement;
 			const schemaElements = xsdDoc.querySelectorAll('element');
-			const definedElements = new Set<string>();
-
-			schemaElements.forEach((el) => {
-				const name = el.getAttribute('name');
-				if (name) definedElements.add(name);
-			});
+			const definedElements = new Set(
+				Array.from(schemaElements)
+					.map((el) => el.getAttribute('name'))
+					.filter((name): name is string => name !== null)
+			);
 
 			// Validate elements exist in schema
 			const checkElements = (element: Element, path: string) => {
@@ -207,9 +218,9 @@
 					}
 				}
 
-				for (const child of element.children) {
-					checkElements(child, `${path}/${tagName}`);
-				}
+				Array.from(element.children).forEach((child) =>
+					checkElements(child, `${path}/${tagName}`)
+				);
 			};
 
 			checkElements(rootElement, '');

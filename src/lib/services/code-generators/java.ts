@@ -1,5 +1,5 @@
 import type { CodeGenerator, JavaOptions, JsonValue, TypeInfo } from './types.js';
-import { inferType, toPascalCase, toCamelCase, generateWithNestedTypes } from './utils.js';
+import { generateWithNestedTypes, inferType, toCamelCase, toPascalCase } from './utils.js';
 
 // ============================================================================
 // Constants
@@ -241,8 +241,9 @@ const generateImports = (options: JavaOptions): string[] => {
 		gson: 'import com.google.gson.annotations.SerializedName;',
 		moshi: 'import com.squareup.moshi.Json;',
 	};
-	if (serializationImports[options.serializationLibrary]) {
-		imports.push(serializationImports[options.serializationLibrary]);
+	const serializationImport = serializationImports[options.serializationLibrary];
+	if (serializationImport) {
+		imports.push(serializationImport);
 	}
 
 	if (options.classStyle === 'lombok') {

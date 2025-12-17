@@ -62,10 +62,12 @@ src-tauri/            # Tauri (Rust) backend
 See `.claude/rules/` for comprehensive guidelines:
 
 - `typescript.md` - TypeScript conventions (mandatory rules)
+- `rust.md` - Rust conventions (mandatory rules)
 - `svelte/components.md` - Svelte 5 component patterns
 - `css/tailwind.md` - Tailwind CSS guidelines
 - `general/git.md` - Git conventions
 - `general/pr.md` - PR guidelines
 - `tauri/commands.md` - Tauri command patterns
-- `testing/unit.md` - Unit testing
+- `testing/typescript.md` - TypeScript/Svelte testing
+- `testing/rust.md` - Rust testing
 - `testing/e2e.md` - E2E testing

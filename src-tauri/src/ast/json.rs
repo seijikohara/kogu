@@ -30,7 +30,7 @@ impl<'a> JsonParser<'a> {
         self.chars.get(self.pos).copied()
     }
 
-    fn advance(&mut self) {
+    const fn advance(&mut self) {
         if self.pos < self.chars.len() {
             self.pos += 1;
         }
@@ -64,10 +64,10 @@ impl<'a> JsonParser<'a> {
             Some('{') => self.parse_object(path, start_offset),
             Some('[') => self.parse_array(path, start_offset),
             Some('"') => self.parse_string(path, start_offset),
-            Some('t') | Some('f') => self.parse_boolean(path, start_offset),
+            Some('t' | 'f') => self.parse_boolean(path, start_offset),
             Some('n') => self.parse_null(path, start_offset),
             Some(c) if c == '-' || c.is_ascii_digit() => self.parse_number(path, start_offset),
-            Some(c) => Err(self.error(&format!("Unexpected character: '{}'", c))),
+            Some(c) => Err(self.error(&format!("Unexpected character: '{c}'"))),
             None => Err(self.error("Unexpected end of input")),
         }
     }
@@ -100,7 +100,7 @@ impl<'a> JsonParser<'a> {
                 self.advance();
 
                 // Parse value
-                let child_path = format!("{}.{}", path, key);
+                let child_path = format!("{path}.{key}");
                 let value_node = self.parse_value(&child_path)?;
 
                 // Create property node
@@ -122,7 +122,7 @@ impl<'a> JsonParser<'a> {
                         prop_node = prop_node.with_children(vec![value_node]);
                     }
                     _ => {
-                        prop_node.value = value_node.value.clone();
+                        prop_node.value.clone_from(&value_node.value);
                         prop_node.node_type = value_node.node_type.clone();
                     }
                 }
@@ -132,10 +132,7 @@ impl<'a> JsonParser<'a> {
                 self.skip_whitespace();
 
                 match self.current() {
-                    Some(',') => {
-                        self.advance();
-                        continue;
-                    }
+                    Some(',') => self.advance(),
                     Some('}') => break,
                     _ => return Err(self.error("Expected ',' or '}'")),
                 }
@@ -163,7 +160,7 @@ impl<'a> JsonParser<'a> {
 
         if self.current() != Some(']') {
             loop {
-                let child_path = format!("{}[{}]", path, index);
+                let child_path = format!("{path}[{index}]");
                 let item = self.parse_value(&child_path)?;
                 children.push(item);
                 index += 1;
@@ -171,10 +168,7 @@ impl<'a> JsonParser<'a> {
                 self.skip_whitespace();
 
                 match self.current() {
-                    Some(',') => {
-                        self.advance();
-                        continue;
-                    }
+                    Some(',') => self.advance(),
                     Some(']') => break,
                     _ => return Err(self.error("Expected ',' or ']'")),
                 }
@@ -201,7 +195,7 @@ impl<'a> JsonParser<'a> {
         let label = if value.len() > 50 {
             format!("\"{}...\"", &value[..47])
         } else {
-            format!("\"{}\"", value)
+            format!("\"{value}\"")
         };
 
         Ok(
@@ -307,11 +301,11 @@ impl<'a> JsonParser<'a> {
         }
 
         // Exponent part
-        if let Some('e') | Some('E') = self.current() {
-            num_str.push(self.current().unwrap());
+        if let Some(c @ ('e' | 'E')) = self.current() {
+            num_str.push(c);
             self.advance();
-            if let Some('+') | Some('-') = self.current() {
-                num_str.push(self.current().unwrap());
+            if let Some(c @ ('+' | '-')) = self.current() {
+                num_str.push(c);
                 self.advance();
             }
             while let Some(c) = self.current() {
@@ -346,7 +340,7 @@ impl<'a> JsonParser<'a> {
         let expected = if is_true { "true" } else { "false" };
         for expected_char in expected.chars() {
             if self.current() != Some(expected_char) {
-                return Err(self.error(&format!("Expected '{}'", expected)));
+                return Err(self.error(&format!("Expected '{expected}'")));
             }
             self.advance();
         }

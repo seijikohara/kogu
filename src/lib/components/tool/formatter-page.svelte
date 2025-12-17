@@ -1,8 +1,8 @@
 <script lang="ts" generics="T extends string, TStats">
-	import type { Snippet, Component } from 'svelte';
-	import { PageHeader } from '$lib/components/layout/index.js';
-	import { page } from '$app/state';
+	import type { Component, Snippet } from 'svelte';
 	import { goto } from '$app/navigation';
+	import { page } from '$app/state';
+	import { PageHeader } from '$lib/components/layout/index.js';
 
 	interface TabDefinition {
 		readonly value: T;

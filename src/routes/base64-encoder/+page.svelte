@@ -1,15 +1,16 @@
 <script lang="ts">
-	import OptionsPanel from '$lib/components/options/options-panel.svelte';
-	import OptionsSection from '$lib/components/options/options-section.svelte';
-	import OptionSelect from '$lib/components/options/option-select.svelte';
+	
 	import { PageHeader, SplitPane } from '$lib/components/layout/index.js';
+	import OptionSelect from '$lib/components/options/option-select.svelte';
+import OptionsPanel from '$lib/components/options/options-panel.svelte';
+	import OptionsSection from '$lib/components/options/options-section.svelte';
 	import { EditorPane } from '$lib/components/tool/index.js';
 	import {
-		encodeToBase64,
-		decodeFromBase64,
-		calculateBase64Stats,
-		SAMPLE_TEXT_FOR_BASE64,
 		type Base64Stats,
+		calculateBase64Stats,
+		decodeFromBase64,
+		encodeToBase64,
+		SAMPLE_TEXT_FOR_BASE64,
 	} from '$lib/services/encoders.js';
 
 	type Mode = 'encode' | 'decode';
