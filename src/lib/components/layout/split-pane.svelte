@@ -29,19 +29,35 @@
 
 <PaneGroup {direction} class="h-full flex-1 {className}">
 	{#if direction === 'horizontal'}
-		<Pane defaultSize={defaultSizes[0]} minSize={minSizes[0]} class="flex h-full flex-col overflow-hidden">
+		<Pane
+			defaultSize={defaultSizes[0]}
+			minSize={minSizes[0]}
+			class="flex h-full flex-col overflow-hidden"
+		>
 			{@render left?.()}
 		</Pane>
 		<Handle withHandle />
-		<Pane defaultSize={defaultSizes[1]} minSize={minSizes[1]} class="flex h-full flex-col overflow-hidden">
+		<Pane
+			defaultSize={defaultSizes[1]}
+			minSize={minSizes[1]}
+			class="flex h-full flex-col overflow-hidden"
+		>
 			{@render right?.()}
 		</Pane>
 	{:else}
-		<Pane defaultSize={defaultSizes[0]} minSize={minSizes[0]} class="flex h-full flex-col overflow-hidden">
+		<Pane
+			defaultSize={defaultSizes[0]}
+			minSize={minSizes[0]}
+			class="flex h-full flex-col overflow-hidden"
+		>
 			{@render top?.()}
 		</Pane>
 		<Handle withHandle />
-		<Pane defaultSize={defaultSizes[1]} minSize={minSizes[1]} class="flex h-full flex-col overflow-hidden">
+		<Pane
+			defaultSize={defaultSizes[1]}
+			minSize={minSizes[1]}
+			class="flex h-full flex-col overflow-hidden"
+		>
 			{@render bottom?.()}
 		</Pane>
 	{/if}

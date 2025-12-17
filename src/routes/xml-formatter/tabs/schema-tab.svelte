@@ -331,7 +331,7 @@
 				onchange={onInputChange}
 				mode="input"
 				editorMode="xml"
-				placeholder="Paste XML here..."
+				placeholder="Enter XML here..."
 				onpaste={handlePaste}
 				onclear={handleClear}
 			/>
@@ -353,7 +353,7 @@
 					bind:value={schemaDefinition}
 					mode="input"
 					editorMode="xml"
-					placeholder="Paste XSD schema here..."
+					placeholder="Enter XSD schema here..."
 					onpaste={async () => {
 						schemaDefinition = await navigator.clipboard.readText();
 						toast.success('Pasted');

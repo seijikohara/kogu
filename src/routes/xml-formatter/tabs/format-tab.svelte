@@ -7,6 +7,7 @@
 		formatXml,
 		minifyXml,
 		defaultXmlFormatOptions,
+		SAMPLE_XML,
 		type XmlFormatOptions,
 	} from '$lib/services/formatters.js';
 	import { downloadTextFile, copyToClipboard, pasteFromClipboard } from '../utils.js';
@@ -80,11 +81,12 @@
 	editorMode="xml"
 	{input}
 	{onInputChange}
-	placeholder="Paste XML here..."
+	placeholder="Enter XML here..."
 	{validate}
 	{format}
 	{onStatsChange}
 	downloadFilename="formatted.xml"
+	sampleData={SAMPLE_XML}
 	{copyToClipboard}
 	{pasteFromClipboard}
 	{downloadTextFile}

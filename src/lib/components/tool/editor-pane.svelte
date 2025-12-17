@@ -21,6 +21,7 @@
 		Columns2,
 		FileCode,
 		FileJson2,
+		FlaskConical,
 	} from '@lucide/svelte';
 	import * as yaml from 'yaml';
 	import { xmlToJson } from '$lib/services/formatters.js';
@@ -50,6 +51,7 @@
 		onchange?: (value: string) => void;
 		onpaste?: () => void;
 		onclear?: () => void;
+		onsample?: () => void;
 		oncopy?: () => void;
 		ondownload?: () => void;
 		actions?: Snippet;
@@ -72,6 +74,7 @@
 		onchange,
 		onpaste,
 		onclear,
+		onsample,
 		oncopy,
 		ondownload,
 		actions,
@@ -319,7 +322,7 @@
 			{/if}
 
 			{#if isInput}
-				<!-- Input actions: Paste, Clear -->
+				<!-- Input actions: Paste, Clear, Sample (all on left side) -->
 				<div class="flex items-center gap-0.5">
 					{#if onpaste}
 						<Button
@@ -345,37 +348,23 @@
 							<span class="hidden sm:inline">Clear</span>
 						</Button>
 					{/if}
+					{#if onsample}
+						<Button
+							variant="ghost"
+							size="sm"
+							class="h-6 gap-1 px-2 text-xs"
+							onclick={onsample}
+							title="Load sample data"
+						>
+							<FlaskConical class="h-3 w-3" />
+							<span class="hidden sm:inline">Sample</span>
+						</Button>
+					{/if}
 				</div>
 			{/if}
 
-			{#if actions}
-				{@render actions()}
-			{/if}
-		</div>
-
-		<div class="flex items-center gap-2">
 			{#if isOutput}
-				<!-- Output format selector -->
-				{#if formatOptions && formatOptions.length > 0}
-					<Select.Root
-						type="single"
-						value={selectedFormat}
-						onValueChange={(v) => handleFormatChange(v)}
-					>
-						<Select.Trigger class="h-6 w-auto min-w-[80px] gap-1 px-2 text-xs">
-							{selectedFormat
-								? (formatOptions.find((f) => f.value === selectedFormat)?.label ?? selectedFormat)
-								: 'Format'}
-						</Select.Trigger>
-						<Select.Content>
-							{#each formatOptions as option}
-								<Select.Item value={option.value}>{option.label}</Select.Item>
-							{/each}
-						</Select.Content>
-					</Select.Root>
-				{/if}
-
-				<!-- Output actions: Copy, Download -->
+				<!-- Output actions: Copy, Download (all on left side) -->
 				<div class="flex items-center gap-0.5">
 					{#if oncopy}
 						<Button
@@ -404,7 +393,35 @@
 				</div>
 			{/if}
 
-			<!-- View Toggle -->
+			{#if actions}
+				{@render actions()}
+			{/if}
+		</div>
+
+		<div class="flex items-center gap-2">
+			{#if isOutput}
+				<!-- Output format selector (right side) -->
+				{#if formatOptions && formatOptions.length > 0}
+					<Select.Root
+						type="single"
+						value={selectedFormat}
+						onValueChange={(v) => handleFormatChange(v)}
+					>
+						<Select.Trigger class="h-6 w-auto min-w-[80px] gap-1 px-2 text-xs">
+							{selectedFormat
+								? (formatOptions.find((f) => f.value === selectedFormat)?.label ?? selectedFormat)
+								: 'Format'}
+						</Select.Trigger>
+						<Select.Content>
+							{#each formatOptions as option}
+								<Select.Item value={option.value}>{option.label}</Select.Item>
+							{/each}
+						</Select.Content>
+					</Select.Root>
+				{/if}
+			{/if}
+
+			<!-- View Toggle (right side) -->
 			{#if showViewToggle && supportsTreeView}
 				<div class="flex items-center gap-0.5 rounded-md bg-muted/50 p-0.5">
 					<Button

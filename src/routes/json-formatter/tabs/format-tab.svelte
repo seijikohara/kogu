@@ -10,6 +10,7 @@
 		processJsonWithOptions,
 		JSON_FORMAT_OPTIONS,
 		JSON_FORMAT_INFO,
+		SAMPLE_JSON,
 		type JsonFormatOptions,
 		type JsonInputFormat,
 		type JsonOutputFormat,
@@ -163,7 +164,7 @@
 	editorMode="json"
 	{input}
 	{onInputChange}
-	placeholder="Paste JSON here..."
+	placeholder="Enter JSON here..."
 	{validate}
 	{format}
 	onStatsChange={handleStatsChange}
@@ -171,6 +172,7 @@
 	selectedOutputFormat={outputFormat}
 	onOutputFormatChange={(f) => (outputFormat = f as JsonOutputFormat)}
 	{downloadFilename}
+	sampleData={SAMPLE_JSON}
 	{copyToClipboard}
 	{pasteFromClipboard}
 	{downloadTextFile}

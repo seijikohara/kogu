@@ -46,7 +46,7 @@
 		outputEditorMode,
 		input,
 		onInputChange,
-		placeholder = 'Paste here...',
+		placeholder = 'Enter content here...',
 		validate,
 		convert,
 		onStatsChange,

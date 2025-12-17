@@ -1,7 +1,6 @@
 <script lang="ts" generics="T extends string, TStats">
 	import type { Snippet, Component } from 'svelte';
-	import * as Tabs from '$lib/components/ui/tabs/index.js';
-	import ValidityBadge from '$lib/components/feedback/validity-badge.svelte';
+	import { PageHeader } from '$lib/components/layout/index.js';
 	import { page } from '$app/state';
 	import { goto } from '$app/navigation';
 
@@ -47,26 +46,41 @@
 		tabContents,
 	}: Props = $props();
 
-	// Shared input across all tabs
-	let sharedInput = $state(defaultInput);
+	// Shared input across all tabs - initialize from props
+	let sharedInput = $state('');
+
+	// Initialize sharedInput on mount
+	$effect(() => {
+		if (sharedInput === '' && defaultInput) {
+			sharedInput = defaultInput;
+		}
+	});
+
 	const setSharedInput = (value: string) => {
 		sharedInput = value;
 	};
 
-	// Get initial tab from URL or default
-	const getInitialTab = (): T => {
+	// Active tab tracking
+	let activeTab = $state<T | null>(null);
+
+	// Get effective active tab (use defaultTab if not set)
+	const effectiveActiveTab = $derived(activeTab ?? defaultTab);
+
+	// Sync tab with URL
+	$effect(() => {
 		const tabParam = page.url.searchParams.get('tab');
 		if (tabParam && tabs.some((t) => t.value === tabParam)) {
-			return tabParam as T;
+			activeTab = tabParam as T;
+		} else if (!tabParam && activeTab !== null) {
+			activeTab = null; // Reset to use defaultTab
 		}
-		return defaultTab;
-	};
+	});
 
-	// Active tab tracking
-	let activeTab = $state<T>(getInitialTab());
+	// Convert tabs to PageHeader format (value -> id)
+	const pageHeaderTabs = $derived(tabs.map((t) => ({ id: t.value, label: t.label, icon: t.icon })));
 
 	// Sync activeTab with URL when it changes
-	const handleTabChange = (value: string | undefined): void => {
+	const handleTabChange = (value: string): void => {
 		if (!value) return;
 		const newTab = value as T;
 		activeTab = newTab;
@@ -79,26 +93,28 @@
 		goto(url.toString(), { replaceState: true, noScroll: true });
 	};
 
-	// React to URL changes (e.g., from search navigation)
-	$effect(() => {
-		const tabParam = page.url.searchParams.get('tab');
-		if (tabParam && tabs.some((t) => t.value === tabParam)) {
-			activeTab = tabParam as T;
-		} else if (!tabParam) {
-			activeTab = defaultTab;
-		}
-	});
-
-	// Stats from each tab
-	let tabStats = $state<Record<T, TabStats>>(
+	// Stats from each tab - use derived to initialize based on tabs prop
+	const initialTabStats = $derived(
 		Object.fromEntries(tabs.map((t) => [t.value, { input: '', valid: null, error: '' }])) as Record<
 			T,
 			TabStats
 		>
 	);
+	let tabStats = $state<Record<T, TabStats>>({} as Record<T, TabStats>);
+
+	// Initialize tabStats when tabs change
+	$effect(() => {
+		const currentKeys = Object.keys(tabStats);
+		const newKeys = tabs.map((t) => t.value);
+		if (currentKeys.length === 0 || !newKeys.every((k) => currentKeys.includes(k))) {
+			tabStats = { ...initialTabStats };
+		}
+	});
 
 	// Current tab stats
-	const currentStats = $derived(tabStats[activeTab]);
+	const currentStats = $derived(
+		tabStats[effectiveActiveTab] ?? { input: '', valid: null, error: '' }
+	);
 
 	// Live stats calculation (using shared input)
 	const liveStats = $derived.by((): TStats | null => {
@@ -117,52 +133,34 @@
 	};
 </script>
 
-<Tabs.Root
-	value={activeTab}
-	onValueChange={handleTabChange}
-	class="flex h-full flex-col overflow-hidden"
->
+<div class="flex h-full flex-col overflow-hidden">
 	<!-- Page header with tabs and stats -->
-	<header class="flex h-10 shrink-0 items-center justify-between border-b px-4">
-		<div class="flex items-center gap-4">
-			<h1 class="text-sm font-semibold">{title}</h1>
-			<Tabs.List class="h-8 rounded-md bg-muted p-1">
-				{#each tabs as tab (tab.value)}
-					<Tabs.Trigger
-						value={tab.value}
-						class="gap-1.5 rounded-sm px-3 text-xs hover:bg-foreground/5 data-[state=active]:bg-background data-[state=active]:shadow-sm"
-					>
-						<tab.icon class="h-3.5 w-3.5" />{tab.label}
-					</Tabs.Trigger>
-				{/each}
-			</Tabs.List>
-		</div>
-
-		<div class="flex items-center gap-3 text-xs">
-			{#if currentStats.error}
-				<span class="max-w-md truncate text-destructive" title={currentStats.error}
-					>{currentStats.error}</span
-				>
-			{:else if liveStats && statsSnippet}
+	<PageHeader
+		{title}
+		tabs={pageHeaderTabs}
+		activeTab={effectiveActiveTab}
+		ontabchange={handleTabChange}
+		valid={currentStats.valid}
+		error={currentStats.error}
+	>
+		{#snippet statusContent()}
+			{#if liveStats && statsSnippet}
 				{#if formatBadge}
 					{@render formatBadge()}
 				{/if}
 				{@render statsSnippet(liveStats)}
-			{:else}
-				<span class="text-muted-foreground/50">No input</span>
 			{/if}
-			<ValidityBadge valid={currentStats.valid} />
-		</div>
-	</header>
+		{/snippet}
+	</PageHeader>
 
 	<!-- Tab contents - using CSS visibility to preserve state across tab switches -->
 	{#each tabs as tab (tab.value)}
 		<div
-			class="flex-1 overflow-hidden {activeTab === tab.value ? 'flex' : 'hidden'}"
+			class="flex-1 overflow-hidden {effectiveActiveTab === tab.value ? 'flex' : 'hidden'}"
 			role="tabpanel"
 			aria-labelledby="tab-{tab.value}"
 		>
 			{@render tabContents(tab.value, sharedInput, setSharedInput, createStatsHandler(tab.value))}
 		</div>
 	{/each}
-</Tabs.Root>
+</div>
