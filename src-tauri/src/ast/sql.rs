@@ -658,7 +658,6 @@ fn truncate_string(s: &str, max_len: usize) -> String {
 }
 
 #[cfg(test)]
-#[allow(clippy::unwrap_used)]
 mod tests {
     use super::*;
 

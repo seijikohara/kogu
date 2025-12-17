@@ -12,8 +12,9 @@
 #![warn(missing_docs)]
 // Rust idioms
 #![warn(rust_2018_idioms)]
-// Clippy - Avoid panic-prone patterns
+// Clippy - Avoid panic-prone patterns (allow unwrap in tests)
 #![warn(clippy::unwrap_used)]
+#![cfg_attr(test, allow(clippy::unwrap_used))]
 #![warn(clippy::expect_used)]
 #![warn(clippy::panic)]
 #![warn(clippy::todo)]
@@ -84,24 +85,25 @@ fn parse_to_ast(text: &str, language: &str) -> Result<AstParseResult, String> {
 ///
 /// These panics are appropriate for an application entry point since the app
 /// cannot continue if initialization fails.
-// Allow expect_used: Entry point function - unrecoverable startup errors should panic
 // Allow large_stack_frames: tauri::generate_context!() macro generates unavoidably large stack data
-#[allow(clippy::expect_used, clippy::large_stack_frames)]
+#[allow(clippy::large_stack_frames)]
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-    let mut builder = tauri::Builder::default()
-        .plugin(tauri_plugin_opener::init())
-        .plugin(tauri_plugin_clipboard_manager::init())
-        .plugin(tauri_plugin_os::init())
-        .plugin(tauri_plugin_dialog::init())
-        .plugin(tauri_plugin_fs::init())
-        .plugin(tauri_plugin_decorum::init());
+    let builder = {
+        let base = tauri::Builder::default()
+            .plugin(tauri_plugin_opener::init())
+            .plugin(tauri_plugin_clipboard_manager::init())
+            .plugin(tauri_plugin_os::init())
+            .plugin(tauri_plugin_dialog::init())
+            .plugin(tauri_plugin_fs::init())
+            .plugin(tauri_plugin_decorum::init());
 
-    // MCP bridge plugin for AI-assisted debugging (development only)
-    #[cfg(debug_assertions)]
-    {
-        builder = builder.plugin(tauri_plugin_mcp_bridge::init());
-    }
+        // MCP bridge plugin for AI-assisted debugging (development only)
+        #[cfg(debug_assertions)]
+        let base = base.plugin(tauri_plugin_mcp_bridge::init());
+
+        base
+    };
 
     builder
         .setup(|app| {
@@ -120,5 +122,12 @@ pub fn run() {
         })
         .invoke_handler(tauri::generate_handler![greet, parse_to_ast])
         .run(tauri::generate_context!())
-        .expect("error while running tauri application");
+        .unwrap_or_else(|e| {
+            use std::io::Write;
+            let _ = writeln!(
+                std::io::stderr(),
+                "Error while running tauri application: {e}"
+            );
+            std::process::exit(1);
+        });
 }

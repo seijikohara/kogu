@@ -379,7 +379,6 @@ impl<'a> JsonParser<'a> {
 }
 
 #[cfg(test)]
-#[allow(clippy::unwrap_used)]
 mod tests {
     use super::*;
 
