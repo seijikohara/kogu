@@ -223,6 +223,7 @@ fn has_multiple_children_with_name(node: &Node<'_, '_>, name: &str) -> bool {
 }
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used)]
 mod tests {
     use super::*;
 

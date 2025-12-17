@@ -222,6 +222,7 @@ fn calculate_range(text: &str, children: &[AstNode], start_line: usize) -> AstRa
 }
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used)]
 mod tests {
     use super::*;
 

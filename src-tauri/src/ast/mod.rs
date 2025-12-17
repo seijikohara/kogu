@@ -234,6 +234,7 @@ pub fn parse_to_ast(text: &str, language: AstLanguage) -> AstParseResult {
 }
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used)]
 mod tests {
     use super::*;
 
