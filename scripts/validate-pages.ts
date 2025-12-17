@@ -226,19 +226,16 @@ const printFailureReport = (errors: readonly ValidationError[]): void => {
 	console.error(`Total: ${errors.length} error(s)\n`);
 };
 
-/** Get summary of all pages with tabs */
+/** Get summary of all pages */
 const getPagesSummary = (
 	pages: readonly PageDefinition[]
 ): readonly { title: string; tabCount: number }[] =>
-	getDirectoriesWithTabs()
-		.map((dir) => {
-			const page = pages.find((p) => p.id === dir);
-			return {
-				title: page?.title ?? dir,
-				tabCount: getActualTabIds(dir).length,
-			};
-		})
-		.filter((p) => p.tabCount > 0)
+	pages
+		.filter((p) => p.id !== 'dashboard')
+		.map((page) => ({
+			title: page.title,
+			tabCount: getActualTabIds(page.id).length,
+		}))
 		.sort((a, b) => a.title.localeCompare(b.title));
 
 /** Print success report */
@@ -246,7 +243,8 @@ const printSuccessReport = (pages: readonly PageDefinition[]): void => {
 	console.log('\n✅ Page/Tab validation passed! All tabs are properly registered.\n');
 	console.log('Summary:');
 	getPagesSummary(pages).forEach(({ title, tabCount }) => {
-		console.log(`  ${title}: ${tabCount} tabs`);
+		const tabInfo = tabCount > 0 ? `${tabCount} tabs` : 'no tabs';
+		console.log(`  ${title}: ${tabInfo}`);
 	});
 	console.log('');
 };
