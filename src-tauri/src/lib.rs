@@ -6,41 +6,32 @@
 #![warn(clippy::all)]
 #![warn(clippy::pedantic)]
 #![warn(clippy::nursery)]
-
 // Safety lints - forbid unsafe code
 #![forbid(unsafe_code)]
-
 // Documentation requirements
 #![warn(missing_docs)]
-
 // Rust idioms
 #![warn(rust_2018_idioms)]
-
 // Clippy - Avoid panic-prone patterns
 #![warn(clippy::unwrap_used)]
 #![warn(clippy::expect_used)]
 #![warn(clippy::panic)]
 #![warn(clippy::todo)]
 #![warn(clippy::unimplemented)]
-
 // Clippy - Error handling
 #![warn(clippy::unwrap_in_result)]
 #![warn(clippy::panic_in_result_fn)]
-
 // Clippy - Code quality
 #![warn(clippy::cognitive_complexity)]
 #![warn(clippy::dbg_macro)]
 #![warn(clippy::print_stdout)]
 #![warn(clippy::print_stderr)]
-
 // Clippy - Performance
 #![warn(clippy::inefficient_to_string)]
 #![warn(clippy::needless_collect)]
-
 // Clippy - Correctness
 #![warn(clippy::missing_errors_doc)]
 #![warn(clippy::missing_panics_doc)]
-
 // Allow specific lints that are too noisy for this project
 #![allow(clippy::module_name_repetitions)]
 #![allow(clippy::must_use_candidate)]

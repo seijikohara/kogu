@@ -45,7 +45,11 @@ fn process_text_child(child: &Node<'_, '_>, element_path: &str) -> Option<AstNod
     let text_pos = child.document().text_pos_at(child.range().start);
     let text_end_pos = child.document().text_pos_at(child.range().end);
     let text_range = AstRange::new(
-        AstPosition::new(text_pos.row as usize, text_pos.col as usize, child.range().start),
+        AstPosition::new(
+            text_pos.row as usize,
+            text_pos.col as usize,
+            child.range().start,
+        ),
         AstPosition::new(
             text_end_pos.row as usize,
             text_end_pos.col as usize,
@@ -134,7 +138,12 @@ fn node_to_ast(node: Node<'_, '_>, path: &str) -> AstNode {
     match node.node_type() {
         roxmltree::NodeType::Element => element_to_ast(node, path, range),
         roxmltree::NodeType::Text => text_node_to_ast(node, path, range),
-        _ => AstNode::new(AstNodeType::Unknown, path.to_string(), "?".to_string(), range),
+        _ => AstNode::new(
+            AstNodeType::Unknown,
+            path.to_string(),
+            "?".to_string(),
+            range,
+        ),
     }
 }
 

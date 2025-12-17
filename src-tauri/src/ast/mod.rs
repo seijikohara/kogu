@@ -150,7 +150,6 @@ impl AstNode {
         }
         self
     }
-
 }
 
 /// Result of AST parsing
@@ -249,7 +248,12 @@ mod tests {
     }
 
     fn create_test_node(node_type: AstNodeType, path: &str) -> AstNode {
-        AstNode::new(node_type, path.to_string(), "test".to_string(), create_test_range())
+        AstNode::new(
+            node_type,
+            path.to_string(),
+            "test".to_string(),
+            create_test_range(),
+        )
     }
 
     // Test-only helper functions (equivalent to removed public functions)
@@ -379,7 +383,10 @@ mod tests {
 
             // Assert
             assert!(node.value.is_some());
-            assert_eq!(node.value.unwrap(), serde_json::Value::String("John".to_string()));
+            assert_eq!(
+                node.value.unwrap(),
+                serde_json::Value::String("John".to_string())
+            );
         }
 
         #[test]
@@ -407,7 +414,6 @@ mod tests {
             // Assert
             assert!(node.children.is_none());
         }
-
     }
 
     // ========================================================================
@@ -507,7 +513,10 @@ mod tests {
             let result = "unknown".parse::<AstLanguage>();
 
             assert!(result.is_err());
-            assert!(result.unwrap_err().to_string().contains("Unsupported language"));
+            assert!(result
+                .unwrap_err()
+                .to_string()
+                .contains("Unsupported language"));
         }
     }
 

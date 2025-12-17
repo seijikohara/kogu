@@ -26,7 +26,10 @@ pub fn parse(text: &str) -> AstParseResult {
                 .collect();
 
             if children.len() == 1 {
-                let mut ast = children.into_iter().next().unwrap_or_else(|| create_empty_root(text));
+                let mut ast = children
+                    .into_iter()
+                    .next()
+                    .unwrap_or_else(|| create_empty_root(text));
                 ast.path = "$".to_string();
                 AstParseResult::success(ast)
             } else {
@@ -49,7 +52,12 @@ fn create_empty_root(text: &str) -> AstNode {
         AstPosition::new(1, 1, 0),
         AstPosition::new(1, 1, text.len()),
     );
-    AstNode::new(AstNodeType::Statement, "$".to_string(), "Empty".to_string(), range)
+    AstNode::new(
+        AstNodeType::Statement,
+        "$".to_string(),
+        "Empty".to_string(),
+        range,
+    )
 }
 
 fn span_to_range(span: Span) -> AstRange {
@@ -77,12 +85,17 @@ fn statement_to_ast(text: &str, stmt: &Statement, path: &str) -> AstNode {
     match stmt {
         Statement::Query(query) => query_to_ast(text, query, path),
         Statement::Insert(insert) => insert_to_ast(text, insert, path, range),
-        Statement::Update { table, assignments, selection, .. } => {
-            update_to_ast(text, table, assignments, selection.as_ref(), path, range)
-        }
+        Statement::Update {
+            table,
+            assignments,
+            selection,
+            ..
+        } => update_to_ast(text, table, assignments, selection.as_ref(), path, range),
         Statement::Delete(delete) => delete_to_ast(text, delete, path, range),
         Statement::CreateTable(create) => create_table_to_ast(create, path, range),
-        Statement::Drop { names, object_type, .. } => drop_to_ast(names, *object_type, path, range),
+        Statement::Drop {
+            names, object_type, ..
+        } => drop_to_ast(names, *object_type, path, range),
         _ => {
             let label = format!("{:?}", std::mem::discriminant(stmt));
             AstNode::new(AstNodeType::Statement, path.to_string(), label, range)
@@ -111,12 +124,20 @@ fn insert_to_ast(
         children.push(query_to_ast(text, source, &format!("{path}.source")));
     }
 
-    AstNode::new(AstNodeType::Statement, path.to_string(), "INSERT".to_string(), range)
-        .with_children(children)
+    AstNode::new(
+        AstNodeType::Statement,
+        path.to_string(),
+        "INSERT".to_string(),
+        range,
+    )
+    .with_children(children)
 }
 
 fn columns_to_ast(columns: &[sqlparser::ast::Ident], path: &str) -> AstNode {
-    let cols: Vec<String> = columns.iter().map(std::string::ToString::to_string).collect();
+    let cols: Vec<String> = columns
+        .iter()
+        .map(std::string::ToString::to_string)
+        .collect();
     let children: Vec<_> = cols
         .iter()
         .enumerate()
@@ -159,11 +180,21 @@ fn update_to_ast(
     }
 
     if let Some(where_expr) = selection {
-        children.push(expr_to_ast(text, where_expr, &format!("{path}.where"), "WHERE"));
+        children.push(expr_to_ast(
+            text,
+            where_expr,
+            &format!("{path}.where"),
+            "WHERE",
+        ));
     }
 
-    AstNode::new(AstNodeType::Statement, path.to_string(), "UPDATE".to_string(), range)
-        .with_children(children)
+    AstNode::new(
+        AstNodeType::Statement,
+        path.to_string(),
+        "UPDATE".to_string(),
+        range,
+    )
+    .with_children(children)
 }
 
 fn assignments_to_ast(assignments: &[sqlparser::ast::Assignment], path: &str) -> AstNode {
@@ -212,11 +243,21 @@ fn delete_to_ast(
     )];
 
     if let Some(where_expr) = &delete.selection {
-        children.push(expr_to_ast(text, where_expr, &format!("{path}.where"), "WHERE"));
+        children.push(expr_to_ast(
+            text,
+            where_expr,
+            &format!("{path}.where"),
+            "WHERE",
+        ));
     }
 
-    AstNode::new(AstNodeType::Statement, path.to_string(), "DELETE".to_string(), range)
-        .with_children(children)
+    AstNode::new(
+        AstNodeType::Statement,
+        path.to_string(),
+        "DELETE".to_string(),
+        range,
+    )
+    .with_children(children)
 }
 
 fn create_table_to_ast(
@@ -257,8 +298,13 @@ fn create_table_to_ast(
         );
     }
 
-    AstNode::new(AstNodeType::Statement, path.to_string(), "CREATE TABLE".to_string(), range)
-        .with_children(children)
+    AstNode::new(
+        AstNodeType::Statement,
+        path.to_string(),
+        "CREATE TABLE".to_string(),
+        range,
+    )
+    .with_children(children)
 }
 
 fn drop_to_ast(
@@ -318,8 +364,13 @@ fn query_to_ast(text: &str, query: &Query, path: &str) -> AstNode {
         ));
     }
 
-    AstNode::new(AstNodeType::Statement, path.to_string(), "SELECT".to_string(), range)
-        .with_children(children)
+    AstNode::new(
+        AstNodeType::Statement,
+        path.to_string(),
+        "SELECT".to_string(),
+        range,
+    )
+    .with_children(children)
 }
 
 fn with_clause_to_ast(with: &sqlparser::ast::With, path: &str) -> Option<AstNode> {
@@ -429,17 +480,32 @@ fn select_to_ast(text: &str, select: &Select, path: &str) -> AstNode {
     children.extend(from_clause_to_ast(text, &select.from, path));
 
     if let Some(where_expr) = &select.selection {
-        children.push(expr_to_ast(text, where_expr, &format!("{path}.where"), "WHERE"));
+        children.push(expr_to_ast(
+            text,
+            where_expr,
+            &format!("{path}.where"),
+            "WHERE",
+        ));
     }
 
     children.extend(group_by_to_ast(&select.group_by, path));
 
     if let Some(having_expr) = &select.having {
-        children.push(expr_to_ast(text, having_expr, &format!("{path}.having"), "HAVING"));
+        children.push(expr_to_ast(
+            text,
+            having_expr,
+            &format!("{path}.having"),
+            "HAVING",
+        ));
     }
 
-    AstNode::new(AstNodeType::Clause, path.to_string(), "SELECT clause".to_string(), default_range())
-        .with_children(children)
+    AstNode::new(
+        AstNodeType::Clause,
+        path.to_string(),
+        "SELECT clause".to_string(),
+        default_range(),
+    )
+    .with_children(children)
 }
 
 fn projection_to_ast(projection: &[SelectItem], path: &str) -> AstNode {
@@ -551,25 +617,36 @@ fn table_to_ast(_text: &str, table: &TableWithJoins, path: &str) -> AstNode {
         )
     }));
 
-    AstNode::new(AstNodeType::Clause, path.to_string(), relation_label, default_range())
-        .with_children(children)
+    AstNode::new(
+        AstNodeType::Clause,
+        path.to_string(),
+        relation_label,
+        default_range(),
+    )
+    .with_children(children)
 }
 
 fn table_factor_label(factor: &TableFactor) -> String {
     match factor {
-        TableFactor::Table { name, alias, .. } => {
-            alias.as_ref().map_or_else(|| name.to_string(), |a| format!("{name} AS {}", a.name))
-        }
-        TableFactor::Derived { alias, .. } => alias
+        TableFactor::Table { name, alias, .. } => alias
             .as_ref()
-            .map_or_else(|| "(subquery)".to_string(), |a| format!("(subquery) AS {}", a.name)),
+            .map_or_else(|| name.to_string(), |a| format!("{name} AS {}", a.name)),
+        TableFactor::Derived { alias, .. } => alias.as_ref().map_or_else(
+            || "(subquery)".to_string(),
+            |a| format!("(subquery) AS {}", a.name),
+        ),
         _ => "table".to_string(),
     }
 }
 
 fn expr_to_ast(_text: &str, expr: &Expr, path: &str, label_prefix: &str) -> AstNode {
     let label = format!("{label_prefix}: {}", truncate_string(&expr.to_string(), 50));
-    AstNode::new(AstNodeType::Expression, path.to_string(), label, default_range())
+    AstNode::new(
+        AstNodeType::Expression,
+        path.to_string(),
+        label,
+        default_range(),
+    )
 }
 
 fn truncate_string(s: &str, max_len: usize) -> String {
