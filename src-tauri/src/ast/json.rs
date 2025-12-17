@@ -51,10 +51,7 @@ impl<'a> JsonParser<'a> {
     }
 
     fn byte_offset(&self) -> usize {
-        self.chars[..self.pos]
-            .iter()
-            .map(|c| c.len_utf8())
-            .sum()
+        self.chars[..self.pos].iter().map(|c| c.len_utf8()).sum()
     }
 
     fn error(&self, msg: &str) -> AstParseError {
@@ -155,8 +152,10 @@ impl<'a> JsonParser<'a> {
         let range = AstRange::from_offset(self.text, start_offset, end_offset);
         let label = format!("{{}} ({} properties)", children.len());
 
-        Ok(AstNode::new(AstNodeType::Object, path.to_string(), label, range)
-            .with_children(children))
+        Ok(
+            AstNode::new(AstNodeType::Object, path.to_string(), label, range)
+                .with_children(children),
+        )
     }
 
     fn parse_array(&mut self, path: &str, start_offset: usize) -> Result<AstNode, AstParseError> {
@@ -192,8 +191,10 @@ impl<'a> JsonParser<'a> {
         let range = AstRange::from_offset(self.text, start_offset, end_offset);
         let label = format!("[] ({} items)", children.len());
 
-        Ok(AstNode::new(AstNodeType::Array, path.to_string(), label, range)
-            .with_children(children))
+        Ok(
+            AstNode::new(AstNodeType::Array, path.to_string(), label, range)
+                .with_children(children),
+        )
     }
 
     fn parse_string(&mut self, path: &str, start_offset: usize) -> Result<AstNode, AstParseError> {
@@ -207,8 +208,10 @@ impl<'a> JsonParser<'a> {
             format!("\"{}\"", value)
         };
 
-        Ok(AstNode::new(AstNodeType::String, path.to_string(), label, range)
-            .with_value(serde_json::Value::String(value)))
+        Ok(
+            AstNode::new(AstNodeType::String, path.to_string(), label, range)
+                .with_value(serde_json::Value::String(value)),
+        )
     }
 
     fn parse_string_value(&mut self) -> Result<String, AstParseError> {
@@ -332,8 +335,13 @@ impl<'a> JsonParser<'a> {
             .parse()
             .map_err(|_| self.error("Invalid number format"))?;
 
-        Ok(AstNode::new(AstNodeType::Number, path.to_string(), num_str.clone(), range)
-            .with_value(serde_json::Value::Number(value)))
+        Ok(AstNode::new(
+            AstNodeType::Number,
+            path.to_string(),
+            num_str.clone(),
+            range,
+        )
+        .with_value(serde_json::Value::Number(value)))
     }
 
     fn parse_boolean(&mut self, path: &str, start_offset: usize) -> Result<AstNode, AstParseError> {
@@ -370,8 +378,13 @@ impl<'a> JsonParser<'a> {
         let end_offset = self.byte_offset();
         let range = AstRange::from_offset(self.text, start_offset, end_offset);
 
-        Ok(AstNode::new(AstNodeType::Null, path.to_string(), "null".to_string(), range)
-            .with_value(serde_json::Value::Null))
+        Ok(AstNode::new(
+            AstNodeType::Null,
+            path.to_string(),
+            "null".to_string(),
+            range,
+        )
+        .with_value(serde_json::Value::Null))
     }
 }
 

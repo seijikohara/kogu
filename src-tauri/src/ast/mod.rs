@@ -128,12 +128,7 @@ pub struct AstNode {
 }
 
 impl AstNode {
-    pub fn new(
-        node_type: AstNodeType,
-        path: String,
-        label: String,
-        range: AstRange,
-    ) -> Self {
+    pub fn new(node_type: AstNodeType, path: String, label: String, range: AstRange) -> Self {
         Self {
             node_type,
             path,

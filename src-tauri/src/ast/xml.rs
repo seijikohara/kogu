@@ -67,7 +67,8 @@ fn node_to_ast(text: &str, node: Node, path: &str) -> AstNode {
             }
 
             // Count child elements for path indexing
-            let mut element_counts: std::collections::HashMap<&str, usize> = std::collections::HashMap::new();
+            let mut element_counts: std::collections::HashMap<&str, usize> =
+                std::collections::HashMap::new();
 
             // Add child elements
             for child in node.children() {
@@ -75,15 +76,19 @@ fn node_to_ast(text: &str, node: Node, path: &str) -> AstNode {
                     roxmltree::NodeType::Element => {
                         let child_name = child.tag_name().name();
                         let count = element_counts.entry(child_name).or_insert(0);
-                        let child_path = if *count > 0 || has_multiple_children_with_name(&node, child_name) {
-                            format!("{}.{}[{}]", element_path, child_name, count)
-                        } else {
-                            format!("{}.{}", element_path, child_name)
-                        };
+                        let child_path =
+                            if *count > 0 || has_multiple_children_with_name(&node, child_name) {
+                                format!("{}.{}[{}]", element_path, child_name, count)
+                            } else {
+                                format!("{}.{}", element_path, child_name)
+                            };
                         *count += 1;
 
                         let child_ast = node_to_ast(text, child, &element_path);
-                        children.push(AstNode { path: child_path, ..child_ast });
+                        children.push(AstNode {
+                            path: child_path,
+                            ..child_ast
+                        });
                     }
                     roxmltree::NodeType::Text => {
                         let text_content = child.text().unwrap_or("").trim();
@@ -91,8 +96,16 @@ fn node_to_ast(text: &str, node: Node, path: &str) -> AstNode {
                             let text_pos = child.document().text_pos_at(child.range().start);
                             let text_end_pos = child.document().text_pos_at(child.range().end);
                             let text_range = AstRange::new(
-                                AstPosition::new(text_pos.row as usize, text_pos.col as usize, child.range().start),
-                                AstPosition::new(text_end_pos.row as usize, text_end_pos.col as usize, child.range().end),
+                                AstPosition::new(
+                                    text_pos.row as usize,
+                                    text_pos.col as usize,
+                                    child.range().start,
+                                ),
+                                AstPosition::new(
+                                    text_end_pos.row as usize,
+                                    text_end_pos.col as usize,
+                                    child.range().end,
+                                ),
                             );
 
                             let text_label = if text_content.len() > 50 {
@@ -117,8 +130,16 @@ fn node_to_ast(text: &str, node: Node, path: &str) -> AstNode {
                         let comment_pos = child.document().text_pos_at(child.range().start);
                         let comment_end_pos = child.document().text_pos_at(child.range().end);
                         let comment_range = AstRange::new(
-                            AstPosition::new(comment_pos.row as usize, comment_pos.col as usize, child.range().start),
-                            AstPosition::new(comment_end_pos.row as usize, comment_end_pos.col as usize, child.range().end),
+                            AstPosition::new(
+                                comment_pos.row as usize,
+                                comment_pos.col as usize,
+                                child.range().start,
+                            ),
+                            AstPosition::new(
+                                comment_end_pos.row as usize,
+                                comment_end_pos.col as usize,
+                                child.range().end,
+                            ),
                         );
 
                         let comment_label = if comment_text.len() > 50 {
@@ -141,17 +162,22 @@ fn node_to_ast(text: &str, node: Node, path: &str) -> AstNode {
             }
 
             let attr_count = node.attributes().count();
-            let element_child_count = children.iter().filter(|c| c.node_type == AstNodeType::Element).count();
+            let element_child_count = children
+                .iter()
+                .filter(|c| c.node_type == AstNodeType::Element)
+                .count();
             let label = if attr_count > 0 {
-                format!("<{}> ({} attrs, {} children)", tag_name, attr_count, element_child_count)
+                format!(
+                    "<{}> ({} attrs, {} children)",
+                    tag_name, attr_count, element_child_count
+                )
             } else if element_child_count > 0 {
                 format!("<{}> ({} children)", tag_name, element_child_count)
             } else {
                 format!("<{}>", tag_name)
             };
 
-            AstNode::new(AstNodeType::Element, element_path, label, range)
-                .with_children(children)
+            AstNode::new(AstNodeType::Element, element_path, label, range).with_children(children)
         }
 
         roxmltree::NodeType::Text => {
@@ -166,16 +192,20 @@ fn node_to_ast(text: &str, node: Node, path: &str) -> AstNode {
                 .with_value(serde_json::Value::String(text_content.to_string()))
         }
 
-        _ => {
-            AstNode::new(AstNodeType::Unknown, path.to_string(), "?".to_string(), range)
-        }
+        _ => AstNode::new(
+            AstNodeType::Unknown,
+            path.to_string(),
+            "?".to_string(),
+            range,
+        ),
     }
 }
 
 fn has_multiple_children_with_name(node: &Node, name: &str) -> bool {
     node.children()
         .filter(|c| c.is_element() && c.tag_name().name() == name)
-        .count() > 1
+        .count()
+        > 1
 }
 
 #[cfg(test)]
@@ -203,7 +233,9 @@ mod tests {
         let children = ast.children.unwrap();
 
         // First child should be the attribute
-        assert!(children.iter().any(|c| c.node_type == AstNodeType::Attribute));
+        assert!(children
+            .iter()
+            .any(|c| c.node_type == AstNodeType::Attribute));
     }
 
     #[test]

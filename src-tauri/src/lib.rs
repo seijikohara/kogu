@@ -20,9 +20,7 @@ fn greet(name: &str) -> String {
 /// AstParseResult containing the AST and any errors
 #[tauri::command]
 fn parse_to_ast(text: &str, language: &str) -> Result<AstParseResult, String> {
-    let lang: AstLanguage = language
-        .parse()
-        .map_err(|e: ast::AstError| e.to_string())?;
+    let lang: AstLanguage = language.parse().map_err(|e: ast::AstError| e.to_string())?;
 
     Ok(ast::parse_to_ast(text, lang))
 }

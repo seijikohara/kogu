@@ -55,7 +55,12 @@ fn create_empty_root(text: &str) -> AstNode {
         AstPosition::new(1, 1, 0),
         AstPosition::new(1, 1, text.len()),
     );
-    AstNode::new(AstNodeType::Statement, "$".to_string(), "Empty".to_string(), range)
+    AstNode::new(
+        AstNodeType::Statement,
+        "$".to_string(),
+        "Empty".to_string(),
+        range,
+    )
 }
 
 fn span_to_range(text: &str, span: Span) -> AstRange {
@@ -65,19 +70,12 @@ fn span_to_range(text: &str, span: Span) -> AstRange {
             span.start.column as usize,
             0, // Offset is not directly available from Span
         ),
-        AstPosition::new(
-            span.end.line as usize,
-            span.end.column as usize,
-            0,
-        ),
+        AstPosition::new(span.end.line as usize, span.end.column as usize, 0),
     )
 }
 
 fn default_range() -> AstRange {
-    AstRange::new(
-        AstPosition::new(1, 1, 0),
-        AstPosition::new(1, 1, 0),
-    )
+    AstRange::new(AstPosition::new(1, 1, 0), AstPosition::new(1, 1, 0))
 }
 
 fn statement_to_ast(text: &str, stmt: &Statement, path: &str) -> AstNode {
@@ -130,11 +128,21 @@ fn statement_to_ast(text: &str, stmt: &Statement, path: &str) -> AstNode {
                 children.push(source_ast);
             }
 
-            AstNode::new(AstNodeType::Statement, path.to_string(), "INSERT".to_string(), range)
-                .with_children(children)
+            AstNode::new(
+                AstNodeType::Statement,
+                path.to_string(),
+                "INSERT".to_string(),
+                range,
+            )
+            .with_children(children)
         }
 
-        Statement::Update { table, assignments, selection, .. } => {
+        Statement::Update {
+            table,
+            assignments,
+            selection,
+            ..
+        } => {
             let mut children = Vec::new();
 
             // Table
@@ -175,11 +183,21 @@ fn statement_to_ast(text: &str, stmt: &Statement, path: &str) -> AstNode {
 
             // WHERE clause
             if let Some(where_expr) = selection {
-                children.push(expr_to_ast(text, where_expr, &format!("{}.where", path), "WHERE"));
+                children.push(expr_to_ast(
+                    text,
+                    where_expr,
+                    &format!("{}.where", path),
+                    "WHERE",
+                ));
             }
 
-            AstNode::new(AstNodeType::Statement, path.to_string(), "UPDATE".to_string(), range)
-                .with_children(children)
+            AstNode::new(
+                AstNodeType::Statement,
+                path.to_string(),
+                "UPDATE".to_string(),
+                range,
+            )
+            .with_children(children)
         }
 
         Statement::Delete(delete) => {
@@ -187,20 +205,16 @@ fn statement_to_ast(text: &str, stmt: &Statement, path: &str) -> AstNode {
 
             // FROM clause - FromTable is an enum in sqlparser v0.53
             let from_label = match &delete.from {
-                sqlparser::ast::FromTable::WithFromKeyword(tables) => {
-                    tables
-                        .iter()
-                        .map(|t| t.relation.to_string())
-                        .collect::<Vec<_>>()
-                        .join(", ")
-                }
-                sqlparser::ast::FromTable::WithoutKeyword(tables) => {
-                    tables
-                        .iter()
-                        .map(|t| t.relation.to_string())
-                        .collect::<Vec<_>>()
-                        .join(", ")
-                }
+                sqlparser::ast::FromTable::WithFromKeyword(tables) => tables
+                    .iter()
+                    .map(|t| t.relation.to_string())
+                    .collect::<Vec<_>>()
+                    .join(", "),
+                sqlparser::ast::FromTable::WithoutKeyword(tables) => tables
+                    .iter()
+                    .map(|t| t.relation.to_string())
+                    .collect::<Vec<_>>()
+                    .join(", "),
             };
             let from_ast = AstNode::new(
                 AstNodeType::Clause,
@@ -212,11 +226,21 @@ fn statement_to_ast(text: &str, stmt: &Statement, path: &str) -> AstNode {
 
             // WHERE clause
             if let Some(where_expr) = &delete.selection {
-                children.push(expr_to_ast(text, where_expr, &format!("{}.where", path), "WHERE"));
+                children.push(expr_to_ast(
+                    text,
+                    where_expr,
+                    &format!("{}.where", path),
+                    "WHERE",
+                ));
             }
 
-            AstNode::new(AstNodeType::Statement, path.to_string(), "DELETE".to_string(), range)
-                .with_children(children)
+            AstNode::new(
+                AstNodeType::Statement,
+                path.to_string(),
+                "DELETE".to_string(),
+                range,
+            )
+            .with_children(children)
         }
 
         Statement::CreateTable(create) => {
@@ -266,7 +290,9 @@ fn statement_to_ast(text: &str, stmt: &Statement, path: &str) -> AstNode {
             .with_children(children)
         }
 
-        Statement::Drop { names, object_type, .. } => {
+        Statement::Drop {
+            names, object_type, ..
+        } => {
             let label = format!("DROP {:?}", object_type);
             let children: Vec<AstNode> = names
                 .iter()
@@ -334,7 +360,9 @@ fn query_to_ast(text: &str, query: &Query, path: &str) -> AstNode {
             let select_ast = select_to_ast(text, select, &format!("{}.select", path));
             children.push(select_ast);
         }
-        SetExpr::SetOperation { op, left, right, .. } => {
+        SetExpr::SetOperation {
+            op, left, right, ..
+        } => {
             let op_str = format!("{:?}", op);
             let left_ast = AstNode::new(
                 AstNodeType::Clause,
@@ -410,8 +438,13 @@ fn query_to_ast(text: &str, query: &Query, path: &str) -> AstNode {
         ));
     }
 
-    AstNode::new(AstNodeType::Statement, path.to_string(), "SELECT".to_string(), range)
-        .with_children(children)
+    AstNode::new(
+        AstNodeType::Statement,
+        path.to_string(),
+        "SELECT".to_string(),
+        range,
+    )
+    .with_children(children)
 }
 
 fn select_to_ast(text: &str, select: &Select, path: &str) -> AstNode {
@@ -480,7 +513,12 @@ fn select_to_ast(text: &str, select: &Select, path: &str) -> AstNode {
 
     // WHERE clause
     if let Some(where_expr) = &select.selection {
-        children.push(expr_to_ast(text, where_expr, &format!("{}.where", path), "WHERE"));
+        children.push(expr_to_ast(
+            text,
+            where_expr,
+            &format!("{}.where", path),
+            "WHERE",
+        ));
     }
 
     // GROUP BY clause
@@ -516,7 +554,12 @@ fn select_to_ast(text: &str, select: &Select, path: &str) -> AstNode {
 
     // HAVING clause
     if let Some(having_expr) = &select.having {
-        children.push(expr_to_ast(text, having_expr, &format!("{}.having", path), "HAVING"));
+        children.push(expr_to_ast(
+            text,
+            having_expr,
+            &format!("{}.having", path),
+            "HAVING",
+        ));
     }
 
     AstNode::new(
@@ -573,14 +616,28 @@ fn table_to_ast(text: &str, table: &TableWithJoins, path: &str) -> AstNode {
         ));
     }
 
-    AstNode::new(AstNodeType::Clause, path.to_string(), relation_label, default_range())
-        .with_children(children)
+    AstNode::new(
+        AstNodeType::Clause,
+        path.to_string(),
+        relation_label,
+        default_range(),
+    )
+    .with_children(children)
 }
 
 fn expr_to_ast(text: &str, expr: &Expr, path: &str, label_prefix: &str) -> AstNode {
-    let label = format!("{}: {}", label_prefix, truncate_string(&expr.to_string(), 50));
+    let label = format!(
+        "{}: {}",
+        label_prefix,
+        truncate_string(&expr.to_string(), 50)
+    );
 
-    AstNode::new(AstNodeType::Expression, path.to_string(), label, default_range())
+    AstNode::new(
+        AstNodeType::Expression,
+        path.to_string(),
+        label,
+        default_range(),
+    )
 }
 
 fn truncate_string(s: &str, max_len: usize) -> String {

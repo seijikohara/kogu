@@ -29,7 +29,12 @@ fn create_empty_root(text: &str) -> AstNode {
         AstPosition::new(1, 1, 0),
         AstPosition::new(1, 1, text.len()),
     );
-    AstNode::new(AstNodeType::Null, "$".to_string(), "null".to_string(), range)
+    AstNode::new(
+        AstNodeType::Null,
+        "$".to_string(),
+        "null".to_string(),
+        range,
+    )
 }
 
 /// Convert yaml-rust2 Yaml to AstNode
@@ -51,10 +56,8 @@ fn yaml_to_ast(text: &str, yaml: &Yaml, path: &str, start_line: usize) -> AstNod
                 let key_line = find_key_line(text, &key_str, start_line);
                 let child_ast = yaml_to_ast(text, value, &child_path, key_line);
 
-                let prop_range = AstRange::new(
-                    AstPosition::new(key_line, 1, 0),
-                    child_ast.range.end,
-                );
+                let prop_range =
+                    AstRange::new(AstPosition::new(key_line, 1, 0), child_ast.range.end);
 
                 let mut prop_node = AstNode::new(
                     AstNodeType::Property,
@@ -97,8 +100,7 @@ fn yaml_to_ast(text: &str, yaml: &Yaml, path: &str, start_line: usize) -> AstNod
             let range = calculate_range(text, &children, start_line);
             let label = format!("[] ({} items)", children.len());
 
-            AstNode::new(AstNodeType::Array, path.to_string(), label, range)
-                .with_children(children)
+            AstNode::new(AstNodeType::Array, path.to_string(), label, range).with_children(children)
         }
 
         Yaml::String(s) => {
@@ -129,19 +131,34 @@ fn yaml_to_ast(text: &str, yaml: &Yaml, path: &str, start_line: usize) -> AstNod
         Yaml::Boolean(b) => {
             let range = estimate_value_range(text, start_line);
             let label = if *b { "true" } else { "false" };
-            AstNode::new(AstNodeType::Boolean, path.to_string(), label.to_string(), range)
-                .with_value(serde_json::Value::Bool(*b))
+            AstNode::new(
+                AstNodeType::Boolean,
+                path.to_string(),
+                label.to_string(),
+                range,
+            )
+            .with_value(serde_json::Value::Bool(*b))
         }
 
         Yaml::Null => {
             let range = estimate_value_range(text, start_line);
-            AstNode::new(AstNodeType::Null, path.to_string(), "null".to_string(), range)
-                .with_value(serde_json::Value::Null)
+            AstNode::new(
+                AstNodeType::Null,
+                path.to_string(),
+                "null".to_string(),
+                range,
+            )
+            .with_value(serde_json::Value::Null)
         }
 
         _ => {
             let range = estimate_value_range(text, start_line);
-            AstNode::new(AstNodeType::Unknown, path.to_string(), "?".to_string(), range)
+            AstNode::new(
+                AstNodeType::Unknown,
+                path.to_string(),
+                "?".to_string(),
+                range,
+            )
         }
     }
 }
@@ -200,10 +217,7 @@ fn calculate_range(text: &str, children: &[AstNode], start_line: usize) -> AstRa
     }
 
     let start = AstPosition::new(start_line, 1, 0);
-    let end = children
-        .last()
-        .map(|c| c.range.end)
-        .unwrap_or(start);
+    let end = children.last().map(|c| c.range.end).unwrap_or(start);
 
     AstRange::new(start, end)
 }
