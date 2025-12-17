@@ -92,7 +92,6 @@ The release script updates these files automatically:
 
 ## Configuration
 
-- `bumpp.config.ts` - Version bump configuration
 - `scripts/release.ts` - Release automation script
 - `.github/workflows/create-release-tag.yml` - Auto tag creation
 - `.github/workflows/release.yml` - Build and publish
