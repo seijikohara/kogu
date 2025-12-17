@@ -4,23 +4,36 @@ paths: src-tauri/**/*.rs
 
 # Rust Guidelines
 
+> **IMPORTANT**: Do not bypass compiler or linter warnings using `#[allow(...)]`, `#[expect(...)]`, or similar attributes. Fix the root cause instead.
+
+## Linter Enforcement
+
+The following rules are enforced by Clippy and should not be documented here to avoid duplication:
+
+- Use `.copied()` instead of `.map(|x| *x)`
+- Use `.cloned()` instead of `.map(|x| x.clone())`
+- Prefix unused parameters with underscore
+- Use `if let` instead of single-arm match
+- Use `matches!` macro for boolean match
+
+Run `cargo clippy -- -W clippy::all` to check compliance. See Clippy documentation for all rules.
+
 ## Fundamental Principles
 
 ### Reference Compliance
 
 - Always follow the latest Rust official documentation and Rust API Guidelines
 - Use Rust 2021 edition idioms
-- Follow Clippy recommendations (`cargo clippy -- -W clippy::all`)
 - Avoid deprecated patterns and unsafe code unless absolutely necessary
 
-### Core Rules (Mandatory)
+### Core Rules
 
 | Rule              | Requirement                                                  |
 | ----------------- | ------------------------------------------------------------ |
 | Pure functions    | No side effects, deterministic output where possible         |
 | Immutability      | Avoid `mut` unless necessary, prefer transformation          |
 | Early returns     | Use `?` operator, guard clauses, never deep nesting          |
-| Iterator chaining | Always use `.iter().filter().map().collect()` over loops     |
+| Iterator chaining | Prefer `.iter().filter().map().collect()` over loops         |
 | Expression style  | Use `let x = if/match` instead of mutable assignment         |
 | Error propagation | Use `Result<T, E>` with `?`, avoid `.unwrap()` in production |
 
@@ -51,12 +64,6 @@ pub fn process_names(names: &[String]) -> Vec<String> {
         .map(|name| name.to_uppercase())
         .collect()
 }
-
-// Avoid: Function with side effects and mutation
-fn process_data(data: &mut Vec<String>) {
-    println!("{:?}", data); // Side effect
-    data.push("new".to_string()); // Mutation
-}
 ```
 
 ### Immutability
@@ -74,14 +81,6 @@ let filtered: Vec<_> = items
     .into_iter()
     .filter(|x| *x > 1)
     .collect();
-
-// Avoid: Mutable variable with push
-let mut result = Vec::new();
-for item in items {
-    if item > 1 {
-        result.push(item);
-    }
-}
 ```
 
 ### Expression-Oriented Programming
@@ -103,17 +102,9 @@ let config = {
     builder.set_retries(3);
     builder.build()
 };
-
-// Avoid: Mutable variable with conditional assignment
-let mut status = "";
-if is_valid {
-    status = "valid";
-} else {
-    status = "invalid";
-}
 ```
 
-## Early Returns (Mandatory)
+## Early Returns
 
 Always use early returns with `?` operator and guard clauses:
 
@@ -139,27 +130,6 @@ pub fn find_user(id: u64, users: &[User]) -> Option<&User> {
     }
     users.iter().find(|u| u.id == id)
 }
-
-// Avoid: Deeply nested conditionals
-pub fn parse_and_process(input: &str) -> Result<Output, Error> {
-    if !input.is_empty() {
-        if input.len() <= MAX_LENGTH {
-            match parse(input) {
-                Ok(parsed) => {
-                    match validate(parsed) {
-                        Ok(validated) => Ok(transform(validated)),
-                        Err(e) => Err(e),
-                    }
-                }
-                Err(e) => Err(e),
-            }
-        } else {
-            Err(Error::TooLong)
-        }
-    } else {
-        Err(Error::EmptyInput)
-    }
-}
 ```
 
 ### The `?` Operator
@@ -182,9 +152,9 @@ pub fn parse_file(path: &str) -> Result<Data, AppError> {
 }
 ```
 
-## Iterator Chaining (Mandatory)
+## Iterator Chaining
 
-Use iterator chains instead of explicit loops:
+Prefer iterator chains over explicit loops:
 
 ```rust
 // Preferred: Iterator chain for transformation
@@ -213,14 +183,6 @@ let all_tags: Vec<_> = items
     .iter()
     .flat_map(|item| item.tags.iter())
     .collect();
-
-// Avoid: Explicit for loop with mutation
-let mut result = Vec::new();
-for item in &items {
-    if item.active {
-        result.push(item.value * 2);
-    }
-}
 ```
 
 ### Common Iterator Patterns
@@ -279,12 +241,6 @@ let positive = number.filter(|n| *n > 0);
 // Preferred: or / or_else for fallback
 let result = primary.or(fallback);
 let result = primary.or_else(|| compute_fallback());
-
-// Avoid: Match for simple transformation
-let length = match input {
-    Some(s) => Some(s.len()),
-    None => None,
-};
 ```
 
 ### Chaining Option/Result
@@ -373,12 +329,6 @@ pub fn load_config(path: &str) -> Result<Config, AppError> {
                 })
         })
 }
-
-// Avoid: .unwrap() in production code
-let config = serde_json::from_str(&content).unwrap(); // Panics on error
-
-// Avoid: Ignoring errors
-let _ = write_file(path, content); // Error silently ignored
 ```
 
 ## Ownership and Borrowing
@@ -399,11 +349,6 @@ pub fn into_uppercase(s: String) -> String {
 // Preferred: Use &str for string parameters
 pub fn process_text(text: &str) -> String {
     text.trim().to_uppercase()
-}
-
-// Avoid: Unnecessary cloning
-pub fn process(items: Vec<Item>) -> Vec<Item> {
-    items.clone().into_iter().filter(|i| i.active).collect()
 }
 ```
 
@@ -614,40 +559,8 @@ let mut result = Vec::with_capacity(items.len());
 pub fn process(items: &[Item]) -> i32 { /* ... */ }
 ```
 
-## Clippy Compliance
-
-Always run and follow Clippy recommendations:
-
-```bash
-cargo clippy -- -W clippy::all -W clippy::pedantic
-```
-
-### Common Clippy Fixes
-
-```rust
-// Use .copied() instead of .map(|x| *x)
-let values: Vec<_> = refs.iter().copied().collect();
-
-// Use .cloned() instead of .map(|x| x.clone())
-let owned: Vec<_> = borrowed.iter().cloned().collect();
-
-// Prefix unused parameters with underscore
-fn process(_unused: &str, used: i32) -> i32 {
-    used * 2
-}
-
-// Use if let instead of single-arm match
-if let Some(value) = option {
-    process(value);
-}
-
-// Use matches! macro for boolean match
-let is_valid = matches!(status, Status::Active | Status::Pending);
-```
-
 ## Best Practices Summary
 
-- Enable `#![warn(clippy::all)]` in lib.rs
 - Avoid `.unwrap()` and `.expect()` in library code
 - Use `?` operator for error propagation
 - Prefer iterator chains over explicit loops
