@@ -18,7 +18,7 @@ pub fn parse(text: &str) -> AstParseResult {
     }
 }
 
-fn create_parse_error(text: &str, error: &roxmltree::Error) -> AstParseError {
+fn create_parse_error(_text: &str, error: &roxmltree::Error) -> AstParseError {
     let pos = error.pos();
     let range = AstRange::new(
         AstPosition::new(pos.row as usize, pos.col as usize, 0),
@@ -27,7 +27,7 @@ fn create_parse_error(text: &str, error: &roxmltree::Error) -> AstParseError {
     AstParseError::new(error.to_string()).with_range(range)
 }
 
-fn node_to_ast(text: &str, node: Node, path: &str) -> AstNode {
+fn node_to_ast(_text: &str, node: Node, path: &str) -> AstNode {
     let pos = node.document().text_pos_at(node.range().start);
     let end_pos = node.document().text_pos_at(node.range().end);
 
@@ -84,7 +84,7 @@ fn node_to_ast(text: &str, node: Node, path: &str) -> AstNode {
                             };
                         *count += 1;
 
-                        let child_ast = node_to_ast(text, child, &element_path);
+                        let child_ast = node_to_ast(_text, child, &element_path);
                         children.push(AstNode {
                             path: child_path,
                             ..child_ast

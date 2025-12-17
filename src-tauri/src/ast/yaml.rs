@@ -202,7 +202,7 @@ fn estimate_value_range(text: &str, line: usize) -> AstRange {
         .map(|l| l.len() + 1) // +1 for newline
         .sum();
 
-    let line_content = lines.get(line_idx).map(|s| *s).unwrap_or("");
+    let line_content = lines.get(line_idx).copied().unwrap_or("");
     let line_end_offset = line_start_offset + line_content.len();
 
     AstRange::new(

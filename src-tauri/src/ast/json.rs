@@ -30,10 +30,6 @@ impl<'a> JsonParser<'a> {
         self.chars.get(self.pos).copied()
     }
 
-    fn peek(&self, offset: usize) -> Option<char> {
-        self.chars.get(self.pos + offset).copied()
-    }
-
     fn advance(&mut self) {
         if self.pos < self.chars.len() {
             self.pos += 1;
@@ -93,7 +89,7 @@ impl<'a> JsonParser<'a> {
 
                 let key_start = self.byte_offset();
                 let key = self.parse_string_value()?;
-                let key_end = self.byte_offset();
+                let _key_end = self.byte_offset();
 
                 self.skip_whitespace();
 

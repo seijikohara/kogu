@@ -63,7 +63,7 @@ fn create_empty_root(text: &str) -> AstNode {
     )
 }
 
-fn span_to_range(text: &str, span: Span) -> AstRange {
+fn span_to_range(_text: &str, span: Span) -> AstRange {
     AstRange::new(
         AstPosition::new(
             span.start.line as usize,
@@ -361,7 +361,10 @@ fn query_to_ast(text: &str, query: &Query, path: &str) -> AstNode {
             children.push(select_ast);
         }
         SetExpr::SetOperation {
-            op, left, right, ..
+            op,
+            left: _,
+            right: _,
+            ..
         } => {
             let op_str = format!("{:?}", op);
             let left_ast = AstNode::new(
@@ -571,7 +574,7 @@ fn select_to_ast(text: &str, select: &Select, path: &str) -> AstNode {
     .with_children(children)
 }
 
-fn table_to_ast(text: &str, table: &TableWithJoins, path: &str) -> AstNode {
+fn table_to_ast(_text: &str, table: &TableWithJoins, path: &str) -> AstNode {
     let mut children = Vec::new();
 
     // Main table
@@ -625,7 +628,7 @@ fn table_to_ast(text: &str, table: &TableWithJoins, path: &str) -> AstNode {
     .with_children(children)
 }
 
-fn expr_to_ast(text: &str, expr: &Expr, path: &str, label_prefix: &str) -> AstNode {
+fn expr_to_ast(_text: &str, expr: &Expr, path: &str, label_prefix: &str) -> AstNode {
     let label = format!(
         "{}: {}",
         label_prefix,

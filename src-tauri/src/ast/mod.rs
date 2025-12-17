@@ -172,11 +172,6 @@ impl AstParseResult {
     pub fn failure(errors: Vec<AstParseError>) -> Self {
         Self { ast: None, errors }
     }
-
-    pub fn with_errors(mut self, errors: Vec<AstParseError>) -> Self {
-        self.errors = errors;
-        self
-    }
 }
 
 /// AST parse error
@@ -206,8 +201,6 @@ impl AstParseError {
 pub enum AstError {
     #[error("Unsupported language: {0}")]
     UnsupportedLanguage(String),
-    #[error("Parse error: {0}")]
-    ParseError(String),
 }
 
 impl Serialize for AstError {
