@@ -1,11 +1,11 @@
 <script lang="ts">
 	import * as yaml from 'yaml';
-	import { Label } from '$lib/components/ui/label/index.js';
-	import { Input } from '$lib/components/ui/input/index.js';
 	import OptionCheckbox from '$lib/components/options/option-checkbox.svelte';
 	import { CompareTabBase } from '$lib/components/tool/index.js';
-	import { findYamlDifferences, type YamlDiffOptions } from '$lib/services/yaml-diff.js';
+	import { Input } from '$lib/components/ui/input/index.js';
+	import { Label } from '$lib/components/ui/label/index.js';
 	import type { GenericDiffItem } from '$lib/constants/diff.js';
+	import { findYamlDifferences, type YamlDiffOptions } from '$lib/services/yaml-diff.js';
 	import { pasteFromClipboard } from '../utils.js';
 
 	interface Props {

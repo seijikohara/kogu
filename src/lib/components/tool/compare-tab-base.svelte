@@ -1,14 +1,15 @@
 <script lang="ts">
-	import type { Snippet } from 'svelte';
-	import { Button } from '$lib/components/ui/button/index.js';
+	
+	import { ArrowRightLeft } from '@lucide/svelte';
+import type { Snippet } from 'svelte';
+	import SplitPane from '$lib/components/layout/split-pane.svelte';
 	import OptionsPanel from '$lib/components/options/options-panel.svelte';
 	import OptionsSection from '$lib/components/options/options-section.svelte';
-	import SplitPane from '$lib/components/layout/split-pane.svelte';
-	import EditorPane from './editor-pane.svelte';
-	import DiffResultsPanel from './diff-results-panel.svelte';
-	import DiffLegend from './diff-legend.svelte';
-	import { ArrowRightLeft } from '@lucide/svelte';
+	import { Button } from '$lib/components/ui/button/index.js';
 	import type { GenericDiffItem } from '$lib/constants/diff.js';
+	import DiffLegend from './diff-legend.svelte';
+	import DiffResultsPanel from './diff-results-panel.svelte';
+	import EditorPane from './editor-pane.svelte';
 
 	type EditorMode = 'json' | 'xml' | 'yaml';
 

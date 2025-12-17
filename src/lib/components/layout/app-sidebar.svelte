@@ -1,19 +1,20 @@
 <script lang="ts">
-	import * as Sidebar from '$lib/components/ui/sidebar/index.js';
-	import * as Collapsible from '$lib/components/ui/collapsible/index.js';
+	
 	import {
-		FileCode2,
 		ChevronRight,
-		Sun,
-		Moon,
-		Monitor,
+		FileCode2,
 		FileText,
 		Lock,
+		Monitor,
+		Moon,
 		Sparkles,
+		Sun,
 	} from '@lucide/svelte';
+	import { mode, toggleMode } from 'mode-watcher';
 	import { page } from '$app/state';
-	import { toggleMode, mode } from 'mode-watcher';
-	import { PAGES, CATEGORIES, getPagesByCategory } from '$lib/services/pages.js';
+	import * as Collapsible from '$lib/components/ui/collapsible/index.js';
+import * as Sidebar from '$lib/components/ui/sidebar/index.js';
+	import { CATEGORIES, getPagesByCategory, PAGES } from '$lib/services/pages.js';
 
 	// Get dashboard page
 	const dashboardPage = $derived(PAGES.find((p) => p.id === 'dashboard'));

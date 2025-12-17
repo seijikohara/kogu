@@ -195,6 +195,34 @@ import type { ComponentProps } from 'svelte';
 // Preferred: Derived types from constants
 export const OPTIONS = ['option1', 'option2', 'option3'] as const;
 export type OptionType = (typeof OPTIONS)[number];
+
+// Preferred: const type parameters (TS 5.0+) for literal inference
+const createConfig = <const T extends Record<string, unknown>>(config: T): T => config;
+const myConfig = createConfig({ port: 3000 }); // { readonly port: 3000 }
+
+// Preferred: using for automatic resource cleanup (TS 5.2+)
+using file = new DisposableResource();
+// Automatically disposed when scope ends
+```
+
+### Avoid Enums
+
+Prefer `as const` objects over enums for better tree-shaking and type inference:
+
+```typescript
+// Preferred: as const object
+export const Status = {
+	Active: 'active',
+	Inactive: 'inactive',
+	Pending: 'pending',
+} as const;
+export type Status = (typeof Status)[keyof typeof Status];
+
+// Avoid: enum (poor tree-shaking, runtime overhead)
+enum Status {
+	Active = 'active',
+	Inactive = 'inactive',
+}
 ```
 
 ## Type Definition Patterns
@@ -429,9 +457,34 @@ const processData = (data: unknown): Result => {
 - Leaving commented-out code
 - Adding comments that duplicate TypeDoc
 
+## Recommended tsconfig.json
+
+```json
+{
+	"compilerOptions": {
+		"strict": true,
+		"noUncheckedIndexedAccess": true,
+		"noImplicitOverride": true,
+		"noPropertyAccessFromIndexSignature": true,
+		"noFallthroughCasesInSwitch": true,
+		"verbatimModuleSyntax": true,
+		"moduleResolution": "bundler"
+	}
+}
+```
+
+| Option                           | Effect                                   |
+| -------------------------------- | ---------------------------------------- |
+| `strict`                         | Enables all strict type-checking options |
+| `noUncheckedIndexedAccess`       | Array access returns `T \| undefined`    |
+| `noPropertyAccessFromIndexSignature` | Forces bracket notation for index signatures |
+| `verbatimModuleSyntax`           | Enforces explicit `import type`          |
+
+> **Note**: `exactOptionalPropertyTypes` is not used in this project due to incompatibility with shadcn-svelte component patterns where optional props can be `undefined`.
+
 ## Best Practices Summary
 
-- Enable strict mode in tsconfig
+- Enable strict mode in tsconfig with additional strict flags
 - Avoid `any` - use `unknown` for truly unknown types
 - Use `readonly` for immutable properties
 - Prefer explicit return types on exported functions
@@ -441,3 +494,4 @@ const processData = (data: unknown): Result => {
 - Never use `\n` escape sequences; use actual line breaks
 - Never use `else` after `return`
 - Never use `for`, `while` for data transformation
+- Avoid enums; use `as const` objects instead

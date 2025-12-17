@@ -1,5 +1,5 @@
 import type { CodeGenerator, JavaScriptOptions, JsonValue, TypeInfo } from './types.js';
-import { inferType, toCamelCase, generateWithNestedTypes } from './utils.js';
+import { generateWithNestedTypes, inferType, toCamelCase } from './utils.js';
 
 // ============================================================================
 // Constants

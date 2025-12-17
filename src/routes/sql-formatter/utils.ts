@@ -1,5 +1,5 @@
 export {
 	copyToClipboard,
-	pasteFromClipboard,
 	downloadTextFile,
+	pasteFromClipboard,
 } from '$lib/utils/file-operations.js';

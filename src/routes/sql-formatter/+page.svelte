@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { PageHeader } from '$lib/components/layout/index.js';
-	import { FormatTab } from './tabs/index.js';
 	import { calculateSqlStats, type SqlStats } from '$lib/services/formatters.js';
+	import { FormatTab } from './tabs/index.js';
 
 	// Shared state
 	let input = $state('');

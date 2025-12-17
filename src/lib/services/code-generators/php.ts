@@ -1,5 +1,5 @@
-import type { CodeGenerator, PhpOptions, JsonValue, TypeInfo } from './types.js';
-import { inferType, toCamelCase, generateWithNestedTypes } from './utils.js';
+import type { CodeGenerator, JsonValue, PhpOptions, TypeInfo } from './types.js';
+import { generateWithNestedTypes, inferType, toCamelCase } from './utils.js';
 
 // ============================================================================
 // Constants
@@ -84,7 +84,7 @@ const generateTraditionalClassPhp = (typeInfo: TypeInfo, options: PhpOptions): s
 		.map(([key]) => `        $this->${toCamelCase(key)} = $${toCamelCase(key)};`)
 		.join('\n');
 
-	const constructor = `    public function __construct(
+	const constructorMethod = `    public function __construct(
         ${constructorParams}
     ) {
 ${constructorAssignments}
@@ -94,7 +94,7 @@ ${constructorAssignments}
 {
 ${properties}
 
-${constructor}
+${constructorMethod}
 }`;
 };
 

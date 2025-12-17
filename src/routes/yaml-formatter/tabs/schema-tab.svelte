@@ -1,17 +1,18 @@
 <script lang="ts">
-	import { toast } from 'svelte-sonner';
-	import { Button } from '$lib/components/ui/button/index.js';
-	import OptionsPanel from '$lib/components/options/options-panel.svelte';
-	import OptionsSection from '$lib/components/options/options-section.svelte';
-	import OptionCheckbox from '$lib/components/options/option-checkbox.svelte';
-	import SplitPane from '$lib/components/layout/split-pane.svelte';
-	import { EditorPane } from '$lib/components/tool/index.js';
+	
 	import { FileCheck, Wand2 } from '@lucide/svelte';
-	import { inferJsonSchema } from '$lib/services/formatters.js';
-	import { downloadTextFile, copyToClipboard, pasteFromClipboard } from '../utils.js';
 	import Ajv from 'ajv';
 	import addFormats from 'ajv-formats';
+import { toast } from 'svelte-sonner';
 	import * as yaml from 'yaml';
+	import SplitPane from '$lib/components/layout/split-pane.svelte';
+	import OptionCheckbox from '$lib/components/options/option-checkbox.svelte';
+	import OptionsPanel from '$lib/components/options/options-panel.svelte';
+	import OptionsSection from '$lib/components/options/options-section.svelte';
+	import { EditorPane } from '$lib/components/tool/index.js';
+	import { Button } from '$lib/components/ui/button/index.js';
+	import { inferJsonSchema } from '$lib/services/formatters.js';
+	import { copyToClipboard, downloadTextFile, pasteFromClipboard } from '../utils.js';
 
 	interface Props {
 		input: string;

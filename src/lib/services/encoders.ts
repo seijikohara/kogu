@@ -101,9 +101,11 @@ export const fileToBase64 = (file: File): Promise<string> => {
  * Convert Base64 data URL to Blob for download.
  */
 export const base64ToBlob = (dataUrl: string): Blob => {
-	const [header, data] = dataUrl.split(',');
+	const parts = dataUrl.split(',');
+	const header = parts[0] ?? '';
+	const data = parts[1] ?? '';
 	const mimeMatch = header.match(/data:([^;]+)/);
-	const mime = mimeMatch ? mimeMatch[1] : 'application/octet-stream';
+	const mime = mimeMatch?.[1] ?? 'application/octet-stream';
 	const binary = globalThis.atob(data);
 	const bytes = Uint8Array.from(binary, (char) => char.charCodeAt(0));
 	return new Blob([bytes], { type: mime });
@@ -191,11 +193,9 @@ export const buildUrl = (baseUrl: string, params: QueryParameter[]): string => {
 	try {
 		const url = new URL(baseUrl);
 		url.search = '';
-		params.forEach(({ key, value }) => {
-			if (key.trim()) {
-				url.searchParams.append(key, value);
-			}
-		});
+		params
+			.filter(({ key }) => key.trim())
+			.forEach(({ key, value }) => url.searchParams.append(key, value));
 		return url.toString();
 	} catch {
 		return baseUrl;
@@ -271,7 +271,7 @@ export const base64UrlDecode = (str: string): string => {
 		globalThis
 			.atob(paddedBase64)
 			.split('')
-			.map((c) => `%${('00' + c.charCodeAt(0).toString(16)).slice(-2)}`)
+			.map((c) => `%${`00${c.charCodeAt(0).toString(16)}`.slice(-2)}`)
 			.join('')
 	);
 };
@@ -285,10 +285,17 @@ export const decodeJwt = (token: string): JwtDecoded | null => {
 		return null;
 	}
 
+	const headerPart = parts[0];
+	const payloadPart = parts[1];
+	const signaturePart = parts[2];
+
+	if (!headerPart || !payloadPart || !signaturePart) {
+		return null;
+	}
+
 	try {
-		const header = JSON.parse(base64UrlDecode(parts[0])) as JwtHeader;
-		const payload = JSON.parse(base64UrlDecode(parts[1])) as JwtPayload;
-		const signature = parts[2];
+		const header = JSON.parse(base64UrlDecode(headerPart)) as JwtHeader;
+		const payload = JSON.parse(base64UrlDecode(payloadPart)) as JwtPayload;
 
 		const now = Date.now() / 1000;
 		const isExpired = payload.exp ? payload.exp < now : false;
@@ -296,7 +303,7 @@ export const decodeJwt = (token: string): JwtDecoded | null => {
 		return {
 			header,
 			payload,
-			signature,
+			signature: signaturePart,
 			isExpired,
 			expiresAt: payload.exp ? new Date(payload.exp * 1000) : undefined,
 			issuedAt: payload.iat ? new Date(payload.iat * 1000) : undefined,
@@ -401,7 +408,7 @@ export const generateAllHashes = (text: string): HashResult[] => {
 /**
  * Generate hash for file using specified algorithm.
  */
-export const generateFileHash = async (file: File, algorithm: HashAlgorithm): Promise<string> => {
+export const generateFileHash = (file: File, algorithm: HashAlgorithm): Promise<string> => {
 	return new Promise((resolve, reject) => {
 		const reader = new FileReader();
 		reader.onload = () => {
@@ -442,16 +449,14 @@ export const generateFileHash = async (file: File, algorithm: HashAlgorithm): Pr
 /**
  * Generate all hashes for file.
  */
-export const generateAllFileHashes = async (file: File): Promise<HashResult[]> => {
-	const results: HashResult[] = [];
-
-	for (const { algorithm, bits } of HASH_ALGORITHMS) {
-		const hash = await generateFileHash(file, algorithm);
-		results.push({ algorithm, hash, bits });
-	}
-
-	return results;
-};
+export const generateAllFileHashes = async (file: File): Promise<HashResult[]> =>
+	Promise.all(
+		HASH_ALGORITHMS.map(async ({ algorithm, bits }) => ({
+			algorithm,
+			hash: await generateFileHash(file, algorithm),
+			bits,
+		}))
+	);
 
 /**
  * Compare two hash values (case-insensitive).

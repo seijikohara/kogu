@@ -1,5 +1,5 @@
-import type { CodeGenerator, RustOptions, JsonValue, TypeInfo } from './types.js';
-import { inferType, toSnakeCase, generateWithNestedTypes } from './utils.js';
+import type { CodeGenerator, JsonValue, RustOptions, TypeInfo } from './types.js';
+import { generateWithNestedTypes, inferType, toSnakeCase } from './utils.js';
 
 // ============================================================================
 // Constants

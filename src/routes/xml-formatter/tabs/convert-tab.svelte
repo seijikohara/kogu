@@ -1,18 +1,19 @@
 <script lang="ts">
-	import { Button } from '$lib/components/ui/button/index.js';
-	import { Label } from '$lib/components/ui/label/index.js';
-	import { Input } from '$lib/components/ui/input/index.js';
-	import OptionsSection from '$lib/components/options/options-section.svelte';
+	
 	import OptionCheckbox from '$lib/components/options/option-checkbox.svelte';
 	import OptionSelect from '$lib/components/options/option-select.svelte';
+	import OptionsSection from '$lib/components/options/options-section.svelte';
 	import { ConvertTabBase } from '$lib/components/tool/index.js';
+import { Button } from '$lib/components/ui/button/index.js';
+	import { Input } from '$lib/components/ui/input/index.js';
+	import { Label } from '$lib/components/ui/label/index.js';
 	import {
-		xmlToJson,
-		xmlToYaml,
 		type XmlToJsonOptions,
 		type XmlToYamlOptions,
+		xmlToJson,
+		xmlToYaml,
 	} from '$lib/services/formatters.js';
-	import { downloadTextFile, copyToClipboard, pasteFromClipboard } from '../utils.js';
+	import { copyToClipboard, downloadTextFile, pasteFromClipboard } from '../utils.js';
 
 	interface Props {
 		input: string;
@@ -60,10 +61,10 @@
 	let yamlFalseStr = $state('false');
 
 	// Derived values
-	const jsonIndent = $derived(parseInt(jsonIndentStr) || 2);
-	const yamlIndent = $derived(parseInt(yamlIndentStr) || 2);
-	const yamlLineWidth = $derived(parseInt(yamlLineWidthStr) || 80);
-	const yamlMinContentWidth = $derived(parseInt(yamlMinContentWidthStr) || 20);
+	const jsonIndent = $derived(Number.parseInt(jsonIndentStr, 10) || 2);
+	const yamlIndent = $derived(Number.parseInt(yamlIndentStr, 10) || 2);
+	const yamlLineWidth = $derived(Number.parseInt(yamlLineWidthStr, 10) || 80);
+	const yamlMinContentWidth = $derived(Number.parseInt(yamlMinContentWidthStr, 10) || 20);
 
 	// JSON options object
 	const jsonOptions = $derived<XmlToJsonOptions>({

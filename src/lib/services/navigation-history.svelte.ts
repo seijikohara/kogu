@@ -1,6 +1,6 @@
-import { beforeNavigate, afterNavigate, goto } from '$app/navigation';
-import { page } from '$app/state';
 import { onMount } from 'svelte';
+import { afterNavigate, beforeNavigate, goto } from '$app/navigation';
+import { page } from '$app/state';
 
 interface NavigationEntry {
 	readonly url: string;
@@ -66,6 +66,7 @@ export const goBack = async (): Promise<void> => {
 	isNavigatingProgrammatically = true;
 	currentIndex -= 1;
 	const entry = history[currentIndex];
+	if (!entry) return;
 	await goto(entry.url, { replaceState: false });
 };
 
@@ -75,6 +76,7 @@ export const goForward = async (): Promise<void> => {
 	isNavigatingProgrammatically = true;
 	currentIndex += 1;
 	const entry = history[currentIndex];
+	if (!entry) return;
 	await goto(entry.url, { replaceState: false });
 };
 

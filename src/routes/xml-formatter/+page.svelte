@@ -1,15 +1,16 @@
 <script lang="ts">
-	import { FormatterPage } from '$lib/components/tool/index.js';
+	
+	import { ArrowRightLeft, Code2, FileCheck, GitCompare, Play, Search } from '@lucide/svelte';
+import { FormatterPage } from '$lib/components/tool/index.js';
+	import { calculateXmlStats, type XmlStats } from '$lib/services/formatters.js';
 	import {
-		FormatTab,
-		QueryTab,
 		CompareTab,
 		ConvertTab,
-		SchemaTab,
+		FormatTab,
 		GenerateTab,
+		QueryTab,
+		SchemaTab,
 	} from './tabs/index.js';
-	import { calculateXmlStats, type XmlStats } from '$lib/services/formatters.js';
-	import { Play, Search, GitCompare, ArrowRightLeft, FileCheck, Code2 } from '@lucide/svelte';
 
 	type TabType = 'format' | 'query' | 'compare' | 'convert' | 'schema' | 'generate';
 

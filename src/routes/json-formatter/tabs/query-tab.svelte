@@ -1,14 +1,15 @@
 <script lang="ts">
-	import { Label } from '$lib/components/ui/label/index.js';
-	import { Input } from '$lib/components/ui/input/index.js';
-	import OptionsPanel from '$lib/components/options/options-panel.svelte';
-	import OptionsSection from '$lib/components/options/options-section.svelte';
+	
+	import SplitPane from '$lib/components/layout/split-pane.svelte';
 	import OptionCheckbox from '$lib/components/options/option-checkbox.svelte';
 	import OptionSelect from '$lib/components/options/option-select.svelte';
-	import SplitPane from '$lib/components/layout/split-pane.svelte';
+	import OptionsPanel from '$lib/components/options/options-panel.svelte';
+	import OptionsSection from '$lib/components/options/options-section.svelte';
 	import { EditorPane } from '$lib/components/tool/index.js';
-	import { executeJsonPath, validateJson, type JsonInputFormat } from '$lib/services/formatters.js';
-	import { downloadTextFile, copyToClipboard, pasteFromClipboard } from '../utils.js';
+	import { Input } from '$lib/components/ui/input/index.js';
+import { Label } from '$lib/components/ui/label/index.js';
+	import { executeJsonPath, type JsonInputFormat, validateJson } from '$lib/services/formatters.js';
+	import { copyToClipboard, downloadTextFile, pasteFromClipboard } from '../utils.js';
 
 	interface Props {
 		input: string;
@@ -44,7 +45,34 @@
 	});
 
 	// Derived numeric values
-	const queryMaxResults = $derived(parseInt(queryMaxResultsStr) || 0);
+	const queryMaxResults = $derived(Number.parseInt(queryMaxResultsStr, 10) || 0);
+
+	// Query options interface
+	interface QueryOptions {
+		flattenArrays: boolean;
+		firstMatchOnly: boolean;
+		maxResults: number;
+		wrapResults: boolean;
+		showPaths: boolean;
+		outputFormat: 'formatted' | 'compact';
+		queryPath: string;
+	}
+
+	/** Apply array transformations based on options */
+	const applyArrayOptions = (arr: unknown[], opts: QueryOptions): unknown => {
+		const flattened = opts.flattenArrays ? arr.flat(Number.POSITIVE_INFINITY) : arr;
+		if (opts.firstMatchOnly && flattened.length > 0) return flattened[0];
+
+		const limited = opts.maxResults > 0 ? flattened.slice(0, opts.maxResults) : flattened;
+		return !opts.wrapResults && limited.length === 1 ? limited[0] : limited;
+	};
+
+	/** Format query result as JSON string */
+	const formatQueryResult = (result: unknown, opts: QueryOptions): string => {
+		const indent = opts.outputFormat === 'compact' ? 0 : 2;
+		const output = opts.showPaths && result !== undefined ? { path: opts.queryPath, value: result } : result;
+		return JSON.stringify(output, null, indent);
+	};
 
 	// Query result
 	const queryResultData = $derived.by(() => {
@@ -52,45 +80,19 @@
 			return { result: '', error: '' };
 		}
 		try {
-			let result: unknown = executeJsonPath(input, queryPath);
+			const rawResult = executeJsonPath(input, queryPath);
+			const opts: QueryOptions = {
+				flattenArrays: queryFlattenArrays,
+				firstMatchOnly: queryFirstMatchOnly,
+				maxResults: queryMaxResults,
+				wrapResults: queryWrapResults,
+				showPaths: queryShowPaths,
+				outputFormat: queryOutputFormat,
+				queryPath,
+			};
 
-			// Apply options for array results
-			if (Array.isArray(result)) {
-				let arr = result as unknown[];
-
-				// Flatten nested arrays if enabled
-				if (queryFlattenArrays) {
-					arr = arr.flat(Infinity);
-				}
-
-				// First match only
-				if (queryFirstMatchOnly && arr.length > 0) {
-					result = arr[0];
-				} else {
-					// Apply max results limit
-					if (queryMaxResults > 0) {
-						arr = arr.slice(0, queryMaxResults);
-					}
-
-					// Unwrap single-element arrays if wrap is disabled
-					if (!queryWrapResults && arr.length === 1) {
-						result = arr[0];
-					} else {
-						result = arr;
-					}
-				}
-			}
-
-			// Format output
-			const indent = queryOutputFormat === 'compact' ? 0 : 2;
-
-			// Show paths in results
-			if (queryShowPaths && result !== undefined) {
-				const output = { path: queryPath, value: result };
-				return { result: JSON.stringify(output, null, indent), error: '' };
-			}
-
-			return { result: JSON.stringify(result, null, indent), error: '' };
+			const result = Array.isArray(rawResult) ? applyArrayOptions(rawResult, opts) : rawResult;
+			return { result: formatQueryResult(result, opts), error: '' };
 		} catch (e) {
 			return { result: '', error: e instanceof Error ? e.message : 'Query failed' };
 		}

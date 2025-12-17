@@ -1,5 +1,5 @@
-import type { CodeGenerator, SwiftOptions, JsonValue, TypeInfo } from './types.js';
-import { inferType, toCamelCase, generateWithNestedTypes } from './utils.js';
+import type { CodeGenerator, JsonValue, SwiftOptions, TypeInfo } from './types.js';
+import { generateWithNestedTypes, inferType, toCamelCase } from './utils.js';
 
 // ============================================================================
 // Constants

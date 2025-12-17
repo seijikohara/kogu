@@ -1,35 +1,36 @@
 <script lang="ts">
-	import { Button } from '$lib/components/ui/button/index.js';
-	import { Label } from '$lib/components/ui/label/index.js';
-	import { Input } from '$lib/components/ui/input/index.js';
-	import OptionsPanel from '$lib/components/options/options-panel.svelte';
-	import OptionsSection from '$lib/components/options/options-section.svelte';
+	
+	import * as yaml from 'yaml';
+	import SplitPane from '$lib/components/layout/split-pane.svelte';
 	import OptionCheckbox from '$lib/components/options/option-checkbox.svelte';
 	import OptionSelect from '$lib/components/options/option-select.svelte';
-	import SplitPane from '$lib/components/layout/split-pane.svelte';
+	import OptionsPanel from '$lib/components/options/options-panel.svelte';
+	import OptionsSection from '$lib/components/options/options-section.svelte';
 	import { EditorPane } from '$lib/components/tool/index.js';
+import { Button } from '$lib/components/ui/button/index.js';
+	import { Input } from '$lib/components/ui/input/index.js';
+	import { Label } from '$lib/components/ui/label/index.js';
 	import {
+		type CSharpOptions,
+		type GoOptions,
 		generateCode,
-		LANGUAGE_INFO,
-		LANGUAGE_OPTIONS,
-		PYTHON_STYLE_OPTIONS,
 		JAVA_CLASS_STYLE_OPTIONS,
 		JAVA_SERIALIZATION_OPTIONS,
-		KOTLIN_SERIALIZATION_OPTIONS,
-		type TargetLanguage,
-		type TypeScriptOptions,
+		type JavaOptions,
 		type JavaScriptOptions,
-		type GoOptions,
+		KOTLIN_SERIALIZATION_OPTIONS,
+		type KotlinOptions,
+		LANGUAGE_INFO,
+		LANGUAGE_OPTIONS,
+		type PhpOptions,
+		PYTHON_STYLE_OPTIONS,
 		type PythonOptions,
 		type RustOptions,
-		type JavaOptions,
-		type CSharpOptions,
-		type KotlinOptions,
 		type SwiftOptions,
-		type PhpOptions,
+		type TargetLanguage,
+		type TypeScriptOptions,
 	} from '$lib/services/code-generators/index.js';
-	import { downloadTextFile, copyToClipboard, pasteFromClipboard } from '../utils.js';
-	import * as yaml from 'yaml';
+	import { copyToClipboard, downloadTextFile, pasteFromClipboard } from '../utils.js';
 
 	interface Props {
 		input: string;

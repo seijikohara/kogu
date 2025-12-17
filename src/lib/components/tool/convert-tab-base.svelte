@@ -1,14 +1,12 @@
 <script lang="ts">
 	import type { Snippet } from 'svelte';
 	import type { EditorMode } from '$lib/components/editors/code-editor.svelte';
-	import OptionsPanel from '$lib/components/options/options-panel.svelte';
 	import SplitPane from '$lib/components/layout/split-pane.svelte';
+	import OptionsPanel from '$lib/components/options/options-panel.svelte';
 	import { EditorPane } from '$lib/components/tool/index.js';
 
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	type ValidationResult = { valid: boolean | null } & Record<string, any>;
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	type StatsResult = { input: string; valid: boolean | null; error: string } & Record<string, any>;
+	type ValidationResult = { valid: boolean | null } & Record<string, unknown>;
+	type StatsResult = { input: string; valid: boolean | null; error: string } & Record<string, unknown>;
 
 	interface Props {
 		/** Editor mode for input */

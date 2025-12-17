@@ -1,3 +1,47 @@
+// =============================================================================
+// Rust Lint Configuration - Strict Mode
+// =============================================================================
+
+// Clippy lint groups
+#![warn(clippy::all)]
+#![warn(clippy::pedantic)]
+#![warn(clippy::nursery)]
+// Safety lints - forbid unsafe code
+#![forbid(unsafe_code)]
+// Documentation requirements
+#![warn(missing_docs)]
+// Rust idioms
+#![warn(rust_2018_idioms)]
+// Clippy - Avoid panic-prone patterns
+#![warn(clippy::unwrap_used)]
+#![warn(clippy::expect_used)]
+#![warn(clippy::panic)]
+#![warn(clippy::todo)]
+#![warn(clippy::unimplemented)]
+// Clippy - Error handling
+#![warn(clippy::unwrap_in_result)]
+#![warn(clippy::panic_in_result_fn)]
+// Clippy - Code quality
+#![warn(clippy::cognitive_complexity)]
+#![warn(clippy::dbg_macro)]
+#![warn(clippy::print_stdout)]
+#![warn(clippy::print_stderr)]
+// Clippy - Performance
+#![warn(clippy::inefficient_to_string)]
+#![warn(clippy::needless_collect)]
+// Clippy - Correctness
+#![warn(clippy::missing_errors_doc)]
+#![warn(clippy::missing_panics_doc)]
+// Allow specific lints that are too noisy for this project
+#![allow(clippy::module_name_repetitions)]
+#![allow(clippy::must_use_candidate)]
+#![allow(clippy::missing_errors_doc)] // Re-allow for now as many functions need updates
+
+//! Kogu - A collection of useful developer tools
+//!
+//! This library provides the Rust backend for the Kogu desktop application,
+//! including AST parsing functionality for JSON, YAML, XML, and SQL.
+
 mod ast;
 
 use tauri::Manager;
@@ -7,7 +51,7 @@ use ast::{AstLanguage, AstParseResult};
 
 #[tauri::command]
 fn greet(name: &str) -> String {
-    format!("Hello, {}! You've been greeted from Rust!", name)
+    format!("Hello, {name}! You've been greeted from Rust!")
 }
 
 /// Parse text to AST based on language
@@ -17,7 +61,7 @@ fn greet(name: &str) -> String {
 /// * `language` - The language identifier ("json", "yaml", "xml", "sql")
 ///
 /// # Returns
-/// AstParseResult containing the AST and any errors
+/// `AstParseResult` containing the AST and any errors
 #[tauri::command]
 fn parse_to_ast(text: &str, language: &str) -> Result<AstParseResult, String> {
     let lang: AstLanguage = language.parse().map_err(|e: ast::AstError| e.to_string())?;
@@ -25,6 +69,24 @@ fn parse_to_ast(text: &str, language: &str) -> Result<AstParseResult, String> {
     Ok(ast::parse_to_ast(text, lang))
 }
 
+/// Runs the Tauri application.
+///
+/// This is the main entry point for the Kogu desktop application.
+/// It initializes all plugins, sets up the window, and starts the event loop.
+///
+/// # Panics
+///
+/// This function will panic if:
+/// - The main window cannot be found (configuration error)
+/// - The overlay titlebar cannot be created
+/// - The traffic lights inset cannot be set (macOS only)
+/// - The Tauri application fails to start
+///
+/// These panics are appropriate for an application entry point since the app
+/// cannot continue if initialization fails.
+// Allow expect_used: Entry point function - unrecoverable startup errors should panic
+// Allow large_stack_frames: tauri::generate_context!() macro generates unavoidably large stack data
+#[allow(clippy::expect_used, clippy::large_stack_frames)]
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     let mut builder = tauri::Builder::default()
@@ -43,14 +105,16 @@ pub fn run() {
 
     builder
         .setup(|app| {
-            let main_window = app.get_webview_window("main").unwrap();
+            let main_window = app
+                .get_webview_window("main")
+                .ok_or("Failed to get main window")?;
 
             // Create overlay titlebar (handles Windows snap layout)
-            main_window.create_overlay_titlebar().unwrap();
+            main_window.create_overlay_titlebar()?;
 
             // macOS: position traffic lights centered in 32px (h-8) title bar
             #[cfg(target_os = "macos")]
-            main_window.set_traffic_lights_inset(12.0, 10.0).unwrap();
+            main_window.set_traffic_lights_inset(12.0, 10.0)?;
 
             Ok(())
         })

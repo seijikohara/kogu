@@ -27,7 +27,7 @@ pub fn run() {
     tauri::Builder::default()
         .invoke_handler(tauri::generate_handler![greet])
         .run(tauri::generate_context!())
-        .expect("error while running tauri application");
+        .unwrap_or_else(|e| eprintln!("Application error: {e}"));
 }
 ```
 
@@ -51,10 +51,13 @@ struct AppState {
 }
 
 #[tauri::command]
-fn increment(state: tauri::State<AppState>) -> i32 {
-    let mut counter = state.counter.lock().unwrap();
+fn increment(state: tauri::State<AppState>) -> Result<i32, String> {
+    let mut counter = state
+        .counter
+        .lock()
+        .map_err(|e| format!("Lock poisoned: {e}"))?;
     *counter += 1;
-    *counter
+    Ok(*counter)
 }
 ```
 
@@ -163,8 +166,8 @@ Permissions are configured in `src-tauri/capabilities/default.json`:
 use tauri::Manager;
 
 #[tauri::command]
-fn open_settings(app: tauri::AppHandle) {
-    let _settings_window = tauri::WebviewWindowBuilder::new(
+fn open_settings(app: tauri::AppHandle) -> Result<(), String> {
+    tauri::WebviewWindowBuilder::new(
         &app,
         "settings",
         tauri::WebviewUrl::App("settings".into())
@@ -172,7 +175,8 @@ fn open_settings(app: tauri::AppHandle) {
     .title("Settings")
     .inner_size(600.0, 400.0)
     .build()
-    .unwrap();
+    .map_err(|e| format!("Failed to create window: {e}"))?;
+    Ok(())
 }
 ```
 
@@ -184,11 +188,14 @@ fn open_settings(app: tauri::AppHandle) {
 use tauri::Emitter;
 
 #[tauri::command]
-fn process_file(app: tauri::AppHandle, path: String) {
+fn process_file(app: tauri::AppHandle, path: String) -> Result<(), String> {
     // Emit progress events
-    app.emit("progress", 50).unwrap();
+    app.emit("progress", 50)
+        .map_err(|e| format!("Emit failed: {e}"))?;
     // ... processing ...
-    app.emit("progress", 100).unwrap();
+    app.emit("progress", 100)
+        .map_err(|e| format!("Emit failed: {e}"))?;
+    Ok(())
 }
 ```
 

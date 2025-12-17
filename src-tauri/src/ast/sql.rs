@@ -19,20 +19,20 @@ pub fn parse(text: &str) -> AstParseResult {
                 return AstParseResult::success(create_empty_root(text));
             }
 
-            let mut children = Vec::new();
-            for (i, stmt) in statements.iter().enumerate() {
-                let stmt_path = format!("$[{}]", i);
-                let stmt_ast = statement_to_ast(text, stmt, &stmt_path);
-                children.push(stmt_ast);
-            }
+            let children: Vec<_> = statements
+                .iter()
+                .enumerate()
+                .map(|(i, stmt)| statement_to_ast(text, stmt, &format!("$[{i}]")))
+                .collect();
 
             if children.len() == 1 {
-                // Single statement - return directly
-                let mut ast = children.remove(0);
+                let mut ast = children
+                    .into_iter()
+                    .next()
+                    .unwrap_or_else(|| create_empty_root(text));
                 ast.path = "$".to_string();
                 AstParseResult::success(ast)
             } else {
-                // Multiple statements
                 let range = AstRange::new(
                     AstPosition::new(1, 1, 0),
                     AstPosition::new(1, 1, text.len()),
@@ -43,10 +43,7 @@ pub fn parse(text: &str) -> AstParseResult {
                 AstParseResult::success(root)
             }
         }
-        Err(e) => {
-            let error = AstParseError::new(e.to_string());
-            AstParseResult::failure(vec![error])
-        }
+        Err(e) => AstParseResult::failure(vec![AstParseError::new(e.to_string())]),
     }
 }
 
@@ -63,379 +60,305 @@ fn create_empty_root(text: &str) -> AstNode {
     )
 }
 
-fn span_to_range(_text: &str, span: Span) -> AstRange {
+fn span_to_range(span: Span) -> AstRange {
     AstRange::new(
         AstPosition::new(
-            span.start.line as usize,
-            span.start.column as usize,
-            0, // Offset is not directly available from Span
+            usize::try_from(span.start.line).unwrap_or(usize::MAX),
+            usize::try_from(span.start.column).unwrap_or(usize::MAX),
+            0,
         ),
-        AstPosition::new(span.end.line as usize, span.end.column as usize, 0),
+        AstPosition::new(
+            usize::try_from(span.end.line).unwrap_or(usize::MAX),
+            usize::try_from(span.end.column).unwrap_or(usize::MAX),
+            0,
+        ),
     )
 }
 
-fn default_range() -> AstRange {
+const fn default_range() -> AstRange {
     AstRange::new(AstPosition::new(1, 1, 0), AstPosition::new(1, 1, 0))
 }
 
 fn statement_to_ast(text: &str, stmt: &Statement, path: &str) -> AstNode {
-    let span = stmt.span();
-    let range = span_to_range(text, span);
+    let range = span_to_range(stmt.span());
 
     match stmt {
         Statement::Query(query) => query_to_ast(text, query, path),
-
-        Statement::Insert(insert) => {
-            let mut children = Vec::new();
-
-            // Table name
-            let table_name = insert.table.to_string();
-            children.push(AstNode::new(
-                AstNodeType::Identifier,
-                format!("{}.table", path),
-                table_name,
-                default_range(),
-            ));
-
-            // Columns
-            if !insert.columns.is_empty() {
-                let cols: Vec<String> = insert.columns.iter().map(|c| c.to_string()).collect();
-                let cols_node = AstNode::new(
-                    AstNodeType::Clause,
-                    format!("{}.columns", path),
-                    format!("COLUMNS ({})", cols.len()),
-                    default_range(),
-                )
-                .with_children(
-                    cols.iter()
-                        .enumerate()
-                        .map(|(i, col)| {
-                            AstNode::new(
-                                AstNodeType::Identifier,
-                                format!("{}.columns[{}]", path, i),
-                                col.clone(),
-                                default_range(),
-                            )
-                        })
-                        .collect(),
-                );
-                children.push(cols_node);
-            }
-
-            // Source (VALUES or SELECT)
-            if let Some(source) = &insert.source {
-                let source_ast = query_to_ast(text, source, &format!("{}.source", path));
-                children.push(source_ast);
-            }
-
-            AstNode::new(
-                AstNodeType::Statement,
-                path.to_string(),
-                "INSERT".to_string(),
-                range,
-            )
-            .with_children(children)
-        }
-
+        Statement::Insert(insert) => insert_to_ast(text, insert, path, range),
         Statement::Update {
             table,
             assignments,
             selection,
             ..
-        } => {
-            let mut children = Vec::new();
-
-            // Table
-            let table_name = table.relation.to_string();
-            children.push(AstNode::new(
-                AstNodeType::Identifier,
-                format!("{}.table", path),
-                table_name,
-                default_range(),
-            ));
-
-            // SET clause
-            if !assignments.is_empty() {
-                let set_children: Vec<AstNode> = assignments
-                    .iter()
-                    .enumerate()
-                    .map(|(i, assign)| {
-                        let target_str = assign.target.to_string();
-                        AstNode::new(
-                            AstNodeType::Expression,
-                            format!("{}.set[{}]", path, i),
-                            format!("{} = ...", target_str),
-                            default_range(),
-                        )
-                    })
-                    .collect();
-
-                children.push(
-                    AstNode::new(
-                        AstNodeType::Clause,
-                        format!("{}.set", path),
-                        format!("SET ({} assignments)", set_children.len()),
-                        default_range(),
-                    )
-                    .with_children(set_children),
-                );
-            }
-
-            // WHERE clause
-            if let Some(where_expr) = selection {
-                children.push(expr_to_ast(
-                    text,
-                    where_expr,
-                    &format!("{}.where", path),
-                    "WHERE",
-                ));
-            }
-
-            AstNode::new(
-                AstNodeType::Statement,
-                path.to_string(),
-                "UPDATE".to_string(),
-                range,
-            )
-            .with_children(children)
-        }
-
-        Statement::Delete(delete) => {
-            let mut children = Vec::new();
-
-            // FROM clause - FromTable is an enum in sqlparser v0.53
-            let from_label = match &delete.from {
-                sqlparser::ast::FromTable::WithFromKeyword(tables) => tables
-                    .iter()
-                    .map(|t| t.relation.to_string())
-                    .collect::<Vec<_>>()
-                    .join(", "),
-                sqlparser::ast::FromTable::WithoutKeyword(tables) => tables
-                    .iter()
-                    .map(|t| t.relation.to_string())
-                    .collect::<Vec<_>>()
-                    .join(", "),
-            };
-            let from_ast = AstNode::new(
-                AstNodeType::Clause,
-                format!("{}.from", path),
-                format!("FROM {}", from_label),
-                default_range(),
-            );
-            children.push(from_ast);
-
-            // WHERE clause
-            if let Some(where_expr) = &delete.selection {
-                children.push(expr_to_ast(
-                    text,
-                    where_expr,
-                    &format!("{}.where", path),
-                    "WHERE",
-                ));
-            }
-
-            AstNode::new(
-                AstNodeType::Statement,
-                path.to_string(),
-                "DELETE".to_string(),
-                range,
-            )
-            .with_children(children)
-        }
-
-        Statement::CreateTable(create) => {
-            let mut children = Vec::new();
-
-            // Table name
-            children.push(AstNode::new(
-                AstNodeType::Identifier,
-                format!("{}.table", path),
-                create.name.to_string(),
-                default_range(),
-            ));
-
-            // Columns
-            let col_children: Vec<AstNode> = create
-                .columns
-                .iter()
-                .enumerate()
-                .map(|(i, col)| {
-                    AstNode::new(
-                        AstNodeType::Identifier,
-                        format!("{}.columns[{}]", path, i),
-                        format!("{} {}", col.name, col.data_type),
-                        default_range(),
-                    )
-                })
-                .collect();
-
-            if !col_children.is_empty() {
-                children.push(
-                    AstNode::new(
-                        AstNodeType::Clause,
-                        format!("{}.columns", path),
-                        format!("COLUMNS ({})", col_children.len()),
-                        default_range(),
-                    )
-                    .with_children(col_children),
-                );
-            }
-
-            AstNode::new(
-                AstNodeType::Statement,
-                path.to_string(),
-                "CREATE TABLE".to_string(),
-                range,
-            )
-            .with_children(children)
-        }
-
+        } => update_to_ast(text, table, assignments, selection.as_ref(), path, range),
+        Statement::Delete(delete) => delete_to_ast(text, delete, path, range),
+        Statement::CreateTable(create) => create_table_to_ast(create, path, range),
         Statement::Drop {
             names, object_type, ..
-        } => {
-            let label = format!("DROP {:?}", object_type);
-            let children: Vec<AstNode> = names
-                .iter()
-                .enumerate()
-                .map(|(i, name)| {
-                    AstNode::new(
-                        AstNodeType::Identifier,
-                        format!("{}.names[{}]", path, i),
-                        name.to_string(),
-                        default_range(),
-                    )
-                })
-                .collect();
-
-            AstNode::new(AstNodeType::Statement, path.to_string(), label, range)
-                .with_children(children)
-        }
-
+        } => drop_to_ast(names, *object_type, path, range),
         _ => {
-            // Generic fallback for other statement types
             let label = format!("{:?}", std::mem::discriminant(stmt));
             AstNode::new(AstNodeType::Statement, path.to_string(), label, range)
         }
     }
 }
 
-fn query_to_ast(text: &str, query: &Query, path: &str) -> AstNode {
-    let span = query.span();
-    let range = span_to_range(text, span);
+fn insert_to_ast(
+    text: &str,
+    insert: &sqlparser::ast::Insert,
+    path: &str,
+    range: AstRange,
+) -> AstNode {
+    let mut children = vec![AstNode::new(
+        AstNodeType::Identifier,
+        format!("{path}.table"),
+        insert.table.to_string(),
+        default_range(),
+    )];
 
+    if !insert.columns.is_empty() {
+        children.push(columns_to_ast(&insert.columns, path));
+    }
+
+    if let Some(source) = &insert.source {
+        children.push(query_to_ast(text, source, &format!("{path}.source")));
+    }
+
+    AstNode::new(
+        AstNodeType::Statement,
+        path.to_string(),
+        "INSERT".to_string(),
+        range,
+    )
+    .with_children(children)
+}
+
+fn columns_to_ast(columns: &[sqlparser::ast::Ident], path: &str) -> AstNode {
+    let cols: Vec<String> = columns
+        .iter()
+        .map(std::string::ToString::to_string)
+        .collect();
+    let children: Vec<_> = cols
+        .iter()
+        .enumerate()
+        .map(|(i, col)| {
+            AstNode::new(
+                AstNodeType::Identifier,
+                format!("{path}.columns[{i}]"),
+                col.clone(),
+                default_range(),
+            )
+        })
+        .collect();
+
+    AstNode::new(
+        AstNodeType::Clause,
+        format!("{path}.columns"),
+        format!("COLUMNS ({})", cols.len()),
+        default_range(),
+    )
+    .with_children(children)
+}
+
+fn update_to_ast(
+    text: &str,
+    table: &sqlparser::ast::TableWithJoins,
+    assignments: &[sqlparser::ast::Assignment],
+    selection: Option<&Expr>,
+    path: &str,
+    range: AstRange,
+) -> AstNode {
+    let mut children = vec![AstNode::new(
+        AstNodeType::Identifier,
+        format!("{path}.table"),
+        table.relation.to_string(),
+        default_range(),
+    )];
+
+    if !assignments.is_empty() {
+        children.push(assignments_to_ast(assignments, path));
+    }
+
+    if let Some(where_expr) = selection {
+        children.push(expr_to_ast(
+            text,
+            where_expr,
+            &format!("{path}.where"),
+            "WHERE",
+        ));
+    }
+
+    AstNode::new(
+        AstNodeType::Statement,
+        path.to_string(),
+        "UPDATE".to_string(),
+        range,
+    )
+    .with_children(children)
+}
+
+fn assignments_to_ast(assignments: &[sqlparser::ast::Assignment], path: &str) -> AstNode {
+    let children: Vec<_> = assignments
+        .iter()
+        .enumerate()
+        .map(|(i, assign)| {
+            AstNode::new(
+                AstNodeType::Expression,
+                format!("{path}.set[{i}]"),
+                format!("{} = ...", assign.target),
+                default_range(),
+            )
+        })
+        .collect();
+
+    AstNode::new(
+        AstNodeType::Clause,
+        format!("{path}.set"),
+        format!("SET ({} assignments)", children.len()),
+        default_range(),
+    )
+    .with_children(children)
+}
+
+fn delete_to_ast(
+    text: &str,
+    delete: &sqlparser::ast::Delete,
+    path: &str,
+    range: AstRange,
+) -> AstNode {
+    let from_label = match &delete.from {
+        sqlparser::ast::FromTable::WithFromKeyword(tables)
+        | sqlparser::ast::FromTable::WithoutKeyword(tables) => tables
+            .iter()
+            .map(|t| t.relation.to_string())
+            .collect::<Vec<_>>()
+            .join(", "),
+    };
+
+    let mut children = vec![AstNode::new(
+        AstNodeType::Clause,
+        format!("{path}.from"),
+        format!("FROM {from_label}"),
+        default_range(),
+    )];
+
+    if let Some(where_expr) = &delete.selection {
+        children.push(expr_to_ast(
+            text,
+            where_expr,
+            &format!("{path}.where"),
+            "WHERE",
+        ));
+    }
+
+    AstNode::new(
+        AstNodeType::Statement,
+        path.to_string(),
+        "DELETE".to_string(),
+        range,
+    )
+    .with_children(children)
+}
+
+fn create_table_to_ast(
+    create: &sqlparser::ast::CreateTable,
+    path: &str,
+    range: AstRange,
+) -> AstNode {
+    let mut children = vec![AstNode::new(
+        AstNodeType::Identifier,
+        format!("{path}.table"),
+        create.name.to_string(),
+        default_range(),
+    )];
+
+    let col_children: Vec<_> = create
+        .columns
+        .iter()
+        .enumerate()
+        .map(|(i, col)| {
+            AstNode::new(
+                AstNodeType::Identifier,
+                format!("{path}.columns[{i}]"),
+                format!("{} {}", col.name, col.data_type),
+                default_range(),
+            )
+        })
+        .collect();
+
+    if !col_children.is_empty() {
+        children.push(
+            AstNode::new(
+                AstNodeType::Clause,
+                format!("{path}.columns"),
+                format!("COLUMNS ({})", col_children.len()),
+                default_range(),
+            )
+            .with_children(col_children),
+        );
+    }
+
+    AstNode::new(
+        AstNodeType::Statement,
+        path.to_string(),
+        "CREATE TABLE".to_string(),
+        range,
+    )
+    .with_children(children)
+}
+
+fn drop_to_ast(
+    names: &[sqlparser::ast::ObjectName],
+    object_type: sqlparser::ast::ObjectType,
+    path: &str,
+    range: AstRange,
+) -> AstNode {
+    let children: Vec<_> = names
+        .iter()
+        .enumerate()
+        .map(|(i, name)| {
+            AstNode::new(
+                AstNodeType::Identifier,
+                format!("{path}.names[{i}]"),
+                name.to_string(),
+                default_range(),
+            )
+        })
+        .collect();
+
+    AstNode::new(
+        AstNodeType::Statement,
+        path.to_string(),
+        format!("DROP {object_type:?}"),
+        range,
+    )
+    .with_children(children)
+}
+
+fn query_to_ast(text: &str, query: &Query, path: &str) -> AstNode {
+    let range = span_to_range(query.span());
     let mut children = Vec::new();
 
-    // WITH clause (CTEs)
     if let Some(with) = &query.with {
-        let cte_children: Vec<AstNode> = with
-            .cte_tables
-            .iter()
-            .enumerate()
-            .map(|(i, cte)| {
-                AstNode::new(
-                    AstNodeType::Clause,
-                    format!("{}.with[{}]", path, i),
-                    format!("CTE: {}", cte.alias.name),
-                    default_range(),
-                )
-            })
-            .collect();
-
-        if !cte_children.is_empty() {
-            children.push(
-                AstNode::new(
-                    AstNodeType::Clause,
-                    format!("{}.with", path),
-                    format!("WITH ({} CTEs)", cte_children.len()),
-                    default_range(),
-                )
-                .with_children(cte_children),
-            );
-        }
+        children.extend(with_clause_to_ast(with, path));
     }
 
-    // Body (SELECT, UNION, etc.)
-    match query.body.as_ref() {
-        SetExpr::Select(select) => {
-            let select_ast = select_to_ast(text, select, &format!("{}.select", path));
-            children.push(select_ast);
-        }
-        SetExpr::SetOperation {
-            op,
-            left: _,
-            right: _,
-            ..
-        } => {
-            let op_str = format!("{:?}", op);
-            let left_ast = AstNode::new(
-                AstNodeType::Clause,
-                format!("{}.left", path),
-                "Left".to_string(),
-                default_range(),
-            );
-            let right_ast = AstNode::new(
-                AstNodeType::Clause,
-                format!("{}.right", path),
-                "Right".to_string(),
-                default_range(),
-            );
-            children.push(
-                AstNode::new(
-                    AstNodeType::Operator,
-                    format!("{}.operation", path),
-                    op_str,
-                    default_range(),
-                )
-                .with_children(vec![left_ast, right_ast]),
-            );
-        }
-        _ => {}
-    }
+    children.extend(query_body_to_ast(text, &query.body, path));
+    children.extend(order_by_to_ast(query.order_by.as_ref(), path));
 
-    // ORDER BY
-    if let Some(order_by) = &query.order_by {
-        if !order_by.exprs.is_empty() {
-            let order_children: Vec<AstNode> = order_by
-                .exprs
-                .iter()
-                .enumerate()
-                .map(|(i, ord)| {
-                    AstNode::new(
-                        AstNodeType::Expression,
-                        format!("{}.orderBy[{}]", path, i),
-                        ord.expr.to_string(),
-                        default_range(),
-                    )
-                })
-                .collect();
-
-            children.push(
-                AstNode::new(
-                    AstNodeType::Clause,
-                    format!("{}.orderBy", path),
-                    format!("ORDER BY ({})", order_children.len()),
-                    default_range(),
-                )
-                .with_children(order_children),
-            );
-        }
-    }
-
-    // LIMIT
     if let Some(limit) = &query.limit {
         children.push(AstNode::new(
             AstNodeType::Clause,
-            format!("{}.limit", path),
-            format!("LIMIT {}", limit),
+            format!("{path}.limit"),
+            format!("LIMIT {limit}"),
             default_range(),
         ));
     }
 
-    // OFFSET
     if let Some(offset) = &query.offset {
         children.push(AstNode::new(
             AstNodeType::Clause,
-            format!("{}.offset", path),
+            format!("{path}.offset"),
             format!("OFFSET {}", offset.value),
             default_range(),
         ));
@@ -450,117 +373,128 @@ fn query_to_ast(text: &str, query: &Query, path: &str) -> AstNode {
     .with_children(children)
 }
 
-fn select_to_ast(text: &str, select: &Select, path: &str) -> AstNode {
-    let mut children = Vec::new();
-
-    // DISTINCT
-    if select.distinct.is_some() {
-        children.push(AstNode::new(
-            AstNodeType::Keyword,
-            format!("{}.distinct", path),
-            "DISTINCT".to_string(),
-            default_range(),
-        ));
-    }
-
-    // Projection (columns)
-    let proj_children: Vec<AstNode> = select
-        .projection
+fn with_clause_to_ast(with: &sqlparser::ast::With, path: &str) -> Option<AstNode> {
+    let cte_children: Vec<_> = with
+        .cte_tables
         .iter()
         .enumerate()
-        .map(|(i, item)| {
-            let label = match item {
-                SelectItem::UnnamedExpr(expr) => expr.to_string(),
-                SelectItem::ExprWithAlias { expr, alias } => format!("{} AS {}", expr, alias),
-                SelectItem::QualifiedWildcard(name, _) => format!("{}.*", name),
-                SelectItem::Wildcard(_) => "*".to_string(),
-            };
+        .map(|(i, cte)| {
             AstNode::new(
-                AstNodeType::Expression,
-                format!("{}.columns[{}]", path, i),
-                label,
+                AstNodeType::Clause,
+                format!("{path}.with[{i}]"),
+                format!("CTE: {}", cte.alias.name),
                 default_range(),
             )
         })
         .collect();
 
-    children.push(
-        AstNode::new(
-            AstNodeType::Clause,
-            format!("{}.columns", path),
-            format!("SELECT ({})", proj_children.len()),
-            default_range(),
-        )
-        .with_children(proj_children),
-    );
-
-    // FROM clause
-    if !select.from.is_empty() {
-        let from_children: Vec<AstNode> = select
-            .from
-            .iter()
-            .enumerate()
-            .map(|(i, table)| table_to_ast(text, table, &format!("{}.from[{}]", path, i)))
-            .collect();
-
-        children.push(
+    if cte_children.is_empty() {
+        None
+    } else {
+        Some(
             AstNode::new(
                 AstNodeType::Clause,
-                format!("{}.from", path),
-                format!("FROM ({})", from_children.len()),
+                format!("{path}.with"),
+                format!("WITH ({} CTEs)", cte_children.len()),
                 default_range(),
             )
-            .with_children(from_children),
-        );
+            .with_children(cte_children),
+        )
+    }
+}
+
+fn query_body_to_ast(text: &str, body: &SetExpr, path: &str) -> Option<AstNode> {
+    match body {
+        SetExpr::Select(select) => Some(select_to_ast(text, select, &format!("{path}.select"))),
+        SetExpr::SetOperation { op, .. } => {
+            let left_ast = AstNode::new(
+                AstNodeType::Clause,
+                format!("{path}.left"),
+                "Left".to_string(),
+                default_range(),
+            );
+            let right_ast = AstNode::new(
+                AstNodeType::Clause,
+                format!("{path}.right"),
+                "Right".to_string(),
+                default_range(),
+            );
+            Some(
+                AstNode::new(
+                    AstNodeType::Operator,
+                    format!("{path}.operation"),
+                    format!("{op:?}"),
+                    default_range(),
+                )
+                .with_children(vec![left_ast, right_ast]),
+            )
+        }
+        _ => None,
+    }
+}
+
+fn order_by_to_ast(order_by: Option<&sqlparser::ast::OrderBy>, path: &str) -> Option<AstNode> {
+    let order_by = order_by?;
+    if order_by.exprs.is_empty() {
+        return None;
     }
 
-    // WHERE clause
+    let children: Vec<_> = order_by
+        .exprs
+        .iter()
+        .enumerate()
+        .map(|(i, ord)| {
+            AstNode::new(
+                AstNodeType::Expression,
+                format!("{path}.orderBy[{i}]"),
+                ord.expr.to_string(),
+                default_range(),
+            )
+        })
+        .collect();
+
+    Some(
+        AstNode::new(
+            AstNodeType::Clause,
+            format!("{path}.orderBy"),
+            format!("ORDER BY ({})", children.len()),
+            default_range(),
+        )
+        .with_children(children),
+    )
+}
+
+fn select_to_ast(text: &str, select: &Select, path: &str) -> AstNode {
+    let mut children = Vec::new();
+
+    if select.distinct.is_some() {
+        children.push(AstNode::new(
+            AstNodeType::Keyword,
+            format!("{path}.distinct"),
+            "DISTINCT".to_string(),
+            default_range(),
+        ));
+    }
+
+    children.push(projection_to_ast(&select.projection, path));
+    children.extend(from_clause_to_ast(text, &select.from, path));
+
     if let Some(where_expr) = &select.selection {
         children.push(expr_to_ast(
             text,
             where_expr,
-            &format!("{}.where", path),
+            &format!("{path}.where"),
             "WHERE",
         ));
     }
 
-    // GROUP BY clause
-    let group_exprs: Vec<&Expr> = match &select.group_by {
-        GroupByExpr::All(_) => vec![],
-        GroupByExpr::Expressions(exprs, _) => exprs.iter().collect(),
-    };
+    children.extend(group_by_to_ast(&select.group_by, path));
 
-    if !group_exprs.is_empty() {
-        let group_children: Vec<AstNode> = group_exprs
-            .iter()
-            .enumerate()
-            .map(|(i, expr)| {
-                AstNode::new(
-                    AstNodeType::Expression,
-                    format!("{}.groupBy[{}]", path, i),
-                    expr.to_string(),
-                    default_range(),
-                )
-            })
-            .collect();
-
-        children.push(
-            AstNode::new(
-                AstNodeType::Clause,
-                format!("{}.groupBy", path),
-                format!("GROUP BY ({})", group_children.len()),
-                default_range(),
-            )
-            .with_children(group_children),
-        );
-    }
-
-    // HAVING clause
     if let Some(having_expr) = &select.having {
         children.push(expr_to_ast(
             text,
             having_expr,
-            &format!("{}.having", path),
+            &format!("{path}.having"),
             "HAVING",
         ));
     }
@@ -574,50 +508,114 @@ fn select_to_ast(text: &str, select: &Select, path: &str) -> AstNode {
     .with_children(children)
 }
 
-fn table_to_ast(_text: &str, table: &TableWithJoins, path: &str) -> AstNode {
-    let mut children = Vec::new();
+fn projection_to_ast(projection: &[SelectItem], path: &str) -> AstNode {
+    let children: Vec<_> = projection
+        .iter()
+        .enumerate()
+        .map(|(i, item)| {
+            let label = match item {
+                SelectItem::UnnamedExpr(expr) => expr.to_string(),
+                SelectItem::ExprWithAlias { expr, alias } => format!("{expr} AS {alias}"),
+                SelectItem::QualifiedWildcard(name, _) => format!("{name}.*"),
+                SelectItem::Wildcard(_) => "*".to_string(),
+            };
+            AstNode::new(
+                AstNodeType::Expression,
+                format!("{path}.columns[{i}]"),
+                label,
+                default_range(),
+            )
+        })
+        .collect();
 
-    // Main table
-    let relation_label = match &table.relation {
-        TableFactor::Table { name, alias, .. } => {
-            if let Some(a) = alias {
-                format!("{} AS {}", name, a.name)
-            } else {
-                name.to_string()
-            }
-        }
-        TableFactor::Derived { alias, .. } => {
-            if let Some(a) = alias {
-                format!("(subquery) AS {}", a.name)
-            } else {
-                "(subquery)".to_string()
-            }
-        }
-        _ => "table".to_string(),
+    AstNode::new(
+        AstNodeType::Clause,
+        format!("{path}.columns"),
+        format!("SELECT ({})", children.len()),
+        default_range(),
+    )
+    .with_children(children)
+}
+
+fn from_clause_to_ast(text: &str, from: &[TableWithJoins], path: &str) -> Option<AstNode> {
+    if from.is_empty() {
+        return None;
+    }
+
+    let children: Vec<_> = from
+        .iter()
+        .enumerate()
+        .map(|(i, table)| table_to_ast(text, table, &format!("{path}.from[{i}]")))
+        .collect();
+
+    Some(
+        AstNode::new(
+            AstNodeType::Clause,
+            format!("{path}.from"),
+            format!("FROM ({})", children.len()),
+            default_range(),
+        )
+        .with_children(children),
+    )
+}
+
+fn group_by_to_ast(group_by: &GroupByExpr, path: &str) -> Option<AstNode> {
+    let exprs: Vec<&Expr> = match group_by {
+        GroupByExpr::All(_) => return None,
+        GroupByExpr::Expressions(exprs, _) => exprs.iter().collect(),
     };
 
-    children.push(AstNode::new(
+    if exprs.is_empty() {
+        return None;
+    }
+
+    let children: Vec<_> = exprs
+        .iter()
+        .enumerate()
+        .map(|(i, expr)| {
+            AstNode::new(
+                AstNodeType::Expression,
+                format!("{path}.groupBy[{i}]"),
+                expr.to_string(),
+                default_range(),
+            )
+        })
+        .collect();
+
+    Some(
+        AstNode::new(
+            AstNodeType::Clause,
+            format!("{path}.groupBy"),
+            format!("GROUP BY ({})", children.len()),
+            default_range(),
+        )
+        .with_children(children),
+    )
+}
+
+fn table_to_ast(_text: &str, table: &TableWithJoins, path: &str) -> AstNode {
+    let relation_label = table_factor_label(&table.relation);
+
+    let mut children = vec![AstNode::new(
         AstNodeType::Identifier,
-        format!("{}.table", path),
+        format!("{path}.table"),
         relation_label.clone(),
         default_range(),
-    ));
+    )];
 
-    // JOINs
-    for (i, join) in table.joins.iter().enumerate() {
+    children.extend(table.joins.iter().enumerate().map(|(i, join)| {
         let join_type = format!("{:?}", join.join_operator);
         let join_table = match &join.relation {
             TableFactor::Table { name, .. } => name.to_string(),
             _ => "table".to_string(),
         };
-
-        children.push(AstNode::new(
+        AstNode::new(
             AstNodeType::Clause,
-            format!("{}.joins[{}]", path, i),
-            format!("{} {}", join_type, join_table),
+            format!("{path}.joins[{i}]"),
+            format!("{join_type} {join_table}"),
             default_range(),
-        ));
-    }
+        )
+    }));
 
     AstNode::new(
         AstNodeType::Clause,
@@ -628,13 +626,21 @@ fn table_to_ast(_text: &str, table: &TableWithJoins, path: &str) -> AstNode {
     .with_children(children)
 }
 
-fn expr_to_ast(_text: &str, expr: &Expr, path: &str, label_prefix: &str) -> AstNode {
-    let label = format!(
-        "{}: {}",
-        label_prefix,
-        truncate_string(&expr.to_string(), 50)
-    );
+fn table_factor_label(factor: &TableFactor) -> String {
+    match factor {
+        TableFactor::Table { name, alias, .. } => alias
+            .as_ref()
+            .map_or_else(|| name.to_string(), |a| format!("{name} AS {}", a.name)),
+        TableFactor::Derived { alias, .. } => alias.as_ref().map_or_else(
+            || "(subquery)".to_string(),
+            |a| format!("(subquery) AS {}", a.name),
+        ),
+        _ => "table".to_string(),
+    }
+}
 
+fn expr_to_ast(_text: &str, expr: &Expr, path: &str, label_prefix: &str) -> AstNode {
+    let label = format!("{label_prefix}: {}", truncate_string(&expr.to_string(), 50));
     AstNode::new(
         AstNodeType::Expression,
         path.to_string(),
@@ -652,6 +658,7 @@ fn truncate_string(s: &str, max_len: usize) -> String {
 }
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used)]
 mod tests {
     use super::*;
 

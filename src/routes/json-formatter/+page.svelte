@@ -1,20 +1,21 @@
 <script lang="ts">
-	import { FormatterPage } from '$lib/components/tool/index.js';
-	import {
-		FormatTab,
-		QueryTab,
-		CompareTab,
-		ConvertTab,
-		SchemaTab,
-		GenerateTab,
-	} from './tabs/index.js';
+	
+	import { ArrowRightLeft, CodeXml, FileCheck, GitCompare, Play, Search } from '@lucide/svelte';
+import { FormatterPage } from '$lib/components/tool/index.js';
 	import {
 		calculateJsonStats,
 		JSON_FORMAT_INFO,
-		type JsonStats,
 		type JsonInputFormat,
+		type JsonStats,
 	} from '$lib/services/formatters.js';
-	import { Play, Search, GitCompare, ArrowRightLeft, FileCheck, CodeXml } from '@lucide/svelte';
+	import {
+		CompareTab,
+		ConvertTab,
+		FormatTab,
+		GenerateTab,
+		QueryTab,
+		SchemaTab,
+	} from './tabs/index.js';
 
 	// Valid tab types
 	type TabType = 'format' | 'query' | 'compare' | 'convert' | 'schema' | 'generate';

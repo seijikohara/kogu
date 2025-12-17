@@ -1,3 +1,10 @@
+export {
+	buildLineToPathMap,
+	buildPathToLineMap,
+	findLineByPath,
+	findPathByLine,
+	parseToAst,
+} from './parser.js';
 export type {
 	AstLanguage,
 	AstNode,
@@ -9,11 +16,3 @@ export type {
 	LineToPathMap,
 	PathToLineMap,
 } from './types.js';
-
-export {
-	buildLineToPathMap,
-	buildPathToLineMap,
-	findLineByPath,
-	findPathByLine,
-	parseToAst,
-} from './parser.js';

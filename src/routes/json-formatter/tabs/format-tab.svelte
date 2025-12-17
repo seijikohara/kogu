@@ -1,23 +1,24 @@
 <script lang="ts">
-	import OptionsSection from '$lib/components/options/options-section.svelte';
+	
+	import type { ContextMenuItem } from '$lib/components/editors/code-editor.svelte';
 	import OptionCheckbox from '$lib/components/options/option-checkbox.svelte';
 	import OptionSelect from '$lib/components/options/option-select.svelte';
+import OptionsSection from '$lib/components/options/options-section.svelte';
 	import { FormatTabBase } from '$lib/components/tool/index.js';
-	import type { ContextMenuItem } from '$lib/components/editors/code-editor.svelte';
 	import {
-		parseJsonAuto,
-		stringifyJson,
-		validateJson,
-		processJsonWithOptions,
-		JSON_FORMAT_OPTIONS,
+		defaultJsonFormatOptions,
 		JSON_FORMAT_INFO,
-		SAMPLE_JSON,
+		JSON_FORMAT_OPTIONS,
 		type JsonFormatOptions,
 		type JsonInputFormat,
 		type JsonOutputFormat,
-		defaultJsonFormatOptions,
+		parseJsonAuto,
+		processJsonWithOptions,
+		SAMPLE_JSON,
+		stringifyJson,
+		validateJson,
 	} from '$lib/services/formatters.js';
-	import { downloadTextFile, copyToClipboard, pasteFromClipboard } from '../utils.js';
+	import { copyToClipboard, downloadTextFile, pasteFromClipboard } from '../utils.js';
 
 	interface Props {
 		input: string;
@@ -53,8 +54,8 @@
 	let maxDepthStr = $state(String(defaultJsonFormatOptions.maxDepth));
 
 	// Derived numeric values
-	const indentSize = $derived(parseInt(indentSizeStr) || 2);
-	const maxDepth = $derived(parseInt(maxDepthStr) || 0);
+	const indentSize = $derived(Number.parseInt(indentSizeStr, 10) || 2);
+	const maxDepth = $derived(Number.parseInt(maxDepthStr, 10) || 0);
 
 	// Format options object
 	const formatOptions = $derived<Partial<JsonFormatOptions>>({
@@ -107,7 +108,7 @@
 				if (formatOptions.escapeUnicode) {
 					output = output.replace(
 						/[\u0080-\uFFFF]/g,
-						(char) => '\\u' + ('0000' + char.charCodeAt(0).toString(16)).slice(-4)
+						(char) => `\\u${(`0000${char.charCodeAt(0).toString(16)}`).slice(-4)}`
 					);
 				}
 				if (formatOptions.arrayBracketSpacing) {
@@ -124,7 +125,7 @@
 						/\[\s*\n(\s*)((?:"[^"]*"|'[^']*'|[\d.eE+-]+|true|false|null)(?:,\s*\n\s*(?:"[^"]*"|'[^']*'|[\d.eE+-]+|true|false|null))*)\s*\n\s*\]/g,
 						(_, _indent, content: string) => {
 							const items = content.split(/,\s*\n\s*/);
-							return '[' + items.join(', ') + ']';
+							return `[${items.join(', ')}]`;
 						}
 					);
 				}

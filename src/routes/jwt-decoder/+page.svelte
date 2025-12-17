@@ -1,14 +1,15 @@
 <script lang="ts">
-	import { PageHeader } from '$lib/components/layout/index.js';
+	
+	import { AlertTriangle, CheckCircle, Clock, Copy } from '@lucide/svelte';
+import { PageHeader } from '$lib/components/layout/index.js';
 	import { EditorPane } from '$lib/components/tool/index.js';
 	import { Button } from '$lib/components/ui/button/index.js';
-	import { Copy, AlertTriangle, CheckCircle, Clock } from '@lucide/svelte';
 	import {
 		decodeJwt,
-		validateJwt,
 		JWT_STANDARD_CLAIMS,
-		SAMPLE_JWT,
 		type JwtDecoded,
+		SAMPLE_JWT,
+		validateJwt,
 	} from '$lib/services/encoders.js';
 
 	// State

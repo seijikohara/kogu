@@ -1,14 +1,15 @@
 <script lang="ts">
-	import { Label } from '$lib/components/ui/label/index.js';
-	import { Input } from '$lib/components/ui/input/index.js';
-	import OptionsSection from '$lib/components/options/options-section.svelte';
+	
+	import * as yaml from 'yaml';
+	import type { ContextMenuItem } from '$lib/components/editors/code-editor.svelte';
 	import OptionCheckbox from '$lib/components/options/option-checkbox.svelte';
 	import OptionSelect from '$lib/components/options/option-select.svelte';
+	import OptionsSection from '$lib/components/options/options-section.svelte';
 	import { FormatTabBase } from '$lib/components/tool/index.js';
-	import type { ContextMenuItem } from '$lib/components/editors/code-editor.svelte';
-	import { sortKeysDeep, validateYaml, SAMPLE_YAML } from '$lib/services/formatters.js';
-	import { downloadTextFile, copyToClipboard, pasteFromClipboard } from '../utils.js';
-	import * as yaml from 'yaml';
+	import { Input } from '$lib/components/ui/input/index.js';
+import { Label } from '$lib/components/ui/label/index.js';
+	import { SAMPLE_YAML, sortKeysDeep, validateYaml } from '$lib/services/formatters.js';
+	import { copyToClipboard, downloadTextFile, pasteFromClipboard } from '../utils.js';
 
 	interface Props {
 		input: string;
@@ -49,9 +50,9 @@
 	let falseStr = $state('false');
 
 	// Derived numeric values
-	const indentSize = $derived(parseInt(indentSizeStr) || 2);
-	const lineWidth = $derived(parseInt(lineWidthStr) || 80);
-	const minContentWidth = $derived(parseInt(minContentWidthStr) || 20);
+	const indentSize = $derived(Number.parseInt(indentSizeStr, 10) || 2);
+	const lineWidth = $derived(Number.parseInt(lineWidthStr, 10) || 80);
+	const minContentWidth = $derived(Number.parseInt(minContentWidthStr, 10) || 20);
 
 	// Validation function - rejects JSON input
 	const validate = (input: string) => {

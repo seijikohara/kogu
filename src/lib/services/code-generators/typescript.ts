@@ -1,5 +1,5 @@
-import type { CodeGenerator, TypeScriptOptions, JsonValue, TypeInfo } from './types.js';
-import { inferType, generateWithNestedTypes } from './utils.js';
+import type { CodeGenerator, JsonValue, TypeInfo, TypeScriptOptions } from './types.js';
+import { generateWithNestedTypes, inferType } from './utils.js';
 
 // ============================================================================
 // Constants

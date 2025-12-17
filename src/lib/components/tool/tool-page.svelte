@@ -1,6 +1,7 @@
 <script lang="ts">
-	import OptionsPanel from '$lib/components/options/options-panel.svelte';
+	
 	import type { Snippet } from 'svelte';
+import OptionsPanel from '$lib/components/options/options-panel.svelte';
 
 	interface Props {
 		showOptions?: boolean;

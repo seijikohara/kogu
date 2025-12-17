@@ -1,6 +1,7 @@
 <script lang="ts">
-	import * as Card from '$lib/components/ui/card/index.js';
+	
 	import { ArrowRight } from '@lucide/svelte';
+import * as Card from '$lib/components/ui/card/index.js';
 	import { getToolPages } from '$lib/services/pages.js';
 
 	const tools = getToolPages();
