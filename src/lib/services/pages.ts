@@ -11,14 +11,17 @@ import {
 	FileCheck,
 	FileCode,
 	FileJson2,
+	FileText,
 	GitCompare,
 	Hash,
 	House,
 	type Icon,
 	Key,
 	Link,
+	Lock,
 	Play,
 	Search,
+	Sparkles,
 } from '@lucide/svelte';
 
 /**
@@ -186,6 +189,7 @@ export const getPagesByCategory = (category: PageCategory): readonly PageDefinit
 export interface CategoryInfo {
 	readonly id: PageCategory;
 	readonly label: string;
+	readonly icon: typeof Icon;
 	readonly defaultOpen: boolean;
 }
 
@@ -193,9 +197,9 @@ export interface CategoryInfo {
  * All categories with display info.
  */
 export const CATEGORIES: readonly CategoryInfo[] = [
-	{ id: 'formatters', label: 'Formatters', defaultOpen: true },
-	{ id: 'encoders', label: 'Encoders', defaultOpen: true },
-	{ id: 'generators', label: 'Generators', defaultOpen: true },
+	{ id: 'formatters', label: 'Formatters', icon: FileText, defaultOpen: true },
+	{ id: 'encoders', label: 'Encoders', icon: Lock, defaultOpen: true },
+	{ id: 'generators', label: 'Generators', icon: Sparkles, defaultOpen: true },
 ];
 
 /**
