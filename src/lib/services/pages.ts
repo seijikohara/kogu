@@ -168,10 +168,6 @@ export const PAGES: readonly PageDefinition[] = [
 		description: 'Generate and verify BCrypt password hashes',
 		color: 'text-cyan-500',
 		category: 'generators',
-		tabs: [
-			{ id: 'generate', label: 'Generate', icon: Hash },
-			{ id: 'verify', label: 'Verify', icon: ShieldCheck },
-		],
 	},
 	{
 		id: 'ssh-key-generator',
