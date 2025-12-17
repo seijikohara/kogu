@@ -13,7 +13,10 @@
 	}
 
 	type ValidationResult = { valid: boolean | null } & Record<string, unknown>;
-	type StatsResult = { input: string; valid: boolean | null; error: string } & Record<string, unknown>;
+	type StatsResult = { input: string; valid: boolean | null; error: string } & Record<
+		string,
+		unknown
+	>;
 
 	interface Props {
 		/** Editor mode for syntax highlighting */

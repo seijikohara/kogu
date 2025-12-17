@@ -1,5 +1,4 @@
 <script lang="ts">
-	
 	import * as monaco from 'monaco-editor';
 	import editorWorker from 'monaco-editor/esm/vs/editor/editor.worker?worker';
 	import cssWorker from 'monaco-editor/esm/vs/language/css/css.worker?worker';
@@ -7,7 +6,7 @@
 	import jsonWorker from 'monaco-editor/esm/vs/language/json/json.worker?worker';
 	import tsWorker from 'monaco-editor/esm/vs/language/typescript/ts.worker?worker';
 	import { configureMonacoYaml } from 'monaco-yaml';
-import { onDestroy, onMount } from 'svelte';
+	import { onDestroy, onMount } from 'svelte';
 	import { browser } from '$app/environment';
 	import yamlWorker from '$lib/workers/yaml.worker.js?worker';
 

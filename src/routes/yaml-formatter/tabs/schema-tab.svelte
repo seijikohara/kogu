@@ -1,9 +1,8 @@
 <script lang="ts">
-	
 	import { FileCheck, Wand2 } from '@lucide/svelte';
 	import Ajv from 'ajv';
 	import addFormats from 'ajv-formats';
-import { toast } from 'svelte-sonner';
+	import { toast } from 'svelte-sonner';
 	import * as yaml from 'yaml';
 	import SplitPane from '$lib/components/layout/split-pane.svelte';
 	import OptionCheckbox from '$lib/components/options/option-checkbox.svelte';

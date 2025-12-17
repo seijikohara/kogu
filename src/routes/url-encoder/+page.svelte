@@ -1,5 +1,4 @@
 <script lang="ts">
-	
 	import {
 		ArrowRightLeft,
 		BookOpen,
@@ -12,7 +11,7 @@
 	} from '@lucide/svelte';
 	import { PageHeader, SplitPane } from '$lib/components/layout/index.js';
 	import OptionSelect from '$lib/components/options/option-select.svelte';
-import OptionsPanel from '$lib/components/options/options-panel.svelte';
+	import OptionsPanel from '$lib/components/options/options-panel.svelte';
 	import OptionsSection from '$lib/components/options/options-section.svelte';
 	import { EditorPane } from '$lib/components/tool/index.js';
 	import { Button } from '$lib/components/ui/button/index.js';

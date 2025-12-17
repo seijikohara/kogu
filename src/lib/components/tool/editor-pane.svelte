@@ -1,5 +1,4 @@
 <script lang="ts">
-	
 	import {
 		Braces,
 		CircleAlert,
@@ -32,7 +31,7 @@
 		type EditorMode,
 		type HighlightLine,
 	} from '$lib/components/editors/code-editor.svelte';
-import { Button } from '$lib/components/ui/button/index.js';
+	import { Button } from '$lib/components/ui/button/index.js';
 	import * as Resizable from '$lib/components/ui/resizable/index.js';
 	import * as Select from '$lib/components/ui/select/index.js';
 	import AstTreeView from '$lib/components/viewers/ast-tree-view.svelte';

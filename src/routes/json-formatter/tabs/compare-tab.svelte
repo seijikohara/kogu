@@ -1,9 +1,8 @@
 <script lang="ts">
-	
 	import OptionCheckbox from '$lib/components/options/option-checkbox.svelte';
 	import { CompareTabBase } from '$lib/components/tool/index.js';
 	import { Input } from '$lib/components/ui/input/index.js';
-import { Label } from '$lib/components/ui/label/index.js';
+	import { Label } from '$lib/components/ui/label/index.js';
 	import type { GenericDiffItem } from '$lib/constants/diff.js';
 	import {
 		findJsonDifferences,
@@ -95,7 +94,11 @@ import { Label } from '$lib/components/ui/label/index.js';
 	};
 
 	/** Handle array element start */
-	const handleArrayStart = (lineNum: number, state: SearchState, targetPath: string): SearchState => {
+	const handleArrayStart = (
+		lineNum: number,
+		state: SearchState,
+		targetPath: string
+	): SearchState => {
 		const arrayPath = [...state.pathStack, String(state.currentArrayIndex)].join('.');
 		if (arrayPath === targetPath) return { ...state, found: lineNum };
 		return { ...state, currentArrayIndex: state.currentArrayIndex + 1 };
@@ -118,7 +121,12 @@ import { Label } from '$lib/components/ui/label/index.js';
 	};
 
 	/** Process a single line in JSON search */
-	const processSearchLine = (state: SearchState, line: string, lineNum: number, targetPath: string): SearchState => {
+	const processSearchLine = (
+		state: SearchState,
+		line: string,
+		lineNum: number,
+		targetPath: string
+	): SearchState => {
 		if (state.found !== null) return state;
 
 		const keyMatch = line.match(/^"([^"]+)"\s*:/);
@@ -138,7 +146,10 @@ import { Label } from '$lib/components/ui/label/index.js';
 	const findLineForPath = (jsonStr: string, targetPath: string): number | null => {
 		if (!jsonStr?.trim() || !targetPath) return null;
 
-		const pathParts = targetPath.replace(/^\$\.?/, '').split(/\.|\[/).filter(Boolean);
+		const pathParts = targetPath
+			.replace(/^\$\.?/, '')
+			.split(/\.|\[/)
+			.filter(Boolean);
 		if (pathParts.length === 0) return 1;
 
 		const targetPathNormalized = pathParts.map((p) => p.replace(/\]$/, '')).join('.');
@@ -147,7 +158,9 @@ import { Label } from '$lib/components/ui/label/index.js';
 
 		const result = lines.reduce<SearchState>(
 			(acc, rawLine, i) =>
-				rawLine === undefined ? acc : processSearchLine(acc, rawLine.trim(), i + 1, targetPathNormalized),
+				rawLine === undefined
+					? acc
+					: processSearchLine(acc, rawLine.trim(), i + 1, targetPathNormalized),
 			initialState
 		);
 

@@ -473,12 +473,12 @@ const processData = (data: unknown): Result => {
 }
 ```
 
-| Option                           | Effect                                   |
-| -------------------------------- | ---------------------------------------- |
-| `strict`                         | Enables all strict type-checking options |
-| `noUncheckedIndexedAccess`       | Array access returns `T \| undefined`    |
+| Option                               | Effect                                       |
+| ------------------------------------ | -------------------------------------------- |
+| `strict`                             | Enables all strict type-checking options     |
+| `noUncheckedIndexedAccess`           | Array access returns `T \| undefined`        |
 | `noPropertyAccessFromIndexSignature` | Forces bracket notation for index signatures |
-| `verbatimModuleSyntax`           | Enforces explicit `import type`          |
+| `verbatimModuleSyntax`               | Enforces explicit `import type`              |
 
 > **Note**: `exactOptionalPropertyTypes` is not used in this project due to incompatibility with shadcn-svelte component patterns where optional props can be `undefined`.
 

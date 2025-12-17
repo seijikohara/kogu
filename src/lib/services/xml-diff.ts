@@ -104,7 +104,11 @@ const compareAttributes = (
 	// Find added attributes
 	const added: GenericDiffItem[] = Array.from(attrMap2.entries())
 		.filter(([name]) => !attrMap1.has(name))
-		.map(([name, value]) => ({ path: `${path}/@${name}`, type: 'added' as const, newValue: value }));
+		.map(([name, value]) => ({
+			path: `${path}/@${name}`,
+			type: 'added' as const,
+			newValue: value,
+		}));
 
 	return [...diffs, ...removedAndChanged, ...added];
 };
@@ -125,7 +129,8 @@ const getChildElements = (element: Element, options: XmlDiffOptions): Node[] =>
 
 /** Get child node name for diff path */
 const getChildName = (child: Node, ignoreNamespaces: boolean): string => {
-	if (child.nodeType === Node.ELEMENT_NODE) return getElementName(child as Element, ignoreNamespaces);
+	if (child.nodeType === Node.ELEMENT_NODE)
+		return getElementName(child as Element, ignoreNamespaces);
 	if (child.nodeType === Node.TEXT_NODE) return 'text()';
 	return 'comment()';
 };
@@ -135,7 +140,12 @@ const getChildValue = (child: Node, name: string): string =>
 	child.nodeType === Node.ELEMENT_NODE ? `<${name}>` : (child.textContent || '').substring(0, 50);
 
 /** Compare text nodes */
-const compareTextNodes = (node1: Node, node2: Node, path: string, options: XmlDiffOptions): GenericDiffItem[] => {
+const compareTextNodes = (
+	node1: Node,
+	node2: Node,
+	path: string,
+	options: XmlDiffOptions
+): GenericDiffItem[] => {
 	const text1 = normalizeText(node1.textContent, options);
 	const text2 = normalizeText(node2.textContent, options);
 	return text1 !== text2 ? [{ path, type: 'changed', oldValue: text1, newValue: text2 }] : [];
@@ -178,11 +188,15 @@ const processChildPair = (
 	const ignoreNs = options.ignoreNamespaces ?? false;
 	if (!child1 && child2) {
 		const childName = getChildName(child2, ignoreNs);
-		return [{ path: `${path}/${childName}`, type: 'added', newValue: getChildValue(child2, childName) }];
+		return [
+			{ path: `${path}/${childName}`, type: 'added', newValue: getChildValue(child2, childName) },
+		];
 	}
 	if (child1 && !child2) {
 		const childName = getChildName(child1, ignoreNs);
-		return [{ path: `${path}/${childName}`, type: 'removed', oldValue: getChildValue(child1, childName) }];
+		return [
+			{ path: `${path}/${childName}`, type: 'removed', oldValue: getChildValue(child1, childName) },
+		];
 	}
 	if (child1 && child2) {
 		const childPath = buildChildPath(child1, path, counts, ignoreNs);
@@ -219,7 +233,9 @@ const compareNodes = (
 	options: XmlDiffOptions
 ): GenericDiffItem[] => {
 	if (node1.nodeType !== node2.nodeType) {
-		return [{ path, type: 'changed', oldValue: `[${node1.nodeName}]`, newValue: `[${node2.nodeName}]` }];
+		return [
+			{ path, type: 'changed', oldValue: `[${node1.nodeName}]`, newValue: `[${node2.nodeName}]` },
+		];
 	}
 
 	if (node1.nodeType === Node.TEXT_NODE) return compareTextNodes(node1, node2, path, options);

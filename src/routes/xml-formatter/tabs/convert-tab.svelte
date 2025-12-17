@@ -1,10 +1,9 @@
 <script lang="ts">
-	
 	import OptionCheckbox from '$lib/components/options/option-checkbox.svelte';
 	import OptionSelect from '$lib/components/options/option-select.svelte';
 	import OptionsSection from '$lib/components/options/options-section.svelte';
 	import { ConvertTabBase } from '$lib/components/tool/index.js';
-import { Button } from '$lib/components/ui/button/index.js';
+	import { Button } from '$lib/components/ui/button/index.js';
 	import { Input } from '$lib/components/ui/input/index.js';
 	import { Label } from '$lib/components/ui/label/index.js';
 	import {

@@ -414,7 +414,9 @@ const processArray = (
 	depth: number,
 	processFn: (obj: unknown, opts: JsonFormatOptions, depth: number) => unknown
 ): unknown => {
-	const processed = arr.map((item) => processFn(item, opts, depth + 1)).filter((item) => item !== undefined);
+	const processed = arr
+		.map((item) => processFn(item, opts, depth + 1))
+		.filter((item) => item !== undefined);
 	return opts.removeEmptyArrays && processed.length === 0 ? undefined : processed;
 };
 
@@ -455,7 +457,8 @@ export const processJsonWithOptions = (
 	if (opts.maxDepth > 0 && depth >= opts.maxDepth) return handleMaxDepth(obj);
 	if (obj === null) return opts.removeNulls ? undefined : null;
 	if (Array.isArray(obj)) return processArray(obj, opts, depth, processJsonWithOptions);
-	if (typeof obj === 'object') return processObject(obj as Record<string, unknown>, opts, depth, processJsonWithOptions);
+	if (typeof obj === 'object')
+		return processObject(obj as Record<string, unknown>, opts, depth, processJsonWithOptions);
 	if (typeof obj === 'string') return opts.removeEmptyStrings && obj === '' ? undefined : obj;
 
 	return obj;
@@ -1025,12 +1028,7 @@ const convertToXmlElement = (data: unknown, name: string, options: JsonToXmlOpti
 	}
 
 	if (typeof data === 'object') {
-		return convertObjectToXml(
-			data as Record<string, unknown>,
-			name,
-			options,
-			convertToXmlElement
-		);
+		return convertObjectToXml(data as Record<string, unknown>, name, options, convertToXmlElement);
 	}
 
 	return convertPrimitiveToXml(data, name, options);
@@ -1041,7 +1039,9 @@ const buildXmlDeclaration = (opts: JsonToXmlOptions, lineSep: string): string =>
 	if (!opts.declaration) return '';
 	const version = opts.declarationVersion ?? '1.0';
 	const encoding = opts.declarationEncoding ?? 'UTF-8';
-	const standalone = opts.declarationStandalone ? ` standalone="${opts.declarationStandalone}"` : '';
+	const standalone = opts.declarationStandalone
+		? ` standalone="${opts.declarationStandalone}"`
+		: '';
 	return `<?xml version="${version}" encoding="${encoding}"${standalone}?>${lineSep}`;
 };
 

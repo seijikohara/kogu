@@ -1,7 +1,6 @@
 <script lang="ts">
-	
 	import { ArrowRightLeft, CodeXml, FileCheck, GitCompare, Play, Search } from '@lucide/svelte';
-import { FormatterPage } from '$lib/components/tool/index.js';
+	import { FormatterPage } from '$lib/components/tool/index.js';
 	import {
 		calculateJsonStats,
 		JSON_FORMAT_INFO,

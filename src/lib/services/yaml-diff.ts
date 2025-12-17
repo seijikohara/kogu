@@ -67,8 +67,10 @@ const compareArrays = (
 
 	return Array.from({ length: maxLen }).flatMap((_, i) => {
 		const itemPath = `${path}[${i}]`;
-		if (i >= sorted1.length) return [{ path: itemPath, type: 'added' as const, newValue: JSON.stringify(sorted2[i]) }];
-		if (i >= sorted2.length) return [{ path: itemPath, type: 'removed' as const, oldValue: JSON.stringify(sorted1[i]) }];
+		if (i >= sorted1.length)
+			return [{ path: itemPath, type: 'added' as const, newValue: JSON.stringify(sorted2[i]) }];
+		if (i >= sorted2.length)
+			return [{ path: itemPath, type: 'removed' as const, oldValue: JSON.stringify(sorted1[i]) }];
 		return compareFn(sorted1[i], sorted2[i], itemPath, options);
 	});
 };
@@ -89,7 +91,8 @@ const processObjectKey = (
 	if (options.ignoreEmpty && !inO1 && isEmpty(o2[key])) return [];
 	if (options.ignoreEmpty && !inO2 && isEmpty(o1[key])) return [];
 	if (!inO1) return [{ path: keyPath, type: 'added' as const, newValue: JSON.stringify(o2[key]) }];
-	if (!inO2) return [{ path: keyPath, type: 'removed' as const, oldValue: JSON.stringify(o1[key]) }];
+	if (!inO2)
+		return [{ path: keyPath, type: 'removed' as const, oldValue: JSON.stringify(o1[key]) }];
 
 	return compareFn(o1[key], o2[key], keyPath, options);
 };
@@ -128,7 +131,9 @@ const findDifferences = (
 	}
 
 	if (typeof obj1 !== typeof obj2) {
-		return [{ path, type: 'changed', oldValue: JSON.stringify(obj1), newValue: JSON.stringify(obj2) }];
+		return [
+			{ path, type: 'changed', oldValue: JSON.stringify(obj1), newValue: JSON.stringify(obj2) },
+		];
 	}
 
 	if (Array.isArray(obj1) && Array.isArray(obj2)) {
@@ -136,7 +141,13 @@ const findDifferences = (
 	}
 
 	if (obj1 !== null && obj2 !== null && typeof obj1 === 'object' && typeof obj2 === 'object') {
-		return compareObjects(obj1 as Record<string, unknown>, obj2 as Record<string, unknown>, path, options, findDifferences);
+		return compareObjects(
+			obj1 as Record<string, unknown>,
+			obj2 as Record<string, unknown>,
+			path,
+			options,
+			findDifferences
+		);
 	}
 
 	const norm1 = normalizeValue(obj1, options);
