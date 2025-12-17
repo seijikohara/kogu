@@ -5,7 +5,7 @@ runs:
   using: composite
   steps:
     - name: Install system dependencies
-      uses: awalsh128/cache-apt-pkgs-action@latest
+      uses: awalsh128/cache-apt-pkgs-action@v1
       with:
         packages: libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
         version: 1.0
