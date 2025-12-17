@@ -1,10 +1,7 @@
 <script lang="ts">
-	
 	import { ArrowRight } from '@lucide/svelte';
-import * as Card from '$lib/components/ui/card/index.js';
-	import { getToolPages } from '$lib/services/pages.js';
-
-	const tools = getToolPages();
+	import * as Card from '$lib/components/ui/card/index.js';
+	import { CATEGORIES, getPagesByCategory } from '$lib/services/pages.js';
 </script>
 
 <svelte:head>
@@ -23,28 +20,34 @@ import * as Card from '$lib/components/ui/card/index.js';
 				</p>
 			</section>
 
-			<!-- Tools Grid -->
-			<section>
-				<h3 class="mb-3 text-sm font-medium text-muted-foreground">Available Tools</h3>
-				<div class="grid gap-3 sm:grid-cols-2">
-					{#each tools as tool}
-						<a href={tool.url} class="block">
-							<Card.Root class="transition-colors hover:bg-muted/50">
-								<Card.Content class="flex items-center gap-3 p-4">
-									<div class="rounded-lg bg-muted p-2">
-										<tool.icon class="h-5 w-5 {tool.color ?? ''}" />
-									</div>
-									<div class="flex-1">
-										<div class="font-medium">{tool.title}</div>
-										<p class="text-xs text-muted-foreground">{tool.description}</p>
-									</div>
-									<ArrowRight class="h-4 w-4 text-muted-foreground" />
-								</Card.Content>
-							</Card.Root>
-						</a>
-					{/each}
-				</div>
-			</section>
+			<!-- Tools by Category -->
+			{#each CATEGORIES as category}
+				{@const tools = getPagesByCategory(category.id)}
+				<section>
+					<div class="mb-3 flex items-center gap-2">
+						<category.icon class="h-4 w-4 text-muted-foreground" />
+						<h3 class="text-sm font-medium text-muted-foreground">{category.label}</h3>
+					</div>
+					<div class="grid gap-3 sm:grid-cols-2">
+						{#each tools as tool}
+							<a href={tool.url} class="block">
+								<Card.Root class="h-full transition-colors hover:bg-muted/50">
+									<Card.Content class="flex h-full items-center gap-3 p-4">
+										<div class="shrink-0 rounded-lg bg-muted p-2">
+											<tool.icon class="h-5 w-5 {tool.color ?? ''}" />
+										</div>
+										<div class="min-w-0 flex-1">
+											<div class="font-medium">{tool.title}</div>
+											<p class="line-clamp-2 text-xs text-muted-foreground">{tool.description}</p>
+										</div>
+										<ArrowRight class="h-4 w-4 shrink-0 text-muted-foreground" />
+									</Card.Content>
+								</Card.Root>
+							</a>
+						{/each}
+					</div>
+				</section>
+			{/each}
 
 			<!-- Quick Tips -->
 			<section>

@@ -1,7 +1,6 @@
 <script lang="ts">
-	
 	import { FileCheck, Wand2 } from '@lucide/svelte';
-import { toast } from 'svelte-sonner';
+	import { toast } from 'svelte-sonner';
 	import SplitPane from '$lib/components/layout/split-pane.svelte';
 	import OptionCheckbox from '$lib/components/options/option-checkbox.svelte';
 	import OptionsPanel from '$lib/components/options/options-panel.svelte';
@@ -218,9 +217,7 @@ import { toast } from 'svelte-sonner';
 					}
 				}
 
-				Array.from(element.children).forEach((child) =>
-					checkElements(child, `${path}/${tagName}`)
-				);
+				Array.from(element.children).forEach((child) => checkElements(child, `${path}/${tagName}`));
 			};
 
 			checkElements(rootElement, '');

@@ -1,9 +1,8 @@
 <script lang="ts">
-	
 	import type { ContextMenuItem } from '$lib/components/editors/code-editor.svelte';
 	import OptionCheckbox from '$lib/components/options/option-checkbox.svelte';
 	import OptionSelect from '$lib/components/options/option-select.svelte';
-import OptionsSection from '$lib/components/options/options-section.svelte';
+	import OptionsSection from '$lib/components/options/options-section.svelte';
 	import { FormatTabBase } from '$lib/components/tool/index.js';
 	import {
 		defaultJsonFormatOptions,
@@ -108,7 +107,7 @@ import OptionsSection from '$lib/components/options/options-section.svelte';
 				if (formatOptions.escapeUnicode) {
 					output = output.replace(
 						/[\u0080-\uFFFF]/g,
-						(char) => `\\u${(`0000${char.charCodeAt(0).toString(16)}`).slice(-4)}`
+						(char) => `\\u${`0000${char.charCodeAt(0).toString(16)}`.slice(-4)}`
 					);
 				}
 				if (formatOptions.arrayBracketSpacing) {

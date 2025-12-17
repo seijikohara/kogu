@@ -1,5 +1,4 @@
 <script lang="ts">
-	
 	import {
 		CheckCircle,
 		Copy,
@@ -12,7 +11,7 @@
 		Trash2,
 		XCircle,
 	} from '@lucide/svelte';
-import { PageHeader } from '$lib/components/layout/index.js';
+	import { PageHeader } from '$lib/components/layout/index.js';
 	import { EditorPane } from '$lib/components/tool/index.js';
 	import { Button } from '$lib/components/ui/button/index.js';
 	import { Input } from '$lib/components/ui/input/index.js';

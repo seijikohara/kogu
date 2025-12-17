@@ -1,11 +1,10 @@
 <script lang="ts">
-	
 	import { Search } from '@lucide/svelte';
 	import { goto } from '$app/navigation';
 	import { Input } from '$lib/components/ui/input/index.js';
 	import { initNavigationHistory } from '$lib/services/navigation-history.svelte.js';
 	import { type SearchResult, searchPages } from '$lib/services/pages.js';
-import NavButtons from './nav-buttons.svelte';
+	import NavButtons from './nav-buttons.svelte';
 
 	let searchQuery = $state('');
 	let isSearchOpen = $state(false);

@@ -1,7 +1,6 @@
 <script lang="ts">
-	
 	import { ArrowRightLeft } from '@lucide/svelte';
-import type { Snippet } from 'svelte';
+	import type { Snippet } from 'svelte';
 	import SplitPane from '$lib/components/layout/split-pane.svelte';
 	import OptionsPanel from '$lib/components/options/options-panel.svelte';
 	import OptionsSection from '$lib/components/options/options-section.svelte';

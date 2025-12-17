@@ -1,7 +1,6 @@
 <script lang="ts">
-	
 	import { ArrowRightLeft, Code2, FileCheck, GitCompare, Play, Search } from '@lucide/svelte';
-import { FormatterPage } from '$lib/components/tool/index.js';
+	import { FormatterPage } from '$lib/components/tool/index.js';
 	import { calculateXmlStats, type XmlStats } from '$lib/services/formatters.js';
 	import {
 		CompareTab,

@@ -1,20 +1,10 @@
 <script lang="ts">
-	import { ChevronRight, FileText, Lock, Monitor, Moon, Sparkles, Sun } from '@lucide/svelte';
+	import { ChevronRight, Monitor, Moon, Sun } from '@lucide/svelte';
 	import { mode, toggleMode } from 'mode-watcher';
 	import { page } from '$app/state';
 	import * as Collapsible from '$lib/components/ui/collapsible/index.js';
 	import * as Sidebar from '$lib/components/ui/sidebar/index.js';
-	import { CATEGORIES, getPagesByCategory, PAGES } from '$lib/services/pages.js';
-
-	// Get dashboard page
-	const dashboardPage = $derived(PAGES.find((p) => p.id === 'dashboard'));
-
-	// Category icons
-	const categoryIcons = {
-		formatters: FileText,
-		encoders: Lock,
-		generators: Sparkles,
-	} as const;
+	import { CATEGORIES, getPagesByCategory } from '$lib/services/pages.js';
 
 	// Track open state for each collapsible group
 	let openGroups = $state<Record<string, boolean>>(
@@ -47,33 +37,9 @@
 
 	<!-- Main Navigation -->
 	<Sidebar.Content>
-		<!-- Quick Access -->
-		<Sidebar.Group>
-			<Sidebar.GroupLabel>Quick Access</Sidebar.GroupLabel>
-			<Sidebar.GroupContent>
-				<Sidebar.Menu>
-					{#if dashboardPage}
-						<Sidebar.MenuItem>
-							<Sidebar.MenuButton
-								isActive={page.url.pathname === dashboardPage.url}
-								tooltipContent={dashboardPage.title}
-							>
-								{#snippet child({ props })}
-									<a href={dashboardPage.url} {...props}>
-										<dashboardPage.icon />
-										<span>{dashboardPage.title}</span>
-									</a>
-								{/snippet}
-							</Sidebar.MenuButton>
-						</Sidebar.MenuItem>
-					{/if}
-				</Sidebar.Menu>
-			</Sidebar.GroupContent>
-		</Sidebar.Group>
-
 		<!-- Category Groups -->
 		{#each CATEGORIES as category}
-			{@const CategoryIcon = categoryIcons[category.id]}
+			{@const CategoryIcon = category.icon}
 			{@const categoryPages = getPagesByCategory(category.id)}
 			<Collapsible.Root bind:open={openGroups[category.id]} class="group/collapsible">
 				<Sidebar.Group>

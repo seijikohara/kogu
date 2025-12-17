@@ -5,13 +5,13 @@ pre-commit:
   parallel: true
   commands:
     frontend-format:
-      glob: "*.{ts,js,svelte,json,css,md,html}"
-      exclude: "node_modules|bun.lock|.svelte-kit"
+      glob: '*.{ts,js,svelte,json,css,md,html}'
+      exclude: 'node_modules|bun.lock|.svelte-kit'
       run: bun run format --write {staged_files} && git add {staged_files}
       stage_fixed: true
 
     backend-format:
-      root: "src-tauri/"
-      glob: "*.rs"
+      root: 'src-tauri/'
+      glob: '*.rs'
       run: cargo fmt
       stage_fixed: true

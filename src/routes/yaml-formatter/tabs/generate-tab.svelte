@@ -1,5 +1,4 @@
 <script lang="ts">
-	
 	import * as yaml from 'yaml';
 	import SplitPane from '$lib/components/layout/split-pane.svelte';
 	import OptionCheckbox from '$lib/components/options/option-checkbox.svelte';
@@ -7,7 +6,7 @@
 	import OptionsPanel from '$lib/components/options/options-panel.svelte';
 	import OptionsSection from '$lib/components/options/options-section.svelte';
 	import { EditorPane } from '$lib/components/tool/index.js';
-import { Button } from '$lib/components/ui/button/index.js';
+	import { Button } from '$lib/components/ui/button/index.js';
 	import { Input } from '$lib/components/ui/input/index.js';
 	import { Label } from '$lib/components/ui/label/index.js';
 	import {

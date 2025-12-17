@@ -1,8 +1,7 @@
 <script lang="ts">
-	
 	import { ChevronLeft, ChevronRight, Settings2 } from '@lucide/svelte';
 	import type { Snippet } from 'svelte';
-import { Button } from '$lib/components/ui/button/index.js';
+	import { Button } from '$lib/components/ui/button/index.js';
 
 	interface Props {
 		title?: string;

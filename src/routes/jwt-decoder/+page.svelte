@@ -1,7 +1,6 @@
 <script lang="ts">
-	
 	import { AlertTriangle, CheckCircle, Clock, Copy } from '@lucide/svelte';
-import { PageHeader } from '$lib/components/layout/index.js';
+	import { PageHeader } from '$lib/components/layout/index.js';
 	import { EditorPane } from '$lib/components/tool/index.js';
 	import { Button } from '$lib/components/ui/button/index.js';
 	import {

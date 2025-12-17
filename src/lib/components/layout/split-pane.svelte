@@ -1,7 +1,6 @@
 <script lang="ts">
-	
 	import type { Snippet } from 'svelte';
-import { Handle, Pane, PaneGroup } from '$lib/components/ui/resizable/index.js';
+	import { Handle, Pane, PaneGroup } from '$lib/components/ui/resizable/index.js';
 
 	type Direction = 'horizontal' | 'vertical';
 

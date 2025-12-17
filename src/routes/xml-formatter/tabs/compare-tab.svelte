@@ -1,9 +1,8 @@
 <script lang="ts">
-	
 	import OptionCheckbox from '$lib/components/options/option-checkbox.svelte';
 	import { CompareTabBase } from '$lib/components/tool/index.js';
 	import { Input } from '$lib/components/ui/input/index.js';
-import { Label } from '$lib/components/ui/label/index.js';
+	import { Label } from '$lib/components/ui/label/index.js';
 	import type { GenericDiffItem } from '$lib/constants/diff.js';
 	import { findXmlDifferences, parseXml, type XmlDiffOptions } from '$lib/services/xml-diff.js';
 	import { pasteFromClipboard } from '../utils.js';

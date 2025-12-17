@@ -1,5 +1,4 @@
 <script lang="ts">
-	
 	import * as yaml from 'yaml';
 	import SplitPane from '$lib/components/layout/split-pane.svelte';
 	import OptionCheckbox from '$lib/components/options/option-checkbox.svelte';
@@ -8,7 +7,7 @@
 	import OptionsSection from '$lib/components/options/options-section.svelte';
 	import { EditorPane } from '$lib/components/tool/index.js';
 	import { Input } from '$lib/components/ui/input/index.js';
-import { Label } from '$lib/components/ui/label/index.js';
+	import { Label } from '$lib/components/ui/label/index.js';
 	import { executeJsonPath } from '$lib/services/formatters.js';
 	import { copyToClipboard, downloadTextFile, pasteFromClipboard } from '../utils.js';
 
@@ -68,8 +67,11 @@ import { Label } from '$lib/components/ui/label/index.js';
 
 	/** Format query result as YAML or JSON string */
 	const formatQueryResult = (result: unknown, opts: QueryOptions): string => {
-		const output = opts.showPaths && result !== undefined ? { path: opts.queryPath, value: result } : result;
-		return opts.outputFormat === 'yaml' ? yaml.stringify(output, { indent: 2 }) : JSON.stringify(output, null, 2);
+		const output =
+			opts.showPaths && result !== undefined ? { path: opts.queryPath, value: result } : result;
+		return opts.outputFormat === 'yaml'
+			? yaml.stringify(output, { indent: 2 })
+			: JSON.stringify(output, null, 2);
 	};
 
 	// Query result

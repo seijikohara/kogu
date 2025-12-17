@@ -1,8 +1,7 @@
 <script lang="ts">
-	
 	import { ChevronDown } from '@lucide/svelte';
 	import type { Snippet } from 'svelte';
-import * as Collapsible from '$lib/components/ui/collapsible/index.js';
+	import * as Collapsible from '$lib/components/ui/collapsible/index.js';
 
 	interface Props {
 		title: string;
