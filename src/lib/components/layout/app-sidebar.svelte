@@ -1,19 +1,9 @@
 <script lang="ts">
-	
-	import {
-		ChevronRight,
-		FileCode2,
-		FileText,
-		Lock,
-		Monitor,
-		Moon,
-		Sparkles,
-		Sun,
-	} from '@lucide/svelte';
+	import { ChevronRight, FileText, Lock, Monitor, Moon, Sparkles, Sun } from '@lucide/svelte';
 	import { mode, toggleMode } from 'mode-watcher';
 	import { page } from '$app/state';
 	import * as Collapsible from '$lib/components/ui/collapsible/index.js';
-import * as Sidebar from '$lib/components/ui/sidebar/index.js';
+	import * as Sidebar from '$lib/components/ui/sidebar/index.js';
 	import { CATEGORIES, getPagesByCategory, PAGES } from '$lib/services/pages.js';
 
 	// Get dashboard page
@@ -43,11 +33,7 @@ import * as Sidebar from '$lib/components/ui/sidebar/index.js';
 				>
 					{#snippet child({ props })}
 						<a href="/" {...props}>
-							<div
-								class="bg-sidebar-primary text-sidebar-primary-foreground flex aspect-square size-8 items-center justify-center rounded-lg"
-							>
-								<FileCode2 class="size-4" />
-							</div>
+							<img src="/logo.svg" alt="Kogu" class="size-8 rounded-lg" />
 							<div class="grid flex-1 text-left text-sm leading-tight">
 								<span class="truncate font-semibold">Kogu</span>
 								<span class="truncate text-xs text-muted-foreground">Developer Tools</span>
