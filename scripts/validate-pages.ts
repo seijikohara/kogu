@@ -21,7 +21,12 @@ interface PageDefinition {
 }
 
 interface ValidationError {
-	readonly type: 'missing-in-pages' | 'missing-file' | 'page-not-found' | 'tabs-not-defined';
+	readonly type:
+		| 'missing-in-pages'
+		| 'missing-file'
+		| 'page-not-found'
+		| 'tabs-not-defined'
+		| 'missing-route';
 	readonly pageId: string;
 	readonly tabId?: string;
 	readonly message: string;
@@ -125,6 +130,22 @@ const findTabsNotDefined = (pages: readonly PageDefinition[]): readonly Validati
 		});
 };
 
+/** Check if a page route exists (+page.svelte file) */
+const routeExists = (pageId: string): boolean => {
+	const routePath = join(ROUTES_DIR, pageId, '+page.svelte');
+	return existsSync(routePath);
+};
+
+/** Find pages registered in pages.ts that don't have corresponding route files */
+const findMissingRoutes = (pages: readonly PageDefinition[]): readonly ValidationError[] =>
+	pages
+		.filter((page) => page.url !== '/' && !routeExists(page.id))
+		.map((page) => ({
+			type: 'missing-route' as const,
+			pageId: page.id,
+			message: `Page "${page.title}" is registered in pages.ts but route file "src/routes/${page.id}/+page.svelte" does not exist`,
+		}));
+
 /** Collect all validation errors */
 const collectErrors = (pages: readonly PageDefinition[]): readonly ValidationError[] => {
 	const pagesWithTabs = getPagesWithTabs(pages);
@@ -133,6 +154,7 @@ const collectErrors = (pages: readonly PageDefinition[]): readonly ValidationErr
 		...pagesWithTabs.flatMap(findMissingFiles),
 		...findUnregisteredPages(pages),
 		...findTabsNotDefined(pages),
+		...findMissingRoutes(pages),
 	];
 };
 
@@ -142,6 +164,7 @@ const groupErrorsByType = (errors: readonly ValidationError[]) => ({
 	missingFiles: errors.filter((e) => e.type === 'missing-file'),
 	pageNotFound: errors.filter((e) => e.type === 'page-not-found'),
 	tabsNotDefined: errors.filter((e) => e.type === 'tabs-not-defined'),
+	missingRoutes: errors.filter((e) => e.type === 'missing-route'),
 });
 
 /** Print error section if not empty */
@@ -162,7 +185,15 @@ const printErrorSection = (
 const printFailureReport = (errors: readonly ValidationError[]): void => {
 	console.error('\n❌ Page/Tab validation failed!\n');
 
-	const { missingInPages, missingFiles, pageNotFound, tabsNotDefined } = groupErrorsByType(errors);
+	const { missingInPages, missingFiles, pageNotFound, tabsNotDefined, missingRoutes } =
+		groupErrorsByType(errors);
+
+	printErrorSection(
+		missingRoutes,
+		'🚫',
+		'Route files missing (create these files or remove from pages.ts)',
+		(e) => `src/routes/${e.pageId}/+page.svelte`
+	);
 
 	printErrorSection(
 		missingInPages,
@@ -195,19 +226,16 @@ const printFailureReport = (errors: readonly ValidationError[]): void => {
 	console.error(`Total: ${errors.length} error(s)\n`);
 };
 
-/** Get summary of all pages with tabs */
+/** Get summary of all pages */
 const getPagesSummary = (
 	pages: readonly PageDefinition[]
 ): readonly { title: string; tabCount: number }[] =>
-	getDirectoriesWithTabs()
-		.map((dir) => {
-			const page = pages.find((p) => p.id === dir);
-			return {
-				title: page?.title ?? dir,
-				tabCount: getActualTabIds(dir).length,
-			};
-		})
-		.filter((p) => p.tabCount > 0)
+	pages
+		.filter((p) => p.id !== 'dashboard')
+		.map((page) => ({
+			title: page.title,
+			tabCount: getActualTabIds(page.id).length,
+		}))
 		.sort((a, b) => a.title.localeCompare(b.title));
 
 /** Print success report */
@@ -215,7 +243,8 @@ const printSuccessReport = (pages: readonly PageDefinition[]): void => {
 	console.log('\n✅ Page/Tab validation passed! All tabs are properly registered.\n');
 	console.log('Summary:');
 	getPagesSummary(pages).forEach(({ title, tabCount }) => {
-		console.log(`  ${title}: ${tabCount} tabs`);
+		const tabInfo = tabCount > 0 ? `${tabCount} tabs` : 'no tabs';
+		console.log(`  ${title}: ${tabInfo}`);
 	});
 	console.log('');
 };

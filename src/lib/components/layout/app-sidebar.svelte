@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { ChevronRight, Monitor, Moon, Sun } from '@lucide/svelte';
+	import { ChevronLeft, ChevronRight, Monitor, Moon, Sun } from '@lucide/svelte';
 	import { mode, toggleMode } from 'mode-watcher';
 	import { page } from '$app/state';
 	import * as Collapsible from '$lib/components/ui/collapsible/index.js';
@@ -10,6 +10,8 @@
 	let openGroups = $state<Record<string, boolean>>(
 		Object.fromEntries(CATEGORIES.map((c) => [c.id, c.defaultOpen]))
 	);
+
+	const sidebar = Sidebar.useSidebar();
 </script>
 
 <Sidebar.Root collapsible="icon">
@@ -80,7 +82,7 @@
 		{/each}
 	</Sidebar.Content>
 
-	<!-- Footer with Theme Toggle -->
+	<!-- Footer with Theme Toggle and Collapse Button -->
 	<Sidebar.Footer>
 		<Sidebar.Menu>
 			<Sidebar.MenuItem>
@@ -95,6 +97,14 @@
 						<Monitor class="size-4" />
 						<span>System</span>
 					{/if}
+				</Sidebar.MenuButton>
+			</Sidebar.MenuItem>
+			<Sidebar.MenuItem>
+				<Sidebar.MenuButton onclick={sidebar.toggle} tooltipContent="Toggle sidebar">
+					<ChevronLeft
+						class="size-4 transition-transform duration-200 group-data-[state=collapsed]:rotate-180"
+					/>
+					<span>Collapse</span>
 				</Sidebar.MenuButton>
 			</Sidebar.MenuItem>
 		</Sidebar.Menu>

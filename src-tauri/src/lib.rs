@@ -44,15 +44,76 @@
 //! including AST parsing functionality for JSON, YAML, XML, and SQL.
 
 mod ast;
+mod generators;
 
 use tauri::Manager;
 use tauri_plugin_decorum::WebviewWindowExt;
 
 use ast::{AstLanguage, AstParseResult};
+use generators::{
+    bcrypt::{BcryptCostInfo, BcryptHashResult, BcryptVerifyResult},
+    cli::CliAvailability,
+    gpg::{GpgKeyOptions, GpgKeyResult},
+    ssh::{SshKeyOptions, SshKeyResult},
+};
 
 #[tauri::command]
 fn greet(name: &str) -> String {
     format!("Hello, {name}! You've been greeted from Rust!")
+}
+
+// =============================================================================
+// BCrypt Commands
+// =============================================================================
+
+/// Generate a `BCrypt` hash from a password
+#[tauri::command]
+fn generate_bcrypt_hash(password: &str, cost: u32) -> Result<BcryptHashResult, String> {
+    generators::bcrypt::generate_hash(password, cost).map_err(|e| e.to_string())
+}
+
+/// Verify a password against a `BCrypt` hash
+#[tauri::command]
+fn verify_bcrypt_hash(password: &str, hash: &str) -> Result<BcryptVerifyResult, String> {
+    generators::bcrypt::verify_hash(password, hash).map_err(|e| e.to_string())
+}
+
+/// Get information about a `BCrypt` cost factor
+#[tauri::command]
+fn get_bcrypt_cost_info(cost: u32) -> BcryptCostInfo {
+    generators::bcrypt::get_cost_info(cost)
+}
+
+// =============================================================================
+// SSH Key Commands
+// =============================================================================
+
+/// Generate an SSH key pair
+#[tauri::command]
+#[allow(clippy::needless_pass_by_value)] // Tauri commands receive owned values from JS
+fn generate_ssh_keypair(options: SshKeyOptions) -> Result<SshKeyResult, String> {
+    generators::ssh::generate_key(&options).map_err(|e| e.to_string())
+}
+
+// =============================================================================
+// GPG Key Commands
+// =============================================================================
+
+/// Generate a GPG key pair
+#[tauri::command]
+#[allow(clippy::needless_pass_by_value)] // Tauri commands receive owned values from JS
+fn generate_gpg_keypair(options: GpgKeyOptions) -> Result<GpgKeyResult, String> {
+    generators::gpg::generate_key(&options).map_err(|e| e.to_string())
+}
+
+// =============================================================================
+// CLI Availability Commands
+// =============================================================================
+
+/// Check CLI tool availability
+#[tauri::command]
+fn check_cli_availability() -> CliAvailability {
+    generators::cli::check_cli_availability()
 }
 
 /// Parse text to AST based on language
@@ -120,7 +181,16 @@ pub fn run() {
 
             Ok(())
         })
-        .invoke_handler(tauri::generate_handler![greet, parse_to_ast])
+        .invoke_handler(tauri::generate_handler![
+            greet,
+            parse_to_ast,
+            generate_bcrypt_hash,
+            verify_bcrypt_hash,
+            get_bcrypt_cost_info,
+            generate_ssh_keypair,
+            generate_gpg_keypair,
+            check_cli_availability,
+        ])
         .run(tauri::generate_context!())
         .unwrap_or_else(|e| {
             use std::io::Write;
