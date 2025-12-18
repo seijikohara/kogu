@@ -71,18 +71,6 @@ pub struct GpgKeyOptions {
     pub method: GenerationMethod,
 }
 
-impl GpgKeyOptions {
-    /// Build the User ID string
-    pub fn user_id(&self) -> String {
-        match &self.comment {
-            Some(comment) if !comment.is_empty() => {
-                format!("{} ({}) <{}>", self.name, comment, self.email)
-            }
-            _ => format!("{} <{}>", self.name, self.email),
-        }
-    }
-}
-
 /// Result of GPG key generation
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct GpgKeyResult {
@@ -105,8 +93,8 @@ pub struct GpgKeyResult {
 }
 
 /// Generate GPG key pair
-pub fn generate_key(options: &GpgKeyOptions) -> Result<GpgKeyResult, GeneratorError> {
-    // Validate input
+pub fn generate_key(options: GpgKeyOptions) -> Result<GpgKeyResult, GeneratorError> {
+    // Validate input before consuming
     if options.name.trim().is_empty() {
         return Err(GeneratorError::InvalidParameter(
             "Name is required".to_string(),
@@ -125,9 +113,28 @@ pub fn generate_key(options: &GpgKeyOptions) -> Result<GpgKeyResult, GeneratorEr
 }
 
 /// Generate GPG key pair using gpg CLI
-fn generate_with_cli(options: &GpgKeyOptions) -> Result<GpgKeyResult, GeneratorError> {
+fn generate_with_cli(options: GpgKeyOptions) -> Result<GpgKeyResult, GeneratorError> {
+    // Destructure to consume ownership
+    let GpgKeyOptions {
+        name,
+        email,
+        comment,
+        algorithm,
+        passphrase,
+        method: _,
+    } = options;
+
+    // Build user_id string
+    let user_id = build_user_id(&name, &email, comment.as_deref());
+
     // Create batch file content
-    let batch_content = build_batch_content(options);
+    let batch_content = build_batch_content_from_parts(
+        &name,
+        &email,
+        comment.as_deref(),
+        algorithm,
+        passphrase.as_deref(),
+    );
 
     // Create temporary batch file
     let temp_dir = std::env::temp_dir();
@@ -163,37 +170,58 @@ fn generate_with_cli(options: &GpgKeyOptions) -> Result<GpgKeyResult, GeneratorE
     let stderr = String::from_utf8_lossy(&output.stderr);
     let fingerprint = extract_fingerprint_from_output(&stderr).unwrap_or_else(|| {
         // Try to get fingerprint from gpg --list-keys
-        get_fingerprint_by_email(&options.email).unwrap_or_else(|| "Unknown".to_string())
+        get_fingerprint_by_email(&email).unwrap_or_else(|| "Unknown".to_string())
     });
 
     // Export public key
-    let public_key = export_key(&options.email, false)?;
+    let public_key = export_key(&email, false)?;
 
     // Export private key
-    let private_key = export_key(&options.email, true)?;
+    let private_key = export_key(&email, true)?;
+
+    // Build batch command for display
+    let gpg_command_batch = build_batch_command_from_parts(
+        &name,
+        &email,
+        comment.as_deref(),
+        algorithm,
+        passphrase.as_deref(),
+    );
 
     Ok(GpgKeyResult {
-        algorithm: options.algorithm.display_name().to_string(),
-        user_id: options.user_id(),
+        algorithm: algorithm.display_name().to_string(),
+        user_id,
         fingerprint: format_fingerprint(&fingerprint),
         public_key,
         private_key,
         gpg_command_interactive: "gpg --full-generate-key".to_string(),
-        gpg_command_batch: build_batch_command(options),
+        gpg_command_batch,
         method_used: "CLI (gpg)".to_string(),
     })
 }
 
 /// Generate GPG key pair using Rust library (pgp crate)
-fn generate_with_library(options: &GpgKeyOptions) -> Result<GpgKeyResult, GeneratorError> {
+fn generate_with_library(options: GpgKeyOptions) -> Result<GpgKeyResult, GeneratorError> {
     use pgp::composed::{ArmorOptions, KeyType, SecretKeyParamsBuilder, SignedPublicKey};
     use pgp::types::PublicKeyTrait;
     use std::fmt::Write;
 
-    let user_id = options.user_id();
+    // Destructure to consume ownership
+    let GpgKeyOptions {
+        name,
+        email,
+        comment,
+        algorithm,
+        passphrase,
+        method: _,
+    } = options;
+
+    // Build user_id string
+    let user_id = build_user_id(&name, &email, comment.as_deref());
+
     let mut rng = rand::rngs::OsRng;
 
-    let key_type = match options.algorithm {
+    let key_type = match algorithm {
         GpgKeyAlgorithm::Rsa2048 => KeyType::Rsa(2048),
         GpgKeyAlgorithm::Rsa3072 => KeyType::Rsa(3072),
         GpgKeyAlgorithm::Rsa4096 => KeyType::Rsa(4096),
@@ -214,11 +242,11 @@ fn generate_with_library(options: &GpgKeyOptions) -> Result<GpgKeyResult, Genera
         .map_err(|e| GeneratorError::Gpg(format!("Failed to generate key: {e}")))?;
 
     // Get passphrase
-    let passphrase = options.passphrase.clone().unwrap_or_default();
+    let passphrase_str = passphrase.clone().unwrap_or_default();
 
     // Sign the key to create SignedSecretKey
     let signed_key = secret_key
-        .sign(&mut rng, || passphrase.clone())
+        .sign(&mut rng, || passphrase_str.clone())
         .map_err(|e| GeneratorError::Gpg(format!("Failed to sign key: {e}")))?;
 
     // Get fingerprint from signed key (PublicKeyTrait)
@@ -245,29 +273,54 @@ fn generate_with_library(options: &GpgKeyOptions) -> Result<GpgKeyResult, Genera
         .to_armored_string(ArmorOptions::default())
         .map_err(|e| GeneratorError::Gpg(format!("Failed to export private key: {e}")))?;
 
+    // Build batch command for display
+    let gpg_command_batch = build_batch_command_from_parts(
+        &name,
+        &email,
+        comment.as_deref(),
+        algorithm,
+        passphrase.as_deref(),
+    );
+
     Ok(GpgKeyResult {
-        algorithm: options.algorithm.display_name().to_string(),
+        algorithm: algorithm.display_name().to_string(),
         user_id,
         fingerprint: format_fingerprint(&fingerprint),
         public_key,
         private_key,
         gpg_command_interactive: "gpg --full-generate-key".to_string(),
-        gpg_command_batch: build_batch_command(options),
+        gpg_command_batch,
         method_used: "Library (pgp)".to_string(),
     })
 }
 
-/// Build GPG batch file content
-fn build_batch_content(options: &GpgKeyOptions) -> String {
-    let key_type = options.algorithm.gpg_key_type();
+/// Build User ID string from parts
+fn build_user_id(name: &str, email: &str, comment: Option<&str>) -> String {
+    match comment {
+        Some(c) if !c.is_empty() => {
+            format!("{name} ({c}) <{email}>")
+        }
+        _ => format!("{name} <{email}>"),
+    }
+}
+
+/// Build GPG batch file content from individual parts
+fn build_batch_content_from_parts(
+    name: &str,
+    email: &str,
+    comment: Option<&str>,
+    algorithm: GpgKeyAlgorithm,
+    passphrase: Option<&str>,
+) -> String {
+    let key_type = algorithm.gpg_key_type();
     let mut lines = vec![
         "%echo Generating GPG key".to_string(),
         format!("Key-Type: {key_type}"),
     ];
 
     // Add key length/curve
-    let key_length = options.algorithm.gpg_key_length();
-    match options.algorithm {
+    let key_length = algorithm.gpg_key_length();
+    match algorithm {
         GpgKeyAlgorithm::Rsa2048 | GpgKeyAlgorithm::Rsa3072 | GpgKeyAlgorithm::Rsa4096 => {
             lines.push(format!("Key-Length: {key_length}"));
         }
@@ -276,24 +329,22 @@ fn build_batch_content(options: &GpgKeyOptions) -> String {
         }
     }
 
-    let name = &options.name;
     lines.push(format!("Name-Real: {name}"));
 
-    if let Some(comment) = &options.comment {
-        if !comment.is_empty() {
-            lines.push(format!("Name-Comment: {comment}"));
+    if let Some(c) = comment {
+        if !c.is_empty() {
+            lines.push(format!("Name-Comment: {c}"));
         }
     }
 
-    let email = &options.email;
     lines.push(format!("Name-Email: {email}"));
     lines.push("Expire-Date: 0".to_string());
 
-    if let Some(passphrase) = &options.passphrase {
-        if passphrase.is_empty() {
+    if let Some(pass) = passphrase {
+        if pass.is_empty() {
             lines.push("%no-protection".to_string());
         } else {
-            lines.push(format!("Passphrase: {passphrase}"));
+            lines.push(format!("Passphrase: {pass}"));
         }
     } else {
         lines.push("%no-protection".to_string());
@@ -305,9 +356,15 @@ fn build_batch_content(options: &GpgKeyOptions) -> String {
     lines.join("\n")
 }
 
-/// Build the batch command string for display
-fn build_batch_command(options: &GpgKeyOptions) -> String {
-    let batch_content = build_batch_content(options);
+/// Build the batch command string for display from individual parts
+fn build_batch_command_from_parts(
+    name: &str,
+    email: &str,
+    comment: Option<&str>,
+    algorithm: GpgKeyAlgorithm,
+    passphrase: Option<&str>,
+) -> String {
+    let batch_content = build_batch_content_from_parts(name, email, comment, algorithm, passphrase);
     format!("gpg --batch --gen-key <<'EOF'\n{batch_content}\nEOF")
 }
 
@@ -398,29 +455,15 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_user_id_without_comment() {
-        let options = GpgKeyOptions {
-            name: "John Doe".to_string(),
-            email: "john@example.com".to_string(),
-            comment: None,
-            algorithm: GpgKeyAlgorithm::Rsa4096,
-            passphrase: None,
-            method: GenerationMethod::Library,
-        };
-        assert_eq!(options.user_id(), "John Doe <john@example.com>");
+    fn test_build_user_id_without_comment() {
+        let user_id = build_user_id("John Doe", "john@example.com", None);
+        assert_eq!(user_id, "John Doe <john@example.com>");
     }
 
     #[test]
-    fn test_user_id_with_comment() {
-        let options = GpgKeyOptions {
-            name: "John Doe".to_string(),
-            email: "john@example.com".to_string(),
-            comment: Some("Work Key".to_string()),
-            algorithm: GpgKeyAlgorithm::Rsa4096,
-            passphrase: None,
-            method: GenerationMethod::Library,
-        };
-        assert_eq!(options.user_id(), "John Doe (Work Key) <john@example.com>");
+    fn test_build_user_id_with_comment() {
+        let user_id = build_user_id("John Doe", "john@example.com", Some("Work Key"));
+        assert_eq!(user_id, "John Doe (Work Key) <john@example.com>");
     }
 
     #[test]
@@ -446,7 +489,7 @@ mod tests {
             passphrase: None,
             method: GenerationMethod::Library,
         };
-        let result = generate_key(&options);
+        let result = generate_key(options);
         assert!(result.is_err());
     }
 
@@ -460,7 +503,7 @@ mod tests {
             passphrase: None,
             method: GenerationMethod::Library,
         };
-        let result = generate_key(&options);
+        let result = generate_key(options);
         assert!(result.is_err());
     }
 }

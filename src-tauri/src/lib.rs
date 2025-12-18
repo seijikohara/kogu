@@ -90,9 +90,8 @@ fn get_bcrypt_cost_info(cost: u32) -> BcryptCostInfo {
 
 /// Generate an SSH key pair
 #[tauri::command]
-#[allow(clippy::needless_pass_by_value)] // Tauri commands receive owned values from JS
 fn generate_ssh_keypair(options: SshKeyOptions) -> Result<SshKeyResult, String> {
-    generators::ssh::generate_key(&options).map_err(|e| e.to_string())
+    generators::ssh::generate_key(options).map_err(|e| e.to_string())
 }
 
 // =============================================================================
@@ -101,9 +100,8 @@ fn generate_ssh_keypair(options: SshKeyOptions) -> Result<SshKeyResult, String> 
 
 /// Generate a GPG key pair
 #[tauri::command]
-#[allow(clippy::needless_pass_by_value)] // Tauri commands receive owned values from JS
 fn generate_gpg_keypair(options: GpgKeyOptions) -> Result<GpgKeyResult, String> {
-    generators::gpg::generate_key(&options).map_err(|e| e.to_string())
+    generators::gpg::generate_key(options).map_err(|e| e.to_string())
 }
 
 // =============================================================================

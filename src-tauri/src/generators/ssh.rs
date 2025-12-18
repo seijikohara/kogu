@@ -101,7 +101,7 @@ pub struct SshKeyResult {
 }
 
 /// Generate SSH key pair
-pub fn generate_key(options: &SshKeyOptions) -> Result<SshKeyResult, GeneratorError> {
+pub fn generate_key(options: SshKeyOptions) -> Result<SshKeyResult, GeneratorError> {
     match options.method {
         GenerationMethod::Cli => generate_with_cli(options),
         GenerationMethod::Library => generate_with_library(options),
@@ -109,7 +109,15 @@ pub fn generate_key(options: &SshKeyOptions) -> Result<SshKeyResult, GeneratorEr
 }
 
 /// Generate SSH key pair using ssh-keygen CLI
-fn generate_with_cli(options: &SshKeyOptions) -> Result<SshKeyResult, GeneratorError> {
+fn generate_with_cli(options: SshKeyOptions) -> Result<SshKeyResult, GeneratorError> {
+    // Destructure to consume ownership
+    let SshKeyOptions {
+        algorithm,
+        comment,
+        passphrase,
+        method: _,
+    } = options;
+
     let temp_dir = std::env::temp_dir();
     let pid = std::process::id();
     let key_path = temp_dir.join(format!("kogu_ssh_key_{pid}"));
@@ -122,13 +130,13 @@ fn generate_with_cli(options: &SshKeyOptions) -> Result<SshKeyResult, GeneratorE
 
     // Build command
     let mut cmd = Command::new("ssh-keygen");
-    cmd.args(options.algorithm.ssh_keygen_args());
+    cmd.args(algorithm.ssh_keygen_args());
     cmd.args(["-f", &key_path_str]);
-    cmd.args(["-N", options.passphrase.as_deref().unwrap_or("")]);
+    cmd.args(["-N", passphrase.as_deref().unwrap_or("")]);
 
-    if let Some(comment) = &options.comment {
-        if !comment.is_empty() {
-            cmd.args(["-C", comment]);
+    if let Some(ref c) = comment {
+        if !c.is_empty() {
+            cmd.args(["-C", c]);
         }
     }
 
@@ -184,22 +192,33 @@ fn generate_with_cli(options: &SshKeyOptions) -> Result<SshKeyResult, GeneratorE
     let _ = std::fs::remove_file(&key_path);
     let _ = std::fs::remove_file(&pub_key_path);
 
+    // Build ssh-keygen command string
+    let ssh_keygen_command = build_ssh_keygen_command_from_parts(algorithm, comment.as_deref());
+
     Ok(SshKeyResult {
-        algorithm: options.algorithm.display_name().to_string(),
+        algorithm: algorithm.display_name().to_string(),
         public_key: public_key.trim().to_string(),
         private_key,
         fingerprint,
-        ssh_keygen_command: build_ssh_keygen_command(options),
+        ssh_keygen_command,
         method_used: "CLI (ssh-keygen)".to_string(),
     })
 }
 
 /// Generate SSH key pair using Rust library
-fn generate_with_library(options: &SshKeyOptions) -> Result<SshKeyResult, GeneratorError> {
-    let mut rng = OsRng;
-    let comment = options.comment.as_deref().unwrap_or("");
+fn generate_with_library(options: SshKeyOptions) -> Result<SshKeyResult, GeneratorError> {
+    // Destructure to consume ownership
+    let SshKeyOptions {
+        algorithm,
+        comment,
+        passphrase,
+        method: _,
+    } = options;
 
-    let private_key: PrivateKey = match options.algorithm {
+    let mut rng = OsRng;
+    let comment_str = comment.as_deref().unwrap_or("");
+
+    let private_key: PrivateKey = match algorithm {
         SshKeyAlgorithm::Ed25519 => {
             let keypair = Ed25519Keypair::random(&mut rng);
             PrivateKey::from(keypair)
@@ -235,7 +254,7 @@ fn generate_with_library(options: &SshKeyOptions) -> Result<SshKeyResult, Genera
     let fingerprint = public_key.fingerprint(HashAlg::Sha256).to_string();
 
     // Format public key with comment
-    let public_key_str = if comment.is_empty() {
+    let public_key_str = if comment_str.is_empty() {
         public_key
             .to_openssh()
             .map_err(|e| GeneratorError::SshKey(e.to_string()))?
@@ -245,20 +264,20 @@ fn generate_with_library(options: &SshKeyOptions) -> Result<SshKeyResult, Genera
             public_key
                 .to_openssh()
                 .map_err(|e| GeneratorError::SshKey(e.to_string()))?,
-            comment
+            comment_str
         )
     };
 
     // Format private key (with optional encryption)
-    let private_key_str = if let Some(passphrase) = &options.passphrase {
-        if passphrase.is_empty() {
+    let private_key_str = if let Some(ref pass) = passphrase {
+        if pass.is_empty() {
             private_key
                 .to_openssh(LineEnding::LF)
                 .map_err(|e| GeneratorError::SshKey(e.to_string()))?
                 .to_string()
         } else {
             private_key
-                .encrypt(&mut rng, passphrase)
+                .encrypt(&mut rng, pass)
                 .map_err(|e| GeneratorError::SshKey(e.to_string()))?
                 .to_openssh(LineEnding::LF)
                 .map_err(|e| GeneratorError::SshKey(e.to_string()))?
@@ -271,36 +290,41 @@ fn generate_with_library(options: &SshKeyOptions) -> Result<SshKeyResult, Genera
             .to_string()
     };
 
+    // Build ssh-keygen command string
+    let ssh_keygen_command = build_ssh_keygen_command_from_parts(algorithm, comment.as_deref());
+
     Ok(SshKeyResult {
-        algorithm: options.algorithm.display_name().to_string(),
+        algorithm: algorithm.display_name().to_string(),
         public_key: public_key_str,
         private_key: private_key_str,
         fingerprint,
-        ssh_keygen_command: build_ssh_keygen_command(options),
+        ssh_keygen_command,
         method_used: "Library (ssh-key)".to_string(),
     })
 }
 
-/// Build the equivalent ssh-keygen command string
-fn build_ssh_keygen_command(options: &SshKeyOptions) -> String {
+/// Build the equivalent ssh-keygen command string from individual parts
+fn build_ssh_keygen_command_from_parts(
+    algorithm: SshKeyAlgorithm,
+    comment: Option<&str>,
+) -> String {
     let mut parts = vec!["ssh-keygen".to_string()];
     parts.extend(
-        options
-            .algorithm
+        algorithm
             .ssh_keygen_args()
             .iter()
             .map(std::string::ToString::to_string),
     );
 
-    if let Some(comment) = &options.comment {
-        if !comment.is_empty() {
+    if let Some(c) = comment {
+        if !c.is_empty() {
             parts.push("-C".to_string());
-            parts.push(format!("\"{comment}\""));
+            parts.push(format!("\"{c}\""));
         }
     }
 
     parts.push("-f".to_string());
-    let filename = options.algorithm.default_filename();
+    let filename = algorithm.default_filename();
     parts.push(format!("~/.ssh/{filename}"));
 
     parts.join(" ")
@@ -319,7 +343,7 @@ mod tests {
             method: GenerationMethod::Library,
         };
 
-        let result = generate_key(&options);
+        let result = generate_key(options);
         assert!(result.is_ok());
 
         let key = result.unwrap();
@@ -330,14 +354,7 @@ mod tests {
 
     #[test]
     fn test_ssh_keygen_command_generation() {
-        let options = SshKeyOptions {
-            algorithm: SshKeyAlgorithm::Ed25519,
-            comment: Some("user@host".to_string()),
-            passphrase: None,
-            method: GenerationMethod::Library,
-        };
-
-        let cmd = build_ssh_keygen_command(&options);
+        let cmd = build_ssh_keygen_command_from_parts(SshKeyAlgorithm::Ed25519, Some("user@host"));
         assert!(cmd.contains("ssh-keygen"));
         assert!(cmd.contains("-t ed25519"));
         assert!(cmd.contains("-C \"user@host\""));
