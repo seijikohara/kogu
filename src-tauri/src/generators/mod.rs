@@ -1,6 +1,6 @@
 //! Cryptographic key generators module
 //!
-//! This module provides BCrypt hashing, SSH key generation, and GPG key generation
+//! This module provides `BCrypt` hashing, SSH key generation, and GPG key generation
 //! with support for both CLI tools and Rust library fallbacks.
 
 pub mod bcrypt;

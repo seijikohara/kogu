@@ -1,21 +1,21 @@
-//! BCrypt hash generation and verification
+//! `BCrypt` hash generation and verification
 
 use serde::{Deserialize, Serialize};
 
 use super::GeneratorError;
 
-/// Result of BCrypt hash generation
+/// Result of `BCrypt` hash generation
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct BcryptHashResult {
-    /// The generated BCrypt hash
+    /// The generated `BCrypt` hash
     pub hash: String,
     /// Cost factor used
     pub cost: u32,
-    /// BCrypt algorithm version (e.g., "2b")
+    /// `BCrypt` algorithm version (e.g., "2b")
     pub algorithm: String,
 }
 
-/// Result of BCrypt verification
+/// Result of `BCrypt` verification
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct BcryptVerifyResult {
     /// Whether the password matches the hash
@@ -24,7 +24,7 @@ pub struct BcryptVerifyResult {
     pub message: String,
 }
 
-/// Information about a BCrypt cost factor
+/// Information about a `BCrypt` cost factor
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct BcryptCostInfo {
     /// Cost factor value
@@ -43,19 +43,18 @@ pub const MAX_COST: u32 = 20;
 #[allow(dead_code)]
 pub const DEFAULT_COST: u32 = 10;
 
-/// Generate a BCrypt hash from a password
+/// Generate a `BCrypt` hash from a password
 ///
 /// # Arguments
 /// * `password` - The password to hash
 /// * `cost` - The cost factor (4-20)
 ///
 /// # Returns
-/// The BCrypt hash result or an error
+/// The `BCrypt` hash result or an error
 pub fn generate_hash(password: &str, cost: u32) -> Result<BcryptHashResult, GeneratorError> {
     if !(MIN_COST..=MAX_COST).contains(&cost) {
         return Err(GeneratorError::InvalidParameter(format!(
-            "Cost factor must be between {} and {}, got {}",
-            MIN_COST, MAX_COST, cost
+            "Cost factor must be between {MIN_COST} and {MAX_COST}, got {cost}"
         )));
     }
 
@@ -68,11 +67,11 @@ pub fn generate_hash(password: &str, cost: u32) -> Result<BcryptHashResult, Gene
     })
 }
 
-/// Verify a password against a BCrypt hash
+/// Verify a password against a `BCrypt` hash
 ///
 /// # Arguments
 /// * `password` - The password to verify
-/// * `hash` - The BCrypt hash to verify against
+/// * `hash` - The `BCrypt` hash to verify against
 ///
 /// # Returns
 /// The verification result
@@ -101,7 +100,9 @@ pub fn get_cost_info(cost: u32) -> BcryptCostInfo {
     // Approximate computation time: ~100ms at cost 10, doubles for each increment
     let base_time_ms = 100.0;
     let base_cost = 10i32;
-    let estimated_time_ms = base_time_ms * 2_f64.powi(cost as i32 - base_cost);
+    // cost is guaranteed to be at most MAX_COST (20), so this conversion always succeeds
+    let cost_i32 = i32::try_from(cost).unwrap_or(i32::MAX);
+    let estimated_time_ms = base_time_ms * 2_f64.powi(cost_i32 - base_cost);
 
     let security_level = match cost {
         0..=5 => "Very Low",

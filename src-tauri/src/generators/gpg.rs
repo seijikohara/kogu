@@ -23,7 +23,7 @@ pub enum GpgKeyAlgorithm {
 
 impl GpgKeyAlgorithm {
     /// Get display name for the algorithm
-    pub fn display_name(&self) -> &'static str {
+    pub const fn display_name(self) -> &'static str {
         match self {
             Self::Rsa2048 => "RSA 2048-bit",
             Self::Rsa3072 => "RSA 3072-bit",
@@ -34,7 +34,7 @@ impl GpgKeyAlgorithm {
     }
 
     /// Get GPG key type string
-    pub fn gpg_key_type(&self) -> &'static str {
+    pub const fn gpg_key_type(self) -> &'static str {
         match self {
             Self::Rsa2048 | Self::Rsa3072 | Self::Rsa4096 => "RSA",
             Self::EcdsaP256 | Self::EcdsaP384 => "ECDSA",
@@ -42,7 +42,7 @@ impl GpgKeyAlgorithm {
     }
 
     /// Get key length/curve for GPG
-    pub fn gpg_key_length(&self) -> &'static str {
+    pub const fn gpg_key_length(self) -> &'static str {
         match self {
             Self::Rsa2048 => "2048",
             Self::Rsa3072 => "3072",
@@ -134,7 +134,7 @@ fn generate_with_cli(options: &GpgKeyOptions) -> Result<GpgKeyResult, GeneratorE
     let batch_file = temp_dir.join(format!("kogu_gpg_batch_{}", std::process::id()));
 
     std::fs::write(&batch_file, &batch_content)
-        .map_err(|e| GeneratorError::CliExecution(format!("Failed to create batch file: {}", e)))?;
+        .map_err(|e| GeneratorError::CliExecution(format!("Failed to create batch file: {e}")))?;
 
     // Generate key using batch mode
     let mut cmd = Command::new("gpg");
@@ -146,7 +146,7 @@ fn generate_with_cli(options: &GpgKeyOptions) -> Result<GpgKeyResult, GeneratorE
 
     let output = cmd.output().map_err(|e| {
         let _ = std::fs::remove_file(&batch_file);
-        GeneratorError::CliExecution(format!("Failed to execute gpg: {}", e))
+        GeneratorError::CliExecution(format!("Failed to execute gpg: {e}"))
     })?;
 
     // Cleanup batch file
@@ -155,8 +155,7 @@ fn generate_with_cli(options: &GpgKeyOptions) -> Result<GpgKeyResult, GeneratorE
     if !output.status.success() {
         let stderr = String::from_utf8_lossy(&output.stderr);
         return Err(GeneratorError::CliExecution(format!(
-            "gpg key generation failed: {}",
-            stderr
+            "gpg key generation failed: {stderr}"
         )));
     }
 
@@ -187,8 +186,9 @@ fn generate_with_cli(options: &GpgKeyOptions) -> Result<GpgKeyResult, GeneratorE
 
 /// Generate GPG key pair using Rust library (pgp crate)
 fn generate_with_library(options: &GpgKeyOptions) -> Result<GpgKeyResult, GeneratorError> {
-    use pgp::composed::{KeyType, SecretKeyParamsBuilder, SignedPublicKey};
+    use pgp::composed::{ArmorOptions, KeyType, SecretKeyParamsBuilder, SignedPublicKey};
     use pgp::types::PublicKeyTrait;
+    use std::fmt::Write;
 
     let user_id = options.user_id();
     let mut rng = rand::rngs::OsRng;
@@ -207,11 +207,11 @@ fn generate_with_library(options: &GpgKeyOptions) -> Result<GpgKeyResult, Genera
         .can_sign(true)
         .primary_user_id(user_id.clone())
         .build()
-        .map_err(|e| GeneratorError::Gpg(format!("Failed to build key params: {}", e)))?;
+        .map_err(|e| GeneratorError::Gpg(format!("Failed to build key params: {e}")))?;
 
     let secret_key = params
-        .generate(&mut rng)
-        .map_err(|e| GeneratorError::Gpg(format!("Failed to generate key: {}", e)))?;
+        .generate(rng)
+        .map_err(|e| GeneratorError::Gpg(format!("Failed to generate key: {e}")))?;
 
     // Get passphrase
     let passphrase = options.passphrase.clone().unwrap_or_default();
@@ -219,29 +219,31 @@ fn generate_with_library(options: &GpgKeyOptions) -> Result<GpgKeyResult, Genera
     // Sign the key to create SignedSecretKey
     let signed_key = secret_key
         .sign(&mut rng, || passphrase.clone())
-        .map_err(|e| GeneratorError::Gpg(format!("Failed to sign key: {}", e)))?;
+        .map_err(|e| GeneratorError::Gpg(format!("Failed to sign key: {e}")))?;
 
     // Get fingerprint from signed key (PublicKeyTrait)
-    let fingerprint = signed_key
-        .fingerprint()
-        .as_bytes()
-        .iter()
-        .map(|b| format!("{:02X}", b))
-        .collect::<Vec<_>>()
-        .join("");
+    let fingerprint =
+        signed_key
+            .fingerprint()
+            .as_bytes()
+            .iter()
+            .fold(String::new(), |mut acc, b| {
+                let _ = write!(acc, "{b:02X}");
+                acc
+            });
 
-    // Convert to public key for export
+    // Convert to public key for export (clone needed as signed_key is used again below)
     let signed_public_key: SignedPublicKey = signed_key.clone().into();
 
     // Export public key
     let public_key = signed_public_key
-        .to_armored_string(Default::default())
-        .map_err(|e| GeneratorError::Gpg(format!("Failed to export public key: {}", e)))?;
+        .to_armored_string(ArmorOptions::default())
+        .map_err(|e| GeneratorError::Gpg(format!("Failed to export public key: {e}")))?;
 
     // Export private key
     let private_key = signed_key
-        .to_armored_string(Default::default())
-        .map_err(|e| GeneratorError::Gpg(format!("Failed to export private key: {}", e)))?;
+        .to_armored_string(ArmorOptions::default())
+        .map_err(|e| GeneratorError::Gpg(format!("Failed to export private key: {e}")))?;
 
     Ok(GpgKeyResult {
         algorithm: options.algorithm.display_name().to_string(),
@@ -257,40 +259,41 @@ fn generate_with_library(options: &GpgKeyOptions) -> Result<GpgKeyResult, Genera
 
 /// Build GPG batch file content
 fn build_batch_content(options: &GpgKeyOptions) -> String {
+    let key_type = options.algorithm.gpg_key_type();
     let mut lines = vec![
         "%echo Generating GPG key".to_string(),
-        format!("Key-Type: {}", options.algorithm.gpg_key_type()),
+        format!("Key-Type: {key_type}"),
     ];
 
     // Add key length/curve
+    let key_length = options.algorithm.gpg_key_length();
     match options.algorithm {
         GpgKeyAlgorithm::Rsa2048 | GpgKeyAlgorithm::Rsa3072 | GpgKeyAlgorithm::Rsa4096 => {
-            lines.push(format!(
-                "Key-Length: {}",
-                options.algorithm.gpg_key_length()
-            ));
+            lines.push(format!("Key-Length: {key_length}"));
         }
         GpgKeyAlgorithm::EcdsaP256 | GpgKeyAlgorithm::EcdsaP384 => {
-            lines.push(format!("Key-Curve: {}", options.algorithm.gpg_key_length()));
+            lines.push(format!("Key-Curve: {key_length}"));
         }
     }
 
-    lines.push(format!("Name-Real: {}", options.name));
+    let name = &options.name;
+    lines.push(format!("Name-Real: {name}"));
 
     if let Some(comment) = &options.comment {
         if !comment.is_empty() {
-            lines.push(format!("Name-Comment: {}", comment));
+            lines.push(format!("Name-Comment: {comment}"));
         }
     }
 
-    lines.push(format!("Name-Email: {}", options.email));
+    let email = &options.email;
+    lines.push(format!("Name-Email: {email}"));
     lines.push("Expire-Date: 0".to_string());
 
     if let Some(passphrase) = &options.passphrase {
-        if !passphrase.is_empty() {
-            lines.push(format!("Passphrase: {}", passphrase));
-        } else {
+        if passphrase.is_empty() {
             lines.push("%no-protection".to_string());
+        } else {
+            lines.push(format!("Passphrase: {passphrase}"));
         }
     } else {
         lines.push("%no-protection".to_string());
@@ -305,7 +308,7 @@ fn build_batch_content(options: &GpgKeyOptions) -> String {
 /// Build the batch command string for display
 fn build_batch_command(options: &GpgKeyOptions) -> String {
     let batch_content = build_batch_content(options);
-    format!("gpg --batch --gen-key <<'EOF'\n{}\nEOF", batch_content)
+    format!("gpg --batch --gen-key <<'EOF'\n{batch_content}\nEOF")
 }
 
 /// Export a key by email
@@ -323,14 +326,14 @@ fn export_key(email: &str, secret: bool) -> Result<String, GeneratorError> {
 
     let output = cmd
         .output()
-        .map_err(|e| GeneratorError::CliExecution(format!("Failed to export key: {}", e)))?;
+        .map_err(|e| GeneratorError::CliExecution(format!("Failed to export key: {e}")))?;
 
     if output.status.success() {
         Ok(String::from_utf8_lossy(&output.stdout).to_string())
     } else {
+        let stderr = String::from_utf8_lossy(&output.stderr);
         Err(GeneratorError::CliExecution(format!(
-            "Failed to export key: {}",
-            String::from_utf8_lossy(&output.stderr)
+            "Failed to export key: {stderr}"
         )))
     }
 }
@@ -369,7 +372,7 @@ fn get_fingerprint_by_email(email: &str) -> Option<String> {
                     .chars()
                     .all(|c| c.is_ascii_hexdigit() || c.is_whitespace())
             {
-                let fp: String = trimmed.chars().filter(|c| c.is_ascii_hexdigit()).collect();
+                let fp: String = trimmed.chars().filter(char::is_ascii_hexdigit).collect();
                 if fp.len() >= 16 {
                     return Some(fp);
                 }
@@ -436,7 +439,7 @@ mod tests {
     #[test]
     fn test_invalid_name() {
         let options = GpgKeyOptions {
-            name: "".to_string(),
+            name: String::new(),
             email: "john@example.com".to_string(),
             comment: None,
             algorithm: GpgKeyAlgorithm::Rsa4096,

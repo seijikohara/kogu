@@ -82,7 +82,8 @@ mod tests {
     fn test_check_cli_availability() {
         let availability = check_cli_availability();
         // Just verify it doesn't panic and returns valid structure
-        println!("SSH-keygen available: {}", availability.ssh_keygen);
-        println!("GPG available: {}", availability.gpg);
+        // ssh_keygen and gpg availability depends on system configuration
+        let _ = availability.ssh_keygen;
+        let _ = availability.gpg;
     }
 }

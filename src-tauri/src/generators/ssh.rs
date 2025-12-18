@@ -30,7 +30,7 @@ pub enum SshKeyAlgorithm {
 
 impl SshKeyAlgorithm {
     /// Get display name for the algorithm
-    pub fn display_name(&self) -> &'static str {
+    pub const fn display_name(self) -> &'static str {
         match self {
             Self::Ed25519 => "Ed25519",
             Self::EcdsaP256 => "ECDSA P-256",
@@ -42,7 +42,7 @@ impl SshKeyAlgorithm {
     }
 
     /// Get ssh-keygen command arguments for this algorithm
-    pub fn ssh_keygen_args(&self) -> Vec<&'static str> {
+    pub fn ssh_keygen_args(self) -> Vec<&'static str> {
         match self {
             Self::Ed25519 => vec!["-t", "ed25519"],
             Self::EcdsaP256 => vec!["-t", "ecdsa", "-b", "256"],
@@ -54,7 +54,7 @@ impl SshKeyAlgorithm {
     }
 
     /// Get the default filename for this algorithm
-    pub fn default_filename(&self) -> &'static str {
+    pub const fn default_filename(self) -> &'static str {
         match self {
             Self::Ed25519 => "id_ed25519",
             Self::EcdsaP256 | Self::EcdsaP384 => "id_ecdsa",
@@ -64,7 +64,7 @@ impl SshKeyAlgorithm {
 
     /// Whether this algorithm is recommended (used by frontend)
     #[allow(dead_code)]
-    pub fn is_recommended(&self) -> bool {
+    pub const fn is_recommended(self) -> bool {
         matches!(self, Self::Ed25519)
     }
 }
@@ -111,9 +111,10 @@ pub fn generate_key(options: &SshKeyOptions) -> Result<SshKeyResult, GeneratorEr
 /// Generate SSH key pair using ssh-keygen CLI
 fn generate_with_cli(options: &SshKeyOptions) -> Result<SshKeyResult, GeneratorError> {
     let temp_dir = std::env::temp_dir();
-    let key_path = temp_dir.join(format!("kogu_ssh_key_{}", std::process::id()));
+    let pid = std::process::id();
+    let key_path = temp_dir.join(format!("kogu_ssh_key_{pid}"));
     let key_path_str = key_path.to_string_lossy();
-    let pub_key_path = format!("{}.pub", key_path_str);
+    let pub_key_path = format!("{key_path_str}.pub");
 
     // Remove existing files if any
     let _ = std::fs::remove_file(&key_path);
@@ -135,9 +136,9 @@ fn generate_with_cli(options: &SshKeyOptions) -> Result<SshKeyResult, GeneratorE
     cmd.stdout(Stdio::piped());
     cmd.stderr(Stdio::piped());
 
-    let output = cmd.output().map_err(|e| {
-        GeneratorError::CliExecution(format!("Failed to execute ssh-keygen: {}", e))
-    })?;
+    let output = cmd
+        .output()
+        .map_err(|e| GeneratorError::CliExecution(format!("Failed to execute ssh-keygen: {e}")))?;
 
     if !output.status.success() {
         let stderr = String::from_utf8_lossy(&output.stderr);
@@ -145,8 +146,7 @@ fn generate_with_cli(options: &SshKeyOptions) -> Result<SshKeyResult, GeneratorE
         let _ = std::fs::remove_file(&key_path);
         let _ = std::fs::remove_file(&pub_key_path);
         return Err(GeneratorError::CliExecution(format!(
-            "ssh-keygen failed: {}",
-            stderr
+            "ssh-keygen failed: {stderr}"
         )));
     }
 
@@ -154,20 +154,20 @@ fn generate_with_cli(options: &SshKeyOptions) -> Result<SshKeyResult, GeneratorE
     let private_key = std::fs::read_to_string(&key_path).map_err(|e| {
         let _ = std::fs::remove_file(&key_path);
         let _ = std::fs::remove_file(&pub_key_path);
-        GeneratorError::CliExecution(format!("Failed to read private key: {}", e))
+        GeneratorError::CliExecution(format!("Failed to read private key: {e}"))
     })?;
 
     let public_key = std::fs::read_to_string(&pub_key_path).map_err(|e| {
         let _ = std::fs::remove_file(&key_path);
         let _ = std::fs::remove_file(&pub_key_path);
-        GeneratorError::CliExecution(format!("Failed to read public key: {}", e))
+        GeneratorError::CliExecution(format!("Failed to read public key: {e}"))
     })?;
 
     // Get fingerprint
     let fingerprint_output = Command::new("ssh-keygen")
         .args(["-lf", &pub_key_path])
         .output()
-        .map_err(|e| GeneratorError::CliExecution(format!("Failed to get fingerprint: {}", e)))?;
+        .map_err(|e| GeneratorError::CliExecution(format!("Failed to get fingerprint: {e}")))?;
 
     let fingerprint = if fingerprint_output.status.success() {
         let output = String::from_utf8_lossy(&fingerprint_output.stdout);
@@ -239,7 +239,6 @@ fn generate_with_library(options: &SshKeyOptions) -> Result<SshKeyResult, Genera
         public_key
             .to_openssh()
             .map_err(|e| GeneratorError::SshKey(e.to_string()))?
-            .to_string()
     } else {
         format!(
             "{} {}",
@@ -252,15 +251,15 @@ fn generate_with_library(options: &SshKeyOptions) -> Result<SshKeyResult, Genera
 
     // Format private key (with optional encryption)
     let private_key_str = if let Some(passphrase) = &options.passphrase {
-        if !passphrase.is_empty() {
+        if passphrase.is_empty() {
             private_key
-                .encrypt(&mut rng, passphrase)
-                .map_err(|e| GeneratorError::SshKey(e.to_string()))?
                 .to_openssh(LineEnding::LF)
                 .map_err(|e| GeneratorError::SshKey(e.to_string()))?
                 .to_string()
         } else {
             private_key
+                .encrypt(&mut rng, passphrase)
+                .map_err(|e| GeneratorError::SshKey(e.to_string()))?
                 .to_openssh(LineEnding::LF)
                 .map_err(|e| GeneratorError::SshKey(e.to_string()))?
                 .to_string()
@@ -290,18 +289,19 @@ fn build_ssh_keygen_command(options: &SshKeyOptions) -> String {
             .algorithm
             .ssh_keygen_args()
             .iter()
-            .map(|s| s.to_string()),
+            .map(std::string::ToString::to_string),
     );
 
     if let Some(comment) = &options.comment {
         if !comment.is_empty() {
             parts.push("-C".to_string());
-            parts.push(format!("\"{}\"", comment));
+            parts.push(format!("\"{comment}\""));
         }
     }
 
     parts.push("-f".to_string());
-    parts.push(format!("~/.ssh/{}", options.algorithm.default_filename()));
+    let filename = options.algorithm.default_filename();
+    parts.push(format!("~/.ssh/{filename}"));
 
     parts.join(" ")
 }

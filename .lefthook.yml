@@ -10,8 +10,18 @@ pre-commit:
       run: bun run format --write {staged_files} && git add {staged_files}
       stage_fixed: true
 
+    frontend-lint:
+      glob: '*.{ts,js,svelte}'
+      exclude: 'node_modules|.svelte-kit'
+      run: bun run biome lint --no-errors-on-unmatched {staged_files}
+
     backend-format:
       root: 'src-tauri/'
       glob: '*.rs'
       run: cargo fmt
       stage_fixed: true
+
+    backend-lint:
+      root: 'src-tauri/'
+      glob: '*.rs'
+      run: cargo clippy --all-targets --all-features -- -D warnings

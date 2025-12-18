@@ -66,19 +66,19 @@ fn greet(name: &str) -> String {
 // BCrypt Commands
 // =============================================================================
 
-/// Generate a BCrypt hash from a password
+/// Generate a `BCrypt` hash from a password
 #[tauri::command]
 fn generate_bcrypt_hash(password: &str, cost: u32) -> Result<BcryptHashResult, String> {
     generators::bcrypt::generate_hash(password, cost).map_err(|e| e.to_string())
 }
 
-/// Verify a password against a BCrypt hash
+/// Verify a password against a `BCrypt` hash
 #[tauri::command]
 fn verify_bcrypt_hash(password: &str, hash: &str) -> Result<BcryptVerifyResult, String> {
     generators::bcrypt::verify_hash(password, hash).map_err(|e| e.to_string())
 }
 
-/// Get information about a BCrypt cost factor
+/// Get information about a `BCrypt` cost factor
 #[tauri::command]
 fn get_bcrypt_cost_info(cost: u32) -> BcryptCostInfo {
     generators::bcrypt::get_cost_info(cost)
@@ -90,6 +90,7 @@ fn get_bcrypt_cost_info(cost: u32) -> BcryptCostInfo {
 
 /// Generate an SSH key pair
 #[tauri::command]
+#[allow(clippy::needless_pass_by_value)] // Tauri commands receive owned values from JS
 fn generate_ssh_keypair(options: SshKeyOptions) -> Result<SshKeyResult, String> {
     generators::ssh::generate_key(&options).map_err(|e| e.to_string())
 }
@@ -100,6 +101,7 @@ fn generate_ssh_keypair(options: SshKeyOptions) -> Result<SshKeyResult, String> 
 
 /// Generate a GPG key pair
 #[tauri::command]
+#[allow(clippy::needless_pass_by_value)] // Tauri commands receive owned values from JS
 fn generate_gpg_keypair(options: GpgKeyOptions) -> Result<GpgKeyResult, String> {
     generators::gpg::generate_key(&options).map_err(|e| e.to_string())
 }

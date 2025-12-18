@@ -106,7 +106,7 @@ export const GPG_ALGORITHMS = [
  * Build GPG User ID string from name, email, and optional comment.
  */
 export const buildGpgUserId = (name: string, email: string, comment?: string): string => {
-	if (comment && comment.trim()) {
+	if (comment?.trim()) {
 		return `${name} (${comment}) <${email}>`;
 	}
 	return `${name} <${email}>`;
