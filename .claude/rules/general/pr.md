@@ -91,13 +91,25 @@ If PR is large, consider:
 
 ## Labels
 
-| Label           | Description           |
-| --------------- | --------------------- |
-| `feature`       | New feature           |
-| `bug`           | Bug fix               |
-| `refactor`      | Code refactoring      |
-| `dependencies`  | Dependency updates    |
-| `documentation` | Documentation updates |
+Labels are **automatically assigned** based on PR title prefix (Conventional Commits).
+
+| PR Title Prefix | Label           | Release Category |
+| --------------- | --------------- | ---------------- |
+| `feat:`         | `feature`       | 🚀 Features      |
+| `fix:`          | `fix`           | 🐛 Bug Fixes     |
+| `perf:`         | `performance`   | ⚡ Performance   |
+| `refactor:`     | `refactor`      | 🔧 Refactoring   |
+| `test:`         | `test`          | 🧪 Tests         |
+| `docs:`         | `documentation` | 📝 Documentation |
+| `chore:`        | `chore`         | 🔨 Maintenance   |
+| `ci:`           | `ci`            | 🔨 Maintenance   |
+| `build:`        | `build`         | 🔨 Maintenance   |
+
+Additional labels (manually assigned):
+
+| Label          | Description        |
+| -------------- | ------------------ |
+| `dependencies` | Dependency updates |
 
 ## Review Process
 
