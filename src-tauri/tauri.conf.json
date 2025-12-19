@@ -33,7 +33,7 @@
 	},
 	"bundle": {
 		"active": true,
-		"targets": "all",
+		"targets": ["app", "dmg", "deb", "rpm", "appimage", "nsis"],
 		"externalBin": ["binaries/bcrypt-worker"],
 		"icon": [
 			"icons/32x32.png",
