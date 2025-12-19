@@ -48,16 +48,7 @@ jobs:
           components: rustfmt, clippy
 
       - name: Build sidecar binaries
-        run: |
-          TARGET_TRIPLE=$(rustc -Vv | grep host | awk '{print $2}')
-          mkdir -p binaries
-          # Create placeholder first (Tauri build.rs requires it)
-          touch "binaries/bcrypt-worker-${TARGET_TRIPLE}"
-          chmod +x "binaries/bcrypt-worker-${TARGET_TRIPLE}"
-          # Build sidecar
-          cargo build --bin bcrypt-worker
-          # Replace placeholder with actual binary
-          cp target/debug/bcrypt-worker "binaries/bcrypt-worker-${TARGET_TRIPLE}"
+        uses: ./.github/actions/build-sidecar
 
       - name: Check formatting
         run: cargo fmt --all --check

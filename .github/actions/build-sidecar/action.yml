@@ -1,0 +1,96 @@
+name: Build Sidecar Binaries
+description: Build sidecar binaries for Tauri application
+
+inputs:
+  target:
+    description: 'Rust target triple (e.g., x86_64-unknown-linux-gnu). If not specified, uses host triple.'
+    required: false
+    default: ''
+  profile:
+    description: 'Build profile (debug or release)'
+    required: false
+    default: 'debug'
+
+runs:
+  using: composite
+  steps:
+    - name: Build sidecar (Unix)
+      if: runner.os != 'Windows'
+      shell: bash
+      working-directory: src-tauri
+      run: |
+        TARGET="${{ inputs.target }}"
+        PROFILE="${{ inputs.profile }}"
+
+        # Get host triple if target not specified
+        if [ -z "$TARGET" ]; then
+          TARGET=$(rustc -Vv | grep host | awk '{print $2}')
+          USE_TARGET_FLAG=false
+        else
+          USE_TARGET_FLAG=true
+        fi
+
+        mkdir -p binaries
+
+        # Create placeholder first (Tauri build.rs requires it)
+        touch "binaries/bcrypt-worker-${TARGET}"
+        chmod +x "binaries/bcrypt-worker-${TARGET}"
+
+        # Build sidecar
+        if [ "$USE_TARGET_FLAG" = true ]; then
+          if [ "$PROFILE" = "release" ]; then
+            cargo build --bin bcrypt-worker --release --target "$TARGET"
+            cp "target/${TARGET}/release/bcrypt-worker" "binaries/bcrypt-worker-${TARGET}"
+          else
+            cargo build --bin bcrypt-worker --target "$TARGET"
+            cp "target/${TARGET}/debug/bcrypt-worker" "binaries/bcrypt-worker-${TARGET}"
+          fi
+        else
+          if [ "$PROFILE" = "release" ]; then
+            cargo build --bin bcrypt-worker --release
+            cp "target/release/bcrypt-worker" "binaries/bcrypt-worker-${TARGET}"
+          else
+            cargo build --bin bcrypt-worker
+            cp "target/debug/bcrypt-worker" "binaries/bcrypt-worker-${TARGET}"
+          fi
+        fi
+
+    - name: Build sidecar (Windows)
+      if: runner.os == 'Windows'
+      shell: pwsh
+      working-directory: src-tauri
+      run: |
+        $Target = "${{ inputs.target }}"
+        $Profile = "${{ inputs.profile }}"
+
+        # Get host triple if target not specified
+        if (-not $Target) {
+          $Target = (rustc -Vv | Select-String "host:").Line.Split(":")[1].Trim()
+          $UseTargetFlag = $false
+        } else {
+          $UseTargetFlag = $true
+        }
+
+        New-Item -ItemType Directory -Force -Path binaries | Out-Null
+
+        # Create placeholder first (Tauri build.rs requires it)
+        New-Item -ItemType File -Force -Path "binaries/bcrypt-worker-${Target}.exe" | Out-Null
+
+        # Build sidecar
+        if ($UseTargetFlag) {
+          if ($Profile -eq "release") {
+            cargo build --bin bcrypt-worker --release --target $Target
+            Copy-Item "target/${Target}/release/bcrypt-worker.exe" "binaries/bcrypt-worker-${Target}.exe" -Force
+          } else {
+            cargo build --bin bcrypt-worker --target $Target
+            Copy-Item "target/${Target}/debug/bcrypt-worker.exe" "binaries/bcrypt-worker-${Target}.exe" -Force
+          }
+        } else {
+          if ($Profile -eq "release") {
+            cargo build --bin bcrypt-worker --release
+            Copy-Item "target/release/bcrypt-worker.exe" "binaries/bcrypt-worker-${Target}.exe" -Force
+          } else {
+            cargo build --bin bcrypt-worker
+            Copy-Item "target/debug/bcrypt-worker.exe" "binaries/bcrypt-worker-${Target}.exe" -Force
+          }
+        }
