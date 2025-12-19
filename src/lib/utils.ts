@@ -1,17 +1,5 @@
-import { type ClassValue, clsx } from 'clsx';
-import { twMerge } from 'tailwind-merge';
+/**
+ * Utils - Re-export from utils/index.ts for backward compatibility
+ */
 
-// ============================================================================
-// CSS Class Utilities
-// ============================================================================
-
-export const cn = (...inputs: ClassValue[]): string => twMerge(clsx(inputs));
-
-// ============================================================================
-// Type Utilities
-// ============================================================================
-
-export type WithoutChild<T> = T extends { child?: unknown } ? Omit<T, 'child'> : T;
-export type WithoutChildren<T> = T extends { children?: unknown } ? Omit<T, 'children'> : T;
-export type WithoutChildrenOrChild<T> = WithoutChildren<WithoutChild<T>>;
-export type WithElementRef<T, U extends HTMLElement = HTMLElement> = T & { ref?: U | null };
+export * from './utils/index.js';

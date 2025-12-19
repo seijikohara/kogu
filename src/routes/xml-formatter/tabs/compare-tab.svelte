@@ -1,6 +1,6 @@
 <script lang="ts">
-	import OptionCheckbox from '$lib/components/options/option-checkbox.svelte';
-	import { CompareTabBase } from '$lib/components/tool/index.js';
+	import { FormCheckbox } from '$lib/components/form';
+	import { CompareTab } from '$lib/components/template';
 	import { Input } from '$lib/components/ui/input/index.js';
 	import { Label } from '$lib/components/ui/label/index.js';
 	import type { GenericDiffItem } from '$lib/constants/diff.js';
@@ -51,7 +51,7 @@
 	};
 </script>
 
-<CompareTabBase
+<CompareTab
 	editorMode="xml"
 	{input}
 	{onInputChange}
@@ -63,13 +63,13 @@
 	{pasteFromClipboard}
 >
 	{#snippet comparisonOptions()}
-		<OptionCheckbox label="Ignore whitespace" bind:checked={compareIgnoreWhitespace} />
-		<OptionCheckbox label="Ignore comments" bind:checked={compareIgnoreComments} />
+		<FormCheckbox label="Ignore whitespace" bind:checked={compareIgnoreWhitespace} />
+		<FormCheckbox label="Ignore comments" bind:checked={compareIgnoreComments} />
 	{/snippet}
 
 	{#snippet advancedOptions()}
-		<OptionCheckbox label="Ignore case" bind:checked={compareIgnoreCase} />
-		<OptionCheckbox label="Ignore namespaces" bind:checked={compareIgnoreNamespaces} />
+		<FormCheckbox label="Ignore case" bind:checked={compareIgnoreCase} />
+		<FormCheckbox label="Ignore namespaces" bind:checked={compareIgnoreNamespaces} />
 		<div class="space-y-1 pt-1">
 			<Label class="text-[10px] uppercase tracking-wide text-muted-foreground"
 				>Ignore Attributes</Label
@@ -84,4 +84,4 @@
 			>
 		</div>
 	{/snippet}
-</CompareTabBase>
+</CompareTab>

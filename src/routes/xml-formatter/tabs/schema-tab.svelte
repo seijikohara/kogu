@@ -2,10 +2,10 @@
 	import { FileCheck, Wand2 } from '@lucide/svelte';
 	import { toast } from 'svelte-sonner';
 	import SplitPane from '$lib/components/layout/split-pane.svelte';
-	import OptionCheckbox from '$lib/components/options/option-checkbox.svelte';
-	import OptionsPanel from '$lib/components/options/options-panel.svelte';
-	import OptionsSection from '$lib/components/options/options-section.svelte';
-	import { EditorPane } from '$lib/components/tool/index.js';
+	import { FormCheckbox } from '$lib/components/form';
+	import { OptionsPanel } from '$lib/components/panel';
+	import { FormSection } from '$lib/components/form';
+	import { CodeEditor } from '$lib/components/editor';
 	import { Button } from '$lib/components/ui/button/index.js';
 	import { copyToClipboard, downloadTextFile, pasteFromClipboard } from '../utils.js';
 
@@ -271,7 +271,7 @@
 		onclose={() => (showOptions = false)}
 		onopen={() => (showOptions = true)}
 	>
-		<OptionsSection title="Actions">
+		<FormSection title="Actions">
 			<div class="flex flex-col gap-1.5">
 				<Button
 					variant="secondary"
@@ -312,14 +312,14 @@
 					</div>
 				{/if}
 			{/if}
-		</OptionsSection>
+		</FormSection>
 
-		<OptionsSection title="Validation Options">
-			<OptionCheckbox label="Validate namespaces" bind:checked={validateNamespaces} />
-			<OptionCheckbox label="Validate DTD (if present)" bind:checked={validateDtd} />
-		</OptionsSection>
+		<FormSection title="Validation Options">
+			<FormCheckbox label="Validate namespaces" bind:checked={validateNamespaces} />
+			<FormCheckbox label="Validate DTD (if present)" bind:checked={validateDtd} />
+		</FormSection>
 
-		<OptionsSection title="Quick Help">
+		<FormSection title="Quick Help">
 			<div class="space-y-1.5 rounded-md bg-muted/50 p-2 text-[11px] text-muted-foreground">
 				<p><strong class="text-foreground">Validate:</strong> Check XML against XSD schema</p>
 				<p><strong class="text-foreground">Infer:</strong> Generate XSD from XML structure</p>
@@ -328,12 +328,12 @@
 					validation.
 				</p>
 			</div>
-		</OptionsSection>
+		</FormSection>
 	</OptionsPanel>
 
 	<SplitPane class="flex-1">
 		{#snippet left()}
-			<EditorPane
+			<CodeEditor
 				title="Input"
 				value={input}
 				onchange={onInputChange}
@@ -346,7 +346,7 @@
 		{/snippet}
 		{#snippet right()}
 			{#if inferredSchema && !schemaDefinition}
-				<EditorPane
+				<CodeEditor
 					title="Inferred Schema (XSD)"
 					value={inferredSchema}
 					mode="readonly"
@@ -355,7 +355,7 @@
 					oncopy={handleCopySchema}
 				/>
 			{:else}
-				<EditorPane
+				<CodeEditor
 					title="XML Schema (XSD)"
 					bind:value={schemaDefinition}
 					mode="input"

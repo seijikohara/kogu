@@ -1,7 +1,7 @@
 <script lang="ts">
 	import type { Component, Snippet } from 'svelte';
 	import { page } from '$app/state';
-	import ValidityBadge from '$lib/components/feedback/validity-badge.svelte';
+	import { ValidityBadge } from '$lib/components/status';
 	import { getPageByUrl } from '$lib/services/pages.js';
 
 	interface TabDefinition {

@@ -1,11 +1,11 @@
 <script lang="ts">
 	import SplitPane from '$lib/components/layout/split-pane.svelte';
-	import OptionsPanel from '$lib/components/options/options-panel.svelte';
-	import OptionsSection from '$lib/components/options/options-section.svelte';
-	import { EditorPane } from '$lib/components/tool/index.js';
+	import { OptionsPanel } from '$lib/components/panel';
+	import { FormSection } from '$lib/components/form';
+	import { CodeEditor } from '$lib/components/editor';
 	import { Input } from '$lib/components/ui/input/index.js';
 	import { Label } from '$lib/components/ui/label/index.js';
-	import { executeXPath, formatXml } from '$lib/services/formatters.js';
+	import { executeXPath, formatXml } from '$lib/services/formatters';
 	import { copyToClipboard, downloadTextFile, pasteFromClipboard } from '../utils.js';
 
 	interface Props {
@@ -102,7 +102,7 @@
 		onclose={() => (showOptions = false)}
 		onopen={() => (showOptions = true)}
 	>
-		<OptionsSection title="XPath Expression">
+		<FormSection title="XPath Expression">
 			<div class="space-y-1">
 				<Label class="text-[10px] uppercase tracking-wide text-muted-foreground"
 					>Path Expression</Label
@@ -114,9 +114,9 @@
 					Found <strong>{resultCount}</strong> match{resultCount > 1 ? 'es' : ''}
 				</div>
 			{/if}
-		</OptionsSection>
+		</FormSection>
 
-		<OptionsSection title="Examples">
+		<FormSection title="Examples">
 			<div class="space-y-1.5 text-[11px]">
 				<div class="space-y-1">
 					<code class="text-muted-foreground">//element</code>
@@ -139,12 +139,12 @@
 					<p class="text-muted-foreground/70">Text content of elements</p>
 				</div>
 			</div>
-		</OptionsSection>
+		</FormSection>
 	</OptionsPanel>
 
 	<SplitPane class="flex-1">
 		{#snippet left()}
-			<EditorPane
+			<CodeEditor
 				title="Input"
 				value={input}
 				onchange={onInputChange}
@@ -156,7 +156,7 @@
 			/>
 		{/snippet}
 		{#snippet right()}
-			<EditorPane
+			<CodeEditor
 				title="Result"
 				value={queryOutput}
 				mode="readonly"

@@ -36,7 +36,10 @@
 // Allow specific lints that are too noisy for this project
 #![allow(clippy::module_name_repetitions)]
 #![allow(clippy::must_use_candidate)]
-#![allow(clippy::missing_errors_doc)] // Re-allow for now as many functions need updates
+#![allow(clippy::missing_errors_doc)]
+// Re-allow for now as many functions need updates
+// Tauri commands require owned State/AppHandle types due to macro constraints
+#![allow(clippy::needless_pass_by_value)]
 
 //! Kogu - A collection of useful developer tools
 //!
@@ -51,7 +54,7 @@ use tauri_plugin_decorum::WebviewWindowExt;
 
 use ast::{AstLanguage, AstParseResult};
 use generators::{
-    bcrypt::{BcryptCostInfo, BcryptHashResult, BcryptVerifyResult},
+    bcrypt::{BcryptCostInfo, BcryptHashResult, BcryptProcessState, BcryptVerifyResult},
     cli::CliAvailability,
     gpg::{GpgKeyOptions, GpgKeyResult},
     ssh::{SshKeyOptions, SshKeyResult},
@@ -63,19 +66,39 @@ fn greet(name: &str) -> String {
 }
 
 // =============================================================================
-// BCrypt Commands
+// BCrypt Commands (with process isolation for true cancellation)
 // =============================================================================
 
-/// Generate a `BCrypt` hash from a password
+/// Generate a `BCrypt` hash from a password (cancellable via process termination)
 #[tauri::command]
-fn generate_bcrypt_hash(password: &str, cost: u32) -> Result<BcryptHashResult, String> {
-    generators::bcrypt::generate_hash(password, cost).map_err(|e| e.to_string())
+async fn generate_bcrypt_hash(
+    password: String,
+    cost: u32,
+    app: tauri::AppHandle,
+    state: tauri::State<'_, BcryptProcessState>,
+) -> Result<BcryptHashResult, String> {
+    generators::bcrypt::generate_hash_isolated(&app, password, cost, &state)
+        .await
+        .map_err(|e| e.to_string())
 }
 
-/// Verify a password against a `BCrypt` hash
+/// Verify a password against a `BCrypt` hash (cancellable via process termination)
 #[tauri::command]
-fn verify_bcrypt_hash(password: &str, hash: &str) -> Result<BcryptVerifyResult, String> {
-    generators::bcrypt::verify_hash(password, hash).map_err(|e| e.to_string())
+async fn verify_bcrypt_hash(
+    password: String,
+    hash: String,
+    app: tauri::AppHandle,
+    state: tauri::State<'_, BcryptProcessState>,
+) -> Result<BcryptVerifyResult, String> {
+    generators::bcrypt::verify_hash_isolated(&app, password, hash, &state)
+        .await
+        .map_err(|e| e.to_string())
+}
+
+/// Cancel any ongoing `BCrypt` operation by killing the worker process
+#[tauri::command]
+fn cancel_bcrypt_operation(state: tauri::State<'_, BcryptProcessState>) -> bool {
+    state.kill()
 }
 
 /// Get information about a `BCrypt` cost factor
@@ -155,7 +178,8 @@ pub fn run() {
             .plugin(tauri_plugin_os::init())
             .plugin(tauri_plugin_dialog::init())
             .plugin(tauri_plugin_fs::init())
-            .plugin(tauri_plugin_decorum::init());
+            .plugin(tauri_plugin_decorum::init())
+            .plugin(tauri_plugin_shell::init());
 
         // MCP bridge plugin for AI-assisted debugging (development only)
         #[cfg(debug_assertions)]
@@ -165,6 +189,7 @@ pub fn run() {
     };
 
     builder
+        .manage(BcryptProcessState::new())
         .setup(|app| {
             let main_window = app
                 .get_webview_window("main")
@@ -184,6 +209,7 @@ pub fn run() {
             parse_to_ast,
             generate_bcrypt_hash,
             verify_bcrypt_hash,
+            cancel_bcrypt_operation,
             get_bcrypt_cost_info,
             generate_ssh_keypair,
             generate_gpg_keypair,

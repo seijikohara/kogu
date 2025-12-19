@@ -1,8 +1,9 @@
 <script lang="ts">
-	import { AlertTriangle, CheckCircle, Clock, Copy } from '@lucide/svelte';
-	import { PageHeader } from '$lib/components/layout/index.js';
-	import { EditorPane } from '$lib/components/tool/index.js';
-	import { Button } from '$lib/components/ui/button/index.js';
+	import { AlertTriangle, CheckCircle, Clock, KeyRound } from '@lucide/svelte';
+	import { PageLayout } from '$lib/components/layout';
+	import { CopyButton } from '$lib/components/action';
+	import { FormInfo, FormSection } from '$lib/components/form';
+	import { CodeEditor } from '$lib/components/editor';
 	import {
 		decodeJwt,
 		JWT_STANDARD_CLAIMS,
@@ -13,6 +14,7 @@
 
 	// State
 	let input = $state('');
+	let showOptions = $state(true);
 
 	// Computed decoded JWT and error
 	const decodeResult = $derived.by((): { decoded: JwtDecoded | null; error: string } => {
@@ -90,14 +92,6 @@
 		input = SAMPLE_JWT;
 	};
 
-	const copyToClipboard = async (text: string) => {
-		try {
-			await navigator.clipboard.writeText(text);
-		} catch {
-			// Clipboard access denied
-		}
-	};
-
 	// Get claim description
 	const getClaimDescription = (claim: string): string | undefined => {
 		return JWT_STANDARD_CLAIMS.find((c) => c.claim === claim)?.name;
@@ -108,50 +102,86 @@
 	<title>JWT Decoder - Kogu</title>
 </svelte:head>
 
-<div class="flex h-full flex-col overflow-hidden">
-	<PageHeader {valid} {error}>
-		{#snippet statusContent()}
-			{#if decoded}
-				{#if decoded.isExpired}
-					<span class="flex items-center gap-1 text-destructive">
-						<AlertTriangle class="h-3 w-3" />
-						Expired
+<PageLayout {valid} {error} bind:showOptions>
+	{#snippet statusContent()}
+		{#if decoded}
+			{#if decoded.isExpired}
+				<span class="flex items-center gap-1 text-destructive">
+					<AlertTriangle class="h-3 w-3" />
+					Expired
+				</span>
+			{:else}
+				<span class="flex items-center gap-1 text-green-600 dark:text-green-400">
+					<CheckCircle class="h-3 w-3" />
+					Valid
+				</span>
+				{#if decoded.expiresAt}
+					<span class="flex items-center gap-1 text-muted-foreground">
+						<Clock class="h-3 w-3" />
+						{getTimeRemaining(decoded.expiresAt)}
 					</span>
-				{:else}
-					<span class="flex items-center gap-1 text-green-600 dark:text-green-400">
-						<CheckCircle class="h-3 w-3" />
-						Valid
-					</span>
-					{#if decoded.expiresAt}
-						<span class="flex items-center gap-1 text-muted-foreground">
-							<Clock class="h-3 w-3" />
-							{getTimeRemaining(decoded.expiresAt)}
-						</span>
-					{/if}
 				{/if}
 			{/if}
-		{/snippet}
-	</PageHeader>
+		{/if}
+	{/snippet}
 
-	<!-- Content -->
-	<div class="flex flex-1 overflow-hidden">
-		<!-- Input panel -->
-		<div class="w-2/5 border-r">
-			<EditorPane
+	{#snippet options()}
+		<FormSection title="About JWT">
+			<FormInfo>
+				<ul class="list-inside list-disc space-y-0.5">
+					<li>JSON Web Token</li>
+					<li>Compact, URL-safe format</li>
+					<li>Three parts: Header.Payload.Signature</li>
+					<li>Self-contained authentication</li>
+				</ul>
+			</FormInfo>
+		</FormSection>
+
+		<FormSection title="Structure">
+			<FormInfo showIcon={false}>
+				<div class="space-y-1.5">
+					<div class="flex items-center gap-2">
+						<span class="h-2 w-2 rounded-full bg-red-500"></span>
+						<span class="text-red-600 dark:text-red-400">Header:</span>
+						<span>Algorithm & type</span>
+					</div>
+					<div class="flex items-center gap-2">
+						<span class="h-2 w-2 rounded-full bg-purple-500"></span>
+						<span class="text-purple-600 dark:text-purple-400">Payload:</span>
+						<span>Claims & data</span>
+					</div>
+					<div class="flex items-center gap-2">
+						<span class="h-2 w-2 rounded-full bg-cyan-500"></span>
+						<span class="text-cyan-600 dark:text-cyan-400">Signature:</span>
+						<span>Verification hash</span>
+					</div>
+				</div>
+			</FormInfo>
+		</FormSection>
+	{/snippet}
+
+	<!-- Main Content: Input + Results -->
+	<div class="flex h-full flex-col overflow-hidden">
+		<!-- Input Editor -->
+		<div class="h-1/4 shrink-0 border-b">
+			<CodeEditor
 				title="JWT Token"
 				bind:value={input}
 				mode="input"
 				editorMode="plain"
 				placeholder="Enter JWT token here..."
+				showViewToggle={false}
 				onpaste={handlePaste}
 				onclear={handleClear}
 				onsample={handleSample}
-				showViewToggle={false}
 			/>
 		</div>
 
-		<!-- Output panel -->
+		<!-- Decoded Results -->
 		<div class="flex flex-1 flex-col overflow-hidden">
+			<div class="flex h-9 shrink-0 items-center border-b bg-muted/30 px-3">
+				<span class="text-xs font-medium text-muted-foreground">Decoded Token</span>
+			</div>
 			{#if decoded}
 				<div class="flex-1 space-y-4 overflow-auto p-4">
 					<!-- Expiration banner -->
@@ -172,15 +202,13 @@
 					<div class="rounded-lg border bg-muted/30">
 						<div class="flex items-center justify-between border-b px-4 py-2">
 							<h3 class="text-sm font-medium text-red-600 dark:text-red-400">Header</h3>
-							<Button
-								variant="ghost"
+							<CopyButton
+								text={formatJson(decoded.header)}
+								toastLabel="Header"
 								size="sm"
-								class="h-6 gap-1 px-2 text-xs"
-								onclick={() => copyToClipboard(formatJson(decoded.header))}
-							>
-								<Copy class="h-3 w-3" />
-								Copy
-							</Button>
+								showLabel
+								class="h-6"
+							/>
 						</div>
 						<div class="p-4">
 							<pre class="overflow-auto rounded bg-muted p-3 font-mono text-xs">{formatJson(
@@ -193,15 +221,13 @@
 					<div class="rounded-lg border bg-muted/30">
 						<div class="flex items-center justify-between border-b px-4 py-2">
 							<h3 class="text-sm font-medium text-purple-600 dark:text-purple-400">Payload</h3>
-							<Button
-								variant="ghost"
+							<CopyButton
+								text={formatJson(decoded.payload)}
+								toastLabel="Payload"
 								size="sm"
-								class="h-6 gap-1 px-2 text-xs"
-								onclick={() => copyToClipboard(formatJson(decoded.payload))}
-							>
-								<Copy class="h-3 w-3" />
-								Copy
-							</Button>
+								showLabel
+								class="h-6"
+							/>
 						</div>
 						<div class="p-4">
 							<pre class="overflow-auto rounded bg-muted p-3 font-mono text-xs">{formatJson(
@@ -239,15 +265,13 @@
 					<div class="rounded-lg border bg-muted/30">
 						<div class="flex items-center justify-between border-b px-4 py-2">
 							<h3 class="text-sm font-medium text-cyan-600 dark:text-cyan-400">Signature</h3>
-							<Button
-								variant="ghost"
+							<CopyButton
+								text={decoded.signature}
+								toastLabel="Signature"
 								size="sm"
-								class="h-6 gap-1 px-2 text-xs"
-								onclick={() => copyToClipboard(decoded.signature)}
-							>
-								<Copy class="h-3 w-3" />
-								Copy
-							</Button>
+								showLabel
+								class="h-6"
+							/>
 						</div>
 						<div class="p-4">
 							<code class="block break-all rounded bg-muted p-3 font-mono text-xs"
@@ -268,10 +292,13 @@
 							<p class="text-sm">{error}</p>
 						</div>
 					{:else}
-						<p class="text-sm">Enter a JWT token to decode</p>
+						<div class="text-center">
+							<KeyRound class="mx-auto mb-2 h-12 w-12 opacity-50" />
+							<p class="text-sm">Enter a JWT token to decode</p>
+						</div>
 					{/if}
 				</div>
 			{/if}
 		</div>
 	</div>
-</div>
+</PageLayout>

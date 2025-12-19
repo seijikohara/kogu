@@ -163,6 +163,14 @@ export const verifyBcryptHash = async (
 export const getBcryptCostInfo = async (cost: number): Promise<BcryptCostInfo> =>
 	invoke<BcryptCostInfo>('get_bcrypt_cost_info', { cost });
 
+/**
+ * Cancel any ongoing BCrypt operation.
+ * This will cause the operation to return an error immediately,
+ * though the background computation may continue until completion.
+ */
+export const cancelBcryptOperation = async (): Promise<void> =>
+	invoke<void>('cancel_bcrypt_operation');
+
 // =============================================================================
 // SSH Key Functions
 // =============================================================================

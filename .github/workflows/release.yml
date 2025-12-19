@@ -70,6 +70,32 @@ jobs:
       - name: Add Rust target
         run: rustup target add ${{ matrix.settings.target }}
 
+      - name: Build sidecar binaries (Unix)
+        if: matrix.settings.os != 'windows-latest'
+        working-directory: src-tauri
+        run: |
+          mkdir -p binaries
+          # Create placeholder first (Tauri build.rs requires it)
+          touch "binaries/bcrypt-worker-${{ matrix.settings.target }}"
+          chmod +x "binaries/bcrypt-worker-${{ matrix.settings.target }}"
+          # Build sidecar
+          cargo build --bin bcrypt-worker --release --target ${{ matrix.settings.target }}
+          # Replace placeholder with actual binary
+          cp "target/${{ matrix.settings.target }}/release/bcrypt-worker" "binaries/bcrypt-worker-${{ matrix.settings.target }}"
+
+      - name: Build sidecar binaries (Windows)
+        if: matrix.settings.os == 'windows-latest'
+        working-directory: src-tauri
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path binaries
+          # Create placeholder first (Tauri build.rs requires it)
+          New-Item -ItemType File -Force -Path "binaries/bcrypt-worker-${{ matrix.settings.target }}.exe"
+          # Build sidecar
+          cargo build --bin bcrypt-worker --release --target ${{ matrix.settings.target }}
+          # Replace placeholder with actual binary
+          Copy-Item "target/${{ matrix.settings.target }}/release/bcrypt-worker.exe" "binaries/bcrypt-worker-${{ matrix.settings.target }}.exe" -Force
+
       - name: Build and release (nightly)
         if: github.ref == 'refs/heads/main'
         uses: tauri-apps/tauri-action@v0.6.0

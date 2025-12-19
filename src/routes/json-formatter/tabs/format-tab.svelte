@@ -1,9 +1,9 @@
 <script lang="ts">
-	import type { ContextMenuItem } from '$lib/components/editors/code-editor.svelte';
-	import OptionCheckbox from '$lib/components/options/option-checkbox.svelte';
-	import OptionSelect from '$lib/components/options/option-select.svelte';
-	import OptionsSection from '$lib/components/options/options-section.svelte';
-	import { FormatTabBase } from '$lib/components/tool/index.js';
+	import type { ContextMenuItem } from '$lib/components/editor';
+	import { CodeEditor } from '$lib/components/editor';
+	import { FormCheckbox, FormMode, FormSection, FormSelect } from '$lib/components/form';
+	import { SplitPane } from '$lib/components/layout';
+	import { OptionsPanel } from '$lib/components/panel';
 	import {
 		defaultJsonFormatOptions,
 		JSON_FORMAT_INFO,
@@ -16,8 +16,7 @@
 		SAMPLE_JSON,
 		stringifyJson,
 		validateJson,
-	} from '$lib/services/formatters.js';
-	import { copyToClipboard, downloadTextFile, pasteFromClipboard } from '../utils.js';
+	} from '$lib/services/formatters';
 
 	interface Props {
 		input: string;
@@ -31,6 +30,10 @@
 	}
 
 	let { input, onInputChange, onStatsChange }: Props = $props();
+
+	// Mode and UI state
+	let formatMode = $state<'format' | 'minify'>('format');
+	let showOptions = $state(true);
 
 	// Output format
 	let outputFormat = $state<JsonOutputFormat>('json');
@@ -75,17 +78,21 @@
 		maxDepth,
 	});
 
-	// Validation function - returns format as extra property instead of setting state
-	const validate = (input: string) => {
+	// Validation and detected format
+	const validation = $derived.by(() => {
 		if (!input.trim()) {
 			return { valid: null as boolean | null, format: null as JsonInputFormat | null };
 		}
 		const result = validateJson(input);
 		return { valid: result.valid, format: result.detectedFormat };
-	};
+	});
 
-	// Format function
-	const format = (input: string, minify: boolean) => {
+	const detectedFormat = $derived(validation.format);
+
+	// Output calculation
+	const formatResult = $derived.by((): { output: string; error: string } => {
+		if (!input.trim()) return { output: '', error: '' };
+
 		try {
 			const { data } = parseJsonAuto(input);
 
@@ -93,7 +100,7 @@
 			const processedData = processJsonWithOptions(data, formatOptions);
 
 			let output: string;
-			if (minify) {
+			if (formatMode === 'minify') {
 				output = stringifyJson(processedData, outputFormat, { indent: 0 });
 			} else {
 				output = stringifyJson(processedData, outputFormat, {
@@ -134,31 +141,49 @@
 		} catch (e) {
 			return { output: '', error: e instanceof Error ? e.message : 'Invalid JSON' };
 		}
-	};
+	});
 
-	// Detected format from stats (derived from onStatsChange callback)
-	let detectedFormat = $state<JsonInputFormat | null>(null);
+	const output = $derived(formatResult.output);
+	const formatError = $derived(formatResult.error);
 
-	// Custom stats handler to extract format from stats
-	const handleStatsChange = (stats: {
-		input: string;
-		valid: boolean | null;
-		error: string;
-		format?: JsonInputFormat | null;
-	}) => {
-		// Update local state for modeExtra display
-		detectedFormat = stats.format ?? null;
-		// Pass to parent
+	// Report stats to parent
+	$effect(() => {
 		onStatsChange?.({
-			input: stats.input,
-			valid: stats.valid,
-			error: stats.error,
-			format: stats.format ?? null,
+			input,
+			valid: validation.valid,
+			error: formatError,
+			format: detectedFormat,
 		});
-	};
+	});
 
 	// Download filename based on output format
 	const downloadFilename = $derived(`formatted.${JSON_FORMAT_INFO[outputFormat].extension}`);
+
+	// Handlers
+	const handlePaste = async () => {
+		try {
+			const text = await navigator.clipboard.readText();
+			if (text) onInputChange(text);
+		} catch {
+			// Clipboard access denied
+		}
+	};
+
+	const handleClear = () => {
+		onInputChange('');
+	};
+
+	const handleCopy = async () => {
+		try {
+			await navigator.clipboard.writeText(output);
+		} catch {
+			// Clipboard access denied
+		}
+	};
+
+	const handleSample = () => {
+		onInputChange(SAMPLE_JSON);
+	};
 
 	// Format input JSON
 	const handleFormatInput = () => {
@@ -197,38 +222,32 @@
 	]);
 </script>
 
-<FormatTabBase
-	editorMode="json"
-	{input}
-	{onInputChange}
-	placeholder="Enter JSON here..."
-	{validate}
-	{format}
-	onStatsChange={handleStatsChange}
-	outputFormatOptions={JSON_FORMAT_OPTIONS}
-	selectedOutputFormat={outputFormat}
-	onOutputFormatChange={(f) => (outputFormat = f as JsonOutputFormat)}
-	{downloadFilename}
-	sampleData={SAMPLE_JSON}
-	{copyToClipboard}
-	{pasteFromClipboard}
-	{downloadTextFile}
-	{inputContextMenuItems}
->
-	{#snippet modeExtra()}
-		{#if detectedFormat && detectedFormat !== 'json'}
-			<div class="mt-2 rounded-md bg-muted/50 p-2 text-[11px] text-muted-foreground">
-				<span class="font-medium text-foreground">Detected:</span>
-				{JSON_FORMAT_INFO[detectedFormat].label}
-			</div>
-		{/if}
-	{/snippet}
+<div class="flex flex-1 overflow-hidden">
+	<OptionsPanel
+		show={showOptions}
+		onclose={() => (showOptions = false)}
+		onopen={() => (showOptions = true)}
+	>
+		<FormSection title="Mode">
+			<FormMode
+				bind:value={formatMode}
+				options={[
+					{ value: 'format', label: 'Format' },
+					{ value: 'minify', label: 'Minify' },
+				]}
+			/>
+			{#if detectedFormat && detectedFormat !== 'json'}
+				<div class="mt-2 rounded-md bg-muted/50 p-2 text-[11px] text-muted-foreground">
+					<span class="font-medium text-foreground">Detected:</span>
+					{JSON_FORMAT_INFO[detectedFormat].label}
+				</div>
+			{/if}
+		</FormSection>
 
-	{#snippet options()}
-		<OptionsSection title="Indentation">
+		<FormSection title="Indentation">
 			<div class="grid grid-cols-2 gap-2">
-				<OptionSelect label="Size" bind:value={indentSizeStr} options={['1', '2', '3', '4', '8']} />
-				<OptionSelect
+				<FormSelect label="Size" bind:value={indentSizeStr} options={['1', '2', '3', '4', '8']} />
+				<FormSelect
 					label="Type"
 					bind:value={indentType}
 					options={[
@@ -237,11 +256,11 @@
 					]}
 				/>
 			</div>
-		</OptionsSection>
+		</FormSection>
 
-		<OptionsSection title="Style">
+		<FormSection title="Style">
 			<div class="grid grid-cols-2 gap-2">
-				<OptionSelect
+				<FormSelect
 					label="Quotes"
 					bind:value={quoteStyle}
 					options={[
@@ -249,7 +268,7 @@
 						{ value: 'single', label: "'...'" },
 					]}
 				/>
-				<OptionSelect
+				<FormSelect
 					label="Max Depth"
 					bind:value={maxDepthStr}
 					options={[
@@ -263,24 +282,54 @@
 				/>
 			</div>
 			<div class="space-y-1.5 pt-1">
-				<OptionCheckbox label="Sort keys alphabetically" bind:checked={sortKeys} />
-				<OptionCheckbox label="Escape unicode characters" bind:checked={escapeUnicode} />
+				<FormCheckbox label="Sort keys alphabetically" bind:checked={sortKeys} />
+				<FormCheckbox label="Escape unicode characters" bind:checked={escapeUnicode} />
 			</div>
-		</OptionsSection>
+		</FormSection>
 
-		<OptionsSection title="Spacing">
-			<OptionCheckbox label="Space after colon" bind:checked={colonSpacing} />
-			<OptionCheckbox label="Array bracket spacing" bind:checked={arrayBracketSpacing} />
-			<OptionCheckbox label="Object bracket spacing" bind:checked={objectBracketSpacing} />
-			<OptionCheckbox label="Trailing commas" bind:checked={trailingComma} />
-			<OptionCheckbox label="Compact arrays" bind:checked={compactArrays} />
-		</OptionsSection>
+		<FormSection title="Spacing">
+			<FormCheckbox label="Space after colon" bind:checked={colonSpacing} />
+			<FormCheckbox label="Array bracket spacing" bind:checked={arrayBracketSpacing} />
+			<FormCheckbox label="Object bracket spacing" bind:checked={objectBracketSpacing} />
+			<FormCheckbox label="Trailing commas" bind:checked={trailingComma} />
+			<FormCheckbox label="Compact arrays" bind:checked={compactArrays} />
+		</FormSection>
 
-		<OptionsSection title="Filtering">
-			<OptionCheckbox label="Remove null values" bind:checked={removeNulls} />
-			<OptionCheckbox label="Remove empty strings" bind:checked={removeEmptyStrings} />
-			<OptionCheckbox label="Remove empty arrays" bind:checked={removeEmptyArrays} />
-			<OptionCheckbox label="Remove empty objects" bind:checked={removeEmptyObjects} />
-		</OptionsSection>
-	{/snippet}
-</FormatTabBase>
+		<FormSection title="Filtering">
+			<FormCheckbox label="Remove null values" bind:checked={removeNulls} />
+			<FormCheckbox label="Remove empty strings" bind:checked={removeEmptyStrings} />
+			<FormCheckbox label="Remove empty arrays" bind:checked={removeEmptyArrays} />
+			<FormCheckbox label="Remove empty objects" bind:checked={removeEmptyObjects} />
+		</FormSection>
+	</OptionsPanel>
+
+	<SplitPane class="h-full flex-1">
+		{#snippet left()}
+			<CodeEditor
+				title="Input"
+				value={input}
+				onchange={onInputChange}
+				mode="input"
+				editorMode="json"
+				placeholder="Enter JSON here..."
+				onsample={handleSample}
+				onpaste={handlePaste}
+				onclear={handleClear}
+				contextMenuItems={inputContextMenuItems}
+			/>
+		{/snippet}
+		{#snippet right()}
+			<CodeEditor
+				title="Output"
+				value={output}
+				mode="output"
+				editorMode="json"
+				placeholder="Formatted output..."
+				formatOptions={JSON_FORMAT_OPTIONS}
+				selectedFormat={outputFormat}
+				onformatchange={(f) => (outputFormat = f as JsonOutputFormat)}
+				oncopy={handleCopy}
+			/>
+		{/snippet}
+	</SplitPane>
+</div>

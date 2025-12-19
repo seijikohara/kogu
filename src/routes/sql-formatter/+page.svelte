@@ -1,10 +1,8 @@
 <script lang="ts">
 	import type { SqlLanguage } from 'sql-formatter';
-	import { PageHeader } from '$lib/components/layout/index.js';
-	import OptionCheckbox from '$lib/components/options/option-checkbox.svelte';
-	import OptionSelect from '$lib/components/options/option-select.svelte';
-	import OptionsSection from '$lib/components/options/options-section.svelte';
-	import { FormatTabBase } from '$lib/components/tool/index.js';
+	import { PageLayout, SplitPane } from '$lib/components/layout';
+	import { FormCheckbox, FormMode, FormSection, FormSelect } from '$lib/components/form';
+	import { CodeEditor } from '$lib/components/editor';
 	import {
 		calculateSqlStats,
 		defaultSqlFormatOptions,
@@ -17,14 +15,14 @@
 		SQL_LOGICAL_OPERATOR_OPTIONS,
 		type SqlFormatOptions,
 		type SqlStats,
-		validateSql,
-	} from '$lib/services/formatters.js';
-	import { copyToClipboard, downloadTextFile, pasteFromClipboard } from './utils.js';
+	} from '$lib/services/formatters';
 
-	// Shared state
+	type Mode = 'format' | 'minify';
+
+	// State
+	let mode = $state<Mode>('format');
 	let input = $state('');
-	let valid = $state<boolean | null>(null);
-	let error = $state('');
+	let showOptions = $state(true);
 
 	// Format options
 	let language = $state<SqlLanguage>(defaultSqlFormatOptions.language);
@@ -71,150 +69,185 @@
 		}
 	});
 
-	// Validation function
-	const validate = (value: string) => {
-		if (!value.trim()) {
-			return { valid: null as boolean | null };
-		}
-		const result = validateSql(value);
-		return { valid: result.valid };
-	};
-
-	// Format function
-	const format = (value: string, minify: boolean) => {
+	// Output calculation
+	const formatResult = $derived.by((): { output: string; error: string } => {
+		if (!input.trim()) return { output: '', error: '' };
 		try {
-			const output = minify ? minifySql(value) : formatSql(value, formatOptions);
+			const output = mode === 'minify' ? minifySql(input) : formatSql(input, formatOptions);
 			return { output, error: '' };
 		} catch (e) {
 			return { output: '', error: e instanceof Error ? e.message : 'Invalid SQL' };
 		}
-	};
+	});
 
-	// Stats handler
-	const handleStatsChange = (newStats: { input: string; valid: boolean | null; error: string }) => {
-		valid = newStats.valid;
-		error = newStats.error;
-	};
+	const output = $derived(formatResult.output);
+	const error = $derived(formatResult.error);
+
+	// Validation state
+	const valid = $derived.by((): boolean | null => {
+		if (!input.trim()) return null;
+		return !error;
+	});
 
 	// Language display
 	const selectedLanguageLabel = $derived(
 		SQL_LANGUAGE_OPTIONS.find((opt) => opt.value === language)?.label ?? 'Standard SQL'
 	);
+
+	// Handlers
+	const handlePaste = async () => {
+		try {
+			const text = await navigator.clipboard.readText();
+			if (text) input = text;
+		} catch {
+			// Clipboard access denied
+		}
+	};
+
+	const handleClear = () => {
+		input = '';
+	};
+
+	const handleCopy = async () => {
+		try {
+			await navigator.clipboard.writeText(output);
+		} catch {
+			// Clipboard access denied
+		}
+	};
+
+	const handleSample = () => {
+		input = SAMPLE_SQL;
+	};
 </script>
 
 <svelte:head>
 	<title>SQL Formatter - Kogu</title>
 </svelte:head>
 
-<div class="flex h-full flex-col overflow-hidden">
-	<PageHeader {valid} {error}>
-		{#snippet statusContent()}
-			{#if stats}
-				<span class="text-muted-foreground"
-					>Statements: <strong class="text-foreground">{stats.statements}</strong></span
-				>
-				<span class="text-muted-foreground"
-					>Size: <strong class="text-foreground">{stats.size}</strong></span
-				>
-			{/if}
+<PageLayout {valid} {error} bind:showOptions>
+	{#snippet statusContent()}
+		{#if stats}
+			<span class="text-muted-foreground"
+				>Statements: <strong class="text-foreground">{stats.statements}</strong></span
+			>
+			<span class="text-muted-foreground"
+				>Size: <strong class="text-foreground">{stats.size}</strong></span
+			>
+		{/if}
+	{/snippet}
+
+	{#snippet options()}
+		<FormSection title="Mode">
+			<FormMode
+				value={mode}
+				onchange={(v) => (mode = v as Mode)}
+				options={[
+					{ value: 'format', label: 'Format' },
+					{ value: 'minify', label: 'Minify' },
+				]}
+			/>
+			<div class="mt-2 rounded-md bg-muted/50 p-2 text-[11px] text-muted-foreground">
+				<span class="font-medium text-foreground">Dialect:</span>
+				{selectedLanguageLabel}
+			</div>
+		</FormSection>
+
+		<FormSection title="SQL Dialect">
+			<FormSelect
+				label="Language"
+				value={language}
+				onchange={(v) => (language = v as SqlLanguage)}
+				options={SQL_LANGUAGE_OPTIONS.map((opt) => ({ value: opt.value, label: opt.label }))}
+			/>
+		</FormSection>
+
+		<FormSection title="Indentation">
+			<div class="grid grid-cols-2 gap-2">
+				<FormSelect
+					label="Width"
+					value={tabWidthStr}
+					onchange={(v) => (tabWidthStr = v)}
+					options={['1', '2', '3', '4', '8']}
+				/>
+				<FormSelect
+					label="Style"
+					value={indentStyle}
+					onchange={(v) => (indentStyle = v as 'standard' | 'tabularLeft' | 'tabularRight')}
+					options={SQL_INDENT_STYLE_OPTIONS.map((opt) => ({
+						value: opt.value,
+						label: opt.label,
+					}))}
+				/>
+			</div>
+			<FormCheckbox label="Use tabs instead of spaces" bind:checked={useTabs} />
+		</FormSection>
+
+		<FormSection title="Keywords">
+			<FormSelect
+				label="Keyword Case"
+				value={keywordCase}
+				onchange={(v) => (keywordCase = v as 'upper' | 'lower' | 'preserve')}
+				options={SQL_KEYWORD_CASE_OPTIONS.map((opt) => ({
+					value: opt.value,
+					label: opt.label,
+				}))}
+			/>
+		</FormSection>
+
+		<FormSection title="Layout">
+			<FormSelect
+				label="Logical Operators"
+				value={logicalOperatorNewline}
+				onchange={(v) => (logicalOperatorNewline = v as 'before' | 'after')}
+				options={SQL_LOGICAL_OPERATOR_OPTIONS.map((opt) => ({
+					value: opt.value,
+					label: opt.label,
+				}))}
+			/>
+			<FormSelect
+				label="Expression Width"
+				value={expressionWidthStr}
+				onchange={(v) => (expressionWidthStr = v)}
+				options={['20', '30', '40', '50', '60', '80', '100', '120']}
+			/>
+			<FormSelect
+				label="Lines Between Queries"
+				value={linesBetweenQueriesStr}
+				onchange={(v) => (linesBetweenQueriesStr = v)}
+				options={['0', '1', '2', '3', '4', '5']}
+			/>
+		</FormSection>
+
+		<FormSection title="Spacing">
+			<FormCheckbox label="Dense operators (no spaces)" bind:checked={denseOperators} />
+			<FormCheckbox label="Newline before semicolon" bind:checked={newlineBeforeSemicolon} />
+		</FormSection>
+	{/snippet}
+
+	<SplitPane class="h-full flex-1">
+		{#snippet left()}
+			<CodeEditor
+				title="Input"
+				value={input}
+				onchange={(v) => (input = v)}
+				mode="input"
+				editorMode="sql"
+				placeholder="Enter SQL here..."
+				onsample={handleSample}
+				onpaste={handlePaste}
+				onclear={handleClear}
+			/>
 		{/snippet}
-	</PageHeader>
-
-	<!-- Content -->
-	<div class="flex flex-1 overflow-hidden">
-		<FormatTabBase
-			editorMode="sql"
-			{input}
-			onInputChange={(v) => (input = v)}
-			placeholder="Enter SQL here..."
-			{validate}
-			{format}
-			onStatsChange={handleStatsChange}
-			downloadFilename="formatted.sql"
-			sampleData={SAMPLE_SQL}
-			{copyToClipboard}
-			{pasteFromClipboard}
-			{downloadTextFile}
-		>
-			{#snippet modeExtra()}
-				<div class="mt-2 rounded-md bg-muted/50 p-2 text-[11px] text-muted-foreground">
-					<span class="font-medium text-foreground">Dialect:</span>
-					{selectedLanguageLabel}
-				</div>
-			{/snippet}
-
-			{#snippet options()}
-				<OptionsSection title="SQL Dialect">
-					<OptionSelect
-						label="Language"
-						value={language}
-						onchange={(v) => (language = v as SqlLanguage)}
-						options={SQL_LANGUAGE_OPTIONS.map((opt) => ({ value: opt.value, label: opt.label }))}
-					/>
-				</OptionsSection>
-
-				<OptionsSection title="Indentation">
-					<div class="grid grid-cols-2 gap-2">
-						<OptionSelect
-							label="Width"
-							value={tabWidthStr}
-							onchange={(v) => (tabWidthStr = v)}
-							options={['1', '2', '3', '4', '8']}
-						/>
-						<OptionSelect
-							label="Style"
-							value={indentStyle}
-							onchange={(v) => (indentStyle = v as 'standard' | 'tabularLeft' | 'tabularRight')}
-							options={SQL_INDENT_STYLE_OPTIONS.map((opt) => ({
-								value: opt.value,
-								label: opt.label,
-							}))}
-						/>
-					</div>
-					<OptionCheckbox label="Use tabs instead of spaces" bind:checked={useTabs} />
-				</OptionsSection>
-
-				<OptionsSection title="Keywords">
-					<OptionSelect
-						label="Keyword Case"
-						value={keywordCase}
-						onchange={(v) => (keywordCase = v as 'upper' | 'lower' | 'preserve')}
-						options={SQL_KEYWORD_CASE_OPTIONS.map((opt) => ({
-							value: opt.value,
-							label: opt.label,
-						}))}
-					/>
-				</OptionsSection>
-
-				<OptionsSection title="Layout">
-					<OptionSelect
-						label="Logical Operators"
-						value={logicalOperatorNewline}
-						onchange={(v) => (logicalOperatorNewline = v as 'before' | 'after')}
-						options={SQL_LOGICAL_OPERATOR_OPTIONS.map((opt) => ({
-							value: opt.value,
-							label: opt.label,
-						}))}
-					/>
-					<OptionSelect
-						label="Expression Width"
-						value={expressionWidthStr}
-						onchange={(v) => (expressionWidthStr = v)}
-						options={['20', '30', '40', '50', '60', '80', '100', '120']}
-					/>
-					<OptionSelect
-						label="Lines Between Queries"
-						value={linesBetweenQueriesStr}
-						onchange={(v) => (linesBetweenQueriesStr = v)}
-						options={['0', '1', '2', '3', '4', '5']}
-					/>
-				</OptionsSection>
-
-				<OptionsSection title="Spacing">
-					<OptionCheckbox label="Dense operators (no spaces)" bind:checked={denseOperators} />
-					<OptionCheckbox label="Newline before semicolon" bind:checked={newlineBeforeSemicolon} />
-				</OptionsSection>
-			{/snippet}
-		</FormatTabBase>
-	</div>
-</div>
+		{#snippet right()}
+			<CodeEditor
+				title="Output"
+				value={output}
+				mode="readonly"
+				editorMode="sql"
+				placeholder="Formatted output..."
+				oncopy={handleCopy}
+			/>
+		{/snippet}
+	</SplitPane>
+</PageLayout>

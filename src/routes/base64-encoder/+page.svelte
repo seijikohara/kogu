@@ -1,14 +1,22 @@
 <script lang="ts">
-	import { PageHeader, SplitPane } from '$lib/components/layout/index.js';
-	import OptionSelect from '$lib/components/options/option-select.svelte';
-	import OptionsPanel from '$lib/components/options/options-panel.svelte';
-	import OptionsSection from '$lib/components/options/options-section.svelte';
-	import { EditorPane } from '$lib/components/tool/index.js';
+	import { PageLayout, SplitPane } from '$lib/components/layout';
+	import { FormCheckbox, FormInfo, FormMode, FormSection, FormSelect } from '$lib/components/form';
+	import { CodeEditor } from '$lib/components/editor';
 	import {
+		type Base64DecodeOptions,
+		type Base64EncodeOptions,
+		type Base64LineBreak,
 		type Base64Stats,
+		type Base64Variant,
+		BASE64_MIME_TYPES,
 		calculateBase64Stats,
 		decodeFromBase64,
+		defaultBase64DecodeOptions,
+		defaultBase64EncodeOptions,
+		detectBase64Variant,
 		encodeToBase64,
+		extractMimeType,
+		isDataUrl,
 		SAMPLE_TEXT_FOR_BASE64,
 	} from '$lib/services/encoders.js';
 
@@ -19,6 +27,41 @@
 	let input = $state('');
 	let showOptions = $state(true);
 
+	// Encode options
+	let variant = $state<Base64Variant>(defaultBase64EncodeOptions.variant);
+	let padding = $state(defaultBase64EncodeOptions.padding);
+	let lineBreak = $state<Base64LineBreak>(defaultBase64EncodeOptions.lineBreak);
+	let dataUrl = $state(defaultBase64EncodeOptions.dataUrl);
+	let mimeType = $state(defaultBase64EncodeOptions.mimeType);
+
+	// Decode options
+	let ignoreWhitespace = $state(defaultBase64DecodeOptions.ignoreWhitespace);
+	let ignoreInvalidChars = $state(defaultBase64DecodeOptions.ignoreInvalidChars);
+	let autoDetectVariant = $state(defaultBase64DecodeOptions.autoDetectVariant);
+
+	// Derived encode options object
+	const encodeOptions = $derived<Partial<Base64EncodeOptions>>({
+		variant,
+		padding,
+		lineBreak,
+		dataUrl,
+		mimeType,
+	});
+
+	// Derived decode options object
+	const decodeOptions = $derived<Partial<Base64DecodeOptions>>({
+		ignoreWhitespace,
+		ignoreInvalidChars,
+		autoDetectVariant,
+	});
+
+	// Detected info for decode mode
+	const detectedVariant = $derived(
+		mode === 'decode' && input.trim() ? detectBase64Variant(input) : null
+	);
+	const detectedDataUrl = $derived(mode === 'decode' && input.trim() ? isDataUrl(input) : false);
+	const detectedMimeType = $derived(detectedDataUrl ? extractMimeType(input) : null);
+
 	// Computed output and error
 	const encodeResult = $derived.by((): { output: string; error: string } => {
 		if (!input.trim()) {
@@ -26,7 +69,10 @@
 		}
 
 		try {
-			const result = mode === 'encode' ? encodeToBase64(input) : decodeFromBase64(input);
+			const result =
+				mode === 'encode'
+					? encodeToBase64(input, encodeOptions)
+					: decodeFromBase64(input, decodeOptions);
 			return { output: result, error: '' };
 		} catch (e) {
 			return { output: '', error: e instanceof Error ? e.message : 'Invalid input' };
@@ -73,19 +119,13 @@
 		}
 	};
 
-	const handleDownload = () => {
-		const filename = mode === 'encode' ? 'encoded.txt' : 'decoded.txt';
-		const blob = new Blob([output], { type: 'text/plain' });
-		const url = URL.createObjectURL(blob);
-		const a = document.createElement('a');
-		a.href = url;
-		a.download = filename;
-		a.click();
-		URL.revokeObjectURL(url);
-	};
-
 	const handleSample = () => {
 		input = SAMPLE_TEXT_FOR_BASE64;
+	};
+
+	const handleModeChange = (newMode: string) => {
+		mode = newMode as Mode;
+		input = '';
 	};
 </script>
 
@@ -93,72 +133,130 @@
 	<title>Base64 Encoder - Kogu</title>
 </svelte:head>
 
-<div class="flex h-full flex-col overflow-hidden">
-	<PageHeader {valid} {error}>
-		{#snippet statusContent()}
-			{#if stats}
-				<span class="text-muted-foreground">
-					Input: <strong class="text-foreground">{stats.inputChars}</strong> chars
-				</span>
-				<span class="text-muted-foreground">
-					Output: <strong class="text-foreground">{stats.outputChars}</strong> chars
-				</span>
-				<span class="text-muted-foreground">
-					Ratio: <strong class="text-foreground">{stats.ratio}</strong>
-				</span>
-			{/if}
-		{/snippet}
-	</PageHeader>
+<PageLayout {valid} {error} bind:showOptions>
+	{#snippet statusContent()}
+		{#if stats}
+			<span class="text-muted-foreground">
+				Input: <strong class="text-foreground">{stats.inputChars}</strong> chars (<strong
+					class="text-foreground">{stats.inputBytes}</strong
+				> bytes)
+			</span>
+			<span class="text-muted-foreground">
+				Output: <strong class="text-foreground">{stats.outputChars}</strong> chars
+			</span>
+			<span class="text-muted-foreground">
+				Ratio: <strong class="text-foreground">{stats.ratio}</strong>
+			</span>
+		{/if}
+	{/snippet}
 
-	<!-- Content -->
-	<div class="flex flex-1 overflow-hidden">
-		<OptionsPanel
-			show={showOptions}
-			onclose={() => (showOptions = false)}
-			onopen={() => (showOptions = true)}
-		>
-			<OptionsSection title="Mode">
-				<OptionSelect
-					label="Operation"
-					value={mode}
-					onchange={(v) => {
-						mode = v as Mode;
-						input = '';
-					}}
+	{#snippet options()}
+		<FormSection title="Mode">
+			<FormMode
+				value={mode}
+				onchange={handleModeChange}
+				options={[
+					{ value: 'encode', label: 'Encode' },
+					{ value: 'decode', label: 'Decode' },
+				]}
+			/>
+		</FormSection>
+
+		{#if mode === 'encode'}
+			<FormSection title="Encoding">
+				<FormSelect
+					label="Variant"
+					bind:value={variant}
 					options={[
-						{ value: 'encode', label: 'Encode' },
-						{ value: 'decode', label: 'Decode' },
+						{ value: 'standard', label: 'Standard (+/)' },
+						{ value: 'url-safe', label: 'URL-safe (-_)' },
 					]}
 				/>
-			</OptionsSection>
-		</OptionsPanel>
+				<FormSelect
+					label="Line Break"
+					bind:value={lineBreak}
+					options={[
+						{ value: 'none', label: 'None' },
+						{ value: '64', label: '64 chars (PEM)' },
+						{ value: '76', label: '76 chars (MIME)' },
+					]}
+				/>
+				<div class="pt-1">
+					<FormCheckbox label="Include padding (=)" bind:checked={padding} />
+				</div>
+			</FormSection>
 
-		<SplitPane class="h-full flex-1">
-			{#snippet left()}
-				<EditorPane
-					title={mode === 'encode' ? 'Text Input' : 'Base64 Input'}
-					value={input}
-					onchange={(v) => (input = v)}
-					mode="input"
-					editorMode="plain"
-					placeholder={mode === 'encode' ? 'Enter text to encode...' : 'Enter Base64 to decode...'}
-					onsample={handleSample}
-					onpaste={handlePaste}
-					onclear={handleClear}
-					showViewToggle={false}
-				/>
-			{/snippet}
-			{#snippet right()}
-				<EditorPane
-					title={mode === 'encode' ? 'Base64 Output' : 'Decoded Text'}
-					value={output}
-					mode="readonly"
-					editorMode="plain"
-					placeholder={mode === 'encode' ? 'Encoded output...' : 'Decoded output...'}
-					oncopy={handleCopy}
-					showViewToggle={false}
-				/>
-			{/snippet}
-		</SplitPane>
-	</div>
-</div>
+			<FormSection title="Data URL">
+				<FormCheckbox label="Output as Data URL" bind:checked={dataUrl} />
+				{#if dataUrl}
+					<div class="pt-1">
+						<FormSelect label="MIME Type" bind:value={mimeType} options={[...BASE64_MIME_TYPES]} />
+					</div>
+				{/if}
+			</FormSection>
+
+			<FormSection title="Info" open={false}>
+				<FormInfo title="Standard vs URL-safe">
+					<p><strong>Standard:</strong> Uses <code>+</code> and <code>/</code> characters.</p>
+					<p class="mt-1">
+						<strong>URL-safe:</strong> Uses <code>-</code> and <code>_</code> instead, safe for URLs and
+						filenames.
+					</p>
+				</FormInfo>
+			</FormSection>
+		{:else}
+			<FormSection title="Decoding">
+				<FormCheckbox label="Ignore whitespace" bind:checked={ignoreWhitespace} />
+				<FormCheckbox label="Ignore invalid characters" bind:checked={ignoreInvalidChars} />
+				<FormCheckbox label="Auto-detect URL-safe variant" bind:checked={autoDetectVariant} />
+			</FormSection>
+
+			{#if detectedVariant || detectedDataUrl}
+				<FormSection title="Detected">
+					<FormInfo showIcon={false}>
+						{#if detectedVariant}
+							<p>
+								<strong>Variant:</strong>
+								{detectedVariant === 'url-safe' ? 'URL-safe (-_)' : 'Standard (+/)'}
+							</p>
+						{/if}
+						{#if detectedDataUrl}
+							<p class="mt-1"><strong>Format:</strong> Data URL</p>
+							{#if detectedMimeType}
+								<p class="mt-1"><strong>MIME:</strong> {detectedMimeType}</p>
+							{/if}
+						{/if}
+					</FormInfo>
+				</FormSection>
+			{/if}
+		{/if}
+	{/snippet}
+
+	<SplitPane class="h-full flex-1">
+		{#snippet left()}
+			<CodeEditor
+				title={mode === 'encode' ? 'Text Input' : 'Base64 Input'}
+				value={input}
+				onchange={(v) => (input = v)}
+				mode="input"
+				editorMode="plain"
+				placeholder={mode === 'encode' ? 'Enter text to encode...' : 'Enter Base64 to decode...'}
+				onsample={handleSample}
+				onpaste={handlePaste}
+				onclear={handleClear}
+				showViewToggle={false}
+			/>
+		{/snippet}
+		{#snippet right()}
+			<CodeEditor
+				title={mode === 'encode' ? 'Base64 Output' : 'Decoded Text'}
+				value={output}
+				mode="readonly"
+				editorMode="plain"
+				placeholder={mode === 'encode' ? 'Encoded output...' : 'Decoded output...'}
+				oncopy={handleCopy}
+				showViewToggle={false}
+			/>
+		{/snippet}
+	</SplitPane>
+</PageLayout>

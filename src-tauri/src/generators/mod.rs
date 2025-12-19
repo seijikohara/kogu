@@ -26,13 +26,11 @@ pub enum GeneratorError {
     #[error("CLI execution error: {0}")]
     CliExecution(String),
 
-    /// CLI tool is not available (reserved for future use)
-    #[allow(dead_code)]
-    #[error("CLI tool not available: {0}")]
-    CliNotAvailable(String),
-
     #[error("Invalid parameter: {0}")]
     InvalidParameter(String),
+
+    #[error("Operation cancelled")]
+    Cancelled,
 }
 
 impl Serialize for GeneratorError {
