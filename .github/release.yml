@@ -1,3 +1,19 @@
+# GitHub Auto-generated Release Notes Configuration
+#
+# Labels are automatically assigned by .github/workflows/pr-labeler.yml
+# based on PR title prefix (Conventional Commits format).
+#
+# Mapping: PR Title → Label → Release Category
+#   feat:     → feature       → 🚀 Features
+#   fix:      → fix           → 🐛 Bug Fixes
+#   perf:     → performance   → ⚡ Performance
+#   refactor: → refactor      → 🔧 Refactoring
+#   test:     → test          → 🧪 Tests
+#   docs:     → documentation → 📝 Documentation
+#   chore:    → chore         → 🔨 Maintenance
+#   ci:       → ci            → 🔨 Maintenance
+#   build:    → build         → 🔨 Maintenance
+
 changelog:
   exclude:
     labels:
@@ -9,21 +25,29 @@ changelog:
     - title: '🚀 Features'
       labels:
         - feature
-        - enhancement
     - title: '🐛 Bug Fixes'
       labels:
-        - bug
         - fix
+    - title: '⚡ Performance'
+      labels:
+        - performance
     - title: '🔧 Refactoring'
       labels:
         - refactor
-    - title: '📦 Dependencies'
+    - title: '🧪 Tests'
       labels:
-        - dependencies
+        - test
     - title: '📝 Documentation'
       labels:
         - documentation
-        - docs
+    - title: '📦 Dependencies'
+      labels:
+        - dependencies
+    - title: '🔨 Maintenance'
+      labels:
+        - chore
+        - ci
+        - build
     - title: '🔨 Other Changes'
       labels:
         - '*'

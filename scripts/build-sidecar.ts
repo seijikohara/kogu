@@ -10,97 +10,145 @@
  */
 
 import { $ } from 'bun';
-import { existsSync, mkdirSync, copyFileSync, chmodSync, writeFileSync, unlinkSync } from 'node:fs';
+import { chmodSync, copyFileSync, existsSync, mkdirSync, unlinkSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 
+// Constants
 const SIDECARS = ['bcrypt-worker'] as const;
+const BINARIES_DIR = join('src-tauri', 'binaries');
 
-async function getTargetTriple(): Promise<string> {
+// Types
+type Sidecar = (typeof SIDECARS)[number];
+
+interface BuildConfig {
+	readonly release: boolean;
+	readonly profile: 'release' | 'debug';
+	readonly targetTriple: string;
+}
+
+interface SidecarPaths {
+	readonly sidecar: Sidecar;
+	readonly sourcePath: string;
+	readonly destPath: string;
+	readonly destName: string;
+}
+
+// Pure functions
+const parseArgs = (argv: readonly string[]): boolean =>
+	argv.slice(2).some((arg) => arg === '--release' || arg === '-r');
+
+const getProfile = (release: boolean): 'release' | 'debug' => (release ? 'release' : 'debug');
+
+const buildDestName = (sidecar: Sidecar, targetTriple: string): string =>
+	`${sidecar}-${targetTriple}`;
+
+const buildSidecarPaths = (sidecar: Sidecar, config: BuildConfig): SidecarPaths => {
+	const destName = buildDestName(sidecar, config.targetTriple);
+	return {
+		sidecar,
+		sourcePath: join('src-tauri', 'target', config.profile, sidecar),
+		destPath: join(BINARIES_DIR, destName),
+		destName,
+	};
+};
+
+const buildAllSidecarPaths = (config: BuildConfig): readonly SidecarPaths[] =>
+	SIDECARS.map((sidecar) => buildSidecarPaths(sidecar, config));
+
+const filterNonExistentPaths = (paths: readonly SidecarPaths[]): readonly SidecarPaths[] =>
+	paths.filter((p) => !existsSync(p.destPath));
+
+// Shell execution
+const getTargetTriple = async (): Promise<string> => {
 	const result = await $`rustc -Vv`.text();
 	const match = result.match(/host:\s+(\S+)/);
 	if (!match) {
 		throw new Error('Failed to determine target triple');
 	}
 	return match[1];
-}
+};
 
-async function buildSidecars(release: boolean): Promise<void> {
-	const mode = release ? '--release' : '';
-	const profile = release ? 'release' : 'debug';
+const runCargoBuild = async (sidecar: Sidecar, release: boolean): Promise<void> => {
+	const args = release ? ['build', '--bin', sidecar, '--release'] : ['build', '--bin', sidecar];
+	await $`cargo ${args}`.cwd('src-tauri');
+};
 
+// File operations
+const ensureDirectory = (dir: string): void => {
+	if (!existsSync(dir)) {
+		mkdirSync(dir, { recursive: true });
+	}
+};
+
+const createPlaceholder = (path: string): void => {
+	writeFileSync(path, '');
+	chmodSync(path, 0o755);
+};
+
+const copyBinary = (sourcePath: string, destPath: string): void => {
+	if (!existsSync(sourcePath)) {
+		throw new Error(`Binary not found: ${sourcePath}`);
+	}
+	copyFileSync(sourcePath, destPath);
+	chmodSync(destPath, 0o755);
+};
+
+const cleanupPlaceholders = (paths: readonly SidecarPaths[]): void => {
+	paths.forEach((p) => {
+		if (existsSync(p.destPath)) {
+			try {
+				unlinkSync(p.destPath);
+			} catch {
+				// Ignore cleanup errors
+			}
+		}
+	});
+};
+
+// Main workflow
+const buildSidecars = async (release: boolean): Promise<void> => {
+	const profile = getProfile(release);
 	console.log(`Building sidecars in ${profile} mode...`);
 
-	// Get target triple first
 	const targetTriple = await getTargetTriple();
 	console.log(`Target triple: ${targetTriple}`);
 
-	// Ensure binaries directory exists
-	const binariesDir = join('src-tauri', 'binaries');
-	if (!existsSync(binariesDir)) {
-		mkdirSync(binariesDir, { recursive: true });
-	}
+	const config: BuildConfig = { release, profile, targetTriple };
+	const allPaths = buildAllSidecarPaths(config);
+	const placeholderPaths = filterNonExistentPaths(allPaths);
 
-	// Create placeholder files for all sidecars first
-	// This is needed because Tauri's build.rs checks for sidecar existence
-	// before our binary is built
-	const placeholderPaths: string[] = [];
-	for (const sidecar of SIDECARS) {
-		const destName = `${sidecar}-${targetTriple}`;
-		const destPath = join(binariesDir, destName);
+	ensureDirectory(BINARIES_DIR);
 
-		if (!existsSync(destPath)) {
-			console.log(`  Creating placeholder for ${destName}...`);
-			writeFileSync(destPath, '');
-			chmodSync(destPath, 0o755);
-			placeholderPaths.push(destPath);
-		}
-	}
+	// Create placeholders for Tauri's build.rs validation
+	placeholderPaths.forEach((p) => {
+		console.log(`  Creating placeholder for ${p.destName}...`);
+		createPlaceholder(p.destPath);
+	});
 
 	try {
 		// Build all sidecar binaries
-		for (const sidecar of SIDECARS) {
-			console.log(`  Building ${sidecar}...`);
-			if (mode) {
-				await $`cargo build --bin ${sidecar} ${mode}`.cwd('src-tauri');
-			} else {
-				await $`cargo build --bin ${sidecar}`.cwd('src-tauri');
-			}
-		}
+		await Promise.all(
+			SIDECARS.map(async (sidecar) => {
+				console.log(`  Building ${sidecar}...`);
+				await runCargoBuild(sidecar, release);
+			})
+		);
 
-		// Copy binaries with target triple suffix (replacing placeholders)
-		for (const sidecar of SIDECARS) {
-			const sourcePath = join('src-tauri', 'target', profile, sidecar);
-			const destName = `${sidecar}-${targetTriple}`;
-			const destPath = join(binariesDir, destName);
-
-			if (!existsSync(sourcePath)) {
-				throw new Error(`Binary not found: ${sourcePath}`);
-			}
-
-			console.log(`  Copying ${sidecar} -> ${destName}`);
-			copyFileSync(sourcePath, destPath);
-			chmodSync(destPath, 0o755);
-		}
+		// Copy binaries with target triple suffix
+		allPaths.forEach((p) => {
+			console.log(`  Copying ${p.sidecar} -> ${p.destName}`);
+			copyBinary(p.sourcePath, p.destPath);
+		});
 
 		console.log('Sidecar build complete!');
 	} catch (error) {
-		// Clean up placeholder files on error
-		for (const placeholderPath of placeholderPaths) {
-			if (existsSync(placeholderPath)) {
-				try {
-					unlinkSync(placeholderPath);
-				} catch {
-					// Ignore cleanup errors
-				}
-			}
-		}
+		cleanupPlaceholders(placeholderPaths);
 		throw error;
 	}
-}
+};
 
-// Parse arguments
-const args = process.argv.slice(2);
-const release = args.includes('--release') || args.includes('-r');
+// Entry point
+const release = parseArgs(process.argv);
 
 buildSidecars(release).catch((error) => {
 	console.error('Error building sidecars:', error);
