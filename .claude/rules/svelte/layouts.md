@@ -232,52 +232,52 @@ Simple encoder/formatter with options panel and split input/output.
 
 ```svelte
 <script lang="ts">
-  import { PageLayout, SplitPane } from '$lib/components/layout';
-  import { CodeEditor } from '$lib/components/editor';
-  import { FormMode, FormSection, FormSelect } from '$lib/components/form';
+	import { PageLayout, SplitPane } from '$lib/components/layout';
+	import { CodeEditor } from '$lib/components/editor';
+	import { FormMode, FormSection, FormSelect } from '$lib/components/form';
 
-  let mode = $state<'format' | 'minify'>('format');
-  let input = $state('');
-  let showOptions = $state(true);
+	let mode = $state<'format' | 'minify'>('format');
+	let input = $state('');
+	let showOptions = $state(true);
 
-  const output = $derived(...);
+	const output = $derived(transform(input));
 </script>
 
 <PageLayout {valid} {error} bind:showOptions>
-  {#snippet statusContent()}
-    <!-- Stats display -->
-  {/snippet}
+	{#snippet statusContent()}
+		<!-- Stats display -->
+	{/snippet}
 
-  {#snippet options()}
-    <FormSection title="Mode">
-      <FormMode value={mode} onchange={(v) => mode = v} options={[...]} />
-    </FormSection>
-    <!-- Additional options -->
-  {/snippet}
+	{#snippet options()}
+		<FormSection title="Mode">
+			<FormMode value={mode} onchange={(v) => (mode = v)} options={modeOptions} />
+		</FormSection>
+		<!-- Additional options -->
+	{/snippet}
 
-  <SplitPane class="h-full flex-1">
-    {#snippet left()}
-      <CodeEditor
-        title="Input"
-        value={input}
-        onchange={(v) => input = v}
-        mode="input"
-        editorMode="sql"
-        onsample={handleSample}
-        onpaste={handlePaste}
-        onclear={handleClear}
-      />
-    {/snippet}
-    {#snippet right()}
-      <CodeEditor
-        title="Output"
-        value={output}
-        mode="readonly"
-        editorMode="sql"
-        oncopy={handleCopy}
-      />
-    {/snippet}
-  </SplitPane>
+	<SplitPane class="h-full flex-1">
+		{#snippet left()}
+			<CodeEditor
+				title="Input"
+				value={input}
+				onchange={(v) => (input = v)}
+				mode="input"
+				editorMode="sql"
+				onsample={handleSample}
+				onpaste={handlePaste}
+				onclear={handleClear}
+			/>
+		{/snippet}
+		{#snippet right()}
+			<CodeEditor
+				title="Output"
+				value={output}
+				mode="readonly"
+				editorMode="sql"
+				oncopy={handleCopy}
+			/>
+		{/snippet}
+	</SplitPane>
 </PageLayout>
 ```
 
@@ -312,14 +312,14 @@ Input editor on top, results panel on bottom.
 
 ```svelte
 <script lang="ts">
-  import { PageLayout } from '$lib/components/layout';
-  import { CodeEditor } from '$lib/components/editor';
-  import { FormInfo, FormSection } from '$lib/components/form';
+	import { PageLayout } from '$lib/components/layout';
+	import { CodeEditor } from '$lib/components/editor';
+	import { FormInfo, FormSection } from '$lib/components/form';
 
-  let input = $state('');
-  let showOptions = $state(true);
+	let input = $state('');
+	let showOptions = $state(true);
 
-  const results = $derived(...);
+	const results = $derived(parseInput(input));
 </script>
 
 <PageLayout {valid} {error} bind:showOptions>
@@ -397,74 +397,71 @@ Form inputs in options panel, results displayed in main area.
 
 ```svelte
 <script lang="ts">
-  import { Key } from '@lucide/svelte';
-  import { PageLayout } from '$lib/components/layout';
-  import { ActionButton, CopyButton } from '$lib/components/action';
-  import { FormInfo, FormInput, FormMode, FormSection, FormSelect } from '$lib/components/form';
+	import { Key } from '@lucide/svelte';
+	import { PageLayout } from '$lib/components/layout';
+	import { ActionButton, CopyButton } from '$lib/components/action';
+	import { FormInfo, FormInput, FormMode, FormSection, FormSelect } from '$lib/components/form';
 
-  // Form state
-  let password = $state('');
-  let algorithm = $state('ed25519');
+	// Form state
+	let password = $state('');
+	let algorithm = $state('ed25519');
 
-  // Result state
-  let result = $state<Result | null>(null);
-  let isGenerating = $state(false);
+	// Result state
+	let result = $state<Result | null>(null);
+	let isGenerating = $state(false);
 
-  const handleGenerate = async () => { ... };
+	const handleGenerate = async () => {
+		// Generate logic
+	};
 </script>
 
 <PageLayout valid={result ? true : null} bind:showOptions>
-  {#snippet statusContent()}
-    {#if result}
-      <!-- Result stats -->
-    {/if}
-  {/snippet}
+	{#snippet statusContent()}
+		{#if result}
+			<!-- Result stats -->
+		{/if}
+	{/snippet}
 
-  {#snippet options()}
-    <FormSection title="Mode">
-      <FormMode value={mode} onchange={...} options={[...]} />
-    </FormSection>
+	{#snippet options()}
+		<FormSection title="Mode">
+			<FormMode value={mode} onchange={(v) => (mode = v)} options={modeOptions} />
+		</FormSection>
 
-    <FormSection title="Settings">
-      <FormInput label="Password" bind:value={password} />
-      <FormSelect label="Algorithm" bind:value={algorithm} options={...} />
-    </FormSection>
+		<FormSection title="Settings">
+			<FormInput label="Password" bind:value={password} />
+			<FormSelect label="Algorithm" bind:value={algorithm} options={algorithmOptions} />
+		</FormSection>
 
-    <FormSection title="Actions">
-      <div class="space-y-2">
-        <ActionButton
-          label="Generate"
-          icon={Key}
-          loading={isGenerating}
-          onclick={handleGenerate}
-        />
-        {#if result}
-          <ActionButton label="Clear" variant="outline" onclick={handleClear} />
-        {/if}
-      </div>
-    </FormSection>
+		<FormSection title="Actions">
+			<div class="space-y-2">
+				<ActionButton label="Generate" icon={Key} loading={isGenerating} onclick={handleGenerate} />
+				{#if result}
+					<ActionButton label="Clear" variant="outline" onclick={handleClear} />
+				{/if}
+			</div>
+		</FormSection>
 
-    <FormSection title="About">
-      <FormInfo>...</FormInfo>
-    </FormSection>
-  {/snippet}
+		<FormSection title="About">
+			<FormInfo>...</FormInfo>
+		</FormSection>
+	{/snippet}
 
-  <!-- Results Panel -->
-  <div class="flex h-full flex-col overflow-hidden">
-    <div class="flex h-9 shrink-0 items-center border-b bg-muted/30 px-3">
-      <span class="text-xs font-medium text-muted-foreground">Generated Result</span>
-    </div>
+	<!-- Results Panel -->
+	<div class="flex h-full flex-col overflow-hidden">
+		<div class="flex h-9 shrink-0 items-center border-b bg-muted/30 px-3">
+			<span class="text-xs font-medium text-muted-foreground">Generated Result</span>
+		</div>
 
-    <div class="flex-1 overflow-auto p-4">
-      {#if result}
-        <!-- Result cards with CopyButton -->
-      {:else if error}
-        <!-- Error display -->
-      {:else}
-        <!-- Empty state with icon -->
-      {/if}
-    </div>
-  </div>
+		<div class="flex-1 overflow-auto p-4">
+			{#if result}
+				<!-- Result cards with CopyButton -->
+			{:else if error}
+				<!-- Error display -->
+			{:else}
+				<!-- Empty state with icon -->
+			{/if}
+		</div>
+	</div>
 </PageLayout>
 ```
 
