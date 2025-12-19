@@ -31,13 +31,35 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           repository: ${{ github.repository }}
 
+  cleanup-nightly-assets:
+    name: Cleanup Nightly Assets
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - name: Delete existing nightly assets
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Delete all assets from existing nightly release
+          assets=$(gh release view nightly --repo ${{ github.repository }} --json assets -q '.assets[].name' 2>/dev/null || echo "")
+          if [ -n "$assets" ]; then
+            echo "$assets" | while read -r asset; do
+              echo "Deleting asset: $asset"
+              gh release delete-asset nightly "$asset" --repo ${{ github.repository }} --yes 2>/dev/null || true
+            done
+            echo "Cleaned up existing nightly assets"
+          else
+            echo "No existing nightly assets to clean up"
+          fi
+
   release:
     name: Build and Release (${{ matrix.settings.platform }})
     runs-on: ${{ matrix.settings.os }}
-    needs: [validate-version]
+    needs: [validate-version, cleanup-nightly-assets]
     if: |
       always() &&
-      (needs.validate-version.result == 'success' || needs.validate-version.result == 'skipped')
+      (needs.validate-version.result == 'success' || needs.validate-version.result == 'skipped') &&
+      (needs.cleanup-nightly-assets.result == 'success' || needs.cleanup-nightly-assets.result == 'skipped')
     strategy:
       fail-fast: false
       matrix:
@@ -79,6 +101,27 @@ jobs:
         with:
           target: ${{ matrix.settings.target }}
           profile: release
+
+      - name: Set nightly version
+        if: github.ref == 'refs/heads/main'
+        shell: bash
+        run: |
+          # Set fixed version for nightly builds
+          NIGHTLY_VERSION="0.0.0-nightly"
+
+          # Update tauri.conf.json
+          if command -v jq &> /dev/null; then
+            jq --arg v "$NIGHTLY_VERSION" '.version = $v' src-tauri/tauri.conf.json > tmp.json && mv tmp.json src-tauri/tauri.conf.json
+          else
+            sed -i.bak "s/\"version\": \"[^\"]*\"/\"version\": \"$NIGHTLY_VERSION\"/" src-tauri/tauri.conf.json
+            rm -f src-tauri/tauri.conf.json.bak
+          fi
+
+          # Update Cargo.toml
+          sed -i.bak "s/^version = \"[^\"]*\"/version = \"$NIGHTLY_VERSION\"/" src-tauri/Cargo.toml
+          rm -f src-tauri/Cargo.toml.bak
+
+          echo "Set version to $NIGHTLY_VERSION for nightly build"
 
       - name: Build and release (nightly)
         if: github.ref == 'refs/heads/main'
