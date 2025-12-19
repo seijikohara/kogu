@@ -1,6 +1,6 @@
 [package]
 name = "kogu"
-version = "0.0.3"
+version = "0.0.4"
 description = "Kogu - A collection of useful developer tools (小道具 - props for developers)"
 authors = ["seijikohara"]
 edition = "2021"
