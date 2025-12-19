@@ -31,35 +31,32 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           repository: ${{ github.repository }}
 
-  cleanup-nightly-assets:
-    name: Cleanup Nightly Assets
+  cleanup-nightly:
+    name: Cleanup Nightly Release
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main'
     steps:
-      - name: Delete existing nightly assets
+      - name: Delete existing nightly release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          # Delete all assets from existing nightly release
-          assets=$(gh release view nightly --repo ${{ github.repository }} --json assets -q '.assets[].name' 2>/dev/null || echo "")
-          if [ -n "$assets" ]; then
-            echo "$assets" | while read -r asset; do
-              echo "Deleting asset: $asset"
-              gh release delete-asset nightly "$asset" --repo ${{ github.repository }} --yes 2>/dev/null || true
-            done
-            echo "Cleaned up existing nightly assets"
+          # Delete entire nightly release (recreated with correct commit info)
+          if gh release view nightly --repo ${{ github.repository }} &>/dev/null; then
+            echo "Deleting existing nightly release..."
+            gh release delete nightly --repo ${{ github.repository }} --yes --cleanup-tag
+            echo "Deleted nightly release"
           else
-            echo "No existing nightly assets to clean up"
+            echo "No existing nightly release"
           fi
 
   release:
     name: Build and Release (${{ matrix.settings.platform }})
     runs-on: ${{ matrix.settings.os }}
-    needs: [validate-version, cleanup-nightly-assets]
+    needs: [validate-version, cleanup-nightly]
     if: |
       always() &&
       (needs.validate-version.result == 'success' || needs.validate-version.result == 'skipped') &&
-      (needs.cleanup-nightly-assets.result == 'success' || needs.cleanup-nightly-assets.result == 'skipped')
+      (needs.cleanup-nightly.result == 'success' || needs.cleanup-nightly.result == 'skipped')
     strategy:
       fail-fast: false
       matrix:
