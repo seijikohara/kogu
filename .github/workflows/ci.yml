@@ -51,9 +51,13 @@ jobs:
         run: |
           TARGET_TRIPLE=$(rustc -Vv | grep host | awk '{print $2}')
           mkdir -p binaries
-          cargo build --bin bcrypt-worker
-          cp target/debug/bcrypt-worker "binaries/bcrypt-worker-${TARGET_TRIPLE}"
+          # Create placeholder first (Tauri build.rs requires it)
+          touch "binaries/bcrypt-worker-${TARGET_TRIPLE}"
           chmod +x "binaries/bcrypt-worker-${TARGET_TRIPLE}"
+          # Build sidecar
+          cargo build --bin bcrypt-worker
+          # Replace placeholder with actual binary
+          cp target/debug/bcrypt-worker "binaries/bcrypt-worker-${TARGET_TRIPLE}"
 
       - name: Check formatting
         run: cargo fmt --all --check
