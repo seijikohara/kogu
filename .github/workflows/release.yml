@@ -106,22 +106,19 @@ jobs:
         if: github.ref == 'refs/heads/main'
         shell: bash
         run: |
-          # Set fixed version for nightly builds
-          NIGHTLY_VERSION="0.0.0-nightly"
+          # Get current version and short commit hash
+          CURRENT_VERSION=$(jq -r '.version' src-tauri/tauri.conf.json)
+          SHORT_SHA=$(echo "${{ github.sha }}" | cut -c1-7)
+          NIGHTLY_VERSION="${CURRENT_VERSION}-${SHORT_SHA}"
 
           # Update tauri.conf.json
-          if command -v jq &> /dev/null; then
-            jq --arg v "$NIGHTLY_VERSION" '.version = $v' src-tauri/tauri.conf.json > tmp.json && mv tmp.json src-tauri/tauri.conf.json
-          else
-            sed -i.bak "s/\"version\": \"[^\"]*\"/\"version\": \"$NIGHTLY_VERSION\"/" src-tauri/tauri.conf.json
-            rm -f src-tauri/tauri.conf.json.bak
-          fi
+          jq --arg v "$NIGHTLY_VERSION" '.version = $v' src-tauri/tauri.conf.json > tmp.json && mv tmp.json src-tauri/tauri.conf.json
 
           # Update Cargo.toml
           sed -i.bak "s/^version = \"[^\"]*\"/version = \"$NIGHTLY_VERSION\"/" src-tauri/Cargo.toml
           rm -f src-tauri/Cargo.toml.bak
 
-          echo "Set version to $NIGHTLY_VERSION for nightly build"
+          echo "Set version to $NIGHTLY_VERSION"
 
       - name: Build and release (nightly)
         if: github.ref == 'refs/heads/main'
@@ -153,17 +150,3 @@ jobs:
           releaseDraft: false
           prerelease: false
           args: --target ${{ matrix.settings.target }}
-
-  cleanup-nightly:
-    name: Cleanup Old Nightly Releases
-    runs-on: ubuntu-latest
-    needs: release
-    if: github.ref == 'refs/heads/main'
-    steps:
-      - name: Delete old nightly releases
-        uses: Nats-ji/delete-old-releases@v1
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          keep-count: 1
-          keep-old-minor-releases: false
-          remove-tags: false
