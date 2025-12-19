@@ -1,6 +1,6 @@
 <script lang="ts">
-	import OptionCheckbox from '$lib/components/options/option-checkbox.svelte';
-	import { CompareTabBase } from '$lib/components/tool/index.js';
+	import { FormCheckbox } from '$lib/components/form';
+	import { CompareTab } from '$lib/components/template';
 	import { Input } from '$lib/components/ui/input/index.js';
 	import { Label } from '$lib/components/ui/label/index.js';
 	import type { GenericDiffItem } from '$lib/constants/diff.js';
@@ -9,7 +9,7 @@
 		type JsonDiffOptions,
 		type JsonInputFormat,
 		validateJson,
-	} from '$lib/services/formatters.js';
+	} from '$lib/services/formatters';
 	import { pasteFromClipboard } from '../utils.js';
 
 	interface Props {
@@ -176,7 +176,7 @@
 	};
 </script>
 
-<CompareTabBase
+<CompareTab
 	editorMode="json"
 	{input}
 	{onInputChange}
@@ -189,19 +189,19 @@
 	{pasteFromClipboard}
 >
 	{#snippet comparisonOptions()}
-		<OptionCheckbox label="Deep compare" bind:checked={compareDeepCompare} />
-		<OptionCheckbox label="Ignore whitespace" bind:checked={compareIgnoreWhitespace} />
-		<OptionCheckbox label="Ignore array order" bind:checked={compareIgnoreArrayOrder} />
+		<FormCheckbox label="Deep compare" bind:checked={compareDeepCompare} />
+		<FormCheckbox label="Ignore whitespace" bind:checked={compareIgnoreWhitespace} />
+		<FormCheckbox label="Ignore array order" bind:checked={compareIgnoreArrayOrder} />
 	{/snippet}
 
 	{#snippet advancedOptions()}
-		<OptionCheckbox label="Ignore case" bind:checked={compareIgnoreCase} />
-		<OptionCheckbox label="Ignore numeric type" bind:checked={compareIgnoreNumericType} />
-		<OptionCheckbox label="Ignore empty values" bind:checked={compareIgnoreEmpty} />
+		<FormCheckbox label="Ignore case" bind:checked={compareIgnoreCase} />
+		<FormCheckbox label="Ignore numeric type" bind:checked={compareIgnoreNumericType} />
+		<FormCheckbox label="Ignore empty values" bind:checked={compareIgnoreEmpty} />
 		<div class="space-y-1 pt-1">
 			<Label class="text-[10px] uppercase tracking-wide text-muted-foreground">Ignore Keys</Label>
 			<Input bind:value={compareIgnoreKeys} placeholder="key1, key2, key3" class="h-7 text-xs" />
 			<span class="text-[10px] text-muted-foreground">Comma-separated list of keys to ignore</span>
 		</div>
 	{/snippet}
-</CompareTabBase>
+</CompareTab>

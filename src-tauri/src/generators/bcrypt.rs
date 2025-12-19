@@ -1,6 +1,14 @@
-//! `BCrypt` hash generation and verification
+//! `BCrypt` hash generation and verification with process isolation
+//!
+//! This module provides `BCrypt` operations that run in a separate process,
+//! enabling true cancellation via process termination.
+
+use std::sync::Mutex;
 
 use serde::{Deserialize, Serialize};
+use tauri::AppHandle;
+use tauri_plugin_shell::process::{CommandChild, CommandEvent};
+use tauri_plugin_shell::ShellExt;
 
 use super::GeneratorError;
 
@@ -43,51 +51,254 @@ pub const MAX_COST: u32 = 20;
 #[allow(dead_code)]
 pub const DEFAULT_COST: u32 = 10;
 
-/// Generate a `BCrypt` hash from a password
+// =============================================================================
+// Sidecar Request/Response Types
+// =============================================================================
+
+/// Request to send to the bcrypt-worker sidecar
+#[derive(Debug, Serialize)]
+#[serde(tag = "operation", rename_all = "lowercase")]
+enum WorkerRequest {
+    Hash { password: String, cost: u32 },
+    Verify { password: String, hash: String },
+}
+
+/// Response from the bcrypt-worker sidecar
+#[derive(Debug, Deserialize)]
+#[serde(untagged)]
+enum WorkerResponse {
+    HashSuccess {
+        #[serde(rename = "success")]
+        _success: bool,
+        hash: String,
+        cost: u32,
+        algorithm: String,
+    },
+    VerifySuccess {
+        #[serde(rename = "success")]
+        _success: bool,
+        valid: bool,
+        message: String,
+    },
+    Error {
+        #[serde(rename = "success")]
+        _success: bool,
+        error: String,
+    },
+}
+
+// =============================================================================
+// Process Management
+// =============================================================================
+
+/// State for managing the `BCrypt` worker process
+#[derive(Default)]
+pub struct BcryptProcessState {
+    /// Currently running child process
+    child: Mutex<Option<CommandChild>>,
+}
+
+impl BcryptProcessState {
+    /// Create a new process state
+    pub const fn new() -> Self {
+        Self {
+            child: Mutex::new(None),
+        }
+    }
+
+    /// Store a child process handle
+    fn set_child(&self, child: CommandChild) {
+        let mut guard = self
+            .child
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner);
+        *guard = Some(child);
+    }
+
+    /// Take the child process handle (removes it from state)
+    fn take_child(&self) -> Option<CommandChild> {
+        let mut guard = self
+            .child
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner);
+        guard.take()
+    }
+
+    /// Kill the current child process if running
+    pub fn kill(&self) -> bool {
+        self.take_child().is_some_and(|child| child.kill().is_ok())
+    }
+}
+
+// =============================================================================
+// Process-Isolated Operations
+// =============================================================================
+
+/// Generate a `BCrypt` hash using process isolation
 ///
-/// # Arguments
-/// * `password` - The password to hash
-/// * `cost` - The cost factor (4-20)
-///
-/// # Returns
-/// The `BCrypt` hash result or an error
-pub fn generate_hash(password: &str, cost: u32) -> Result<BcryptHashResult, GeneratorError> {
+/// Spawns a separate process for the computation, allowing true cancellation.
+pub async fn generate_hash_isolated(
+    app: &AppHandle,
+    password: String,
+    cost: u32,
+    state: &BcryptProcessState,
+) -> Result<BcryptHashResult, GeneratorError> {
     if !(MIN_COST..=MAX_COST).contains(&cost) {
         return Err(GeneratorError::InvalidParameter(format!(
             "Cost factor must be between {MIN_COST} and {MAX_COST}, got {cost}"
         )));
     }
 
-    let hash = bcrypt::hash(password, cost).map_err(|e| GeneratorError::Bcrypt(e.to_string()))?;
+    // Create request
+    let request = WorkerRequest::Hash { password, cost };
+    let request_json =
+        serde_json::to_string(&request).map_err(|e| GeneratorError::Bcrypt(e.to_string()))?;
 
-    Ok(BcryptHashResult {
-        hash,
-        cost,
-        algorithm: "2b".to_string(),
-    })
-}
+    // Spawn sidecar and get output
+    let output = spawn_worker(app, &request_json, state).await?;
 
-/// Verify a password against a `BCrypt` hash
-///
-/// # Arguments
-/// * `password` - The password to verify
-/// * `hash` - The `BCrypt` hash to verify against
-///
-/// # Returns
-/// The verification result
-pub fn verify_hash(password: &str, hash: &str) -> Result<BcryptVerifyResult, GeneratorError> {
-    match bcrypt::verify(password, hash) {
-        Ok(valid) => Ok(BcryptVerifyResult {
-            valid,
-            message: if valid {
-                "Password matches the hash".to_string()
-            } else {
-                "Password does not match the hash".to_string()
-            },
+    // Parse response
+    let response: WorkerResponse =
+        serde_json::from_str(&output).map_err(|e| GeneratorError::Bcrypt(e.to_string()))?;
+
+    match response {
+        WorkerResponse::HashSuccess {
+            hash,
+            cost,
+            algorithm,
+            ..
+        } => Ok(BcryptHashResult {
+            hash,
+            cost,
+            algorithm,
         }),
-        Err(e) => Err(GeneratorError::Bcrypt(e.to_string())),
+        WorkerResponse::Error { error, .. } => Err(GeneratorError::Bcrypt(error)),
+        WorkerResponse::VerifySuccess { .. } => Err(GeneratorError::Bcrypt(
+            "Unexpected response type: expected hash result".to_string(),
+        )),
     }
 }
+
+/// Verify a `BCrypt` hash using process isolation
+///
+/// Spawns a separate process for the computation, allowing true cancellation.
+pub async fn verify_hash_isolated(
+    app: &AppHandle,
+    password: String,
+    hash: String,
+    state: &BcryptProcessState,
+) -> Result<BcryptVerifyResult, GeneratorError> {
+    // Create request
+    let request = WorkerRequest::Verify { password, hash };
+    let request_json =
+        serde_json::to_string(&request).map_err(|e| GeneratorError::Bcrypt(e.to_string()))?;
+
+    // Spawn sidecar and get output
+    let output = spawn_worker(app, &request_json, state).await?;
+
+    // Parse response
+    let response: WorkerResponse =
+        serde_json::from_str(&output).map_err(|e| GeneratorError::Bcrypt(e.to_string()))?;
+
+    match response {
+        WorkerResponse::VerifySuccess { valid, message, .. } => {
+            Ok(BcryptVerifyResult { valid, message })
+        }
+        WorkerResponse::Error { error, .. } => Err(GeneratorError::Bcrypt(error)),
+        WorkerResponse::HashSuccess { .. } => Err(GeneratorError::Bcrypt(
+            "Unexpected response type: expected verify result".to_string(),
+        )),
+    }
+}
+
+/// Spawn the bcrypt-worker sidecar and execute a request
+async fn spawn_worker(
+    app: &AppHandle,
+    request_json: &str,
+    state: &BcryptProcessState,
+) -> Result<String, GeneratorError> {
+    // Kill any existing process first
+    state.kill();
+
+    // Create the sidecar command
+    // Note: Use just the binary name, not the full path
+    let sidecar_command = app
+        .shell()
+        .sidecar("bcrypt-worker")
+        .map_err(|e| GeneratorError::Bcrypt(format!("Failed to create sidecar command: {e}")))?;
+
+    // Spawn the sidecar process
+    let (mut rx, mut child) = sidecar_command
+        .spawn()
+        .map_err(|e| GeneratorError::Bcrypt(format!("Failed to spawn sidecar: {e}")))?;
+
+    // Write request to stdin (with newline for line-based reading)
+    let input = format!("{request_json}\n");
+    child
+        .write(input.as_bytes())
+        .map_err(|e| GeneratorError::Bcrypt(format!("Failed to write to stdin: {e}")))?;
+
+    // Store child handle for potential cancellation
+    state.set_child(child);
+
+    // Collect output from the process
+    let mut output = String::new();
+    let mut stderr_output = String::new();
+
+    while let Some(event) = rx.recv().await {
+        match event {
+            CommandEvent::Stdout(line_bytes) => {
+                let line = String::from_utf8_lossy(&line_bytes);
+                output.push_str(&line);
+            }
+            CommandEvent::Stderr(line_bytes) => {
+                let line = String::from_utf8_lossy(&line_bytes);
+                stderr_output.push_str(&line);
+            }
+            CommandEvent::Error(e) => {
+                // Clear child from state
+                state.take_child();
+                return Err(GeneratorError::Bcrypt(format!("Process error: {e}")));
+            }
+            CommandEvent::Terminated(status) => {
+                // Clear child from state
+                state.take_child();
+
+                // Check if process exited successfully (code 0)
+                let success = status.code == Some(0);
+                if !success {
+                    // Check if it was killed (signal termination indicates cancellation)
+                    if status.signal.is_some() {
+                        return Err(GeneratorError::Cancelled);
+                    }
+                    // Include stderr in error message if available
+                    let error_msg = if stderr_output.trim().is_empty() {
+                        format!("Worker exited with code: {:?}", status.code)
+                    } else {
+                        format!(
+                            "Worker exited with code {:?}: {}",
+                            status.code,
+                            stderr_output.trim()
+                        )
+                    };
+                    return Err(GeneratorError::Bcrypt(error_msg));
+                }
+                break;
+            }
+            _ => {}
+        }
+    }
+
+    if output.trim().is_empty() {
+        return Err(GeneratorError::Bcrypt("No output from worker".to_string()));
+    }
+
+    Ok(output)
+}
+
+// =============================================================================
+// Cost Information
+// =============================================================================
 
 /// Get information about a cost factor
 ///
@@ -119,6 +330,44 @@ pub fn get_cost_info(cost: u32) -> BcryptCostInfo {
         cost,
         estimated_time_ms,
         security_level,
+    }
+}
+
+// =============================================================================
+// Synchronous Operations (for testing)
+// =============================================================================
+
+/// Generate a `BCrypt` hash from a password (synchronous, for testing)
+#[cfg(test)]
+fn generate_hash(password: &str, cost: u32) -> Result<BcryptHashResult, GeneratorError> {
+    if !(MIN_COST..=MAX_COST).contains(&cost) {
+        return Err(GeneratorError::InvalidParameter(format!(
+            "Cost factor must be between {MIN_COST} and {MAX_COST}, got {cost}"
+        )));
+    }
+
+    let hash = bcrypt::hash(password, cost).map_err(|e| GeneratorError::Bcrypt(e.to_string()))?;
+
+    Ok(BcryptHashResult {
+        hash,
+        cost,
+        algorithm: "2b".to_string(),
+    })
+}
+
+/// Verify a password against a `BCrypt` hash (synchronous, for testing)
+#[cfg(test)]
+fn verify_hash(password: &str, hash: &str) -> Result<BcryptVerifyResult, GeneratorError> {
+    match bcrypt::verify(password, hash) {
+        Ok(valid) => Ok(BcryptVerifyResult {
+            valid,
+            message: if valid {
+                "Password matches the hash".to_string()
+            } else {
+                "Password does not match the hash".to_string()
+            },
+        }),
+        Err(e) => Err(GeneratorError::Bcrypt(e.to_string())),
     }
 }
 

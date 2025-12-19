@@ -1,4 +1,4 @@
-import type { EditorMode } from '$lib/components/editors/code-editor.svelte';
+import type { EditorMode } from '$lib/components/editor';
 
 export type { EditorMode };
 

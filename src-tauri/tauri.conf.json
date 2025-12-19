@@ -20,6 +20,10 @@
 				"minHeight": 600,
 				"hiddenTitle": true,
 				"titleBarStyle": "Overlay",
+				"trafficLightPosition": {
+					"x": 12,
+					"y": 10
+				},
 				"dragDropEnabled": false
 			}
 		],
@@ -30,6 +34,7 @@
 	"bundle": {
 		"active": true,
 		"targets": "all",
+		"externalBin": ["binaries/bcrypt-worker"],
 		"icon": [
 			"icons/32x32.png",
 			"icons/128x128.png",

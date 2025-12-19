@@ -93,9 +93,48 @@ fn statement_to_ast(stmt: &Statement, path: &str) -> AstNode {
             names, object_type, ..
         } => drop_to_ast(names, *object_type, path, range),
         _ => {
-            let label = format!("{:?}", std::mem::discriminant(stmt));
+            let label = statement_type_label(stmt);
             AstNode::new(AstNodeType::Statement, path.to_string(), label, range)
         }
+    }
+}
+
+fn statement_type_label(stmt: &Statement) -> String {
+    match stmt {
+        Statement::Query(_) => "SELECT".to_string(),
+        Statement::Insert(_) => "INSERT".to_string(),
+        Statement::Update { .. } => "UPDATE".to_string(),
+        Statement::Delete(_) => "DELETE".to_string(),
+        Statement::CreateTable(_) => "CREATE TABLE".to_string(),
+        Statement::CreateView { .. } => "CREATE VIEW".to_string(),
+        Statement::CreateIndex(_) => "CREATE INDEX".to_string(),
+        Statement::CreateSchema { .. } => "CREATE SCHEMA".to_string(),
+        Statement::CreateDatabase { .. } => "CREATE DATABASE".to_string(),
+        Statement::CreateFunction { .. } => "CREATE FUNCTION".to_string(),
+        Statement::CreateProcedure { .. } => "CREATE PROCEDURE".to_string(),
+        Statement::AlterTable { .. } => "ALTER TABLE".to_string(),
+        Statement::AlterIndex { .. } => "ALTER INDEX".to_string(),
+        Statement::AlterView { .. } => "ALTER VIEW".to_string(),
+        Statement::Drop { .. } => "DROP".to_string(),
+        Statement::Truncate { .. } => "TRUNCATE".to_string(),
+        Statement::Grant { .. } => "GRANT".to_string(),
+        Statement::Revoke { .. } => "REVOKE".to_string(),
+        Statement::StartTransaction { .. } => "START TRANSACTION".to_string(),
+        Statement::Commit { .. } => "COMMIT".to_string(),
+        Statement::Rollback { .. } => "ROLLBACK".to_string(),
+        Statement::SetVariable { .. } => "SET".to_string(),
+        Statement::ShowVariable { .. } => "SHOW".to_string(),
+        Statement::ShowTables { .. } => "SHOW TABLES".to_string(),
+        Statement::ShowColumns { .. } => "SHOW COLUMNS".to_string(),
+        Statement::Use { .. } => "USE".to_string(),
+        Statement::Explain { .. } => "EXPLAIN".to_string(),
+        Statement::Analyze { .. } => "ANALYZE".to_string(),
+        Statement::Merge { .. } => "MERGE".to_string(),
+        Statement::Call(_) => "CALL".to_string(),
+        Statement::Copy { .. } => "COPY".to_string(),
+        Statement::Cache { .. } => "CACHE".to_string(),
+        Statement::Comment { .. } => "COMMENT".to_string(),
+        _ => "SQL Statement".to_string(),
     }
 }
 
@@ -343,10 +382,25 @@ fn drop_to_ast(
     AstNode::new(
         AstNodeType::Statement,
         path.to_string(),
-        format!("DROP {object_type:?}"),
+        format!("DROP {}", object_type_label(object_type)),
         range,
     )
     .with_children(children)
+}
+
+const fn object_type_label(object_type: sqlparser::ast::ObjectType) -> &'static str {
+    use sqlparser::ast::ObjectType;
+    match object_type {
+        ObjectType::Table => "TABLE",
+        ObjectType::View => "VIEW",
+        ObjectType::Index => "INDEX",
+        ObjectType::Schema => "SCHEMA",
+        ObjectType::Database => "DATABASE",
+        ObjectType::Sequence => "SEQUENCE",
+        ObjectType::Stage => "STAGE",
+        ObjectType::Type => "TYPE",
+        ObjectType::Role => "ROLE",
+    }
 }
 
 fn query_to_ast(query: &Query, path: &str) -> AstNode {
@@ -443,13 +497,22 @@ fn query_body_to_ast(body: &SetExpr, path: &str) -> Option<AstNode> {
                 AstNode::new(
                     AstNodeType::Operator,
                     format!("{path}.operation"),
-                    format!("{op:?}"),
+                    set_operator_label(*op).to_string(),
                     body_range,
                 )
                 .with_children(vec![left_ast, right_ast]),
             )
         }
         _ => None,
+    }
+}
+
+const fn set_operator_label(op: sqlparser::ast::SetOperator) -> &'static str {
+    use sqlparser::ast::SetOperator;
+    match op {
+        SetOperator::Union => "UNION",
+        SetOperator::Intersect => "INTERSECT",
+        SetOperator::Except => "EXCEPT",
     }
 }
 
@@ -649,7 +712,7 @@ fn table_to_ast(table: &TableWithJoins, path: &str) -> AstNode {
 
     children.extend(table.joins.iter().enumerate().map(|(i, join)| {
         let join_range = span_to_range(join.span());
-        let join_type = format!("{:?}", join.join_operator);
+        let join_type = join_operator_label(&join.join_operator);
         let join_table = match &join.relation {
             TableFactor::Table { name, .. } => name.to_string(),
             _ => "table".to_string(),
@@ -671,6 +734,26 @@ fn table_to_ast(table: &TableWithJoins, path: &str) -> AstNode {
     .with_children(children)
 }
 
+const fn join_operator_label(op: &sqlparser::ast::JoinOperator) -> &'static str {
+    use sqlparser::ast::JoinOperator;
+    match op {
+        JoinOperator::Inner(_) => "INNER JOIN",
+        JoinOperator::LeftOuter(_) => "LEFT JOIN",
+        JoinOperator::RightOuter(_) => "RIGHT JOIN",
+        JoinOperator::FullOuter(_) => "FULL OUTER JOIN",
+        JoinOperator::CrossJoin => "CROSS JOIN",
+        JoinOperator::Semi(_) => "SEMI JOIN",
+        JoinOperator::LeftSemi(_) => "LEFT SEMI JOIN",
+        JoinOperator::RightSemi(_) => "RIGHT SEMI JOIN",
+        JoinOperator::Anti(_) => "ANTI JOIN",
+        JoinOperator::LeftAnti(_) => "LEFT ANTI JOIN",
+        JoinOperator::RightAnti(_) => "RIGHT ANTI JOIN",
+        JoinOperator::CrossApply => "CROSS APPLY",
+        JoinOperator::OuterApply => "OUTER APPLY",
+        JoinOperator::AsOf { .. } => "AS OF JOIN",
+    }
+}
+
 fn table_factor_label(factor: &TableFactor) -> String {
     match factor {
         TableFactor::Table { name, alias, .. } => alias
@@ -686,8 +769,337 @@ fn table_factor_label(factor: &TableFactor) -> String {
 
 fn expr_to_ast(expr: &Expr, path: &str, label_prefix: &str) -> AstNode {
     let expr_range = span_to_range(expr.span());
-    let label = format!("{label_prefix}: {}", truncate_string(&expr.to_string(), 50));
-    AstNode::new(AstNodeType::Expression, path.to_string(), label, expr_range)
+
+    match expr {
+        Expr::BinaryOp { left, op, right } => {
+            binary_op_to_ast(left, op, right, path, label_prefix, expr_range)
+        }
+        Expr::UnaryOp { op, expr: inner } => {
+            unary_op_to_ast(inner, *op, path, label_prefix, expr_range)
+        }
+        Expr::IsNull(inner) => is_null_to_ast(inner, false, path, label_prefix, expr_range),
+        Expr::IsNotNull(inner) => is_null_to_ast(inner, true, path, label_prefix, expr_range),
+        Expr::InList {
+            expr: inner,
+            list,
+            negated,
+        } => in_list_to_ast(inner, list, *negated, path, label_prefix, expr_range),
+        Expr::Between {
+            expr: inner,
+            low,
+            high,
+            negated,
+        } => between_to_ast(inner, low, high, *negated, path, label_prefix, expr_range),
+        Expr::Like {
+            expr: inner,
+            pattern,
+            negated,
+            ..
+        } => like_to_ast(
+            inner,
+            pattern,
+            *negated,
+            "LIKE",
+            path,
+            label_prefix,
+            expr_range,
+        ),
+        Expr::ILike {
+            expr: inner,
+            pattern,
+            negated,
+            ..
+        } => like_to_ast(
+            inner,
+            pattern,
+            *negated,
+            "ILIKE",
+            path,
+            label_prefix,
+            expr_range,
+        ),
+        Expr::Function(func) => function_to_ast(func, path, label_prefix, expr_range),
+        Expr::Subquery(query) => subquery_expr_to_ast(query, path, label_prefix, expr_range),
+        Expr::Nested(inner) => expr_to_ast(inner, path, label_prefix),
+        Expr::Case {
+            operand,
+            conditions,
+            results,
+            else_result,
+        } => case_to_ast(
+            operand.as_deref(),
+            conditions,
+            results,
+            else_result.as_deref(),
+            path,
+            label_prefix,
+            expr_range,
+        ),
+        Expr::Identifier(ident) => AstNode::new(
+            AstNodeType::Identifier,
+            path.to_string(),
+            format!("{label_prefix}: {ident}"),
+            expr_range,
+        ),
+        Expr::CompoundIdentifier(idents) => {
+            compound_ident_to_ast(idents, path, label_prefix, expr_range)
+        }
+        Expr::Value(val) => AstNode::new(
+            AstNodeType::Literal,
+            path.to_string(),
+            format!("{label_prefix}: {val}"),
+            expr_range,
+        ),
+        _ => AstNode::new(
+            AstNodeType::Expression,
+            path.to_string(),
+            format!("{label_prefix}: {}", truncate_string(&expr.to_string(), 50)),
+            expr_range,
+        ),
+    }
+}
+
+fn binary_op_to_ast(
+    left: &Expr,
+    op: &sqlparser::ast::BinaryOperator,
+    right: &Expr,
+    path: &str,
+    label_prefix: &str,
+    range: AstRange,
+) -> AstNode {
+    let left_ast = expr_to_ast(left, &format!("{path}.left"), "Left");
+    let right_ast = expr_to_ast(right, &format!("{path}.right"), "Right");
+    AstNode::new(
+        AstNodeType::Operator,
+        path.to_string(),
+        format!("{label_prefix}: {op}"),
+        range,
+    )
+    .with_children(vec![left_ast, right_ast])
+}
+
+fn unary_op_to_ast(
+    inner: &Expr,
+    op: sqlparser::ast::UnaryOperator,
+    path: &str,
+    label_prefix: &str,
+    range: AstRange,
+) -> AstNode {
+    let inner_ast = expr_to_ast(inner, &format!("{path}.operand"), "Operand");
+    AstNode::new(
+        AstNodeType::Operator,
+        path.to_string(),
+        format!("{label_prefix}: {op}"),
+        range,
+    )
+    .with_children(vec![inner_ast])
+}
+
+fn is_null_to_ast(
+    inner: &Expr,
+    is_not: bool,
+    path: &str,
+    label_prefix: &str,
+    range: AstRange,
+) -> AstNode {
+    let inner_ast = expr_to_ast(inner, &format!("{path}.expr"), "Expression");
+    let op_name = if is_not { "IS NOT NULL" } else { "IS NULL" };
+    AstNode::new(
+        AstNodeType::Operator,
+        path.to_string(),
+        format!("{label_prefix}: {op_name}"),
+        range,
+    )
+    .with_children(vec![inner_ast])
+}
+
+fn in_list_to_ast(
+    inner: &Expr,
+    list: &[Expr],
+    negated: bool,
+    path: &str,
+    label_prefix: &str,
+    range: AstRange,
+) -> AstNode {
+    let op_name = if negated { "NOT IN" } else { "IN" };
+    let mut children = vec![expr_to_ast(inner, &format!("{path}.expr"), "Expression")];
+    children.extend(list.iter().enumerate().map(|(i, item)| {
+        expr_to_ast(
+            item,
+            &format!("{path}.list[{i}]"),
+            &format!("Item {}", i + 1),
+        )
+    }));
+    AstNode::new(
+        AstNodeType::Operator,
+        path.to_string(),
+        format!("{label_prefix}: {op_name}"),
+        range,
+    )
+    .with_children(children)
+}
+
+fn between_to_ast(
+    inner: &Expr,
+    low: &Expr,
+    high: &Expr,
+    negated: bool,
+    path: &str,
+    label_prefix: &str,
+    range: AstRange,
+) -> AstNode {
+    let op_name = if negated { "NOT BETWEEN" } else { "BETWEEN" };
+    let children = vec![
+        expr_to_ast(inner, &format!("{path}.expr"), "Expression"),
+        expr_to_ast(low, &format!("{path}.low"), "Low"),
+        expr_to_ast(high, &format!("{path}.high"), "High"),
+    ];
+    AstNode::new(
+        AstNodeType::Operator,
+        path.to_string(),
+        format!("{label_prefix}: {op_name}"),
+        range,
+    )
+    .with_children(children)
+}
+
+fn like_to_ast(
+    inner: &Expr,
+    pattern: &Expr,
+    negated: bool,
+    like_type: &str,
+    path: &str,
+    label_prefix: &str,
+    range: AstRange,
+) -> AstNode {
+    let op_name = if negated {
+        format!("NOT {like_type}")
+    } else {
+        like_type.to_string()
+    };
+    let children = vec![
+        expr_to_ast(inner, &format!("{path}.expr"), "Expression"),
+        expr_to_ast(pattern, &format!("{path}.pattern"), "Pattern"),
+    ];
+    AstNode::new(
+        AstNodeType::Operator,
+        path.to_string(),
+        format!("{label_prefix}: {op_name}"),
+        range,
+    )
+    .with_children(children)
+}
+
+fn function_to_ast(
+    func: &sqlparser::ast::Function,
+    path: &str,
+    label_prefix: &str,
+    range: AstRange,
+) -> AstNode {
+    let func_name = func.name.to_string();
+    let children: Vec<AstNode> = match &func.args {
+        sqlparser::ast::FunctionArguments::List(arg_list) => arg_list
+            .args
+            .iter()
+            .enumerate()
+            .filter_map(|(i, arg)| {
+                let arg_expr = match arg {
+                    sqlparser::ast::FunctionArg::Unnamed(
+                        sqlparser::ast::FunctionArgExpr::Expr(e),
+                    )
+                    | sqlparser::ast::FunctionArg::Named {
+                        arg: sqlparser::ast::FunctionArgExpr::Expr(e),
+                        ..
+                    } => Some(e),
+                    _ => None,
+                };
+                arg_expr
+                    .map(|e| expr_to_ast(e, &format!("{path}.arg[{i}]"), &format!("Arg {}", i + 1)))
+            })
+            .collect(),
+        sqlparser::ast::FunctionArguments::Subquery(query) => {
+            vec![query_to_ast(query, &format!("{path}.subquery"))]
+        }
+        sqlparser::ast::FunctionArguments::None => vec![],
+    };
+    let node = AstNode::new(
+        AstNodeType::Function,
+        path.to_string(),
+        format!("{label_prefix}: {func_name}()"),
+        range,
+    );
+    if children.is_empty() {
+        node
+    } else {
+        node.with_children(children)
+    }
+}
+
+fn subquery_expr_to_ast(query: &Query, path: &str, label_prefix: &str, range: AstRange) -> AstNode {
+    let subquery_ast = query_to_ast(query, &format!("{path}.subquery"));
+    AstNode::new(
+        AstNodeType::Expression,
+        path.to_string(),
+        format!("{label_prefix}: (Subquery)"),
+        range,
+    )
+    .with_children(vec![subquery_ast])
+}
+
+fn case_to_ast(
+    operand: Option<&Expr>,
+    conditions: &[Expr],
+    results: &[Expr],
+    else_result: Option<&Expr>,
+    path: &str,
+    label_prefix: &str,
+    range: AstRange,
+) -> AstNode {
+    let mut children = Vec::new();
+    if let Some(op) = operand {
+        children.push(expr_to_ast(op, &format!("{path}.operand"), "Operand"));
+    }
+    for (i, (cond, result)) in conditions.iter().zip(results.iter()).enumerate() {
+        children.push(expr_to_ast(
+            cond,
+            &format!("{path}.when[{i}]"),
+            &format!("WHEN {}", i + 1),
+        ));
+        children.push(expr_to_ast(
+            result,
+            &format!("{path}.then[{i}]"),
+            &format!("THEN {}", i + 1),
+        ));
+    }
+    if let Some(else_expr) = else_result {
+        children.push(expr_to_ast(else_expr, &format!("{path}.else"), "ELSE"));
+    }
+    AstNode::new(
+        AstNodeType::Expression,
+        path.to_string(),
+        format!("{label_prefix}: CASE"),
+        range,
+    )
+    .with_children(children)
+}
+
+fn compound_ident_to_ast(
+    idents: &[sqlparser::ast::Ident],
+    path: &str,
+    label_prefix: &str,
+    range: AstRange,
+) -> AstNode {
+    let full_name = idents
+        .iter()
+        .map(std::string::ToString::to_string)
+        .collect::<Vec<_>>()
+        .join(".");
+    AstNode::new(
+        AstNodeType::Identifier,
+        path.to_string(),
+        format!("{label_prefix}: {full_name}"),
+        range,
+    )
 }
 
 fn truncate_string(s: &str, max_len: usize) -> String {

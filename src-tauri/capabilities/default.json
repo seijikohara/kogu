@@ -21,6 +21,11 @@
 		"dialog:allow-save",
 		"fs:allow-read-text-file",
 		"fs:allow-write-text-file",
-		"decorum:allow-show-snap-overlay"
+		"decorum:allow-show-snap-overlay",
+		{
+			"identifier": "shell:allow-spawn",
+			"allow": [{ "name": "binaries/bcrypt-worker", "sidecar": true }]
+		},
+		"shell:allow-kill"
 	]
 }

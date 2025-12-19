@@ -7,6 +7,7 @@ edition = "2021"
 license = "MIT"
 repository = "https://github.com/seijikohara/kogu"
 keywords = ["developer-tools", "utilities", "kogu", "tauri"]
+default-run = "kogu"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
@@ -16,6 +17,10 @@ keywords = ["developer-tools", "utilities", "kogu", "tauri"]
 # This seems to be only an issue on Windows, see https://github.com/rust-lang/cargo/issues/8519
 name = "kogu_lib"
 crate-type = ["staticlib", "cdylib", "rlib"]
+
+[[bin]]
+name = "bcrypt-worker"
+path = "src/bin/bcrypt-worker.rs"
 
 [build-dependencies]
 tauri-build = { version = "2", features = [] }
@@ -38,6 +43,10 @@ sqlparser = "0.53"
 tauri-plugin-mcp-bridge = "0.4.0"
 tauri-plugin-dialog = "2.4.2"
 tauri-plugin-fs = "2.4.4"
+tauri-plugin-shell = "2"
+
+# Async Runtime (for cancellable operations)
+tokio = { version = "1", features = ["sync"] }
 
 # Cryptographic Generators
 bcrypt = "0.16"

@@ -2,50 +2,107 @@
 	import {
 		ArrowRightLeft,
 		BookOpen,
-		Copy,
 		ExternalLink,
 		Hammer,
 		Link2,
 		Plus,
 		Trash2,
 	} from '@lucide/svelte';
-	import { PageHeader, SplitPane } from '$lib/components/layout/index.js';
-	import OptionSelect from '$lib/components/options/option-select.svelte';
-	import OptionsPanel from '$lib/components/options/options-panel.svelte';
-	import OptionsSection from '$lib/components/options/options-section.svelte';
-	import { EditorPane } from '$lib/components/tool/index.js';
+	import { PageLayout, SplitPane } from '$lib/components/layout';
+	import { useTabSync } from '$lib/utils';
+	import { CopyButton } from '$lib/components/action';
+	import {
+		FormCheckbox,
+		FormInfo,
+		FormInput,
+		FormMode,
+		FormSection,
+		FormSelect,
+		FormSlider,
+	} from '$lib/components/form';
+	import { OptionsPanel } from '$lib/components/panel';
+	import { CodeEditor } from '$lib/components/editor';
 	import { Button } from '$lib/components/ui/button/index.js';
 	import { Input } from '$lib/components/ui/input/index.js';
 	import {
 		buildUrl,
-		decodeUrl,
-		decodeUrlComponent,
-		encodeUrl,
-		encodeUrlComponent,
+		decodeUrlWithOptions,
+		defaultUrlDecodeOptions,
+		defaultUrlEncodeOptions,
+		encodeUrlWithOptions,
+		getEncodingDepth,
+		isDoubleEncoded,
 		parseUrl,
 		type QueryParameter,
 		SAMPLE_URL,
 		URL_ENCODING_EXAMPLES,
+		type UrlDecodeOptions,
 		type UrlEncodeMode,
+		type UrlEncodeOptions,
+		type UrlHexCase,
+		type UrlInvalidHandling,
+		type UrlNewlineHandling,
+		type UrlSpaceEncoding,
 	} from '$lib/services/encoders.js';
 
 	type Tab = 'encode' | 'parse' | 'build' | 'reference';
 	type Mode = 'encode' | 'decode';
 
-	// Tab definitions for PageHeader
-	const urlTabs = [
-		{ id: 'encode', label: 'Encode/Decode', icon: ArrowRightLeft },
-		{ id: 'parse', label: 'Parse URL', icon: Link2 },
-		{ id: 'build', label: 'Build URL', icon: Hammer },
-		{ id: 'reference', label: 'Reference', icon: BookOpen },
+	// Tab definitions
+	const tabs = [
+		{ id: 'encode' as const, label: 'Encode/Decode', icon: ArrowRightLeft },
+		{ id: 'parse' as const, label: 'Parse URL', icon: Link2 },
+		{ id: 'build' as const, label: 'Build URL', icon: Hammer },
+		{ id: 'reference' as const, label: 'Reference', icon: BookOpen },
 	] as const;
 
-	// State
-	let activeTab = $state<Tab>('encode');
+	const tabIds = tabs.map((t) => t.id);
+
+	// Tab sync with URL
+	const { activeTab, setActiveTab } = useTabSync({
+		tabs: tabIds,
+		defaultTab: 'encode',
+	});
+
+	// Type-safe tab change handler for PageLayout
+	const handleTabChange = (tab: string) => setActiveTab(tab as Tab);
+
+	// Encode/Decode tab state
 	let mode = $state<Mode>('encode');
-	let encodeMode = $state<UrlEncodeMode>('component');
 	let input = $state('');
 	let showOptions = $state(true);
+
+	// Encode options
+	let encodeMode = $state<UrlEncodeMode>(defaultUrlEncodeOptions.mode);
+	let spaceEncoding = $state<UrlSpaceEncoding>(defaultUrlEncodeOptions.spaceEncoding);
+	let hexCase = $state<UrlHexCase>(defaultUrlEncodeOptions.hexCase);
+	let newlineHandling = $state<UrlNewlineHandling>(defaultUrlEncodeOptions.newlineHandling);
+	let preserveChars = $state(defaultUrlEncodeOptions.preserveChars);
+	let encodeNonAscii = $state(defaultUrlEncodeOptions.encodeNonAscii);
+
+	// Decode options
+	let plusAsSpace = $state(defaultUrlDecodeOptions.plusAsSpace);
+	let invalidHandling = $state<UrlInvalidHandling>(defaultUrlDecodeOptions.invalidHandling);
+	let decodeMultiple = $state(defaultUrlDecodeOptions.decodeMultiple);
+	let maxIterations = $state(defaultUrlDecodeOptions.maxIterations);
+
+	// Derived encode options object
+	const encodeOptions = $derived<Partial<UrlEncodeOptions>>({
+		mode: encodeMode,
+		spaceEncoding,
+		hexCase,
+		newlineHandling,
+		preserveChars,
+		encodeNonAscii,
+	});
+
+	// Derived decode options object
+	const decodeOptions = $derived<Partial<UrlDecodeOptions>>({
+		plusAsSpace,
+		invalidHandling,
+		decodeMultiple,
+		maxIterations,
+	});
 
 	// URL Parser state
 	let parseInput = $state('');
@@ -57,6 +114,14 @@
 		{ key: 'name', value: 'test' },
 	]);
 
+	// Detected info for decode mode
+	const detectedDoubleEncoded = $derived(
+		mode === 'decode' && input.trim() ? isDoubleEncoded(input) : false
+	);
+	const detectedEncodingDepth = $derived(
+		mode === 'decode' && input.trim() ? getEncodingDepth(input) : 0
+	);
+
 	// Computed output and error for encode/decode
 	const encodeResult = $derived.by((): { output: string; error: string } => {
 		if (!input.trim()) {
@@ -64,12 +129,10 @@
 		}
 
 		try {
-			let result: string;
-			if (mode === 'encode') {
-				result = encodeMode === 'component' ? encodeUrlComponent(input) : encodeUrl(input);
-			} else {
-				result = encodeMode === 'component' ? decodeUrlComponent(input) : decodeUrl(input);
-			}
+			const result =
+				mode === 'encode'
+					? encodeUrlWithOptions(input, encodeOptions)
+					: decodeUrlWithOptions(input, decodeOptions);
 			return { output: result, error: '' };
 		} catch (e) {
 			return { output: '', error: e instanceof Error ? e.message : 'Invalid input' };
@@ -89,11 +152,17 @@
 	// Built URL
 	const builtUrl = $derived(buildUrl(baseUrl, queryParams));
 
-	// Validation state
+	// Validation state per tab
 	const valid = $derived.by((): boolean | null => {
-		if (activeTab !== 'encode') return null;
-		if (!input.trim()) return null;
-		return !error;
+		if (activeTab === 'encode') {
+			if (!input.trim()) return null;
+			return !error;
+		}
+		if (activeTab === 'parse') {
+			if (!parseInput.trim()) return null;
+			return parsedUrl !== null;
+		}
+		return null;
 	});
 
 	// Handlers
@@ -118,25 +187,6 @@
 		}
 	};
 
-	const handleCopyBuiltUrl = async () => {
-		try {
-			await navigator.clipboard.writeText(builtUrl);
-		} catch {
-			// Clipboard access denied
-		}
-	};
-
-	const handleDownload = () => {
-		const filename = mode === 'encode' ? 'encoded.txt' : 'decoded.txt';
-		const blob = new Blob([output], { type: 'text/plain' });
-		const url = URL.createObjectURL(blob);
-		const a = document.createElement('a');
-		a.href = url;
-		a.download = filename;
-		a.click();
-		URL.revokeObjectURL(url);
-	};
-
 	const handleSample = () => {
 		input = SAMPLE_URL;
 	};
@@ -158,136 +208,222 @@
 			i === index ? { ...param, [field]: value } : param
 		);
 	};
-
-	const copyToClipboard = async (text: string) => {
-		try {
-			await navigator.clipboard.writeText(text);
-		} catch {
-			// Clipboard access denied
-		}
-	};
 </script>
 
 <svelte:head>
 	<title>URL Encoder - Kogu</title>
 </svelte:head>
 
-<div class="flex h-full flex-col overflow-hidden">
-	<PageHeader
-		tabs={urlTabs}
-		{activeTab}
-		ontabchange={(tab) => (activeTab = tab as Tab)}
-		valid={activeTab === 'encode'
-			? valid
-			: activeTab === 'parse'
-				? parsedUrl
-					? true
-					: parseInput.trim()
-						? false
-						: null
-				: undefined}
-		error={activeTab === 'encode' ? error : undefined}
-	>
-		{#snippet statusContent()}
-			{#if activeTab === 'encode'}
-				{#if input.trim() && output}
-					<span class="text-muted-foreground">
-						Input: <strong class="text-foreground">{input.length}</strong> chars
-					</span>
-					<span class="text-muted-foreground">
-						Output: <strong class="text-foreground">{output.length}</strong> chars
-					</span>
-				{/if}
-			{:else if activeTab === 'parse'}
-				{#if parsedUrl}
-					<span class="text-muted-foreground">
-						Params: <strong class="text-foreground">{parsedUrl.params.length}</strong>
-					</span>
-				{/if}
-			{:else if activeTab === 'build'}
+<PageLayout
+	{tabs}
+	{activeTab}
+	ontabchange={handleTabChange}
+	{valid}
+	error={activeTab === 'encode' ? error : undefined}
+	preserveTabState
+>
+	{#snippet statusContent()}
+		{#if activeTab === 'encode'}
+			{#if input.trim() && output}
 				<span class="text-muted-foreground">
-					Params: <strong class="text-foreground">{queryParams.length}</strong>
+					Input: <strong class="text-foreground">{input.length}</strong> chars
+				</span>
+				<span class="text-muted-foreground">
+					Output: <strong class="text-foreground">{output.length}</strong> chars
 				</span>
 			{/if}
-		{/snippet}
-	</PageHeader>
-
-	<!-- Content -->
-	<div class="flex flex-1 overflow-hidden">
-		{#if activeTab === 'encode'}
-			<OptionsPanel
-				show={showOptions}
-				onclose={() => (showOptions = false)}
-				onopen={() => (showOptions = true)}
-			>
-				<OptionsSection title="Mode">
-					<OptionSelect
-						label="Operation"
-						value={mode}
-						onchange={(v) => {
-							mode = v as Mode;
-							input = '';
-						}}
-						options={[
-							{ value: 'encode', label: 'Encode' },
-							{ value: 'decode', label: 'Decode' },
-						]}
-					/>
-					<OptionSelect
-						label="Encoding Mode"
-						value={encodeMode}
-						onchange={(v) => (encodeMode = v as UrlEncodeMode)}
-						options={[
-							{ value: 'component', label: 'encodeURIComponent' },
-							{ value: 'uri', label: 'encodeURI' },
-						]}
-					/>
-				</OptionsSection>
-
-				<OptionsSection title="Info">
-					<div class="space-y-2 text-[11px] text-muted-foreground">
-						<p>
-							<strong class="text-foreground">encodeURIComponent:</strong> Encodes all special characters
-							including /, ?, &, =, #
-						</p>
-						<p>
-							<strong class="text-foreground">encodeURI:</strong> Preserves URL structure characters (/,
-							?, &, =, #, :)
-						</p>
-					</div>
-				</OptionsSection>
-			</OptionsPanel>
-
-			<SplitPane class="h-full flex-1">
-				{#snippet left()}
-					<EditorPane
-						title={mode === 'encode' ? 'Text Input' : 'URL Encoded Input'}
-						value={input}
-						onchange={(v) => (input = v)}
-						mode="input"
-						editorMode="plain"
-						placeholder={mode === 'encode'
-							? 'Enter text to encode...'
-							: 'Enter URL encoded text to decode...'}
-						onsample={handleSample}
-						onpaste={handlePaste}
-						onclear={handleClear}
-						showViewToggle={false}
-					/>
-				{/snippet}
-				{#snippet right()}
-					<EditorPane
-						title={mode === 'encode' ? 'URL Encoded Output' : 'Decoded Text'}
-						value={output}
-						mode="readonly"
-						editorMode="plain"
-						placeholder={mode === 'encode' ? 'Encoded output...' : 'Decoded output...'}
-						oncopy={handleCopy}
-						showViewToggle={false}
-					/>
-				{/snippet}
-			</SplitPane>
 		{:else if activeTab === 'parse'}
+			{#if parsedUrl}
+				<span class="text-muted-foreground">
+					Params: <strong class="text-foreground">{parsedUrl.params.length}</strong>
+				</span>
+			{/if}
+		{:else if activeTab === 'build'}
+			<span class="text-muted-foreground">
+				Params: <strong class="text-foreground">{queryParams.length}</strong>
+			</span>
+		{/if}
+	{/snippet}
+
+	{#snippet tabContent(tab)}
+		{#if tab === 'encode'}
+			<div class="flex h-full">
+				<OptionsPanel
+					show={showOptions}
+					onclose={() => (showOptions = false)}
+					onopen={() => (showOptions = true)}
+				>
+					<FormSection title="Mode">
+						<FormMode
+							value={mode}
+							onchange={(v) => {
+								mode = v as Mode;
+								input = '';
+							}}
+							options={[
+								{ value: 'encode', label: 'Encode' },
+								{ value: 'decode', label: 'Decode' },
+							]}
+						/>
+					</FormSection>
+
+					{#if mode === 'encode'}
+						<FormSection title="Encoding">
+							<FormSelect
+								label="Mode"
+								bind:value={encodeMode}
+								options={[
+									{ value: 'component', label: 'Component (strict)' },
+									{ value: 'uri', label: 'URI (preserve structure)' },
+									{ value: 'form', label: 'Form (x-www-form-urlencoded)' },
+									{ value: 'path', label: 'Path segment' },
+									{ value: 'custom', label: 'Custom' },
+								]}
+							/>
+							<FormSelect
+								label="Space Encoding"
+								bind:value={spaceEncoding}
+								options={[
+									{ value: 'percent', label: '%20 (standard)' },
+									{ value: 'plus', label: '+ (form data)' },
+								]}
+							/>
+							<FormSelect
+								label="Hex Case"
+								bind:value={hexCase}
+								options={[
+									{ value: 'upper', label: 'Uppercase (%2F)' },
+									{ value: 'lower', label: 'Lowercase (%2f)' },
+								]}
+							/>
+							<FormSelect
+								label="Newline Handling"
+								bind:value={newlineHandling}
+								options={[
+									{ value: 'encode', label: 'Encode as-is' },
+									{ value: 'crlf', label: 'Convert to CRLF' },
+									{ value: 'lf', label: 'Convert to LF' },
+									{ value: 'remove', label: 'Remove' },
+								]}
+							/>
+							<div class="pt-1">
+								<FormCheckbox label="Encode non-ASCII characters" bind:checked={encodeNonAscii} />
+							</div>
+						</FormSection>
+
+						{#if encodeMode === 'custom'}
+							<FormSection title="Custom Settings">
+								<FormInput
+									label="Preserve Characters"
+									bind:value={preserveChars}
+									placeholder="e.g., -_.~"
+								/>
+								<FormInfo>
+									<p>Characters listed here will not be encoded.</p>
+								</FormInfo>
+							</FormSection>
+						{/if}
+
+						<FormSection title="Info" open={false}>
+							<FormInfo title="Encoding Modes">
+								<p><strong>Component:</strong> Encodes all special chars including /, ?, &, =, #</p>
+								<p class="mt-1">
+									<strong>URI:</strong> Preserves URL structure characters (/, ?, &, =, #, :)
+								</p>
+								<p class="mt-1"><strong>Form:</strong> Like component but uses + for spaces</p>
+								<p class="mt-1">
+									<strong>Path:</strong> Preserves / but encodes other special chars
+								</p>
+								<p class="mt-1"><strong>Custom:</strong> Configure preserved characters manually</p>
+							</FormInfo>
+						</FormSection>
+					{:else}
+						<FormSection title="Decoding">
+							<FormCheckbox label="Treat + as space" bind:checked={plusAsSpace} />
+							<FormSelect
+								label="Invalid Sequences"
+								bind:value={invalidHandling}
+								options={[
+									{ value: 'error', label: 'Throw error' },
+									{ value: 'skip', label: 'Skip (remove)' },
+									{ value: 'keep', label: 'Keep as-is' },
+								]}
+							/>
+							<FormCheckbox label="Decode multiple layers" bind:checked={decodeMultiple} />
+							{#if decodeMultiple}
+								<div class="pt-1">
+									<FormSlider
+										label="Max Iterations"
+										bind:value={maxIterations}
+										min={1}
+										max={10}
+										step={1}
+									/>
+								</div>
+							{/if}
+						</FormSection>
+
+						{#if detectedDoubleEncoded || detectedEncodingDepth > 1}
+							<FormSection title="Detected">
+								<FormInfo showIcon={false}>
+									{#if detectedDoubleEncoded}
+										<p><strong>Warning:</strong> Double-encoded content detected</p>
+									{/if}
+									{#if detectedEncodingDepth > 1}
+										<p class="mt-1">
+											<strong>Encoding Depth:</strong>
+											{detectedEncodingDepth} layers
+										</p>
+									{/if}
+								</FormInfo>
+							</FormSection>
+						{/if}
+
+						<FormSection title="Info" open={false}>
+							<FormInfo title="Decoding Options">
+								<p><strong>+ as space:</strong> Treats + as space (form data format)</p>
+								<p class="mt-1">
+									<strong>Invalid sequences:</strong> How to handle malformed % sequences
+								</p>
+								<p class="mt-1">
+									<strong>Multiple layers:</strong> Recursively decode double/triple encoded content
+								</p>
+							</FormInfo>
+						</FormSection>
+					{/if}
+				</OptionsPanel>
+
+				<SplitPane class="h-full flex-1">
+					{#snippet left()}
+						<CodeEditor
+							title={mode === 'encode' ? 'Text Input' : 'URL Encoded Input'}
+							value={input}
+							onchange={(v) => (input = v)}
+							mode="input"
+							editorMode="plain"
+							placeholder={mode === 'encode'
+								? 'Enter text to encode...'
+								: 'Enter URL encoded text to decode...'}
+							onsample={handleSample}
+							onpaste={handlePaste}
+							onclear={handleClear}
+							showViewToggle={false}
+						/>
+					{/snippet}
+					{#snippet right()}
+						<CodeEditor
+							title={mode === 'encode' ? 'URL Encoded Output' : 'Decoded Text'}
+							value={output}
+							mode="readonly"
+							editorMode="plain"
+							placeholder={mode === 'encode' ? 'Encoded output...' : 'Decoded output...'}
+							oncopy={handleCopy}
+							showViewToggle={false}
+						/>
+					{/snippet}
+				</SplitPane>
+			</div>
+		{:else if tab === 'parse'}
 			<div class="flex flex-1 flex-col overflow-hidden p-4">
 				<div class="mb-4">
 					<label for="url-parse-input" class="mb-1 block text-xs font-medium text-muted-foreground"
@@ -316,14 +452,7 @@
 									<div class="flex items-center gap-2">
 										<span class="w-24 font-medium text-muted-foreground">{key}:</span>
 										<code class="flex-1 rounded bg-muted px-2 py-1 font-mono">{value}</code>
-										<Button
-											variant="ghost"
-											size="icon"
-											class="h-6 w-6"
-											onclick={() => copyToClipboard(String(value))}
-										>
-											<Copy class="h-3 w-3" />
-										</Button>
+										<CopyButton text={String(value)} toastLabel={key} size="icon" class="h-6 w-6" />
 									</div>
 								{/each}
 							</div>
@@ -343,14 +472,12 @@
 											>
 											<span class="text-muted-foreground">=</span>
 											<code class="flex-1 rounded bg-muted px-2 py-1 font-mono">{param.value}</code>
-											<Button
-												variant="ghost"
+											<CopyButton
+												text={param.value}
+												toastLabel={param.key}
 												size="icon"
 												class="h-6 w-6"
-												onclick={() => copyToClipboard(param.value)}
-											>
-												<Copy class="h-3 w-3" />
-											</Button>
+											/>
 										</div>
 									{/each}
 								</div>
@@ -367,7 +494,7 @@
 					</div>
 				{/if}
 			</div>
-		{:else if activeTab === 'build'}
+		{:else if tab === 'build'}
 			<div class="flex flex-1 flex-col overflow-hidden p-4">
 				<div class="mb-4">
 					<label for="url-base-input" class="mb-1 block text-xs font-medium text-muted-foreground"
@@ -421,10 +548,7 @@
 					<div class="mb-2 flex items-center justify-between">
 						<span class="text-xs font-medium text-muted-foreground">Generated URL</span>
 						<div class="flex gap-1">
-							<Button variant="ghost" size="sm" onclick={handleCopyBuiltUrl}>
-								<Copy class="mr-1 h-3 w-3" />
-								Copy
-							</Button>
+							<CopyButton text={builtUrl} toastLabel="URL" size="sm" showLabel class="h-7" />
 							<Button variant="ghost" size="sm" onclick={() => window.open(builtUrl, '_blank')}>
 								<ExternalLink class="mr-1 h-3 w-3" />
 								Open
@@ -434,7 +558,7 @@
 					<code class="block break-all rounded bg-muted p-3 font-mono text-sm">{builtUrl}</code>
 				</div>
 			</div>
-		{:else if activeTab === 'reference'}
+		{:else if tab === 'reference'}
 			<div class="flex-1 overflow-auto p-4">
 				<div class="rounded-lg border bg-muted/30 p-4">
 					<h3 class="mb-4 text-sm font-medium">Common URL Encoded Characters</h3>
@@ -454,5 +578,5 @@
 				</div>
 			</div>
 		{/if}
-	</div>
-</div>
+	{/snippet}
+</PageLayout>

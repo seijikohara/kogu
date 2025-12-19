@@ -1,14 +1,13 @@
 <script lang="ts">
 	import * as yaml from 'yaml';
-	import type { ContextMenuItem } from '$lib/components/editors/code-editor.svelte';
-	import OptionCheckbox from '$lib/components/options/option-checkbox.svelte';
-	import OptionSelect from '$lib/components/options/option-select.svelte';
-	import OptionsSection from '$lib/components/options/options-section.svelte';
-	import { FormatTabBase } from '$lib/components/tool/index.js';
+	import type { ContextMenuItem } from '$lib/components/editor';
+	import { CodeEditor } from '$lib/components/editor';
+	import { FormCheckbox, FormMode, FormSection, FormSelect } from '$lib/components/form';
+	import { SplitPane } from '$lib/components/layout';
+	import { OptionsPanel } from '$lib/components/panel';
 	import { Input } from '$lib/components/ui/input/index.js';
 	import { Label } from '$lib/components/ui/label/index.js';
-	import { SAMPLE_YAML, sortKeysDeep, validateYaml } from '$lib/services/formatters.js';
-	import { copyToClipboard, downloadTextFile, pasteFromClipboard } from '../utils.js';
+	import { SAMPLE_YAML, sortKeysDeep, validateYaml } from '$lib/services/formatters';
 
 	interface Props {
 		input: string;
@@ -17,6 +16,10 @@
 	}
 
 	let { input, onInputChange, onStatsChange }: Props = $props();
+
+	// Mode and UI state
+	let formatMode = $state<'format' | 'minify'>('format');
+	let showOptions = $state(true);
 
 	// Basic formatting options
 	let indentSizeStr = $state('2');
@@ -53,24 +56,29 @@
 	const lineWidth = $derived(Number.parseInt(lineWidthStr, 10) || 80);
 	const minContentWidth = $derived(Number.parseInt(minContentWidthStr, 10) || 20);
 
-	// Validation function - rejects JSON input
-	const validate = (input: string) => {
+	// Validation
+	const validation = $derived.by(() => {
 		if (!input.trim()) return { valid: null as boolean | null };
 		const result = validateYaml(input);
 		return { valid: result.valid };
-	};
+	});
 
-	// Format function
-	const format = (input: string, minify: boolean) => {
+	// Output calculation
+	const formatResult = $derived.by((): { output: string; error: string } => {
+		if (!input.trim()) return { output: '', error: '' };
+
 		// Validate first - reject JSON input
-		const validation = validateYaml(input);
-		if (!validation.valid) {
-			return { output: '', error: validation.error ?? 'Invalid YAML' };
+		const validationResult = validateYaml(input);
+		if (!validationResult.valid) {
+			return { output: '', error: validationResult.error ?? 'Invalid YAML' };
 		}
 
 		try {
-			if (minify) {
-				return { output: yaml.stringify(yaml.parse(input), { indent: 0 }), error: '' };
+			if (formatMode === 'minify') {
+				return {
+					output: yaml.stringify(yaml.parse(input), { indent: 1, indentSeq: false }),
+					error: '',
+				};
 			}
 
 			const parsed = yaml.parse(input);
@@ -103,6 +111,44 @@
 		} catch (e) {
 			return { output: '', error: e instanceof Error ? e.message : 'Invalid YAML' };
 		}
+	});
+
+	const output = $derived(formatResult.output);
+	const formatError = $derived(formatResult.error);
+
+	// Report stats to parent
+	$effect(() => {
+		onStatsChange?.({
+			input,
+			valid: validation.valid,
+			error: formatError,
+		});
+	});
+
+	// Handlers
+	const handlePaste = async () => {
+		try {
+			const text = await navigator.clipboard.readText();
+			if (text) onInputChange(text);
+		} catch {
+			// Clipboard access denied
+		}
+	};
+
+	const handleClear = () => {
+		onInputChange('');
+	};
+
+	const handleCopy = async () => {
+		try {
+			await navigator.clipboard.writeText(output);
+		} catch {
+			// Clipboard access denied
+		}
+	};
+
+	const handleSample = () => {
+		onInputChange(SAMPLE_YAML);
 	};
 
 	// Format input YAML
@@ -120,7 +166,7 @@
 	const handleMinifyInput = () => {
 		try {
 			const parsed = yaml.parse(input);
-			const minified = yaml.stringify(parsed, { indent: 0 });
+			const minified = yaml.stringify(parsed, { indent: 1, indentSeq: false });
 			onInputChange(minified);
 		} catch {
 			// Invalid YAML
@@ -142,26 +188,26 @@
 	]);
 </script>
 
-<FormatTabBase
-	editorMode="yaml"
-	{input}
-	{onInputChange}
-	placeholder="Enter YAML here..."
-	{validate}
-	{format}
-	{onStatsChange}
-	downloadFilename="formatted.yaml"
-	sampleData={SAMPLE_YAML}
-	{copyToClipboard}
-	{pasteFromClipboard}
-	{downloadTextFile}
-	{inputContextMenuItems}
->
-	{#snippet options()}
-		<OptionsSection title="Formatting">
+<div class="flex flex-1 overflow-hidden">
+	<OptionsPanel
+		show={showOptions}
+		onclose={() => (showOptions = false)}
+		onopen={() => (showOptions = true)}
+	>
+		<FormSection title="Mode">
+			<FormMode
+				bind:value={formatMode}
+				options={[
+					{ value: 'format', label: 'Format' },
+					{ value: 'minify', label: 'Minify' },
+				]}
+			/>
+		</FormSection>
+
+		<FormSection title="Formatting">
 			<div class="grid grid-cols-2 gap-2">
-				<OptionSelect label="Indent" bind:value={indentSizeStr} options={['2', '4', '8']} />
-				<OptionSelect
+				<FormSelect label="Indent" bind:value={indentSizeStr} options={['2', '4', '8']} />
+				<FormSelect
 					label="Line Width"
 					bind:value={lineWidthStr}
 					options={[
@@ -172,7 +218,7 @@
 					]}
 				/>
 			</div>
-			<OptionSelect
+			<FormSelect
 				label="Collection Style"
 				bind:value={collectionStyle}
 				options={[
@@ -182,13 +228,13 @@
 				]}
 			/>
 			<div class="space-y-1.5 pt-1">
-				<OptionCheckbox label="Indent sequences" bind:checked={indentSeq} />
-				<OptionCheckbox label="Flow collection padding" bind:checked={flowCollectionPadding} />
+				<FormCheckbox label="Indent sequences" bind:checked={indentSeq} />
+				<FormCheckbox label="Flow collection padding" bind:checked={flowCollectionPadding} />
 			</div>
-		</OptionsSection>
+		</FormSection>
 
-		<OptionsSection title="Strings">
-			<OptionSelect
+		<FormSection title="Strings">
+			<FormSelect
 				label="String Style"
 				bind:value={stringType}
 				options={[
@@ -200,14 +246,14 @@
 				]}
 			/>
 			<div class="space-y-1.5 pt-1">
-				<OptionCheckbox label="Force quotes on all strings" bind:checked={forceQuotes} />
-				<OptionCheckbox label="Prefer single quotes" bind:checked={singleQuote} />
-				<OptionCheckbox label="Double-quoted as JSON style" bind:checked={doubleQuotedAsJSON} />
+				<FormCheckbox label="Force quotes on all strings" bind:checked={forceQuotes} />
+				<FormCheckbox label="Prefer single quotes" bind:checked={singleQuote} />
+				<FormCheckbox label="Double-quoted as JSON style" bind:checked={doubleQuotedAsJSON} />
 			</div>
-		</OptionsSection>
+		</FormSection>
 
-		<OptionsSection title="Keys">
-			<OptionSelect
+		<FormSection title="Keys">
+			<FormSelect
 				label="Key Style"
 				bind:value={keyType}
 				options={[
@@ -217,29 +263,56 @@
 				]}
 			/>
 			<div class="space-y-1.5 pt-1">
-				<OptionCheckbox label="Sort keys alphabetically" bind:checked={sortKeys} />
+				<FormCheckbox label="Sort keys alphabetically" bind:checked={sortKeys} />
 			</div>
-		</OptionsSection>
+		</FormSection>
 
-		<OptionsSection title="Special Values">
+		<FormSection title="Special Values">
 			<div class="grid grid-cols-3 gap-2">
 				<div class="space-y-1">
 					<Label class="text-[10px] uppercase tracking-wide text-muted-foreground">Null</Label>
-					<Input bind:value={nullStr} placeholder="null" class="h-7 text-xs font-mono" />
+					<Input bind:value={nullStr} placeholder="null" class="h-7 font-mono text-xs" />
 				</div>
 				<div class="space-y-1">
 					<Label class="text-[10px] uppercase tracking-wide text-muted-foreground">True</Label>
-					<Input bind:value={trueStr} placeholder="true" class="h-7 text-xs font-mono" />
+					<Input bind:value={trueStr} placeholder="true" class="h-7 font-mono text-xs" />
 				</div>
 				<div class="space-y-1">
 					<Label class="text-[10px] uppercase tracking-wide text-muted-foreground">False</Label>
-					<Input bind:value={falseStr} placeholder="false" class="h-7 text-xs font-mono" />
+					<Input bind:value={falseStr} placeholder="false" class="h-7 font-mono text-xs" />
 				</div>
 			</div>
-		</OptionsSection>
+		</FormSection>
 
-		<OptionsSection title="Advanced">
-			<OptionCheckbox label="Disable YAML references/aliases" bind:checked={noRefs} />
-		</OptionsSection>
-	{/snippet}
-</FormatTabBase>
+		<FormSection title="Advanced">
+			<FormCheckbox label="Disable YAML references/aliases" bind:checked={noRefs} />
+		</FormSection>
+	</OptionsPanel>
+
+	<SplitPane class="h-full flex-1">
+		{#snippet left()}
+			<CodeEditor
+				title="Input"
+				value={input}
+				onchange={onInputChange}
+				mode="input"
+				editorMode="yaml"
+				placeholder="Enter YAML here..."
+				onsample={handleSample}
+				onpaste={handlePaste}
+				onclear={handleClear}
+				contextMenuItems={inputContextMenuItems}
+			/>
+		{/snippet}
+		{#snippet right()}
+			<CodeEditor
+				title="Output"
+				value={output}
+				mode="readonly"
+				editorMode="yaml"
+				placeholder="Formatted output..."
+				oncopy={handleCopy}
+			/>
+		{/snippet}
+	</SplitPane>
+</div>

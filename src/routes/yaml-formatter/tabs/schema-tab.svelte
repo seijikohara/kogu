@@ -5,12 +5,12 @@
 	import { toast } from 'svelte-sonner';
 	import * as yaml from 'yaml';
 	import SplitPane from '$lib/components/layout/split-pane.svelte';
-	import OptionCheckbox from '$lib/components/options/option-checkbox.svelte';
-	import OptionsPanel from '$lib/components/options/options-panel.svelte';
-	import OptionsSection from '$lib/components/options/options-section.svelte';
-	import { EditorPane } from '$lib/components/tool/index.js';
+	import { FormCheckbox } from '$lib/components/form';
+	import { OptionsPanel } from '$lib/components/panel';
+	import { FormSection } from '$lib/components/form';
+	import { CodeEditor } from '$lib/components/editor';
 	import { Button } from '$lib/components/ui/button/index.js';
-	import { inferJsonSchema } from '$lib/services/formatters.js';
+	import { inferJsonSchema } from '$lib/services/formatters';
 	import { copyToClipboard, downloadTextFile, pasteFromClipboard } from '../utils.js';
 
 	interface Props {
@@ -170,7 +170,7 @@
 		onclose={() => (showOptions = false)}
 		onopen={() => (showOptions = true)}
 	>
-		<OptionsSection title="Actions">
+		<FormSection title="Actions">
 			<div class="flex flex-col gap-1.5">
 				<Button
 					variant="secondary"
@@ -204,9 +204,9 @@
 						: `${schemaValidationResult.errors.length} error(s) found`}
 				</div>
 			{/if}
-		</OptionsSection>
+		</FormSection>
 
-		<OptionsSection title="Schema Format">
+		<FormSection title="Schema Format">
 			<div class="flex gap-1">
 				<Button
 					variant={outputSchemaFormat === 'yaml' ? 'secondary' : 'ghost'}
@@ -225,34 +225,34 @@
 					JSON
 				</Button>
 			</div>
-		</OptionsSection>
+		</FormSection>
 
-		<OptionsSection title="Validation">
-			<OptionCheckbox label="Report all errors" bind:checked={schemaAllErrors} />
-			<OptionCheckbox label="Strict mode" bind:checked={schemaStrictMode} />
-			<OptionCheckbox label="Coerce types" bind:checked={schemaCoerceTypes} />
-			<OptionCheckbox label="Validate formats" bind:checked={schemaValidateFormats} />
-		</OptionsSection>
+		<FormSection title="Validation">
+			<FormCheckbox label="Report all errors" bind:checked={schemaAllErrors} />
+			<FormCheckbox label="Strict mode" bind:checked={schemaStrictMode} />
+			<FormCheckbox label="Coerce types" bind:checked={schemaCoerceTypes} />
+			<FormCheckbox label="Validate formats" bind:checked={schemaValidateFormats} />
+		</FormSection>
 
-		<OptionsSection title="Advanced">
-			<OptionCheckbox label="Use defaults" bind:checked={schemaUseDefaults} />
-			<OptionCheckbox label="Remove additional properties" bind:checked={schemaRemoveAdditional} />
-			<OptionCheckbox label="Verbose errors" bind:checked={schemaVerboseErrors} />
-		</OptionsSection>
+		<FormSection title="Advanced">
+			<FormCheckbox label="Use defaults" bind:checked={schemaUseDefaults} />
+			<FormCheckbox label="Remove additional properties" bind:checked={schemaRemoveAdditional} />
+			<FormCheckbox label="Verbose errors" bind:checked={schemaVerboseErrors} />
+		</FormSection>
 
-		<OptionsSection title="Quick Help">
+		<FormSection title="Quick Help">
 			<div class="space-y-1.5 rounded-md bg-muted/50 p-2 text-[11px] text-muted-foreground">
 				<p><strong class="text-foreground">Validate:</strong> Check YAML against JSON Schema</p>
 				<p><strong class="text-foreground">Infer:</strong> Generate schema from YAML</p>
 				<p><strong class="text-foreground">Strict:</strong> Enforce JSON Schema draft rules</p>
 				<p><strong class="text-foreground">Coerce:</strong> Auto-convert types (string→number)</p>
 			</div>
-		</OptionsSection>
+		</FormSection>
 	</OptionsPanel>
 
 	<SplitPane class="flex-1">
 		{#snippet left()}
-			<EditorPane
+			<CodeEditor
 				title="Input"
 				value={input}
 				onchange={onInputChange}
@@ -265,7 +265,7 @@
 		{/snippet}
 		{#snippet right()}
 			{#if inferredSchema && !schemaDefinition}
-				<EditorPane
+				<CodeEditor
 					title="Inferred Schema"
 					value={inferredSchema}
 					mode="readonly"
@@ -274,7 +274,7 @@
 					oncopy={handleCopySchema}
 				/>
 			{:else}
-				<EditorPane
+				<CodeEditor
 					title="JSON Schema"
 					bind:value={schemaDefinition}
 					mode="input"

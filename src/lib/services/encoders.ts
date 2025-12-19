@@ -20,44 +20,223 @@ export const formatBytes = (bytes: number): string => {
 // Base64 Encoder/Decoder
 // ============================================================================
 
+/** Base64 encoding variant */
+export type Base64Variant = 'standard' | 'url-safe';
+
+/** Line break options for Base64 output */
+export type Base64LineBreak = 'none' | '64' | '76';
+
+/** Base64 encoding options */
+export interface Base64EncodeOptions {
+	/** Encoding variant: standard (+/) or url-safe (-_) */
+	variant: Base64Variant;
+	/** Add padding (=) characters */
+	padding: boolean;
+	/** Line break interval */
+	lineBreak: Base64LineBreak;
+	/** Output as Data URL with MIME type */
+	dataUrl: boolean;
+	/** MIME type for Data URL */
+	mimeType: string;
+}
+
+/** Base64 decoding options */
+export interface Base64DecodeOptions {
+	/** Ignore whitespace characters */
+	ignoreWhitespace: boolean;
+	/** Ignore invalid characters instead of throwing error */
+	ignoreInvalidChars: boolean;
+	/** Auto-detect URL-safe variant */
+	autoDetectVariant: boolean;
+}
+
+/** Default Base64 encoding options */
+export const defaultBase64EncodeOptions: Base64EncodeOptions = {
+	variant: 'standard',
+	padding: true,
+	lineBreak: 'none',
+	dataUrl: false,
+	mimeType: 'text/plain',
+};
+
+/** Default Base64 decoding options */
+export const defaultBase64DecodeOptions: Base64DecodeOptions = {
+	ignoreWhitespace: true,
+	ignoreInvalidChars: false,
+	autoDetectVariant: true,
+};
+
+/** Common MIME types for Data URL */
+export const BASE64_MIME_TYPES = [
+	{ value: 'text/plain', label: 'Text (text/plain)' },
+	{ value: 'text/html', label: 'HTML (text/html)' },
+	{ value: 'text/css', label: 'CSS (text/css)' },
+	{ value: 'text/javascript', label: 'JavaScript (text/javascript)' },
+	{ value: 'application/json', label: 'JSON (application/json)' },
+	{ value: 'application/xml', label: 'XML (application/xml)' },
+	{ value: 'image/png', label: 'PNG Image (image/png)' },
+	{ value: 'image/jpeg', label: 'JPEG Image (image/jpeg)' },
+	{ value: 'image/gif', label: 'GIF Image (image/gif)' },
+	{ value: 'image/svg+xml', label: 'SVG Image (image/svg+xml)' },
+	{ value: 'application/pdf', label: 'PDF (application/pdf)' },
+	{ value: 'application/octet-stream', label: 'Binary (application/octet-stream)' },
+] as const;
+
 /**
- * Encode text to Base64 (UTF-8 safe).
+ * Encode text to Base64 with options.
  */
-export const encodeToBase64 = (text: string): string => {
+export const encodeToBase64 = (
+	text: string,
+	options: Partial<Base64EncodeOptions> = {}
+): string => {
+	const opts = { ...defaultBase64EncodeOptions, ...options };
+
+	// Encode to bytes
 	const bytes = new TextEncoder().encode(text);
 	const binary = Array.from(bytes, (byte) => String.fromCharCode(byte)).join('');
-	return globalThis.btoa(binary);
+
+	// Standard Base64 encoding
+	let result = globalThis.btoa(binary);
+
+	// Convert to URL-safe variant if needed
+	if (opts.variant === 'url-safe') {
+		result = result.replace(/\+/g, '-').replace(/\//g, '_');
+	}
+
+	// Remove padding if not wanted
+	if (!opts.padding) {
+		result = result.replace(/=+$/, '');
+	}
+
+	// Add line breaks if specified
+	if (opts.lineBreak !== 'none') {
+		const lineLength = opts.lineBreak === '64' ? 64 : 76;
+		result = result.match(new RegExp(`.{1,${lineLength}}`, 'g'))?.join('\n') ?? result;
+	}
+
+	// Wrap as Data URL if requested
+	if (opts.dataUrl) {
+		result = `data:${opts.mimeType};base64,${result.replace(/\n/g, '')}`;
+	}
+
+	return result;
 };
 
 /**
- * Decode Base64 to text (UTF-8 safe).
+ * Decode Base64 to text with options.
  */
-export const decodeFromBase64 = (base64: string): string => {
-	const binary = globalThis.atob(base64);
+export const decodeFromBase64 = (
+	base64: string,
+	options: Partial<Base64DecodeOptions> = {}
+): string => {
+	const opts = { ...defaultBase64DecodeOptions, ...options };
+
+	let input = base64;
+
+	// Handle Data URL
+	if (input.startsWith('data:')) {
+		const commaIndex = input.indexOf(',');
+		if (commaIndex !== -1) {
+			input = input.slice(commaIndex + 1);
+		}
+	}
+
+	// Remove whitespace if option is set
+	if (opts.ignoreWhitespace) {
+		input = input.replace(/\s/g, '');
+	}
+
+	// Auto-detect and convert URL-safe variant
+	if (opts.autoDetectVariant) {
+		if (input.includes('-') || input.includes('_')) {
+			input = input.replace(/-/g, '+').replace(/_/g, '/');
+		}
+	}
+
+	// Remove invalid characters if option is set
+	if (opts.ignoreInvalidChars) {
+		input = input.replace(/[^A-Za-z0-9+/=]/g, '');
+	}
+
+	// Add padding if missing
+	const padding = input.length % 4;
+	if (padding) {
+		input += '='.repeat(4 - padding);
+	}
+
+	const binary = globalThis.atob(input);
 	const bytes = Uint8Array.from(binary, (char) => char.charCodeAt(0));
 	return new TextDecoder().decode(bytes);
 };
 
 /**
- * Validate Base64 string.
+ * Validate Base64 string with options.
  */
-export const validateBase64 = (input: string): { valid: boolean; error?: string } => {
+export const validateBase64 = (
+	input: string,
+	options: Partial<Base64DecodeOptions> = {}
+): { valid: boolean; error?: string } => {
 	if (!input.trim()) {
 		return { valid: false, error: 'Empty input' };
 	}
 
-	// Check for valid Base64 characters
-	const base64Regex = /^[A-Za-z0-9+/]*={0,2}$/;
-	if (!base64Regex.test(input.replace(/\s/g, ''))) {
+	const opts = { ...defaultBase64DecodeOptions, ...options };
+	let cleanInput = input;
+
+	// Handle Data URL
+	if (cleanInput.startsWith('data:')) {
+		const commaIndex = cleanInput.indexOf(',');
+		if (commaIndex !== -1) {
+			cleanInput = cleanInput.slice(commaIndex + 1);
+		}
+	}
+
+	// Remove whitespace if option is set
+	if (opts.ignoreWhitespace) {
+		cleanInput = cleanInput.replace(/\s/g, '');
+	}
+
+	// Check for valid Base64 characters (including URL-safe)
+	const base64Regex = opts.autoDetectVariant
+		? /^[A-Za-z0-9+/\-_]*={0,2}$/
+		: /^[A-Za-z0-9+/]*={0,2}$/;
+
+	if (!base64Regex.test(cleanInput)) {
 		return { valid: false, error: 'Invalid Base64 characters' };
 	}
 
 	try {
-		decodeFromBase64(input);
+		decodeFromBase64(input, options);
 		return { valid: true };
 	} catch {
 		return { valid: false, error: 'Invalid Base64 encoding' };
 	}
+};
+
+/**
+ * Detect Base64 variant from input.
+ */
+export const detectBase64Variant = (input: string): Base64Variant => {
+	const cleanInput = input.replace(/\s/g, '');
+	if (cleanInput.includes('-') || cleanInput.includes('_')) {
+		return 'url-safe';
+	}
+	return 'standard';
+};
+
+/**
+ * Check if input is a Data URL.
+ */
+export const isDataUrl = (input: string): boolean => {
+	return input.trim().startsWith('data:');
+};
+
+/**
+ * Extract MIME type from Data URL.
+ */
+export const extractMimeType = (dataUrl: string): string | null => {
+	const match = dataUrl.match(/^data:([^;,]+)/);
+	return match?.[1] ?? null;
 };
 
 export interface Base64Stats {
@@ -115,8 +294,280 @@ export const base64ToBlob = (dataUrl: string): Blob => {
 // URL Encoder/Decoder
 // ============================================================================
 
-export type UrlEncodeMode = 'component' | 'uri';
+export type UrlEncodeMode = 'component' | 'uri' | 'form' | 'path' | 'custom';
 
+/** Space encoding method */
+export type UrlSpaceEncoding = 'percent' | 'plus';
+
+/** Case for percent-encoded hex digits */
+export type UrlHexCase = 'upper' | 'lower';
+
+/** How to handle newlines */
+export type UrlNewlineHandling = 'encode' | 'crlf' | 'lf' | 'remove';
+
+/** How to handle invalid sequences when decoding */
+export type UrlInvalidHandling = 'error' | 'skip' | 'keep';
+
+/** URL encoding options */
+export interface UrlEncodeOptions {
+	/** Encoding mode */
+	mode: UrlEncodeMode;
+	/** How to encode spaces */
+	spaceEncoding: UrlSpaceEncoding;
+	/** Case for hex digits (%2F vs %2f) */
+	hexCase: UrlHexCase;
+	/** How to handle newlines */
+	newlineHandling: UrlNewlineHandling;
+	/** Characters to preserve (not encode) - only for custom mode */
+	preserveChars: string;
+	/** Encode non-ASCII characters */
+	encodeNonAscii: boolean;
+}
+
+/** URL decoding options */
+export interface UrlDecodeOptions {
+	/** Treat + as space */
+	plusAsSpace: boolean;
+	/** How to handle invalid percent sequences */
+	invalidHandling: UrlInvalidHandling;
+	/** Decode multiple times if double-encoded */
+	decodeMultiple: boolean;
+	/** Maximum decode iterations (for decodeMultiple) */
+	maxIterations: number;
+}
+
+/** Default URL encoding options */
+export const defaultUrlEncodeOptions: UrlEncodeOptions = {
+	mode: 'component',
+	spaceEncoding: 'percent',
+	hexCase: 'upper',
+	newlineHandling: 'encode',
+	preserveChars: '',
+	encodeNonAscii: true,
+};
+
+/** Default URL decoding options */
+export const defaultUrlDecodeOptions: UrlDecodeOptions = {
+	plusAsSpace: false,
+	invalidHandling: 'error',
+	decodeMultiple: false,
+	maxIterations: 5,
+};
+
+/** Characters preserved by each encoding mode */
+export const URL_MODE_PRESERVED_CHARS: Record<UrlEncodeMode, string> = {
+	component: '', // encodeURIComponent preserves: A-Za-z0-9-_.!~*'()
+	uri: ';,/?:@&=+$#', // encodeURI also preserves these
+	form: '', // application/x-www-form-urlencoded (+ for space)
+	path: '/', // Path segment encoding
+	custom: '', // User-defined
+};
+
+/** RFC 3986 unreserved characters (always safe) */
+export const RFC3986_UNRESERVED =
+	'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~';
+
+/**
+ * Encode string for URL with options.
+ */
+export const encodeUrlWithOptions = (
+	text: string,
+	options: Partial<UrlEncodeOptions> = {}
+): string => {
+	const opts = { ...defaultUrlEncodeOptions, ...options };
+	let input = text;
+
+	// Handle newlines first
+	switch (opts.newlineHandling) {
+		case 'crlf':
+			input = input.replace(/\r?\n/g, '\r\n');
+			break;
+		case 'lf':
+			input = input.replace(/\r\n/g, '\n');
+			break;
+		case 'remove':
+			input = input.replace(/\r?\n/g, '');
+			break;
+		// 'encode' - leave as-is, will be percent-encoded
+	}
+
+	let result: string;
+
+	switch (opts.mode) {
+		case 'component':
+			result = encodeURIComponent(input);
+			break;
+		case 'uri':
+			result = encodeURI(input);
+			break;
+		case 'form':
+			// application/x-www-form-urlencoded
+			result = encodeURIComponent(input).replace(/%20/g, '+');
+			break;
+		case 'path':
+			// Encode but preserve /
+			result = input
+				.split('/')
+				.map((segment) => encodeURIComponent(segment))
+				.join('/');
+			break;
+		case 'custom':
+			// Custom encoding with preserved characters
+			result = customUrlEncode(input, opts.preserveChars, opts.encodeNonAscii);
+			break;
+		default:
+			result = encodeURIComponent(input);
+	}
+
+	// Apply space encoding preference (only if not form mode which already uses +)
+	if (opts.mode !== 'form') {
+		if (opts.spaceEncoding === 'plus') {
+			result = result.replace(/%20/g, '+');
+		}
+	}
+
+	// Apply hex case preference
+	if (opts.hexCase === 'lower') {
+		result = result.replace(/%[0-9A-F]{2}/g, (match) => match.toLowerCase());
+	} else {
+		result = result.replace(/%[0-9a-f]{2}/g, (match) => match.toUpperCase());
+	}
+
+	return result;
+};
+
+/**
+ * Custom URL encoding with specified preserved characters.
+ */
+const customUrlEncode = (text: string, preserveChars: string, encodeNonAscii: boolean): string => {
+	const safeChars = new Set([...RFC3986_UNRESERVED, ...preserveChars]);
+	let result = '';
+
+	for (const char of text) {
+		const code = char.charCodeAt(0);
+
+		if (safeChars.has(char)) {
+			result += char;
+		} else if (code > 127 && !encodeNonAscii) {
+			result += char;
+		} else {
+			// Encode the character
+			const bytes = new TextEncoder().encode(char);
+			for (const byte of bytes) {
+				result += `%${byte.toString(16).toUpperCase().padStart(2, '0')}`;
+			}
+		}
+	}
+
+	return result;
+};
+
+/**
+ * Decode URL-encoded string with options.
+ */
+export const decodeUrlWithOptions = (
+	text: string,
+	options: Partial<UrlDecodeOptions> = {}
+): string => {
+	const opts = { ...defaultUrlDecodeOptions, ...options };
+	let input = text;
+
+	// Replace + with space if option is set
+	if (opts.plusAsSpace) {
+		input = input.replace(/\+/g, ' ');
+	}
+
+	// Handle invalid sequences based on option
+	if (opts.invalidHandling !== 'error') {
+		input = sanitizePercentEncoding(input, opts.invalidHandling);
+	}
+
+	let result: string;
+	try {
+		result = decodeURIComponent(input);
+	} catch {
+		if (opts.invalidHandling === 'error') {
+			throw new Error('Invalid percent-encoded sequence');
+		}
+		// If sanitization didn't help, return as-is
+		result = input;
+	}
+
+	// Decode multiple times if option is set
+	if (opts.decodeMultiple) {
+		let iterations = 0;
+		let prev = result;
+		while (iterations < opts.maxIterations) {
+			// Check if there are still percent-encoded sequences
+			if (!/%[0-9A-Fa-f]{2}/.test(result)) {
+				break;
+			}
+
+			try {
+				let decoded = result;
+				if (opts.plusAsSpace) {
+					decoded = decoded.replace(/\+/g, ' ');
+				}
+				result = decodeURIComponent(decoded);
+			} catch {
+				break;
+			}
+
+			if (result === prev) {
+				break;
+			}
+			prev = result;
+			iterations++;
+		}
+	}
+
+	return result;
+};
+
+/**
+ * Sanitize invalid percent-encoded sequences.
+ */
+const sanitizePercentEncoding = (text: string, handling: 'skip' | 'keep'): string => {
+	// Match valid percent-encoded sequences or standalone %
+	return text.replace(/%([0-9A-Fa-f]{2})?/g, (match, hex) => {
+		if (hex) {
+			return match; // Valid sequence, keep it
+		}
+		// Invalid % not followed by two hex digits
+		return handling === 'skip' ? '' : '%25'; // Convert to %25 (encoded %)
+	});
+};
+
+/**
+ * Check if text appears to be double-encoded.
+ */
+export const isDoubleEncoded = (text: string): boolean => {
+	// Look for patterns like %25XX (encoded %)
+	return /%25[0-9A-Fa-f]{2}/.test(text);
+};
+
+/**
+ * Count encoding depth (how many times text has been encoded).
+ */
+export const getEncodingDepth = (text: string): number => {
+	let depth = 0;
+	let current = text;
+
+	while (/%[0-9A-Fa-f]{2}/.test(current) && depth < 10) {
+		try {
+			const decoded = decodeURIComponent(current);
+			if (decoded === current) break;
+			current = decoded;
+			depth++;
+		} catch {
+			break;
+		}
+	}
+
+	return depth;
+};
+
+// Legacy functions for backward compatibility
 /**
  * Encode string for URL (encodeURIComponent mode).
  */

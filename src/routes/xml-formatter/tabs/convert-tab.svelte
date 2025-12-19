@@ -1,8 +1,8 @@
 <script lang="ts">
-	import OptionCheckbox from '$lib/components/options/option-checkbox.svelte';
-	import OptionSelect from '$lib/components/options/option-select.svelte';
-	import OptionsSection from '$lib/components/options/options-section.svelte';
-	import { ConvertTabBase } from '$lib/components/tool/index.js';
+	import { FormCheckbox } from '$lib/components/form';
+	import { FormSelect } from '$lib/components/form';
+	import { FormSection } from '$lib/components/form';
+	import { ConvertTab } from '$lib/components/template';
 	import { Button } from '$lib/components/ui/button/index.js';
 	import { Input } from '$lib/components/ui/input/index.js';
 	import { Label } from '$lib/components/ui/label/index.js';
@@ -11,7 +11,7 @@
 		type XmlToYamlOptions,
 		xmlToJson,
 		xmlToYaml,
-	} from '$lib/services/formatters.js';
+	} from '$lib/services/formatters';
 	import { copyToClipboard, downloadTextFile, pasteFromClipboard } from '../utils.js';
 
 	interface Props {
@@ -127,7 +127,7 @@
 	const outputTitle = $derived(`Output (${convertFormat.toUpperCase()})`);
 </script>
 
-<ConvertTabBase
+<ConvertTab
 	inputEditorMode="xml"
 	{outputEditorMode}
 	{input}
@@ -143,7 +143,7 @@
 	{downloadTextFile}
 >
 	{#snippet options()}
-		<OptionsSection title="Output Format">
+		<FormSection title="Output Format">
 			<div class="flex gap-1">
 				<Button
 					variant={convertFormat === 'json' ? 'secondary' : 'ghost'}
@@ -162,11 +162,11 @@
 					YAML
 				</Button>
 			</div>
-		</OptionsSection>
+		</FormSection>
 
 		{#if convertFormat === 'json'}
-			<OptionsSection title="Formatting">
-				<OptionSelect
+			<FormSection title="Formatting">
+				<FormSelect
 					label="Indent"
 					bind:value={jsonIndentStr}
 					options={[
@@ -176,18 +176,18 @@
 						{ value: '8', label: '8' },
 					]}
 				/>
-			</OptionsSection>
+			</FormSection>
 
-			<OptionsSection title="Keys">
-				<OptionCheckbox label="Sort keys alphabetically" bind:checked={jsonSortKeys} />
-			</OptionsSection>
+			<FormSection title="Keys">
+				<FormCheckbox label="Sort keys alphabetically" bind:checked={jsonSortKeys} />
+			</FormSection>
 		{/if}
 
 		{#if convertFormat === 'yaml'}
-			<OptionsSection title="Formatting">
+			<FormSection title="Formatting">
 				<div class="grid grid-cols-2 gap-2">
-					<OptionSelect label="Indent" bind:value={yamlIndentStr} options={['2', '4', '8']} />
-					<OptionSelect
+					<FormSelect label="Indent" bind:value={yamlIndentStr} options={['2', '4', '8']} />
+					<FormSelect
 						label="Line Width"
 						bind:value={yamlLineWidthStr}
 						options={[
@@ -198,7 +198,7 @@
 						]}
 					/>
 				</div>
-				<OptionSelect
+				<FormSelect
 					label="Collection Style"
 					bind:value={yamlCollectionStyle}
 					options={[
@@ -208,16 +208,13 @@
 					]}
 				/>
 				<div class="space-y-1.5 pt-1">
-					<OptionCheckbox label="Indent sequences" bind:checked={yamlIndentSeq} />
-					<OptionCheckbox
-						label="Flow collection padding"
-						bind:checked={yamlFlowCollectionPadding}
-					/>
+					<FormCheckbox label="Indent sequences" bind:checked={yamlIndentSeq} />
+					<FormCheckbox label="Flow collection padding" bind:checked={yamlFlowCollectionPadding} />
 				</div>
-			</OptionsSection>
+			</FormSection>
 
-			<OptionsSection title="Strings">
-				<OptionSelect
+			<FormSection title="Strings">
+				<FormSelect
 					label="String Style"
 					bind:value={yamlStringType}
 					options={[
@@ -229,17 +226,14 @@
 					]}
 				/>
 				<div class="space-y-1.5 pt-1">
-					<OptionCheckbox label="Force quotes on all strings" bind:checked={yamlForceQuotes} />
-					<OptionCheckbox label="Prefer single quotes" bind:checked={yamlSingleQuote} />
-					<OptionCheckbox
-						label="Double-quoted as JSON style"
-						bind:checked={yamlDoubleQuotedAsJSON}
-					/>
+					<FormCheckbox label="Force quotes on all strings" bind:checked={yamlForceQuotes} />
+					<FormCheckbox label="Prefer single quotes" bind:checked={yamlSingleQuote} />
+					<FormCheckbox label="Double-quoted as JSON style" bind:checked={yamlDoubleQuotedAsJSON} />
 				</div>
-			</OptionsSection>
+			</FormSection>
 
-			<OptionsSection title="Keys">
-				<OptionSelect
+			<FormSection title="Keys">
+				<FormSelect
 					label="Key Style"
 					bind:value={yamlKeyType}
 					options={[
@@ -249,11 +243,11 @@
 					]}
 				/>
 				<div class="space-y-1.5 pt-1">
-					<OptionCheckbox label="Sort keys alphabetically" bind:checked={yamlSortKeys} />
+					<FormCheckbox label="Sort keys alphabetically" bind:checked={yamlSortKeys} />
 				</div>
-			</OptionsSection>
+			</FormSection>
 
-			<OptionsSection title="Special Values">
+			<FormSection title="Special Values">
 				<div class="grid grid-cols-3 gap-2">
 					<div class="space-y-1">
 						<Label class="text-[10px] uppercase tracking-wide text-muted-foreground">Null</Label>
@@ -268,11 +262,11 @@
 						<Input bind:value={yamlFalseStr} placeholder="false" class="h-7 text-xs font-mono" />
 					</div>
 				</div>
-			</OptionsSection>
+			</FormSection>
 
-			<OptionsSection title="Advanced">
-				<OptionCheckbox label="Disable YAML references/aliases" bind:checked={yamlNoRefs} />
-			</OptionsSection>
+			<FormSection title="Advanced">
+				<FormCheckbox label="Disable YAML references/aliases" bind:checked={yamlNoRefs} />
+			</FormSection>
 		{/if}
 	{/snippet}
-</ConvertTabBase>
+</ConvertTab>
