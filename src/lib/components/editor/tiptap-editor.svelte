@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { Pencil } from '@lucide/svelte';
+	import { ChevronsUpDown, Pencil } from '@lucide/svelte';
 	import { Editor, Extension } from '@tiptap/core';
 	import { CodeBlockLowlight } from '@tiptap/extension-code-block-lowlight';
 	import { Image } from '@tiptap/extension-image';
@@ -21,6 +21,8 @@
 	import { onDestroy, onMount, untrack } from 'svelte';
 	import { Markdown } from 'tiptap-markdown';
 	import { detectDiagramType, renderDiagram } from '$lib/services/diagram.js';
+	import FloatingLanguageCombobox from './floating-language-combobox.svelte';
+	import { LANGUAGES, openLanguageCombobox } from './language-combobox-state.svelte.js';
 
 	// ProseMirror Node type (simplified interface for type checking)
 	interface PMNode {
@@ -128,47 +130,6 @@
 
 	// Create lowlight instance with common languages
 	const lowlight = createLowlight(common);
-
-	// Available languages for syntax highlighting (from lowlight common)
-	const LANGUAGES = [
-		{ value: '', label: 'Plain Text' },
-		{ value: 'bash', label: 'Bash' },
-		{ value: 'c', label: 'C' },
-		{ value: 'cpp', label: 'C++' },
-		{ value: 'csharp', label: 'C#' },
-		{ value: 'css', label: 'CSS' },
-		{ value: 'diff', label: 'Diff' },
-		{ value: 'dot', label: 'GraphViz (DOT)' },
-		{ value: 'go', label: 'Go' },
-		{ value: 'graphql', label: 'GraphQL' },
-		{ value: 'graphviz', label: 'GraphViz' },
-		{ value: 'ini', label: 'INI' },
-		{ value: 'java', label: 'Java' },
-		{ value: 'javascript', label: 'JavaScript' },
-		{ value: 'json', label: 'JSON' },
-		{ value: 'kotlin', label: 'Kotlin' },
-		{ value: 'less', label: 'Less' },
-		{ value: 'lua', label: 'Lua' },
-		{ value: 'makefile', label: 'Makefile' },
-		{ value: 'markdown', label: 'Markdown' },
-		{ value: 'mermaid', label: 'Mermaid' },
-		{ value: 'objectivec', label: 'Objective-C' },
-		{ value: 'perl', label: 'Perl' },
-		{ value: 'php', label: 'PHP' },
-		{ value: 'plantuml', label: 'PlantUML' },
-		{ value: 'python', label: 'Python' },
-		{ value: 'r', label: 'R' },
-		{ value: 'ruby', label: 'Ruby' },
-		{ value: 'rust', label: 'Rust' },
-		{ value: 'scss', label: 'SCSS' },
-		{ value: 'shell', label: 'Shell' },
-		{ value: 'sql', label: 'SQL' },
-		{ value: 'swift', label: 'Swift' },
-		{ value: 'typescript', label: 'TypeScript' },
-		{ value: 'wasm', label: 'WebAssembly' },
-		{ value: 'xml', label: 'XML' },
-		{ value: 'yaml', label: 'YAML' },
-	] as const;
 
 	// Custom CodeBlock extension with language selector and diagram rendering
 	const CodeBlockWithLanguageSelector = CodeBlockLowlight.extend({
@@ -341,6 +302,57 @@
 		}
 	};
 
+	// Get display label for a language value
+	const getLanguageLabel = (value: string): string => {
+		const found = LANGUAGES.find((lang) => lang.value === value);
+		return found?.label ?? value ?? 'Plain Text';
+	};
+
+	// Create a trigger button for language selection that opens the external combobox
+	const createLanguageTrigger = (
+		currentLanguage: string,
+		onchange: (newLanguage: string) => void
+	): HTMLButtonElement => {
+		const button = document.createElement('button');
+		button.type = 'button';
+		button.className =
+			'inline-flex h-7 w-[140px] items-center justify-between rounded-md border border-input bg-background px-2 text-xs hover:bg-accent hover:text-accent-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1';
+
+		// Create span for label
+		const labelSpan = document.createElement('span');
+		labelSpan.className = 'truncate';
+		labelSpan.textContent = getLanguageLabel(currentLanguage);
+		button.appendChild(labelSpan);
+
+		// Create icon container
+		const iconSpan = document.createElement('span');
+		iconSpan.className = 'ml-1 h-4 w-4 shrink-0 opacity-50';
+		iconSpan.innerHTML =
+			'<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m7 15 5 5 5-5"/><path d="m7 9 5-5 5 5"/></svg>';
+		button.appendChild(iconSpan);
+
+		// Store current language in data attribute
+		button.dataset['language'] = currentLanguage;
+
+		// Handle click - open the external combobox
+		button.addEventListener('click', (e) => {
+			e.preventDefault();
+			e.stopPropagation();
+			openLanguageCombobox(button, button.dataset['language'] ?? '', onchange);
+		});
+
+		return button;
+	};
+
+	// Update trigger button label
+	const updateLanguageTrigger = (button: HTMLButtonElement, newLanguage: string): void => {
+		button.dataset['language'] = newLanguage;
+		const labelSpan = button.querySelector('span.truncate');
+		if (labelSpan) {
+			labelSpan.textContent = getLanguageLabel(newLanguage);
+		}
+	};
+
 	// Create node view for regular code blocks
 	const createCodeBlockNodeView = (
 		pmNode: PMNode,
@@ -353,22 +365,6 @@
 		// Language selector header
 		const header = document.createElement('div');
 		header.className = 'code-block-header';
-
-		const select = document.createElement('select');
-		select.className = 'code-block-language-select';
-		select.setAttribute('aria-label', 'Select language');
-
-		LANGUAGES.forEach(({ value, label }) => {
-			const option = document.createElement('option');
-			option.value = value;
-			option.textContent = label;
-			select.appendChild(option);
-		});
-
-		const language = pmNode.attrs['language'] as string | null;
-		select.value = language ?? '';
-
-		header.appendChild(select);
 		container.appendChild(header);
 
 		// Code content
@@ -377,22 +373,43 @@
 		pre.appendChild(code);
 		container.appendChild(pre);
 
-		select.addEventListener('change', (e) => {
-			const target = e.target as HTMLSelectElement;
+		// Current language state
+		let currentLanguage = (pmNode.attrs['language'] as string | null) ?? '';
+
+		// Handle language change from combobox
+		const handleLanguageChange = (newLanguage: string) => {
 			const pos = getPos();
 			if (typeof pos === 'number') {
+				// Update local state first
+				currentLanguage = newLanguage;
+				updateLanguageTrigger(triggerButton, newLanguage);
+
+				// Dispatch to ProseMirror
 				editor.view.dispatch(
 					editor.view.state.tr.setNodeMarkup(pos, undefined, {
 						...pmNode.attrs,
-						language: target.value || null,
+						language: newLanguage || null,
 					})
 				);
 			}
-		});
+		};
+
+		// Create and append trigger button for combobox
+		const triggerButton = createLanguageTrigger(currentLanguage, handleLanguageChange);
+		header.appendChild(triggerButton);
 
 		return {
 			dom: container,
 			contentDOM: code,
+			// Allow events in the header (button) to pass through
+			stopEvent: (event: Event) => {
+				const target = event.target as HTMLElement;
+				// Stop ProseMirror from handling events in the header area
+				if (header.contains(target)) {
+					return true;
+				}
+				return false;
+			},
 			update: (updatedNode: PMNode) => {
 				if (updatedNode.type.name !== 'codeBlock') {
 					return false;
@@ -404,8 +421,16 @@
 					return false;
 				}
 
-				select.value = updatedLanguage ?? '';
+				// Update trigger button if language changed
+				if (currentLanguage !== (updatedLanguage ?? '')) {
+					currentLanguage = updatedLanguage ?? '';
+					updateLanguageTrigger(triggerButton, currentLanguage);
+				}
 				return true;
+			},
+			destroy: () => {
+				// Clean up by removing element
+				triggerButton.remove();
 			},
 		};
 	};
@@ -901,6 +926,9 @@
 	</div>
 </div>
 
+<!-- Floating language combobox - lives outside NodeView to avoid bits-ui context issue -->
+<FloatingLanguageCombobox />
+
 <style>
 	/* ========================================
 	   Base Editor Styles (shadcn-consistent)
@@ -1284,44 +1312,18 @@
 		background: color-mix(in oklch, var(--muted) 30%, transparent);
 	}
 
-	/* Language select - matches shadcn select-trigger */
-	.tiptap-container :global(.code-block-language-select) {
-		font-size: 0.75rem;
-		line-height: 1rem;
-		height: 1.75rem;
-		padding: 0.25rem 1.5rem 0.25rem 0.5rem;
-		border-radius: calc(var(--radius) - 2px);
-		background: var(--background);
-		border: 1px solid var(--input);
-		color: var(--foreground);
-		cursor: pointer;
-		outline: none;
-		transition: box-shadow 0.15s ease;
-		appearance: none;
+	/* Language combobox container */
+	.tiptap-container :global(.code-block-language-combobox) {
+		display: flex;
+		align-items: center;
+	}
+
+	/* Select arrow for language dropdown */
+	.tiptap-container :global(.select-arrow) {
 		background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
 		background-position: right 0.25rem center;
 		background-repeat: no-repeat;
-		background-size: 1rem;
-		box-shadow:
-			0 1px 2px 0 rgb(0 0 0 / 0.05),
-			0 1px 1px 0 rgb(0 0 0 / 0.03);
-	}
-
-	:global(.dark .code-block-language-select) {
-		background: color-mix(in oklch, var(--input) 30%, transparent);
-	}
-
-	.tiptap-container :global(.code-block-language-select:hover) {
-		background: var(--accent);
-	}
-
-	:global(.dark .code-block-language-select:hover) {
-		background: color-mix(in oklch, var(--input) 50%, transparent);
-	}
-
-	.tiptap-container :global(.code-block-language-select:focus) {
-		border-color: var(--ring);
-		box-shadow: 0 0 0 3px color-mix(in oklch, var(--ring) 50%, transparent);
+		background-size: 1.25em 1.25em;
 	}
 
 	.tiptap-container :global(.code-block-wrapper pre) {
