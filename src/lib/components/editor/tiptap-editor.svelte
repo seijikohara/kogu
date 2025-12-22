@@ -20,6 +20,7 @@
 	import texmath from 'markdown-it-texmath';
 	import { onDestroy, onMount, untrack } from 'svelte';
 	import { Markdown } from 'tiptap-markdown';
+	import { detectDiagramType, renderDiagram } from '$lib/services/diagram.js';
 
 	// ProseMirror Node type (simplified interface for type checking)
 	interface PMNode {
@@ -169,69 +170,245 @@
 		{ value: 'yaml', label: 'YAML' },
 	] as const;
 
-	// Custom CodeBlock extension with language selector
+	// Custom CodeBlock extension with language selector and diagram rendering
 	const CodeBlockWithLanguageSelector = CodeBlockLowlight.extend({
 		addNodeView() {
 			return ({ node, getPos, editor }) => {
 				const pmNode = node as PMNode;
-				const container = document.createElement('div');
-				container.className = 'code-block-wrapper';
-
-				// Language selector header
-				const header = document.createElement('div');
-				header.className = 'code-block-header';
-
-				const select = document.createElement('select');
-				select.className = 'code-block-language-select';
-				select.setAttribute('aria-label', 'Select language');
-
-				LANGUAGES.forEach(({ value, label }) => {
-					const option = document.createElement('option');
-					option.value = value;
-					option.textContent = label;
-					select.appendChild(option);
-				});
-
 				const language = pmNode.attrs['language'] as string | null;
-				select.value = language ?? '';
+				const diagramType = language ? detectDiagramType(language) : null;
 
-				header.appendChild(select);
-				container.appendChild(header);
+				// For diagram languages, render the diagram
+				if (diagramType) {
+					return createDiagramNodeView(pmNode, getPos, editor, diagramType);
+				}
 
-				// Code content
-				const pre = document.createElement('pre');
-				const code = document.createElement('code');
-				pre.appendChild(code);
-				container.appendChild(pre);
-
-				select.addEventListener('change', (e) => {
-					const target = e.target as HTMLSelectElement;
-					const pos = getPos();
-					if (typeof pos === 'number') {
-						editor.view.dispatch(
-							editor.view.state.tr.setNodeMarkup(pos, undefined, {
-								...pmNode.attrs,
-								language: target.value || null,
-							})
-						);
-					}
-				});
-
-				return {
-					dom: container,
-					contentDOM: code,
-					update: (updatedNode: PMNode) => {
-						if (updatedNode.type.name !== 'codeBlock') {
-							return false;
-						}
-						const updatedLanguage = updatedNode.attrs['language'] as string | null;
-						select.value = updatedLanguage ?? '';
-						return true;
-					},
-				};
+				// For regular code blocks, use standard code editor view
+				return createCodeBlockNodeView(pmNode, getPos, editor);
 			};
 		},
 	});
+
+	// Create node view for diagram code blocks (read-only rendering)
+	// Key design decisions:
+	// 1. No contentDOM: Diagrams are read-only, ProseMirror doesn't need to sync content
+	// 2. Version tracking: Each render has a version to detect superseded renders
+	// 3. DOM validity check: Verify element is still connected before updating
+	// 4. Sequential rendering: Use setTimeout to avoid blocking UI
+	const createDiagramNodeView = (
+		pmNode: PMNode,
+		_getPos: () => number | undefined,
+		_editor: Editor,
+		initialDiagramType: ReturnType<typeof detectDiagramType>
+	) => {
+		// Capture initial content at creation time (immutable for this instance)
+		const initialContent = pmNode.textContent;
+
+		const container = document.createElement('div');
+		container.className = 'diagram-block-wrapper';
+
+		// Header with diagram type label
+		const header = document.createElement('div');
+		header.className = 'diagram-block-header';
+
+		const label = document.createElement('span');
+		label.className = 'diagram-block-label';
+		label.textContent = getDiagramLabel(initialDiagramType);
+		header.appendChild(label);
+		container.appendChild(header);
+
+		// Diagram render area
+		const diagramContainer = document.createElement('div');
+		diagramContainer.className = 'diagram-render-area';
+		diagramContainer.innerHTML = '<div class="diagram-loading">Loading...</div>';
+		container.appendChild(diagramContainer);
+
+		// State for this NodeView instance
+		let currentVersion = 0;
+		let lastRenderedContent = '';
+		let lastRenderedType: ReturnType<typeof detectDiagramType> = null;
+		let isDestroyed = false;
+
+		// Render diagram with version tracking
+		const renderWithVersion = (
+			content: string,
+			type: ReturnType<typeof detectDiagramType>,
+			version: number
+		) => {
+			if (!type) {
+				diagramContainer.innerHTML = '<div class="diagram-error">Unknown diagram type</div>';
+				return;
+			}
+
+			// Use setTimeout to yield to the event loop and prevent UI blocking
+			setTimeout(async () => {
+				// Validate before rendering
+				if (isDestroyed || version !== currentVersion || !container.isConnected) {
+					return;
+				}
+
+				try {
+					const result = await renderDiagram(type, content);
+
+					// Validate after async operation
+					if (isDestroyed || version !== currentVersion || !container.isConnected) {
+						return;
+					}
+
+					if (result.success) {
+						diagramContainer.innerHTML = result.html;
+					} else {
+						diagramContainer.innerHTML = `<div class="diagram-error">${result.error ?? 'Render failed'}</div>`;
+					}
+
+					lastRenderedContent = content;
+					lastRenderedType = type;
+				} catch (error) {
+					// Validate before error display
+					if (isDestroyed || version !== currentVersion || !container.isConnected) {
+						return;
+					}
+					const message = error instanceof Error ? error.message : String(error);
+					diagramContainer.innerHTML = `<div class="diagram-error">${message}</div>`;
+				}
+			}, 0);
+		};
+
+		// Schedule a render (increments version to cancel pending renders)
+		const scheduleRender = (content: string, type: ReturnType<typeof detectDiagramType>) => {
+			// Skip if already rendered with same content and type
+			if (content === lastRenderedContent && type === lastRenderedType) {
+				return;
+			}
+
+			// Increment version to invalidate any pending renders
+			currentVersion++;
+			const version = currentVersion;
+
+			diagramContainer.innerHTML = '<div class="diagram-loading">Rendering...</div>';
+			renderWithVersion(content, type, version);
+		};
+
+		// Initial render
+		scheduleRender(initialContent, initialDiagramType);
+
+		return {
+			dom: container,
+			// No contentDOM: Diagram blocks are read-only, no need for ProseMirror content sync
+			// This is intentional - prevents issues with ProseMirror trying to manage hidden content
+			update: (updatedNode: PMNode) => {
+				if (updatedNode.type.name !== 'codeBlock') {
+					return false;
+				}
+				const updatedLanguage = updatedNode.attrs['language'] as string | null;
+				const updatedDiagramType = updatedLanguage ? detectDiagramType(updatedLanguage) : null;
+
+				// If language changed to non-diagram, reject update (will recreate node view)
+				if (!updatedDiagramType) {
+					return false;
+				}
+
+				// Update label if diagram type changed
+				if (updatedDiagramType !== lastRenderedType) {
+					label.textContent = getDiagramLabel(updatedDiagramType);
+				}
+
+				// Re-render if content or type changed
+				const newContent = updatedNode.textContent;
+				if (newContent !== lastRenderedContent || updatedDiagramType !== lastRenderedType) {
+					scheduleRender(newContent, updatedDiagramType);
+				}
+
+				return true;
+			},
+			destroy: () => {
+				isDestroyed = true;
+			},
+		};
+	};
+
+	// Get human-readable diagram type label
+	const getDiagramLabel = (type: ReturnType<typeof detectDiagramType>): string => {
+		switch (type) {
+			case 'mermaid':
+				return 'Mermaid';
+			case 'plantuml':
+				return 'PlantUML';
+			case 'graphviz':
+				return 'GraphViz';
+			default:
+				return 'Diagram';
+		}
+	};
+
+	// Create node view for regular code blocks
+	const createCodeBlockNodeView = (
+		pmNode: PMNode,
+		getPos: () => number | undefined,
+		editor: Editor
+	) => {
+		const container = document.createElement('div');
+		container.className = 'code-block-wrapper';
+
+		// Language selector header
+		const header = document.createElement('div');
+		header.className = 'code-block-header';
+
+		const select = document.createElement('select');
+		select.className = 'code-block-language-select';
+		select.setAttribute('aria-label', 'Select language');
+
+		LANGUAGES.forEach(({ value, label }) => {
+			const option = document.createElement('option');
+			option.value = value;
+			option.textContent = label;
+			select.appendChild(option);
+		});
+
+		const language = pmNode.attrs['language'] as string | null;
+		select.value = language ?? '';
+
+		header.appendChild(select);
+		container.appendChild(header);
+
+		// Code content
+		const pre = document.createElement('pre');
+		const code = document.createElement('code');
+		pre.appendChild(code);
+		container.appendChild(pre);
+
+		select.addEventListener('change', (e) => {
+			const target = e.target as HTMLSelectElement;
+			const pos = getPos();
+			if (typeof pos === 'number') {
+				editor.view.dispatch(
+					editor.view.state.tr.setNodeMarkup(pos, undefined, {
+						...pmNode.attrs,
+						language: target.value || null,
+					})
+				);
+			}
+		});
+
+		return {
+			dom: container,
+			contentDOM: code,
+			update: (updatedNode: PMNode) => {
+				if (updatedNode.type.name !== 'codeBlock') {
+					return false;
+				}
+				const updatedLanguage = updatedNode.attrs['language'] as string | null;
+
+				// If language changed to a diagram type, reject update (will recreate node view)
+				if (updatedLanguage && detectDiagramType(updatedLanguage)) {
+					return false;
+				}
+
+				select.value = updatedLanguage ?? '';
+				return true;
+			},
+		};
+	};
 
 	interface MarkdownStorage {
 		readonly getMarkdown: () => string;
@@ -1358,5 +1535,94 @@
 
 	:global(.dark .tiptap :not(pre) > code) {
 		background: color-mix(in oklch, var(--muted) 50%, transparent);
+	}
+
+	/* ========================================
+	   Diagram Blocks (Mermaid, PlantUML, GraphViz)
+	   ======================================== */
+	.tiptap-container :global(.diagram-block-wrapper) {
+		position: relative;
+		margin: 1rem 0;
+		border-radius: var(--radius);
+		border: 1px solid var(--border);
+		background: color-mix(in oklch, var(--muted) 20%, transparent);
+		overflow: hidden;
+		box-shadow:
+			0 1px 2px 0 rgb(0 0 0 / 0.05),
+			0 1px 1px 0 rgb(0 0 0 / 0.03);
+	}
+
+	:global(.dark .diagram-block-wrapper) {
+		background: color-mix(in oklch, var(--input) 20%, transparent);
+	}
+
+	.tiptap-container :global(.diagram-block-header) {
+		display: flex;
+		align-items: center;
+		padding: 0.5rem 0.75rem;
+		background: color-mix(in oklch, var(--muted) 50%, transparent);
+		border-bottom: 1px solid var(--border);
+	}
+
+	:global(.dark .diagram-block-header) {
+		background: color-mix(in oklch, var(--muted) 30%, transparent);
+	}
+
+	.tiptap-container :global(.diagram-block-label) {
+		font-size: 0.75rem;
+		font-weight: 500;
+		color: var(--muted-foreground);
+		text-transform: uppercase;
+		letter-spacing: 0.025em;
+	}
+
+	.tiptap-container :global(.diagram-render-area) {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		padding: 1rem;
+		min-height: 100px;
+		background: var(--background);
+	}
+
+	:global(.dark .diagram-render-area) {
+		background: color-mix(in oklch, var(--background) 50%, transparent);
+	}
+
+	/* SVG diagrams (Mermaid, GraphViz) */
+	.tiptap-container :global(.diagram-render-area svg) {
+		max-width: 100%;
+		height: auto;
+	}
+
+	/* PlantUML images */
+	.tiptap-container :global(.diagram-render-area img.plantuml-diagram) {
+		max-width: 100%;
+		height: auto;
+	}
+
+	/* Loading state */
+	.tiptap-container :global(.diagram-loading) {
+		color: var(--muted-foreground);
+		font-size: 0.875rem;
+		font-style: italic;
+	}
+
+	/* Error state */
+	.tiptap-container :global(.diagram-error) {
+		color: var(--destructive);
+		font-size: 0.875rem;
+		font-family: ui-monospace, monospace;
+		background: color-mix(in oklch, var(--destructive) 10%, transparent);
+		padding: 0.75rem 1rem;
+		border-radius: calc(var(--radius) - 2px);
+		white-space: pre-wrap;
+		word-break: break-word;
+	}
+
+	/* Selection state */
+	.tiptap-container :global(.diagram-block-wrapper.ProseMirror-selectednode) {
+		outline: 2px solid var(--ring);
+		outline-offset: 2px;
 	}
 </style>
