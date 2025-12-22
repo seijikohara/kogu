@@ -48,7 +48,7 @@
 	} from '$lib/services/markdown.js';
 	import MarkdownContextMenuItems from './markdown-context-menu-items.svelte';
 
-	type RightPanelMode = 'wysiwyg' | 'preview';
+	type RightPanelMode = 'editor' | 'preview';
 	type ActiveEditor = 'monaco' | 'tiptap' | null;
 
 	// Toolbar group definitions
@@ -98,7 +98,7 @@
 
 	// State
 	let input = $state('');
-	let rightPanelMode = $state<RightPanelMode>('wysiwyg');
+	let rightPanelMode = $state<RightPanelMode>('editor');
 	let showOptions = $state(true);
 	let activeEditor = $state<ActiveEditor>(null);
 
@@ -393,7 +393,7 @@ ${tocToMarkdown(toc)}
 				value={rightPanelMode}
 				onchange={handleRightPanelModeChange}
 				options={[
-					{ value: 'wysiwyg', label: 'WYSIWYG' },
+					{ value: 'editor', label: 'Editor' },
 					{ value: 'preview', label: 'Preview' },
 				]}
 			/>
@@ -450,7 +450,7 @@ ${tocToMarkdown(toc)}
 			<FormInfo>
 				<ul class="list-inside list-disc space-y-0.5">
 					<li>Monaco editor with syntax highlighting</li>
-					<li>Tiptap WYSIWYG editor</li>
+					<li>Tiptap visual editor</li>
 					<li>Real-time bidirectional sync</li>
 					<li>Formatting toolbar & context menu</li>
 					<li>Table of Contents generation</li>
@@ -567,7 +567,7 @@ ${tocToMarkdown(toc)}
 				</CodeEditor>
 			{/snippet}
 			{#snippet right()}
-				{#if rightPanelMode === 'wysiwyg'}
+				{#if rightPanelMode === 'editor'}
 					<ContextMenu.Root>
 						<ContextMenu.Trigger class="relative h-full">
 							{#if activeEditor === 'tiptap'}
