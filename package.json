@@ -63,7 +63,7 @@
 	},
 	"devDependencies": {
 		"@biomejs/biome": "^2.3.10",
-		"@internationalized/date": "^3.8.1",
+		"@internationalized/date": "^3.10.1",
 		"@lucide/svelte": "^0.544.0",
 		"@sveltejs/adapter-static": "^3.0.10",
 		"@sveltejs/kit": "^2.49.2",
