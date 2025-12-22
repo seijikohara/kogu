@@ -2,6 +2,7 @@
 	import { Pencil } from '@lucide/svelte';
 	import { Editor, Extension } from '@tiptap/core';
 	import { CodeBlockLowlight } from '@tiptap/extension-code-block-lowlight';
+	import { Image } from '@tiptap/extension-image';
 	import { Link } from '@tiptap/extension-link';
 	import { Mathematics } from '@tiptap/extension-mathematics';
 	import { Placeholder } from '@tiptap/extension-placeholder';
@@ -13,8 +14,9 @@
 	import { TaskList } from '@tiptap/extension-task-list';
 	import { StarterKit } from '@tiptap/starter-kit';
 	import katex from 'katex';
+	import 'katex/dist/katex.min.css';
 	import { common, createLowlight } from 'lowlight';
-	import type MarkdownIt from 'markdown-it';
+	import MarkdownIt from 'markdown-it';
 	import texmath from 'markdown-it-texmath';
 	import { onDestroy, onMount, untrack } from 'svelte';
 	import { Markdown } from 'tiptap-markdown';
@@ -24,6 +26,19 @@
 		type: { name: string };
 		attrs: Record<string, unknown>;
 		isBlock: boolean;
+		textContent: string;
+		nodeSize: number;
+	}
+
+	// markdown-it Token type (simplified for our use)
+	interface MdToken {
+		type: string;
+		tag: string;
+		map: [number, number] | null;
+		content: string;
+		children: MdToken[] | null;
+		block: boolean;
+		nesting: -1 | 0 | 1;
 	}
 
 	// Helper function to escape HTML attributes
@@ -34,6 +49,9 @@
 			.replace(/>/g, '&gt;')
 			.replace(/"/g, '&quot;')
 			.replace(/'/g, '&#039;');
+
+	// Create a markdown-it instance for source map parsing
+	const mdParser = new MarkdownIt();
 
 	// Custom extension to integrate markdown-it-texmath with tiptap-markdown
 	// Use WeakSet to track initialized markdown-it instances (avoid repeated initialization)
@@ -80,6 +98,25 @@
 							md.renderer.rules['math_block_eqno'] = (tokens, idx) => {
 								const latex = tokens[idx]?.content ?? '';
 								return `<div data-type="block-math" data-latex="${escapeHtml(latex)}"></div>`;
+							};
+
+							// GitHub-compatible ```math code block syntax
+							const defaultFence =
+								md.renderer.rules['fence'] ??
+								((tokens, idx, options, _env, self) => self.renderToken(tokens, idx, options));
+
+							md.renderer.rules['fence'] = (tokens, idx, options, env, self) => {
+								const token = tokens[idx];
+								const info = token?.info?.trim().toLowerCase() ?? '';
+
+								// Handle ```math code blocks
+								if (info === 'math') {
+									const latex = token?.content?.trim() ?? '';
+									return `<div data-type="block-math" data-latex="${escapeHtml(latex)}"></div>`;
+								}
+
+								// Default fence rendering for other languages
+								return defaultFence(tokens, idx, options, env, self);
 							};
 						},
 					},
@@ -197,8 +234,224 @@
 	});
 
 	interface MarkdownStorage {
-		getMarkdown: () => string;
+		readonly getMarkdown: () => string;
 	}
+
+	// Source map entry: maps a block to its source line range
+	interface SourceMapEntry {
+		readonly startLine: number; // 1-indexed
+		readonly endLine: number; // 1-indexed
+		readonly type: string; // Token type (heading_open, paragraph_open, etc.)
+		readonly content: string; // Text content for matching
+	}
+
+	// Leaf block types in ProseMirror - these are the actual content blocks
+	// Container types (table, tableRow, bulletList, etc.) are NOT leaf blocks
+	const LEAF_BLOCK_TYPES = new Set(['heading', 'paragraph', 'codeBlock', 'horizontalRule']);
+
+	// Token types that represent leaf-level content (not containers)
+	// These correspond to ProseMirror's leaf block types
+	const LEAF_TOKEN_TYPES = new Set([
+		'heading_open', // Corresponds to 'heading' in PM
+		'paragraph_open', // Corresponds to 'paragraph' in PM
+		'fence', // Corresponds to 'codeBlock' in PM
+		'code_block', // Corresponds to 'codeBlock' in PM
+		'hr', // Corresponds to 'horizontalRule' in PM
+	]);
+
+	// Table cell tokens (each cell contains a paragraph in ProseMirror)
+	const TABLE_CELL_TYPES = new Set(['th_open', 'td_open']);
+
+	// Accumulator state for source map building
+	interface SourceMapState {
+		readonly entries: readonly SourceMapEntry[];
+		readonly inTable: boolean;
+	}
+
+	// Process a single token and return updated state
+	const processToken = (
+		state: SourceMapState,
+		token: MdToken,
+		nextToken: MdToken | undefined
+	): SourceMapState => {
+		// Track table state
+		if (token.type === 'table_open') {
+			return { ...state, inTable: true };
+		}
+		if (token.type === 'table_close') {
+			return { ...state, inTable: false };
+		}
+
+		// Skip tokens without source map
+		if (!token.map) return state;
+
+		// Handle table cells (each cell = one paragraph in ProseMirror)
+		if (state.inTable && TABLE_CELL_TYPES.has(token.type)) {
+			const content = nextToken?.type === 'inline' ? nextToken.content : '';
+			return {
+				...state,
+				entries: [
+					...state.entries,
+					{
+						startLine: token.map[0] + 1,
+						endLine: token.map[1],
+						type: token.type,
+						content: content.slice(0, 100),
+					},
+				],
+			};
+		}
+
+		// Skip paragraphs inside tables (they're handled by cell tokens)
+		if (state.inTable && token.type === 'paragraph_open') {
+			return state;
+		}
+
+		// Process leaf token types
+		if (LEAF_TOKEN_TYPES.has(token.type)) {
+			const content =
+				token.type === 'fence' || token.type === 'code_block'
+					? token.content
+					: nextToken?.type === 'inline'
+						? nextToken.content
+						: '';
+
+			return {
+				...state,
+				entries: [
+					...state.entries,
+					{
+						startLine: token.map[0] + 1,
+						endLine: token.map[1],
+						type: token.type,
+						content: content.slice(0, 100),
+					},
+				],
+			};
+		}
+
+		return state;
+	};
+
+	// Build source map from markdown using markdown-it tokens
+	// Only captures leaf-level content tokens that correspond to ProseMirror leaf blocks
+	const buildSourceMap = (markdown: string): readonly SourceMapEntry[] => {
+		const tokens = mdParser.parse(markdown, {}) as MdToken[];
+		const initialState: SourceMapState = { entries: [], inTable: false };
+
+		const finalState = tokens.reduce(
+			(state, token, index) => processToken(state, token, tokens[index + 1]),
+			initialState
+		);
+
+		return finalState.entries;
+	};
+
+	// Check if a ProseMirror node is a leaf block (content-bearing, not a container)
+	const isLeafBlock = (node: PMNode): boolean => LEAF_BLOCK_TYPES.has(node.type.name);
+
+	// Get the leaf block index at cursor position in ProseMirror document
+	// Note: Uses mutable variables due to ProseMirror's callback-based descendants API
+	const getBlockIndexAtCursor = (editor: Editor): number => {
+		const { from } = editor.state.selection;
+		let blockIndex = 0;
+		let cursorBlockIndex = 0;
+
+		editor.state.doc.descendants((node: PMNode, pos: number) => {
+			if (!isLeafBlock(node)) return true;
+
+			if (pos <= from && from <= pos + node.nodeSize) {
+				cursorBlockIndex = blockIndex;
+			}
+			blockIndex++;
+			return true;
+		});
+
+		return cursorBlockIndex;
+	};
+
+	// Get the ProseMirror position at a given leaf block index
+	// Note: Uses mutable variables due to ProseMirror's callback-based descendants API
+	const getBlockPositionByIndex = (editor: Editor, targetIndex: number): number => {
+		let blockIndex = 0;
+		let targetPos = 1;
+
+		editor.state.doc.descendants((node: PMNode, pos: number) => {
+			if (targetPos > 1 && blockIndex > targetIndex) return false;
+			if (!isLeafBlock(node)) return true;
+
+			if (blockIndex === targetIndex) {
+				targetPos = pos + 1;
+				return false;
+			}
+			blockIndex++;
+			return true;
+		});
+
+		return targetPos;
+	};
+
+	// Map ProseMirror cursor position to Markdown line number using source map
+	const getMarkdownLineFromCursor = (editor: Editor, markdown: string): number => {
+		const { from } = editor.state.selection;
+
+		// Edge case: empty or minimal document
+		if (editor.state.doc.content.size <= 1 || from <= 1) return 1;
+
+		// Build source map from markdown
+		const sourceMap = buildSourceMap(markdown);
+		if (sourceMap.length === 0) return 1;
+
+		// Get block index at cursor
+		const blockIndex = getBlockIndexAtCursor(editor);
+
+		// Find the corresponding source map entry
+		// Use min to handle edge cases where ProseMirror has more blocks
+		const entryIndex = Math.min(blockIndex, sourceMap.length - 1);
+		const entry = sourceMap[entryIndex];
+
+		return entry?.startLine ?? 1;
+	};
+
+	// Find the block index that contains or is closest to the target line
+	const findBlockIndexForLine = (
+		sourceMap: readonly SourceMapEntry[],
+		targetLine: number
+	): number => {
+		// Find exact match: block that contains the target line
+		const exactMatchIndex = sourceMap.findIndex(
+			(entry) => targetLine >= entry.startLine && targetLine < entry.endLine
+		);
+		if (exactMatchIndex !== -1) return exactMatchIndex;
+
+		// Find the first block that starts after target line, then use previous block
+		const nextBlockIndex = sourceMap.findIndex((entry) => entry.startLine > targetLine);
+		if (nextBlockIndex > 0) return nextBlockIndex - 1;
+		if (nextBlockIndex === 0) return 0;
+
+		// Target line is after all blocks, use last block
+		return sourceMap.length - 1;
+	};
+
+	// Map Markdown line number to ProseMirror position using source map
+	const getProseMirrorPosFromLine = (
+		editor: Editor,
+		markdown: string,
+		targetLine: number
+	): number => {
+		// Edge case
+		if (targetLine <= 1) return 1;
+
+		// Build source map from markdown
+		const sourceMap = buildSourceMap(markdown);
+		if (sourceMap.length === 0) return 1;
+
+		// Find which block contains this line
+		const targetBlockIndex = findBlockIndexForLine(sourceMap, targetLine);
+
+		// Get the ProseMirror position at that block index
+		return getBlockPositionByIndex(editor, targetBlockIndex);
+	};
 
 	export type FormatCommand =
 		| 'bold'
@@ -288,6 +541,8 @@
 					heading: { levels: [1, 2, 3, 4, 5, 6] },
 					// Disable codeBlock from StarterKit to use CodeBlockLowlight instead
 					codeBlock: false,
+					// Disable link from StarterKit to use custom Link configuration
+					link: false,
 				}),
 				Placeholder.configure({
 					placeholder,
@@ -297,6 +552,10 @@
 					HTMLAttributes: {
 						class: 'cursor-pointer',
 					},
+				}),
+				Image.configure({
+					inline: false,
+					allowBase64: true,
 				}),
 				Table.configure({
 					resizable: true,
@@ -332,13 +591,12 @@
 			},
 			onSelectionUpdate: ({ editor }) => {
 				if (!oncursorchange) return;
-				const { from } = editor.state.selection;
-				let lineNumber = 1;
-				editor.state.doc.nodesBetween(0, from, (node: PMNode, pos: number) => {
-					if (node.isBlock && pos < from) {
-						lineNumber++;
-					}
-				});
+
+				// Get current markdown source from editor
+				const markdown = getMarkdownFromEditor(editor);
+
+				// Map cursor position to markdown line using block-based mapping
+				const lineNumber = getMarkdownLineFromCursor(editor, markdown);
 				oncursorchange(lineNumber);
 			},
 			onFocus: () => {
@@ -443,18 +701,13 @@
 	// Expose method to set cursor position by line number (without stealing focus)
 	export const setCursorLine = (line: number) => {
 		if (!editor || editor.isFocused) return; // Don't interfere if editor is focused
-		let pos = 0;
-		let currentLine = 1;
-		editor.state.doc.descendants((node: PMNode, nodePos: number) => {
-			if (currentLine === line && pos === 0) {
-				pos = nodePos + 1;
-				return false;
-			}
-			if (node.isBlock) {
-				currentLine++;
-			}
-			return true;
-		});
+
+		// Get markdown source
+		const markdown = getMarkdownFromEditor(editor);
+
+		// Map markdown line to ProseMirror position using block-based mapping
+		const pos = getProseMirrorPosFromLine(editor, markdown, line);
+
 		if (pos > 0) {
 			editor.commands.setTextSelection(pos);
 		}
@@ -467,10 +720,7 @@
 		<span class="text-xs font-medium text-muted-foreground">Visual Editor</span>
 	</div>
 	<div class="tiptap-container flex-1 overflow-auto p-4">
-		<div
-			bind:this={element}
-			class="tiptap-editor prose prose-sm dark:prose-invert max-w-none h-full"
-		></div>
+		<div bind:this={element} class="tiptap-editor h-full max-w-none"></div>
 	</div>
 </div>
 
@@ -481,20 +731,187 @@
 	.tiptap-container :global(.tiptap) {
 		outline: none;
 		min-height: 100%;
+		color: var(--foreground);
+		font-size: 0.875rem;
+		line-height: 1.625;
+	}
+
+	/* Text Selection */
+	.tiptap-container :global(.tiptap ::selection) {
+		background: color-mix(in oklch, var(--primary) 30%, transparent);
+		color: inherit;
+	}
+
+	.tiptap-container :global(.tiptap *::selection) {
+		background: color-mix(in oklch, var(--primary) 30%, transparent);
+		color: inherit;
 	}
 
 	/* Placeholder - matches shadcn input placeholder */
 	.tiptap-container :global(.tiptap p.is-editor-empty:first-child::before) {
 		content: attr(data-placeholder);
 		float: left;
-		color: hsl(var(--muted-foreground));
+		color: var(--muted-foreground);
 		pointer-events: none;
 		height: 0;
 	}
 
 	/* ========================================
-	   List Styles
+	   Typography - Headings
 	   ======================================== */
+	.tiptap-container :global(.tiptap h1) {
+		font-size: 2rem;
+		font-weight: 700;
+		line-height: 1.2;
+		margin-top: 1.5rem;
+		margin-bottom: 1rem;
+		color: var(--foreground);
+		letter-spacing: -0.025em;
+	}
+
+	.tiptap-container :global(.tiptap h2) {
+		font-size: 1.5rem;
+		font-weight: 600;
+		line-height: 1.25;
+		margin-top: 1.5rem;
+		margin-bottom: 0.75rem;
+		color: var(--foreground);
+		letter-spacing: -0.02em;
+		border-bottom: 1px solid var(--border);
+		padding-bottom: 0.5rem;
+	}
+
+	.tiptap-container :global(.tiptap h3) {
+		font-size: 1.25rem;
+		font-weight: 600;
+		line-height: 1.3;
+		margin-top: 1.25rem;
+		margin-bottom: 0.5rem;
+		color: var(--foreground);
+		letter-spacing: -0.015em;
+	}
+
+	.tiptap-container :global(.tiptap h4) {
+		font-size: 1.125rem;
+		font-weight: 600;
+		line-height: 1.4;
+		margin-top: 1rem;
+		margin-bottom: 0.5rem;
+		color: var(--foreground);
+	}
+
+	.tiptap-container :global(.tiptap h5) {
+		font-size: 1rem;
+		font-weight: 600;
+		line-height: 1.5;
+		margin-top: 1rem;
+		margin-bottom: 0.25rem;
+		color: var(--foreground);
+	}
+
+	.tiptap-container :global(.tiptap h6) {
+		font-size: 0.875rem;
+		font-weight: 600;
+		line-height: 1.5;
+		margin-top: 1rem;
+		margin-bottom: 0.25rem;
+		color: var(--muted-foreground);
+	}
+
+	/* First child headings - no top margin */
+	.tiptap-container :global(.tiptap > h1:first-child),
+	.tiptap-container :global(.tiptap > h2:first-child),
+	.tiptap-container :global(.tiptap > h3:first-child),
+	.tiptap-container :global(.tiptap > h4:first-child),
+	.tiptap-container :global(.tiptap > h5:first-child),
+	.tiptap-container :global(.tiptap > h6:first-child) {
+		margin-top: 0;
+	}
+
+	/* ========================================
+	   Typography - Paragraphs
+	   ======================================== */
+	.tiptap-container :global(.tiptap p) {
+		margin-top: 0;
+		margin-bottom: 0.75rem;
+		line-height: 1.625;
+	}
+
+	.tiptap-container :global(.tiptap p:last-child) {
+		margin-bottom: 0;
+	}
+
+	/* ========================================
+	   Typography - Inline Formatting
+	   ======================================== */
+	.tiptap-container :global(.tiptap strong) {
+		font-weight: 600;
+		color: var(--foreground);
+	}
+
+	.tiptap-container :global(.tiptap em) {
+		font-style: italic;
+	}
+
+	.tiptap-container :global(.tiptap s),
+	.tiptap-container :global(.tiptap del) {
+		text-decoration: line-through;
+		color: var(--muted-foreground);
+	}
+
+	.tiptap-container :global(.tiptap u) {
+		text-decoration: underline;
+		text-underline-offset: 3px;
+	}
+
+	/* ========================================
+	   List Styles - Unordered List
+	   ======================================== */
+	.tiptap-container :global(.tiptap ul:not([data-type='taskList'])) {
+		list-style-type: disc;
+		padding-left: 1.5rem;
+		margin-top: 0.5rem;
+		margin-bottom: 0.75rem;
+	}
+
+	.tiptap-container :global(.tiptap ul:not([data-type='taskList']) ul) {
+		list-style-type: circle;
+		margin-top: 0.25rem;
+		margin-bottom: 0.25rem;
+	}
+
+	.tiptap-container :global(.tiptap ul:not([data-type='taskList']) ul ul) {
+		list-style-type: square;
+	}
+
+	/* ========================================
+	   List Styles - Ordered List
+	   ======================================== */
+	.tiptap-container :global(.tiptap ol) {
+		list-style-type: decimal;
+		padding-left: 1.5rem;
+		margin-top: 0.5rem;
+		margin-bottom: 0.75rem;
+	}
+
+	.tiptap-container :global(.tiptap ol ol) {
+		list-style-type: lower-alpha;
+		margin-top: 0.25rem;
+		margin-bottom: 0.25rem;
+	}
+
+	.tiptap-container :global(.tiptap ol ol ol) {
+		list-style-type: lower-roman;
+	}
+
+	/* ========================================
+	   List Styles - Common
+	   ======================================== */
+	.tiptap-container :global(.tiptap ul:not([data-type='taskList']) li),
+	.tiptap-container :global(.tiptap ol li) {
+		margin-bottom: 0.25rem;
+	}
+
 	.tiptap-container :global(.tiptap ul:not([data-type='taskList']) li > p),
 	.tiptap-container :global(.tiptap ol li > p) {
 		margin: 0;
@@ -527,7 +944,7 @@
 		width: 1rem;
 		height: 1rem;
 		cursor: pointer;
-		border: 1px solid hsl(var(--input));
+		border: 1px solid var(--input);
 		border-radius: 4px;
 		background: transparent;
 		appearance: none;
@@ -542,8 +959,8 @@
 
 	.tiptap-container
 		:global(.tiptap ul[data-type='taskList'] li > label input[type='checkbox']:checked) {
-		background: hsl(var(--primary));
-		border-color: hsl(var(--primary));
+		background: var(--primary);
+		border-color: var(--primary);
 	}
 
 	.tiptap-container
@@ -552,21 +969,25 @@
 		display: block;
 		width: 0.5rem;
 		height: 0.25rem;
-		border-left: 2px solid hsl(var(--primary-foreground));
-		border-bottom: 2px solid hsl(var(--primary-foreground));
+		border-left: 2px solid var(--primary-foreground);
+		border-bottom: 2px solid var(--primary-foreground);
 		transform: rotate(-45deg) translateY(-1px);
 	}
 
 	.tiptap-container
 		:global(.tiptap ul[data-type='taskList'] li > label input[type='checkbox']:focus-visible) {
-		border-color: hsl(var(--ring));
-		box-shadow: 0 0 0 3px hsl(var(--ring) / 0.5);
+		border-color: var(--ring);
+		box-shadow: 0 0 0 3px color-mix(in oklch, var(--ring) 50%, transparent);
 	}
 
-	:global(.dark)
-		.tiptap-container
-		:global(.tiptap ul[data-type='taskList'] li > label input[type='checkbox']) {
-		background: hsl(var(--input) / 0.3);
+	:global(.dark .tiptap ul[data-type='taskList'] li > label input[type='checkbox']) {
+		background: color-mix(in oklch, var(--input) 30%, transparent);
+		border-color: color-mix(in oklch, var(--muted-foreground) 50%, transparent);
+	}
+
+	:global(.dark .tiptap ul[data-type='taskList'] li > label input[type='checkbox']:checked) {
+		background: var(--primary);
+		border-color: var(--primary);
 	}
 
 	.tiptap-container :global(.tiptap ul[data-type='taskList'] li > div) {
@@ -580,14 +1001,14 @@
 
 	.tiptap-container :global(.tiptap ul[data-type='taskList'] li[data-checked='true'] > div) {
 		text-decoration: line-through;
-		color: hsl(var(--muted-foreground));
+		color: var(--muted-foreground);
 	}
 
 	/* ========================================
 	   Table Styles
 	   ======================================== */
 	.tiptap-container :global(.tiptap .selectedCell:after) {
-		background: hsl(var(--primary) / 0.1);
+		background: color-mix(in oklch, var(--primary) 10%, transparent);
 		content: '';
 		left: 0;
 		right: 0;
@@ -599,8 +1020,8 @@
 	}
 
 	.tiptap-container :global(.tiptap .column-resize-handle) {
-		background-color: hsl(var(--ring));
-		bottom: -2px;
+		background-color: var(--ring);
+		bottom: 0;
 		pointer-events: none;
 		position: absolute;
 		right: -2px;
@@ -622,24 +1043,36 @@
 	.tiptap-container :global(.tiptap table) {
 		border-collapse: collapse;
 		width: 100%;
+		margin: 1rem 0;
 	}
 
 	.tiptap-container :global(.tiptap th),
 	.tiptap-container :global(.tiptap td) {
-		border: 1px solid hsl(var(--border));
+		border: 1px solid var(--border);
 		padding: 0.5rem 0.75rem;
 		position: relative;
 		vertical-align: top;
 	}
 
+	/* Remove paragraph margin in table cells to prevent height jump when resize handles appear */
+	.tiptap-container :global(.tiptap th p),
+	.tiptap-container :global(.tiptap td p) {
+		margin: 0;
+	}
+
+	:global(.dark .tiptap th),
+	:global(.dark .tiptap td) {
+		border-color: color-mix(in oklch, var(--muted-foreground) 30%, transparent);
+	}
+
 	.tiptap-container :global(.tiptap th) {
-		background: hsl(var(--muted) / 0.5);
+		background: color-mix(in oklch, var(--muted) 50%, transparent);
 		font-weight: 500;
 		text-align: left;
 	}
 
-	:global(.dark) .tiptap-container :global(.tiptap th) {
-		background: hsl(var(--muted) / 0.3);
+	:global(.dark .tiptap th) {
+		background: color-mix(in oklch, var(--muted) 30%, transparent);
 	}
 
 	/* ========================================
@@ -649,16 +1082,16 @@
 		position: relative;
 		margin: 1rem 0;
 		border-radius: var(--radius);
-		border: 1px solid hsl(var(--border));
-		background: hsl(var(--muted) / 0.3);
+		border: 1px solid var(--border);
+		background: color-mix(in oklch, var(--muted) 30%, transparent);
 		overflow: hidden;
 		box-shadow:
 			0 1px 2px 0 rgb(0 0 0 / 0.05),
 			0 1px 1px 0 rgb(0 0 0 / 0.03);
 	}
 
-	:global(.dark) .tiptap-container :global(.code-block-wrapper) {
-		background: hsl(var(--input) / 0.3);
+	:global(.dark .code-block-wrapper) {
+		background: color-mix(in oklch, var(--input) 30%, transparent);
 	}
 
 	.tiptap-container :global(.code-block-header) {
@@ -666,12 +1099,12 @@
 		align-items: center;
 		justify-content: flex-end;
 		padding: 0.5rem 0.75rem;
-		background: hsl(var(--muted) / 0.5);
-		border-bottom: 1px solid hsl(var(--border));
+		background: color-mix(in oklch, var(--muted) 50%, transparent);
+		border-bottom: 1px solid var(--border);
 	}
 
-	:global(.dark) .tiptap-container :global(.code-block-header) {
-		background: hsl(var(--muted) / 0.3);
+	:global(.dark .code-block-header) {
+		background: color-mix(in oklch, var(--muted) 30%, transparent);
 	}
 
 	/* Language select - matches shadcn select-trigger */
@@ -681,9 +1114,9 @@
 		height: 1.75rem;
 		padding: 0.25rem 1.5rem 0.25rem 0.5rem;
 		border-radius: calc(var(--radius) - 2px);
-		background: hsl(var(--background));
-		border: 1px solid hsl(var(--input));
-		color: hsl(var(--foreground));
+		background: var(--background);
+		border: 1px solid var(--input);
+		color: var(--foreground);
 		cursor: pointer;
 		outline: none;
 		transition: box-shadow 0.15s ease;
@@ -697,21 +1130,21 @@
 			0 1px 1px 0 rgb(0 0 0 / 0.03);
 	}
 
-	:global(.dark) .tiptap-container :global(.code-block-language-select) {
-		background: hsl(var(--input) / 0.3);
+	:global(.dark .code-block-language-select) {
+		background: color-mix(in oklch, var(--input) 30%, transparent);
 	}
 
 	.tiptap-container :global(.code-block-language-select:hover) {
-		background: hsl(var(--accent));
+		background: var(--accent);
 	}
 
-	:global(.dark) .tiptap-container :global(.code-block-language-select:hover) {
-		background: hsl(var(--input) / 0.5);
+	:global(.dark .code-block-language-select:hover) {
+		background: color-mix(in oklch, var(--input) 50%, transparent);
 	}
 
 	.tiptap-container :global(.code-block-language-select:focus) {
-		border-color: hsl(var(--ring));
-		box-shadow: 0 0 0 3px hsl(var(--ring) / 0.5);
+		border-color: var(--ring);
+		box-shadow: 0 0 0 3px color-mix(in oklch, var(--ring) 50%, transparent);
 	}
 
 	.tiptap-container :global(.code-block-wrapper pre) {
@@ -737,7 +1170,7 @@
 
 	.tiptap-container :global(.hljs-comment),
 	.tiptap-container :global(.hljs-quote) {
-		color: hsl(var(--muted-foreground));
+		color: var(--muted-foreground);
 		font-style: italic;
 	}
 
@@ -790,7 +1223,7 @@
 	}
 
 	.tiptap-container :global(.hljs-formula) {
-		background: hsl(var(--muted) / 0.5);
+		background: color-mix(in oklch, var(--muted) 50%, transparent);
 	}
 
 	.tiptap-container :global(.hljs-emphasis) {
@@ -812,11 +1245,11 @@
 	}
 
 	.tiptap-container :global(.tiptap-mathematics-render:hover) {
-		background: hsl(var(--accent));
+		background: var(--accent);
 	}
 
-	:global(.dark) .tiptap-container :global(.tiptap-mathematics-render:hover) {
-		background: hsl(var(--accent) / 0.5);
+	:global(.dark .tiptap-mathematics-render:hover) {
+		background: color-mix(in oklch, var(--accent) 50%, transparent);
 	}
 
 	.tiptap-container :global(.tiptap-mathematics-render--editable) {
@@ -829,12 +1262,12 @@
 		text-align: center;
 		margin: 1rem 0;
 		padding: 0.75rem 1rem;
-		background: hsl(var(--muted) / 0.3);
+		background: color-mix(in oklch, var(--muted) 30%, transparent);
 		border-radius: var(--radius);
 	}
 
-	:global(.dark) .tiptap-container :global(div.tiptap-mathematics-render) {
-		background: hsl(var(--muted) / 0.2);
+	:global(.dark div.tiptap-mathematics-render) {
+		background: color-mix(in oklch, var(--muted) 20%, transparent);
 	}
 
 	/* Inline math */
@@ -846,36 +1279,61 @@
 	/* Math error states */
 	.tiptap-container :global(.block-math-error),
 	.tiptap-container :global(.inline-math-error) {
-		color: hsl(var(--destructive));
+		color: var(--destructive);
 		font-family: ui-monospace, monospace;
 		font-size: 0.875rem;
-		background: hsl(var(--destructive) / 0.1);
+		background: color-mix(in oklch, var(--destructive) 10%, transparent);
 		padding: 0.25rem 0.5rem;
 		border-radius: calc(var(--radius) - 2px);
+	}
+
+	/* ========================================
+	   Images
+	   ======================================== */
+	.tiptap-container :global(.tiptap img) {
+		max-width: 100%;
+		height: auto;
+		border-radius: var(--radius);
+		margin: 0.5rem 0;
+	}
+
+	.tiptap-container :global(.tiptap img.ProseMirror-selectednode) {
+		outline: 2px solid var(--ring);
+		outline-offset: 2px;
 	}
 
 	/* ========================================
 	   Links - matches shadcn link pattern
 	   ======================================== */
 	.tiptap-container :global(.tiptap a) {
-		color: hsl(var(--primary));
+		color: var(--primary);
 		text-decoration: underline;
 		text-underline-offset: 4px;
 		transition: color 0.15s ease;
 	}
 
 	.tiptap-container :global(.tiptap a:hover) {
-		color: hsl(var(--primary) / 0.8);
+		color: color-mix(in oklch, var(--primary) 80%, transparent);
 	}
 
 	/* ========================================
 	   Blockquote - shadcn border-l pattern
 	   ======================================== */
 	.tiptap-container :global(.tiptap blockquote) {
-		border-left: 3px solid hsl(var(--border));
+		border-left: 3px solid color-mix(in oklch, var(--muted-foreground) 50%, transparent);
 		padding-left: 1rem;
+		margin: 1rem 0;
 		margin-left: 0;
-		color: hsl(var(--muted-foreground));
+		color: var(--muted-foreground);
+		font-style: italic;
+	}
+
+	.tiptap-container :global(.tiptap blockquote p) {
+		margin: 0;
+	}
+
+	:global(.dark .tiptap blockquote) {
+		border-left-color: color-mix(in oklch, var(--muted-foreground) 40%, transparent);
 	}
 
 	/* ========================================
@@ -883,7 +1341,7 @@
 	   ======================================== */
 	.tiptap-container :global(.tiptap hr) {
 		border: none;
-		border-top: 1px solid hsl(var(--border));
+		border-top: 2px solid var(--muted-foreground);
 		margin: 1.5rem 0;
 	}
 
@@ -891,14 +1349,14 @@
 	   Inline Code - matches shadcn kbd/code pattern
 	   ======================================== */
 	.tiptap-container :global(.tiptap :not(pre) > code) {
-		background: hsl(var(--muted));
+		background: var(--muted);
 		padding: 0.125rem 0.375rem;
 		border-radius: calc(var(--radius) - 2px);
 		font-size: 0.875em;
 		font-weight: 500;
 	}
 
-	:global(.dark) .tiptap-container :global(.tiptap :not(pre) > code) {
-		background: hsl(var(--muted) / 0.5);
+	:global(.dark .tiptap :not(pre) > code) {
+		background: color-mix(in oklch, var(--muted) 50%, transparent);
 	}
 </style>
