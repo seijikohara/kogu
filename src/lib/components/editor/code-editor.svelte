@@ -8,7 +8,8 @@
 		Database,
 		Download,
 		FileCode,
-		FileJson2,
+		FileJson,
+		FileText,
 		FlaskConical,
 		FolderOpen,
 		HardDrive,
@@ -135,8 +136,8 @@
 		editorWrapperRef?.focusEditor();
 	};
 
-	export const gotoLine = (line: number) => {
-		editorWrapperRef?.scrollToLine(line);
+	export const gotoLine = (line: number, focus: boolean = false) => {
+		editorWrapperRef?.scrollToLine(line, focus);
 	};
 
 	const isInput = $derived(mode === 'input');
@@ -145,7 +146,11 @@
 
 	// Check if tree view is supported for current mode (AST-supported languages)
 	const supportsTreeView = $derived(
-		editorMode === 'json' || editorMode === 'yaml' || editorMode === 'xml' || editorMode === 'sql'
+		editorMode === 'json' ||
+			editorMode === 'yaml' ||
+			editorMode === 'xml' ||
+			editorMode === 'sql' ||
+			editorMode === 'markdown'
 	);
 
 	// AST and path maps state
@@ -176,6 +181,7 @@
 			yaml: 'yaml',
 			xml: 'xml',
 			sql: 'sql',
+			markdown: 'markdown',
 		};
 		return languageMap[mode] ?? null;
 	};
@@ -609,9 +615,11 @@
 						{#if editorMode === 'xml'}
 							<FileCode class="h-3.5 w-3.5" />
 						{:else if editorMode === 'yaml'}
-							<FileJson2 class="h-3.5 w-3.5" />
+							<FileJson class="h-3.5 w-3.5" />
 						{:else if editorMode === 'sql'}
 							<Database class="h-3.5 w-3.5" />
+						{:else if editorMode === 'markdown'}
+							<FileText class="h-3.5 w-3.5" />
 						{:else}
 							<Braces class="h-3.5 w-3.5" />
 						{/if}

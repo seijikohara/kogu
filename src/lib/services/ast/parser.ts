@@ -1,8 +1,10 @@
 /**
- * AST parser service using Tauri command
+ * AST parser service using Tauri command (for JSON, YAML, XML, SQL)
+ * or TypeScript parser (for Markdown)
  */
 
 import { browser } from '$app/environment';
+import { parseMarkdownToAst } from './markdown.js';
 import type {
 	AstLanguage,
 	AstNode,
@@ -12,13 +14,19 @@ import type {
 } from './types.js';
 
 /**
- * Parse text to AST using Rust parser
- * Only works in browser environment with Tauri
+ * Parse text to AST
+ * Uses TypeScript parser for Markdown, Rust parser for other languages
+ * Only works in browser environment with Tauri (for non-Markdown)
  */
 export const parseToAst = async (text: string, language: AstLanguage): Promise<AstParseResult> => {
 	// Skip parsing on server-side
 	if (!browser) {
 		return { ast: null, errors: [] };
+	}
+
+	// Use TypeScript parser for Markdown (no Rust backend support yet)
+	if (language === 'markdown') {
+		return parseMarkdownToAst(text);
 	}
 
 	try {

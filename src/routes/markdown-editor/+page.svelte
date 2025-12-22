@@ -340,13 +340,30 @@ ${tocToMarkdown(toc)}
 		rightPanelMode = newMode as RightPanelMode;
 	};
 
-	// Recursive TOC renderer
-	const renderTocItem = (item: TocItem, depth: number = 0): string => {
-		const indent = '  '.repeat(depth);
-		const children = item.children.map((child) => renderTocItem(child, depth + 1)).join('');
-		return `${indent}<li><a href="#${item.id}" class="text-xs hover:underline">${item.text}</a>${children ? `<ul class="ml-2">${children}</ul>` : ''}</li>`;
+	// Handle TOC item click - scroll to line in Monaco
+	const handleTocClick = (line: number) => {
+		monacoRef?.gotoLine(line, true);
 	};
 </script>
+
+{#snippet tocItem(item: TocItem)}
+	<li>
+		<button
+			type="button"
+			class="text-left text-xs hover:underline hover:text-primary"
+			onclick={() => handleTocClick(item.line)}
+		>
+			{item.text}
+		</button>
+		{#if item.children.length > 0}
+			<ul class="ml-3 mt-0.5 space-y-0.5">
+				{#each item.children as child}
+					{@render tocItem(child)}
+				{/each}
+			</ul>
+		{/if}
+	</li>
+{/snippet}
 
 <svelte:head>
 	<title>Markdown Editor - Kogu</title>
@@ -419,10 +436,10 @@ ${tocToMarkdown(toc)}
 
 		{#if toc.length > 0}
 			<FormSection title="Table of Contents">
-				<nav class="max-h-48 overflow-auto text-xs">
-					<ul class="space-y-1">
+				<nav class="max-h-48 overflow-auto">
+					<ul class="space-y-0.5">
 						{#each toc as item}
-							{@html renderTocItem(item)}
+							{@render tocItem(item)}
 						{/each}
 					</ul>
 				</nav>

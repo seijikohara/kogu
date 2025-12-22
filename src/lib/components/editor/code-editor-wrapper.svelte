@@ -413,7 +413,7 @@
 		editor?.focus();
 	};
 
-	export const scrollToLine = (line: number) => {
+	export const scrollToLine = (line: number, focus: boolean = true) => {
 		if (!editor) return;
 		const model = editor.getModel();
 		if (!model) return;
@@ -421,7 +421,9 @@
 		const targetLine = Math.min(Math.max(1, line), lineCount);
 		editor.revealLineInCenter(targetLine);
 		editor.setPosition({ lineNumber: targetLine, column: 1 });
-		editor.focus();
+		if (focus) {
+			editor.focus();
+		}
 	};
 
 	onMount(() => {

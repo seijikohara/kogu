@@ -9,7 +9,15 @@
 		Copy,
 		Database,
 		FileCode,
+		FileText,
 		Hash,
+		Heading,
+		List,
+		ListChecks,
+		Minus,
+		Pilcrow,
+		Quote,
+		Table,
 		Tag,
 		Terminal,
 		ToggleLeft,
@@ -89,6 +97,29 @@
 				return Terminal;
 			case 'function':
 				return Code;
+			// Markdown specific
+			case 'document':
+				return FileText;
+			case 'heading':
+				return Heading;
+			case 'paragraph':
+				return Pilcrow;
+			case 'code_block':
+				return Code;
+			case 'blockquote':
+				return Quote;
+			case 'list':
+				return List;
+			case 'list_item':
+				return Minus;
+			case 'task_item':
+				return ListChecks;
+			case 'table':
+				return Table;
+			case 'table_row':
+				return Minus;
+			case 'horizontal_rule':
+				return Minus;
 			default:
 				return Code;
 		}
@@ -99,7 +130,6 @@
 		switch (t) {
 			// Value types
 			case 'string':
-			case 'text':
 				return {
 					text: 'text-emerald-600 dark:text-emerald-400',
 					bg: 'bg-emerald-500/10',
@@ -180,6 +210,64 @@
 					bg: 'bg-sky-500/10',
 					icon: 'text-sky-500',
 				};
+			// Markdown types
+			case 'document':
+				return {
+					text: 'text-purple-600 dark:text-purple-400',
+					bg: 'bg-purple-500/10',
+					icon: 'text-purple-500',
+				};
+			case 'heading':
+				return {
+					text: 'text-rose-600 dark:text-rose-400',
+					bg: 'bg-rose-500/10',
+					icon: 'text-rose-500',
+				};
+			case 'paragraph':
+			case 'text':
+				return {
+					text: 'text-emerald-600 dark:text-emerald-400',
+					bg: 'bg-emerald-500/10',
+					icon: 'text-emerald-500',
+				};
+			case 'code_block':
+				return {
+					text: 'text-amber-600 dark:text-amber-400',
+					bg: 'bg-amber-500/10',
+					icon: 'text-amber-500',
+				};
+			case 'blockquote':
+				return {
+					text: 'text-indigo-600 dark:text-indigo-400',
+					bg: 'bg-indigo-500/10',
+					icon: 'text-indigo-500',
+				};
+			case 'list':
+			case 'list_item':
+				return {
+					text: 'text-cyan-600 dark:text-cyan-400',
+					bg: 'bg-cyan-500/10',
+					icon: 'text-cyan-500',
+				};
+			case 'task_item':
+				return {
+					text: 'text-teal-600 dark:text-teal-400',
+					bg: 'bg-teal-500/10',
+					icon: 'text-teal-500',
+				};
+			case 'table':
+			case 'table_row':
+				return {
+					text: 'text-violet-600 dark:text-violet-400',
+					bg: 'bg-violet-500/10',
+					icon: 'text-violet-500',
+				};
+			case 'horizontal_rule':
+				return {
+					text: 'text-gray-500 dark:text-gray-400',
+					bg: 'bg-gray-500/10',
+					icon: 'text-gray-400',
+				};
 			default:
 				return {
 					text: 'text-foreground',
@@ -223,6 +311,17 @@
 				return node.label.toUpperCase();
 			case 'root':
 				return `root(${childCount})`;
+			// Markdown types
+			case 'document':
+				return `doc(${childCount})`;
+			case 'heading':
+				return node.label;
+			case 'list':
+				return `list[${childCount}]`;
+			case 'table':
+				return `table(${childCount})`;
+			case 'blockquote':
+				return `quote(${childCount})`;
 			default:
 				return hasChildren ? `${node.type}(${childCount})` : node.type;
 		}

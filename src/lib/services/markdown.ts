@@ -16,6 +16,7 @@ export interface TocItem {
 	readonly id: string;
 	readonly level: number;
 	readonly text: string;
+	readonly line: number;
 	readonly children: readonly TocItem[];
 }
 
@@ -389,11 +390,18 @@ interface HeadingInfo {
 	readonly level: number;
 	readonly text: string;
 	readonly id: string;
+	readonly line: number;
 }
 
 const extractHeadings = (markdown: string): readonly HeadingInfo[] => {
 	const headingRegex = /^(#{1,6})\s+(.+)$/gm;
 	const matches = Array.from(markdown.matchAll(headingRegex));
+
+	// Calculate line number from character offset
+	const getLineNumber = (offset: number): number => {
+		const textBefore = markdown.slice(0, offset);
+		return textBefore.split('\n').length;
+	};
 
 	const { headings } = matches.reduce<{
 		headings: HeadingInfo[];
@@ -407,13 +415,14 @@ const extractHeadings = (markdown: string): readonly HeadingInfo[] => {
 			const level = hashPart.length;
 			const text = textPart.trim();
 			const baseId = generateSlug(text);
+			const line = match.index !== undefined ? getLineNumber(match.index) : 1;
 
 			// Handle duplicate IDs
 			const count = acc.idCounts.get(baseId) ?? 0;
 			const id = count > 0 ? `${baseId}-${count}` : baseId;
 			acc.idCounts.set(baseId, count + 1);
 
-			acc.headings.push({ level, text, id });
+			acc.headings.push({ level, text, id, line });
 			return acc;
 		},
 		{ headings: [], idCounts: new Map<string, number>() }
@@ -434,6 +443,7 @@ const buildTocTree = (headings: readonly HeadingInfo[]): readonly TocItem[] => {
 			id: heading.id,
 			level: heading.level,
 			text: heading.text,
+			line: heading.line,
 			children: [],
 		};
 
