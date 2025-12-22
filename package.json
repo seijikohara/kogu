@@ -57,7 +57,7 @@
 		"monaco-yaml": "^5.3.1",
 		"node-sql-parser": "^5.3.13",
 		"sql-formatter": "^15.6.12",
-		"tailwindcss": "^4.1.17",
+		"tailwindcss": "^4.1.18",
 		"xml-formatter": "^3.6.7",
 		"yaml": "^2.8.2"
 	},
