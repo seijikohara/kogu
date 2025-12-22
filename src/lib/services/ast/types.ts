@@ -4,7 +4,7 @@
  */
 
 /** Supported languages for AST parsing */
-export type AstLanguage = 'json' | 'yaml' | 'xml' | 'sql';
+export type AstLanguage = 'json' | 'yaml' | 'xml' | 'sql' | 'markdown';
 
 /** AST node type */
 export type AstNodeType =
@@ -31,6 +31,18 @@ export type AstNodeType =
 	| 'operator'
 	| 'keyword'
 	| 'function'
+	// Markdown specific
+	| 'document'
+	| 'heading'
+	| 'paragraph'
+	| 'code_block'
+	| 'blockquote'
+	| 'list'
+	| 'list_item'
+	| 'task_item'
+	| 'table'
+	| 'table_row'
+	| 'horizontal_rule'
 	// Fallback
 	| 'unknown';
 

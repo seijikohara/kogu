@@ -6,10 +6,12 @@ import {
 	ArrowRightLeft,
 	Binary,
 	Braces,
+	CaseSensitive,
 	CodeXml,
 	Database,
 	FileCheck,
 	FileCode,
+	FileDiff,
 	FileJson2,
 	FileText,
 	GitCompare,
@@ -30,7 +32,7 @@ import {
 /**
  * Page categories for sidebar grouping.
  */
-export type PageCategory = 'formatters' | 'encoders' | 'generators';
+export type PageCategory = 'formatters' | 'encoders' | 'generators' | 'text';
 
 export interface PageTab {
 	readonly id: string;
@@ -187,6 +189,33 @@ export const PAGES: readonly PageDefinition[] = [
 		color: 'text-indigo-500',
 		category: 'generators',
 	},
+	{
+		id: 'markdown-editor',
+		title: 'Markdown Editor',
+		url: '/markdown-editor',
+		icon: FileText,
+		description: 'Edit markdown with live preview and TeX/LaTeX support',
+		color: 'text-slate-500',
+		category: 'text',
+	},
+	{
+		id: 'diff-viewer',
+		title: 'Diff Viewer',
+		url: '/diff-viewer',
+		icon: FileDiff,
+		description: 'Compare and visualize differences between two texts',
+		color: 'text-amber-500',
+		category: 'text',
+	},
+	{
+		id: 'string-case-converter',
+		title: 'String Case Converter',
+		url: '/string-case-converter',
+		icon: CaseSensitive,
+		description: 'Convert text between camelCase, snake_case, and more',
+		color: 'text-teal-500',
+		category: 'text',
+	},
 ];
 
 /**
@@ -230,6 +259,7 @@ export const CATEGORIES: readonly CategoryInfo[] = [
 	{ id: 'formatters', label: 'Formatters', icon: FileText, defaultOpen: true },
 	{ id: 'encoders', label: 'Encoders', icon: Lock, defaultOpen: true },
 	{ id: 'generators', label: 'Generators', icon: Sparkles, defaultOpen: true },
+	{ id: 'text', label: 'Text', icon: CaseSensitive, defaultOpen: true },
 ];
 
 /**

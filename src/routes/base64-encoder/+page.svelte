@@ -1,14 +1,14 @@
 <script lang="ts">
-	import { PageLayout, SplitPane } from '$lib/components/layout';
-	import { FormCheckbox, FormInfo, FormMode, FormSection, FormSelect } from '$lib/components/form';
 	import { CodeEditor } from '$lib/components/editor';
+	import { FormCheckbox, FormInfo, FormMode, FormSection, FormSelect } from '$lib/components/form';
+	import { PageLayout, SplitPane } from '$lib/components/layout';
 	import {
+		BASE64_MIME_TYPES,
 		type Base64DecodeOptions,
 		type Base64EncodeOptions,
 		type Base64LineBreak,
 		type Base64Stats,
 		type Base64Variant,
-		BASE64_MIME_TYPES,
 		calculateBase64Stats,
 		decodeFromBase64,
 		defaultBase64DecodeOptions,

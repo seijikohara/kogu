@@ -1,11 +1,9 @@
 <script lang="ts">
 	import * as yaml from 'yaml';
-	import SplitPane from '$lib/components/layout/split-pane.svelte';
-	import { FormCheckbox } from '$lib/components/form';
-	import { FormSelect } from '$lib/components/form';
-	import { OptionsPanel } from '$lib/components/panel';
-	import { FormSection } from '$lib/components/form';
 	import { CodeEditor } from '$lib/components/editor';
+	import { FormCheckbox, FormSection, FormSelect } from '$lib/components/form';
+	import SplitPane from '$lib/components/layout/split-pane.svelte';
+	import { OptionsPanel } from '$lib/components/panel';
 	import { Button } from '$lib/components/ui/button/index.js';
 	import { Input } from '$lib/components/ui/input/index.js';
 	import { Label } from '$lib/components/ui/label/index.js';

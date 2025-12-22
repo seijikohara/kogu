@@ -1,8 +1,8 @@
 <script lang="ts">
 	import { ArrowRightLeft, Code2, FileCheck, GitCompare, Play, Search } from '@lucide/svelte';
 	import { PageLayout } from '$lib/components/layout';
-	import { useTabSync } from '$lib/utils';
 	import { calculateYamlStats, type YamlStats } from '$lib/services/formatters';
+	import { useTabSync } from '$lib/utils';
 	import {
 		CompareTab,
 		ConvertTab,

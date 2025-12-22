@@ -3,11 +3,10 @@
 	import Ajv from 'ajv';
 	import addFormats from 'ajv-formats';
 	import { toast } from 'svelte-sonner';
-	import SplitPane from '$lib/components/layout/split-pane.svelte';
-	import { FormCheckbox } from '$lib/components/form';
-	import { OptionsPanel } from '$lib/components/panel';
-	import { FormSection } from '$lib/components/form';
 	import { CodeEditor } from '$lib/components/editor';
+	import { FormCheckbox, FormSection } from '$lib/components/form';
+	import SplitPane from '$lib/components/layout/split-pane.svelte';
+	import { OptionsPanel } from '$lib/components/panel';
 	import { Button } from '$lib/components/ui/button/index.js';
 	import { inferJsonSchema, type JsonInputFormat, validateJson } from '$lib/services/formatters';
 	import { copyToClipboard, downloadTextFile, pasteFromClipboard } from '../utils.js';

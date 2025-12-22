@@ -1,8 +1,8 @@
 <script lang="ts">
 	import type { Component, Snippet } from 'svelte';
+	import { OptionsPanel } from '$lib/components/panel';
 	import PageHeader from './page-header.svelte';
 	import TabPanels from './tab-panels.svelte';
-	import { OptionsPanel } from '$lib/components/panel';
 
 	interface TabDefinition {
 		readonly id: string;

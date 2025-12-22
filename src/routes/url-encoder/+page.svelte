@@ -8,9 +8,8 @@
 		Plus,
 		Trash2,
 	} from '@lucide/svelte';
-	import { PageLayout, SplitPane } from '$lib/components/layout';
-	import { useTabSync } from '$lib/utils';
 	import { CopyButton } from '$lib/components/action';
+	import { CodeEditor } from '$lib/components/editor';
 	import {
 		FormCheckbox,
 		FormInfo,
@@ -20,8 +19,8 @@
 		FormSelect,
 		FormSlider,
 	} from '$lib/components/form';
+	import { PageLayout, SplitPane } from '$lib/components/layout';
 	import { OptionsPanel } from '$lib/components/panel';
-	import { CodeEditor } from '$lib/components/editor';
 	import { Button } from '$lib/components/ui/button/index.js';
 	import { Input } from '$lib/components/ui/input/index.js';
 	import {
@@ -44,6 +43,7 @@
 		type UrlNewlineHandling,
 		type UrlSpaceEncoding,
 	} from '$lib/services/encoders.js';
+	import { useTabSync } from '$lib/utils';
 
 	type Tab = 'encode' | 'parse' | 'build' | 'reference';
 	type Mode = 'encode' | 'decode';

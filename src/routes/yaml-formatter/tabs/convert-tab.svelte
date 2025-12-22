@@ -1,8 +1,6 @@
 <script lang="ts">
 	import * as yaml from 'yaml';
-	import { FormCheckbox } from '$lib/components/form';
-	import { FormSelect } from '$lib/components/form';
-	import { FormSection } from '$lib/components/form';
+	import { FormCheckbox, FormSection, FormSelect } from '$lib/components/form';
 	import { ConvertTab } from '$lib/components/template';
 	import { Button } from '$lib/components/ui/button/index.js';
 	import { Input } from '$lib/components/ui/input/index.js';

@@ -24,17 +24,9 @@
 	import { readTextFile, writeTextFile } from '@tauri-apps/plugin-fs';
 	import type { Snippet } from 'svelte';
 	import { toast } from 'svelte-sonner';
-	import CodeEditorWrapper, {
-		type ContextMenuItem,
-		type CursorPosition,
-		type EditorContext,
-		type EditorMode,
-		type HighlightLine,
-	} from './code-editor-wrapper.svelte';
 	import { Button } from '$lib/components/ui/button/index.js';
 	import * as Resizable from '$lib/components/ui/resizable/index.js';
 	import * as Select from '$lib/components/ui/select/index.js';
-	import TreeView from './tree-view.svelte';
 	import {
 		type AstLanguage,
 		type AstNode,
@@ -48,6 +40,14 @@
 		parseToAst,
 	} from '$lib/services/ast/index.js';
 	import { cn } from '$lib/utils.js';
+	import CodeEditorWrapper, {
+		type ContextMenuItem,
+		type CursorPosition,
+		type EditorContext,
+		type EditorMode,
+		type HighlightLine,
+	} from './code-editor-wrapper.svelte';
+	import TreeView from './tree-view.svelte';
 
 	type PaneMode = 'input' | 'output' | 'readonly';
 	type ViewMode = 'code' | 'tree' | 'split';
@@ -73,6 +73,9 @@
 		defaultFileName?: string;
 		onformatchange?: (format: string) => void;
 		onchange?: (value: string) => void;
+		oncursorchange?: (line: number) => void;
+		onfocus?: () => void;
+		onblur?: () => void;
 		onpaste?: () => void;
 		onclear?: () => void;
 		onsample?: () => void;
@@ -97,6 +100,9 @@
 		defaultFileName = 'untitled',
 		onformatchange,
 		onchange,
+		oncursorchange,
+		onfocus,
+		onblur,
 		onpaste,
 		onclear,
 		onsample,
@@ -112,6 +118,26 @@
 	let gotoLineCounter = $state(0);
 	let isDragOver = $state(false);
 	let dragCounter = $state(0);
+
+	// Editor wrapper reference for exposing methods
+	let editorWrapperRef = $state<CodeEditorWrapper | null>(null);
+
+	// Exported methods for parent components
+	export const getSelectionRange = (): { start: number; end: number } => {
+		return editorWrapperRef?.getSelectionRange() ?? { start: 0, end: 0 };
+	};
+
+	export const setSelectionRange = (start: number, end: number) => {
+		editorWrapperRef?.setSelectionRange(start, end);
+	};
+
+	export const focusEditor = () => {
+		editorWrapperRef?.focusEditor();
+	};
+
+	export const gotoLine = (line: number) => {
+		editorWrapperRef?.scrollToLine(line);
+	};
 
 	const isInput = $derived(mode === 'input');
 	const isOutput = $derived(mode === 'output' || mode === 'readonly');
@@ -201,6 +227,7 @@
 	const handleCursorChange = (position: CursorPosition) => {
 		cursorPosition = position;
 		updateSelectedPathFromCursor(position.line);
+		oncursorchange?.(position.line);
 	};
 
 	// Update selected path based on cursor line (using AST-based line map)
@@ -650,6 +677,7 @@
 			<Resizable.PaneGroup direction="horizontal" class="h-full">
 				<Resizable.Pane defaultSize={50} minSize={20}>
 					<CodeEditorWrapper
+						bind:this={editorWrapperRef}
 						bind:value
 						mode={editorMode}
 						height="100%"
@@ -657,6 +685,8 @@
 						{placeholder}
 						{onchange}
 						oncursorchange={handleCursorChange}
+						{onfocus}
+						{onblur}
 						oncontextmenu={handleContextMenu}
 						gotoLine={editorGotoLine}
 						gotoLineTrigger={gotoLineCounter}
@@ -698,6 +728,7 @@
 			</Resizable.PaneGroup>
 		{:else}
 			<CodeEditorWrapper
+				bind:this={editorWrapperRef}
 				bind:value
 				mode={editorMode}
 				height="100%"
@@ -705,6 +736,8 @@
 				{placeholder}
 				{onchange}
 				oncursorchange={handleCursorChange}
+				{onfocus}
+				{onblur}
 				oncontextmenu={handleContextMenu}
 				gotoLine={editorGotoLine}
 				gotoLineTrigger={gotoLineCounter}

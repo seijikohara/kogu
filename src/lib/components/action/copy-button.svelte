@@ -1,6 +1,6 @@
 <script lang="ts">
-	import { toast } from 'svelte-sonner';
 	import { Copy } from '@lucide/svelte';
+	import { toast } from 'svelte-sonner';
 	import { Button } from '$lib/components/ui/button/index.js';
 	import { cn } from '$lib/utils.js';
 

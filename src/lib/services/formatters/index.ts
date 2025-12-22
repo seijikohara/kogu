@@ -5,6 +5,45 @@
  * Existing imports like `import { formatJson } from '$lib/services/formatters'` continue to work.
  */
 
+// Constants
+export {
+	defaultJsonDiffOptions,
+	defaultJsonFormatOptions,
+	defaultJsonToXmlOptions,
+	defaultJsonToYamlOptions,
+	defaultSqlFormatOptions,
+	defaultXmlFormatOptions,
+	defaultYamlFormatOptions,
+	JSON_FORMAT_INFO,
+	JSON_FORMAT_OPTIONS,
+	SQL_INDENT_STYLE_OPTIONS,
+	SQL_KEYWORD_CASE_OPTIONS,
+	SQL_LANGUAGE_OPTIONS,
+	SQL_LANGUAGES,
+	SQL_LOGICAL_OPERATOR_OPTIONS,
+} from './constants.js';
+// Converters
+export { jsonToXml, jsonToYaml } from './converters/index.js';
+// JSON
+export {
+	calculateJsonStats,
+	convertJsonFormat,
+	detectJsonFormat,
+	findJsonDifferences,
+	formatJson,
+	inferJsonSchema,
+	minifyJson,
+	parseJson,
+	parseJsonAuto,
+	processJsonWithOptions,
+	stringifyJson,
+	validateJson,
+} from './json/index.js';
+export { executeJsonPath } from './json/query.js';
+// Samples
+export { SAMPLE_JSON, SAMPLE_SQL, SAMPLE_XML, SAMPLE_YAML } from './samples.js';
+// SQL
+export { calculateSqlStats, formatSql, minifySql, validateSql } from './sql/index.js';
 // Types
 export type {
 	DiffItem,
@@ -29,46 +68,8 @@ export type {
 	YamlToJsonOptions,
 	YamlToXmlOptions,
 } from './types.js';
-
-// Constants
-export {
-	defaultJsonDiffOptions,
-	defaultJsonFormatOptions,
-	defaultJsonToXmlOptions,
-	defaultJsonToYamlOptions,
-	defaultSqlFormatOptions,
-	defaultXmlFormatOptions,
-	defaultYamlFormatOptions,
-	JSON_FORMAT_INFO,
-	JSON_FORMAT_OPTIONS,
-	SQL_INDENT_STYLE_OPTIONS,
-	SQL_KEYWORD_CASE_OPTIONS,
-	SQL_LANGUAGE_OPTIONS,
-	SQL_LANGUAGES,
-	SQL_LOGICAL_OPERATOR_OPTIONS,
-} from './constants.js';
-
 // Utilities
 export { sortKeysDeep } from './utils.js';
-
-// JSON
-export {
-	calculateJsonStats,
-	convertJsonFormat,
-	detectJsonFormat,
-	findJsonDifferences,
-	formatJson,
-	inferJsonSchema,
-	minifyJson,
-	parseJson,
-	parseJsonAuto,
-	processJsonWithOptions,
-	stringifyJson,
-	validateJson,
-} from './json/index.js';
-
-export { executeJsonPath } from './json/query.js';
-
 // XML
 export {
 	calculateXmlStats,
@@ -79,7 +80,6 @@ export {
 	xmlToJsonObject,
 	xmlToYaml,
 } from './xml/index.js';
-
 // YAML
 export {
 	calculateYamlStats,
@@ -89,12 +89,3 @@ export {
 	yamlToJson,
 	yamlToXml,
 } from './yaml/index.js';
-
-// SQL
-export { calculateSqlStats, formatSql, minifySql, validateSql } from './sql/index.js';
-
-// Converters
-export { jsonToXml, jsonToYaml } from './converters/index.js';
-
-// Samples
-export { SAMPLE_JSON, SAMPLE_SQL, SAMPLE_XML, SAMPLE_YAML } from './samples.js';
