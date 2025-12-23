@@ -1,8 +1,9 @@
 #!/usr/bin/env bun
 
 import { execSync } from 'node:child_process';
-import { readFileSync, writeFileSync } from 'node:fs';
-import { resolve } from 'node:path';
+import { readFileSync, writeFileSync, unlinkSync } from 'node:fs';
+import { resolve, join } from 'node:path';
+import { tmpdir } from 'node:os';
 import * as readline from 'node:readline';
 
 // Constants
@@ -195,8 +196,15 @@ A tag \`v${newVersion}\` will be automatically created, triggering the release w
 
 // GitHub operations
 const createPullRequest = (version: string, body: string): string => {
-	const escapedBody = body.replace(/"/g, '\\"').replace(/\n/g, '\\n');
-	return exec(`gh pr create --title "chore: release v${version}" --body "${escapedBody}"`);
+	// Use temporary file to avoid shell escaping issues
+	const tempFile = join(tmpdir(), `release-pr-body-${Date.now()}.md`);
+	writeFileSync(tempFile, body);
+
+	try {
+		return exec(`gh pr create --title "chore: release v${version}" --body-file "${tempFile}"`);
+	} finally {
+		unlinkSync(tempFile);
+	}
 };
 
 // Validation
