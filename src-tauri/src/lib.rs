@@ -112,9 +112,15 @@ fn get_bcrypt_cost_info(cost: u32) -> BcryptCostInfo {
 // =============================================================================
 
 /// Generate an SSH key pair
+///
+/// Runs on a background thread to prevent UI freeze during key generation.
 #[tauri::command]
-fn generate_ssh_keypair(options: SshKeyOptions) -> Result<SshKeyResult, String> {
-    generators::ssh::generate_key(options).map_err(|e| e.to_string())
+async fn generate_ssh_keypair(options: SshKeyOptions) -> Result<SshKeyResult, String> {
+    tokio::task::spawn_blocking(move || {
+        generators::ssh::generate_key(options).map_err(|e| e.to_string())
+    })
+    .await
+    .map_err(|e| format!("Task join error: {e}"))?
 }
 
 // =============================================================================
@@ -122,9 +128,15 @@ fn generate_ssh_keypair(options: SshKeyOptions) -> Result<SshKeyResult, String> 
 // =============================================================================
 
 /// Generate a GPG key pair
+///
+/// Runs on a background thread to prevent UI freeze during key generation.
 #[tauri::command]
-fn generate_gpg_keypair(options: GpgKeyOptions) -> Result<GpgKeyResult, String> {
-    generators::gpg::generate_key(options).map_err(|e| e.to_string())
+async fn generate_gpg_keypair(options: GpgKeyOptions) -> Result<GpgKeyResult, String> {
+    tokio::task::spawn_blocking(move || {
+        generators::gpg::generate_key(options).map_err(|e| e.to_string())
+    })
+    .await
+    .map_err(|e| format!("Task join error: {e}"))?
 }
 
 // =============================================================================
