@@ -8,6 +8,30 @@ export {
 	updateAddBlockButtonState,
 } from './add-block-button-state.svelte.js';
 
+// Bubble selectors (link & image)
+export { BubbleSelectorExtension } from './bubble-selector-extension.js';
+export { default as FloatingImageSelector } from './floating-image-selector.svelte';
+export { default as FloatingLinkSelector } from './floating-link-selector.svelte';
+export type { ImageAttributes } from './image-selector-state.svelte.js';
+export {
+	closeImageSelector,
+	imageSelectorStore,
+	openCurrentImage,
+	openImageSelector,
+	removeImage,
+	updateImage,
+} from './image-selector-state.svelte.js';
+export {
+	closeLinkSelector,
+	getUrlFromString,
+	isValidUrl,
+	linkSelectorStore,
+	openCurrentLink,
+	openLinkSelector,
+	removeLink,
+	setLink,
+} from './link-selector-state.svelte.js';
+
 // Language combobox
 export { default as FloatingLanguageCombobox } from './floating-language-combobox.svelte';
 export { default as LanguageCombobox } from './language-combobox.svelte';

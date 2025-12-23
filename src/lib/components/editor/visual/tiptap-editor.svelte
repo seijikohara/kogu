@@ -24,7 +24,10 @@
 	import 'tippy.js/dist/tippy.css';
 	import { detectDiagramType, renderDiagram } from '$lib/services/diagram.js';
 	import { AddBlockButtonExtension } from './add-block-button-extension.js';
+	import { BubbleSelectorExtension } from './bubble-selector-extension.js';
+	import FloatingImageSelector from './floating-image-selector.svelte';
 	import FloatingLanguageCombobox from './floating-language-combobox.svelte';
+	import FloatingLinkSelector from './floating-link-selector.svelte';
 	import { LANGUAGES, openLanguageCombobox } from './language-combobox-state.svelte.js';
 	import { renderItems, SlashCommandExtension } from './slash-command-extension.js';
 	import { filterSuggestionItems, suggestionItems } from './slash-command-items.js';
@@ -805,6 +808,10 @@
 				}),
 				MathematicsMarkdown,
 				Mathematics,
+				BubbleSelectorExtension.configure({
+					enableLinkSelector: true,
+					enableImageSelector: true,
+				}),
 			],
 			content,
 			onUpdate: ({ editor }) => {
@@ -953,6 +960,8 @@
 
 <!-- Floating components - live outside NodeView to avoid bits-ui context issue -->
 <FloatingLanguageCombobox />
+<FloatingLinkSelector />
+<FloatingImageSelector />
 
 <style>
 	/* ========================================
