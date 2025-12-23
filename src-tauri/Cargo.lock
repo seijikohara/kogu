@@ -2738,7 +2738,7 @@ dependencies = [
 
 [[package]]
 name = "kogu"
-version = "0.0.3"
+version = "0.0.4"
 dependencies = [
  "bcrypt",
  "pgp",
@@ -5651,9 +5651,9 @@ dependencies = [
 
 [[package]]
 name = "tauri-plugin-mcp-bridge"
-version = "0.4.0"
+version = "0.5.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "606c20677c2296577ab0bb4cf63f7ce9078c1ef7036ae474ccda30b36782eabc"
+checksum = "1cfe35e58d7a37326d2d73b9b10c8de96b4bf3747c9b70326d4701a3a40d9229"
 dependencies = [
  "base64 0.22.1",
  "block2 0.5.1",
