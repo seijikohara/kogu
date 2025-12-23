@@ -36,7 +36,7 @@ tauri-plugin-decorum = "1.1.1"
 
 # AST Parsers
 thiserror = "2"
-roxmltree = "0.20"
+roxmltree = "0.21"
 serde_yaml = "0.9"
 yaml-rust2 = "0.11"
 sqlparser = "0.53"
