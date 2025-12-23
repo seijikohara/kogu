@@ -59,7 +59,9 @@
 		"@tiptap/extension-table-row": "^3.14.0",
 		"@tiptap/extension-task-item": "^3.14.0",
 		"@tiptap/extension-task-list": "^3.14.0",
+		"@tiptap/pm": "^3.14.0",
 		"@tiptap/starter-kit": "^3.14.0",
+		"@tiptap/suggestion": "^3.14.0",
 		"@viz-js/viz": "^3.24.0",
 		"@xml-tools/ast": "^5.0.5",
 		"@xml-tools/parser": "^1.0.11",
@@ -78,6 +80,8 @@
 		"node-sql-parser": "^5.3.13",
 		"sql-formatter": "^15.6.12",
 		"tailwindcss": "^4.1.18",
+		"tippy.js": "^6.3.7",
+		"tiptap-extension-global-drag-handle": "^0.1.18",
 		"tiptap-markdown": "0.9.0",
 		"xml-formatter": "^3.6.7",
 		"yaml": "^2.8.2"

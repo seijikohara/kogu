@@ -3,10 +3,10 @@
 	import * as Command from '$lib/components/ui/command';
 	import { cn } from '$lib/utils.js';
 	import {
+		closeLanguageCombobox,
 		LANGUAGES,
 		languageComboboxStore,
 		selectLanguage,
-		closeLanguageCombobox,
 	} from './language-combobox-state.svelte.js';
 
 	// Local search input state

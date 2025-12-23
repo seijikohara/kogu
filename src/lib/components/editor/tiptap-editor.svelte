@@ -19,10 +19,15 @@
 	import MarkdownIt from 'markdown-it';
 	import texmath from 'markdown-it-texmath';
 	import { onDestroy, onMount, untrack } from 'svelte';
+	import GlobalDragHandle from 'tiptap-extension-global-drag-handle';
 	import { Markdown } from 'tiptap-markdown';
+	import 'tippy.js/dist/tippy.css';
 	import { detectDiagramType, renderDiagram } from '$lib/services/diagram.js';
+	import { AddBlockButtonExtension } from './add-block-button-extension.js';
 	import FloatingLanguageCombobox from './floating-language-combobox.svelte';
 	import { LANGUAGES, openLanguageCombobox } from './language-combobox-state.svelte.js';
+	import { renderItems, SlashCommandExtension } from './slash-command-extension.js';
+	import { filterSuggestionItems, suggestionItems } from './slash-command-items.js';
 
 	// ProseMirror Node type (simplified interface for type checking)
 	interface PMNode {
@@ -190,6 +195,35 @@
 		let lastRenderedType: ReturnType<typeof detectDiagramType> = null;
 		let isDestroyed = false;
 
+		// Check if the render is still valid (not superseded or destroyed)
+		const isRenderValid = (version: number): boolean =>
+			!isDestroyed && version === currentVersion && container.isConnected;
+
+		// Execute the actual diagram rendering
+		const executeDiagramRender = async (
+			content: string,
+			type: NonNullable<ReturnType<typeof detectDiagramType>>,
+			version: number
+		) => {
+			if (!isRenderValid(version)) return;
+
+			try {
+				const result = await renderDiagram(type, content);
+				if (!isRenderValid(version)) return;
+
+				diagramContainer.innerHTML = result.success
+					? result.html
+					: `<div class="diagram-error">${result.error ?? 'Render failed'}</div>`;
+
+				lastRenderedContent = content;
+				lastRenderedType = type;
+			} catch (error) {
+				if (!isRenderValid(version)) return;
+				const message = error instanceof Error ? error.message : String(error);
+				diagramContainer.innerHTML = `<div class="diagram-error">${message}</div>`;
+			}
+		};
+
 		// Render diagram with version tracking
 		const renderWithVersion = (
 			content: string,
@@ -202,37 +236,7 @@
 			}
 
 			// Use setTimeout to yield to the event loop and prevent UI blocking
-			setTimeout(async () => {
-				// Validate before rendering
-				if (isDestroyed || version !== currentVersion || !container.isConnected) {
-					return;
-				}
-
-				try {
-					const result = await renderDiagram(type, content);
-
-					// Validate after async operation
-					if (isDestroyed || version !== currentVersion || !container.isConnected) {
-						return;
-					}
-
-					if (result.success) {
-						diagramContainer.innerHTML = result.html;
-					} else {
-						diagramContainer.innerHTML = `<div class="diagram-error">${result.error ?? 'Render failed'}</div>`;
-					}
-
-					lastRenderedContent = content;
-					lastRenderedType = type;
-				} catch (error) {
-					// Validate before error display
-					if (isDestroyed || version !== currentVersion || !container.isConnected) {
-						return;
-					}
-					const message = error instanceof Error ? error.message : String(error);
-					diagramContainer.innerHTML = `<div class="diagram-error">${message}</div>`;
-				}
-			}, 0);
+			setTimeout(() => executeDiagramRender(content, type, version), 0);
 		};
 
 		// Schedule a render (increments version to cancel pending renders)
@@ -747,7 +751,28 @@
 					link: false,
 				}),
 				Placeholder.configure({
-					placeholder,
+					placeholder: ({ node }) => {
+						// Show slash command hint for empty paragraphs
+						if (node.type.name === 'paragraph') {
+							return "Type '/' for commands...";
+						}
+						return placeholder;
+					},
+					showOnlyCurrent: true,
+				}),
+				SlashCommandExtension.configure({
+					suggestion: {
+						items: ({ query }: { query: string }) => filterSuggestionItems(suggestionItems, query),
+						render: renderItems,
+					},
+				}),
+				GlobalDragHandle.configure({
+					dragHandleWidth: 20,
+					scrollTreshold: 100,
+					customNodes: ['codeBlock', 'horizontalRule'],
+				}),
+				AddBlockButtonExtension.configure({
+					offsetFromHandle: 24,
 				}),
 				Link.configure({
 					openOnClick: false,
@@ -921,12 +946,12 @@
 		<Pencil class="mr-2 h-3.5 w-3.5 text-muted-foreground" />
 		<span class="text-xs font-medium text-muted-foreground">Visual Editor</span>
 	</div>
-	<div class="tiptap-container flex-1 overflow-auto p-4">
+	<div class="tiptap-container flex-1 overflow-auto py-4 pl-16 pr-4">
 		<div bind:this={element} class="tiptap-editor h-full max-w-none"></div>
 	</div>
 </div>
 
-<!-- Floating language combobox - lives outside NodeView to avoid bits-ui context issue -->
+<!-- Floating components - live outside NodeView to avoid bits-ui context issue -->
 <FloatingLanguageCombobox />
 
 <style>
@@ -939,6 +964,11 @@
 		color: var(--foreground);
 		font-size: 0.875rem;
 		line-height: 1.625;
+	}
+
+	/* Prevent text selection during drag */
+	.tiptap-container :global(.tiptap.dragging) {
+		user-select: none;
 	}
 
 	/* Text Selection */
@@ -1626,5 +1656,97 @@
 	.tiptap-container :global(.diagram-block-wrapper.ProseMirror-selectednode) {
 		outline: 2px solid var(--ring);
 		outline-offset: 2px;
+	}
+
+	/* ========================================
+	   Global Drag Handle
+	   ======================================== */
+	:global(.drag-handle) {
+		position: fixed;
+		opacity: 1;
+		transition: opacity ease-in 0.2s;
+		border-radius: 0.25rem;
+		transform: translateX(-8px);
+		background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 10' style='fill: rgba(128, 128, 128, 0.5)'%3E%3Cpath d='M3,2 C2.44771525,2 2,1.55228475 2,1 C2,0.44771525 2.44771525,0 3,0 C3.55228475,0 4,0.44771525 4,1 C4,1.55228475 3.55228475,2 3,2 Z M3,6 C2.44771525,6 2,5.55228475 2,5 C2,4.44771525 2.44771525,4 3,4 C3.55228475,4 4,4.44771525 4,5 C4,5.55228475 3.55228475,6 3,6 Z M3,10 C2.44771525,10 2,9.55228475 2,9 C2,8.44771525 2.44771525,8 3,8 C3.55228475,8 4,8.44771525 4,9 C4,9.55228475 3.55228475,10 3,10 Z M7,2 C6.44771525,2 6,1.55228475 6,1 C6,0.44771525 6.44771525,0 7,0 C7.55228475,0 8,0.44771525 8,1 C8,1.55228475 7.55228475,2 7,2 Z M7,6 C6.44771525,6 6,5.55228475 6,5 C6,4.44771525 6.44771525,4 7,4 C7.55228475,4 8,4.44771525 8,5 C8,5.55228475 7.55228475,6 7,6 Z M7,10 C6.44771525,10 6,9.55228475 6,9 C6,8.44771525 6.44771525,8 7,8 C7.55228475,8 8,8.44771525 8,9 C8,9.55228475 7.55228475,10 7,10 Z'%3E%3C/path%3E%3C/svg%3E");
+		background-size: calc(0.5em + 0.375rem) calc(0.5em + 0.375rem);
+		background-repeat: no-repeat;
+		background-position: center;
+		width: 1.2rem;
+		height: 1.5rem;
+		z-index: 50;
+		cursor: grab;
+	}
+
+	:global(.drag-handle:hover) {
+		background-color: var(--muted);
+		transition: background-color 0.2s;
+	}
+
+	:global(.drag-handle:active) {
+		background-color: var(--accent);
+		cursor: grabbing;
+	}
+
+	:global(.dark .drag-handle) {
+		background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 10' style='fill: rgba(200, 200, 200, 0.5)'%3E%3Cpath d='M3,2 C2.44771525,2 2,1.55228475 2,1 C2,0.44771525 2.44771525,0 3,0 C3.55228475,0 4,0.44771525 4,1 C4,1.55228475 3.55228475,2 3,2 Z M3,6 C2.44771525,6 2,5.55228475 2,5 C2,4.44771525 2.44771525,4 3,4 C3.55228475,4 4,4.44771525 4,5 C4,5.55228475 3.55228475,6 3,6 Z M3,10 C2.44771525,10 2,9.55228475 2,9 C2,8.44771525 2.44771525,8 3,8 C3.55228475,8 4,8.44771525 4,9 C4,9.55228475 3.55228475,10 3,10 Z M7,2 C6.44771525,2 6,1.55228475 6,1 C6,0.44771525 6.44771525,0 7,0 C7.55228475,0 8,0.44771525 8,1 C8,1.55228475 7.55228475,2 7,2 Z M7,6 C6.44771525,6 6,5.55228475 6,5 C6,4.44771525 6.44771525,4 7,4 C7.55228475,4 8,4.44771525 8,5 C8,5.55228475 7.55228475,6 7,6 Z M7,10 C6.44771525,10 6,9.55228475 6,9 C6,8.44771525 6.44771525,8 7,8 C7.55228475,8 8,8.44771525 8,9 C8,9.55228475 7.55228475,10 7,10 Z'%3E%3C/path%3E%3C/svg%3E");
+	}
+
+	/* ========================================
+	   Add Block Button (Plus Button)
+	   ======================================== */
+	:global(.add-block-button) {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		width: 1.2rem;
+		height: 1.5rem;
+		border: none;
+		border-radius: 0.25rem;
+		background: transparent;
+		color: var(--muted-foreground);
+		cursor: pointer;
+		opacity: 0.5;
+		transition:
+			opacity 0.2s,
+			background-color 0.2s,
+			color 0.2s;
+	}
+
+	:global(.add-block-button:hover) {
+		opacity: 1;
+		background-color: var(--muted);
+		color: var(--foreground);
+	}
+
+	:global(.add-block-button:active) {
+		background-color: var(--accent);
+	}
+
+	:global(.dark .add-block-button) {
+		color: var(--muted-foreground);
+	}
+
+	:global(.dark .add-block-button:hover) {
+		background-color: var(--muted);
+		color: var(--foreground);
+	}
+
+	/* ========================================
+	   Tippy.js Override for Slash Command Menu
+	   Override default tippy dark tooltip styles
+	   ======================================== */
+	:global(.tippy-box) {
+		background: transparent;
+		border-radius: 0;
+		padding: 0;
+	}
+
+	:global(.tippy-content) {
+		padding: 0;
+	}
+
+	/* Hide default tippy arrow */
+	:global(.tippy-arrow) {
+		display: none;
 	}
 </style>

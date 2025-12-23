@@ -81,7 +81,7 @@ Use \`inline code\` for code snippets within text.
 
 Visit the [Kogu GitHub Repository](https://github.com/seijikohara/kogu) for more information.
 
-Here's an image: ![Placeholder](https://via.placeholder.com/150x50?text=Sample+Image)
+Here's an image: ![Placeholder](https://placehold.co/150x50?text=Sample+Image)
 
 ## Headings (H1-H6)
 
