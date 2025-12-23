@@ -1,7 +1,7 @@
 <script lang="ts">
+	import { Copy } from '@lucide/svelte';
 	import type { Component, Snippet } from 'svelte';
 	import { toast } from 'svelte-sonner';
-	import { Copy } from '@lucide/svelte';
 	import { Button } from '$lib/components/ui/button/index.js';
 	import { cn } from '$lib/utils.js';
 

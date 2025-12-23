@@ -1,17 +1,17 @@
 <script lang="ts">
-	import { toast } from 'svelte-sonner';
 	import { Key, Lock, Terminal, Unlock } from '@lucide/svelte';
-	import { PageLayout } from '$lib/components/layout';
+	import { toast } from 'svelte-sonner';
 	import { ActionButton, CopyButton } from '$lib/components/action';
 	import { FormCheckbox, FormInfo, FormInput, FormSection, FormSelect } from '$lib/components/form';
+	import { PageLayout } from '$lib/components/layout';
 	import {
-		SSH_ALGORITHMS,
-		generateSshKeyPair,
+		type CliAvailability,
 		checkCliAvailability,
+		type GenerationMethod,
+		generateSshKeyPair,
+		SSH_ALGORITHMS,
 		type SshKeyAlgorithm,
 		type SshKeyResult,
-		type GenerationMethod,
-		type CliAvailability,
 	} from '$lib/services/generators.js';
 
 	// State

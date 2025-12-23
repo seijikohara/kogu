@@ -1,11 +1,5 @@
-export { default as CodeEditor } from './code-editor.svelte';
-export { default as CodeEditorWrapper } from './code-editor-wrapper.svelte';
-export { default as TreeView } from './tree-view.svelte';
+// Code editor (CodeMirror based)
+export * from './code/index.js';
 
-export type {
-	ContextMenuItem,
-	CursorPosition,
-	EditorContext,
-	EditorMode,
-	HighlightLine,
-} from './code-editor-wrapper.svelte';
+// Visual editor (TipTap based)
+export * from './visual/index.js';

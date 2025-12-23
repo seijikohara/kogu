@@ -1,8 +1,8 @@
 <script lang="ts">
+	import { CodeEditor } from '$lib/components/editor';
+	import { FormSection } from '$lib/components/form';
 	import SplitPane from '$lib/components/layout/split-pane.svelte';
 	import { OptionsPanel } from '$lib/components/panel';
-	import { FormSection } from '$lib/components/form';
-	import { CodeEditor } from '$lib/components/editor';
 	import { Input } from '$lib/components/ui/input/index.js';
 	import { Label } from '$lib/components/ui/label/index.js';
 	import { executeXPath, formatXml } from '$lib/services/formatters';

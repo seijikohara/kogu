@@ -53,7 +53,8 @@
 		| 'kotlin'
 		| 'swift'
 		| 'php'
-		| 'plain';
+		| 'plain'
+		| 'markdown';
 	export type EditorTheme = 'dark' | 'light';
 
 	export interface CursorPosition {
@@ -98,6 +99,8 @@
 		highlightLines?: HighlightLine[];
 		onchange?: (value: string) => void;
 		oncursorchange?: (position: CursorPosition) => void;
+		onfocus?: () => void;
+		onblur?: () => void;
 		oncontextmenu?: (event: MouseEvent, context: EditorContext) => void;
 	}
 
@@ -113,6 +116,8 @@
 		highlightLines = [],
 		onchange,
 		oncursorchange,
+		onfocus,
+		onblur,
 		oncontextmenu,
 	}: Props = $props();
 
@@ -132,6 +137,7 @@
 		swift: 'swift',
 		php: 'php',
 		plain: 'plaintext',
+		markdown: 'markdown',
 	};
 
 	let container: HTMLDivElement;
@@ -213,6 +219,14 @@
 				column: e.position.column,
 				selection: selectionLength,
 			});
+		});
+
+		editor.onDidFocusEditorText(() => {
+			onfocus?.();
+		});
+
+		editor.onDidBlurEditorText(() => {
+			onblur?.();
 		});
 
 		if (placeholder && !value) {
@@ -366,6 +380,50 @@
 			oncontextmenu(e, buildEditorContext());
 		}
 		// If no custom handler, Monaco's built-in context menu will be used
+	};
+
+	// Exported methods for parent components
+	export const getSelectionRange = (): { start: number; end: number } => {
+		if (!editor) return { start: 0, end: 0 };
+		const model = editor.getModel();
+		if (!model) return { start: 0, end: 0 };
+		const selection = editor.getSelection();
+		if (!selection) return { start: 0, end: 0 };
+		return {
+			start: model.getOffsetAt(selection.getStartPosition()),
+			end: model.getOffsetAt(selection.getEndPosition()),
+		};
+	};
+
+	export const setSelectionRange = (start: number, end: number) => {
+		if (!editor) return;
+		const model = editor.getModel();
+		if (!model) return;
+		const startPos = model.getPositionAt(start);
+		const endPos = model.getPositionAt(end);
+		editor.setSelection({
+			startLineNumber: startPos.lineNumber,
+			startColumn: startPos.column,
+			endLineNumber: endPos.lineNumber,
+			endColumn: endPos.column,
+		});
+	};
+
+	export const focusEditor = () => {
+		editor?.focus();
+	};
+
+	export const scrollToLine = (line: number, focus: boolean = true) => {
+		if (!editor) return;
+		const model = editor.getModel();
+		if (!model) return;
+		const lineCount = model.getLineCount();
+		const targetLine = Math.min(Math.max(1, line), lineCount);
+		editor.revealLineInCenter(targetLine);
+		editor.setPosition({ lineNumber: targetLine, column: 1 });
+		if (focus) {
+			editor.focus();
+		}
 	};
 
 	onMount(() => {

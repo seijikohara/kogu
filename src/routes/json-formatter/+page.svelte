@@ -1,13 +1,13 @@
 <script lang="ts">
 	import { ArrowRightLeft, CodeXml, FileCheck, GitCompare, Play, Search } from '@lucide/svelte';
 	import { PageLayout } from '$lib/components/layout';
-	import { useTabSync } from '$lib/utils';
 	import {
 		calculateJsonStats,
 		JSON_FORMAT_INFO,
 		type JsonInputFormat,
 		type JsonStats,
 	} from '$lib/services/formatters';
+	import { useTabSync } from '$lib/utils';
 	import {
 		CompareTab,
 		ConvertTab,

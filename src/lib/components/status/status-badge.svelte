@@ -1,6 +1,6 @@
 <script lang="ts">
+	import { AlertTriangle, Check, Info, X } from '@lucide/svelte';
 	import type { Component } from 'svelte';
-	import { Check, AlertTriangle, X, Info } from '@lucide/svelte';
 	import { cn } from '$lib/utils.js';
 
 	interface Props {

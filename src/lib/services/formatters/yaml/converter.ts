@@ -5,9 +5,9 @@
 import * as yaml from 'yaml';
 
 import { defaultJsonToXmlOptions } from '../constants.js';
+import { jsonToXml } from '../converters/json-to-xml.js';
 import type { YamlToJsonOptions, YamlToXmlOptions } from '../types.js';
 import { sortKeysDeep } from '../utils.js';
-import { jsonToXml } from '../converters/json-to-xml.js';
 
 /** Convert YAML to JSON string */
 export const yamlToJson = (input: string, options: YamlToJsonOptions | number = {}): string => {

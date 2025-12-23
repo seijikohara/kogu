@@ -1,4 +1,5 @@
 #!/usr/bin/env bun
+
 /**
  * Build and copy sidecar binaries for Tauri
  *
@@ -9,9 +10,9 @@
  * build script validation, then replaces them with the actual binaries.
  */
 
-import { $ } from 'bun';
 import { chmodSync, copyFileSync, existsSync, mkdirSync, unlinkSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { $ } from 'bun';
 
 // Constants
 const SIDECARS = ['bcrypt-worker'] as const;

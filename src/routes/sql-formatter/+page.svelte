@@ -1,8 +1,8 @@
 <script lang="ts">
 	import type { SqlLanguage } from 'sql-formatter';
-	import { PageLayout, SplitPane } from '$lib/components/layout';
-	import { FormCheckbox, FormMode, FormSection, FormSelect } from '$lib/components/form';
 	import { CodeEditor } from '$lib/components/editor';
+	import { FormCheckbox, FormMode, FormSection, FormSelect } from '$lib/components/form';
+	import { PageLayout, SplitPane } from '$lib/components/layout';
 	import {
 		calculateSqlStats,
 		defaultSqlFormatOptions,

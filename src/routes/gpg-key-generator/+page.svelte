@@ -1,19 +1,19 @@
 <script lang="ts">
-	import { toast } from 'svelte-sonner';
 	import { Key, Lock, Terminal, Unlock, User } from '@lucide/svelte';
-	import { PageLayout } from '$lib/components/layout';
+	import { toast } from 'svelte-sonner';
 	import { ActionButton, CopyButton } from '$lib/components/action';
 	import { FormCheckbox, FormInfo, FormInput, FormSection, FormSelect } from '$lib/components/form';
+	import { PageLayout } from '$lib/components/layout';
 	import {
-		GPG_ALGORITHMS,
-		generateGpgKeyPair,
-		checkCliAvailability,
 		buildGpgUserId,
-		isValidEmail,
+		type CliAvailability,
+		checkCliAvailability,
+		type GenerationMethod,
+		GPG_ALGORITHMS,
 		type GpgKeyAlgorithm,
 		type GpgKeyResult,
-		type GenerationMethod,
-		type CliAvailability,
+		generateGpgKeyPair,
+		isValidEmail,
 	} from '$lib/services/generators.js';
 
 	// State

@@ -1,9 +1,9 @@
 <script lang="ts">
 	import { AlertTriangle, CheckCircle, Clock, KeyRound } from '@lucide/svelte';
-	import { PageLayout } from '$lib/components/layout';
 	import { CopyButton } from '$lib/components/action';
-	import { FormInfo, FormSection } from '$lib/components/form';
 	import { CodeEditor } from '$lib/components/editor';
+	import { FormInfo, FormSection } from '$lib/components/form';
+	import { PageLayout } from '$lib/components/layout';
 	import {
 		decodeJwt,
 		JWT_STANDARD_CLAIMS,
