@@ -203,8 +203,7 @@ fn generate_with_cli(options: GpgKeyOptions) -> Result<GpgKeyResult, GeneratorEr
 /// Generate GPG key pair using Rust library (pgp crate)
 fn generate_with_library(options: GpgKeyOptions) -> Result<GpgKeyResult, GeneratorError> {
     use pgp::composed::{ArmorOptions, KeyType, SecretKeyParamsBuilder, SignedPublicKey};
-    use pgp::types::PublicKeyTrait;
-    use std::fmt::Write;
+    use pgp::types::{KeyDetails, Password};
 
     // Destructure to consume ownership
     let GpgKeyOptions {
@@ -241,24 +240,16 @@ fn generate_with_library(options: GpgKeyOptions) -> Result<GpgKeyResult, Generat
         .generate(rng)
         .map_err(|e| GeneratorError::Gpg(format!("Failed to generate key: {e}")))?;
 
-    // Get passphrase
-    let passphrase_str = passphrase.clone().unwrap_or_default();
+    // Get passphrase as Password type
+    let password = Password::from(passphrase.clone().unwrap_or_default());
 
     // Sign the key to create SignedSecretKey
     let signed_key = secret_key
-        .sign(&mut rng, || passphrase_str.clone())
+        .sign(&mut rng, &password)
         .map_err(|e| GeneratorError::Gpg(format!("Failed to sign key: {e}")))?;
 
-    // Get fingerprint from signed key (PublicKeyTrait)
-    let fingerprint =
-        signed_key
-            .fingerprint()
-            .as_bytes()
-            .iter()
-            .fold(String::new(), |mut acc, b| {
-                let _ = write!(acc, "{b:02X}");
-                acc
-            });
+    // Get fingerprint from signed key (KeyDetails trait)
+    let fingerprint = format!("{:X}", signed_key.fingerprint());
 
     // Convert to public key for export (clone needed as signed_key is used again below)
     let signed_public_key: SignedPublicKey = signed_key.clone().into();
