@@ -164,12 +164,11 @@ export const getBcryptCostInfo = async (cost: number): Promise<BcryptCostInfo> =
 	invoke<BcryptCostInfo>('get_bcrypt_cost_info', { cost });
 
 /**
- * Cancel any ongoing BCrypt operation.
- * This will cause the operation to return an error immediately,
- * though the background computation may continue until completion.
+ * Cancel any ongoing worker operation (BCrypt, SSH, GPG).
+ * This kills the worker process, providing true cancellation.
  */
-export const cancelBcryptOperation = async (): Promise<void> =>
-	invoke<void>('cancel_bcrypt_operation');
+export const cancelWorkerOperation = async (): Promise<boolean> =>
+	invoke<boolean>('cancel_worker_operation');
 
 // =============================================================================
 // SSH Key Functions

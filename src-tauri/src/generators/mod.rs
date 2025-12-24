@@ -1,12 +1,13 @@
 //! Cryptographic key generators module
 //!
 //! This module provides `BCrypt` hashing, SSH key generation, and GPG key generation
-//! with support for both CLI tools and Rust library fallbacks.
+//! with process isolation for cancellable operations.
 
 pub mod bcrypt;
 pub mod cli;
 pub mod gpg;
 pub mod ssh;
+pub mod worker;
 
 use serde::Serialize;
 use thiserror::Error;
@@ -23,11 +24,15 @@ pub enum GeneratorError {
     #[error("GPG key generation error: {0}")]
     Gpg(String),
 
+    #[cfg(test)]
     #[error("CLI execution error: {0}")]
     CliExecution(String),
 
     #[error("Invalid parameter: {0}")]
     InvalidParameter(String),
+
+    #[error("Worker error: {0}")]
+    Worker(String),
 
     #[error("Operation cancelled")]
     Cancelled,

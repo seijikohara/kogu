@@ -9,7 +9,7 @@
 		type BcryptCostInfo,
 		type BcryptHashResult,
 		type BcryptVerifyResult,
-		cancelBcryptOperation,
+		cancelWorkerOperation,
 		DEFAULT_BCRYPT_COST,
 		generateBcryptHash,
 		getBcryptCostInfo,
@@ -115,7 +115,7 @@
 
 	const handleCancelGenerate = async () => {
 		generateCancelled = true;
-		await cancelBcryptOperation();
+		await cancelWorkerOperation();
 		stopTimer();
 		isGenerating = false;
 		toast.info('Hash generation cancelled');
@@ -153,7 +153,7 @@
 
 	const handleCancelVerify = async () => {
 		verifyCancelled = true;
-		await cancelBcryptOperation();
+		await cancelWorkerOperation();
 		stopTimer();
 		isVerifying = false;
 		toast.info('Verification cancelled');

@@ -19,8 +19,8 @@ name = "kogu_lib"
 crate-type = ["staticlib", "cdylib", "rlib"]
 
 [[bin]]
-name = "bcrypt-worker"
-path = "src/bin/bcrypt-worker.rs"
+name = "worker"
+path = "src/bin/worker.rs"
 
 [build-dependencies]
 tauri-build = { version = "2", features = [] }

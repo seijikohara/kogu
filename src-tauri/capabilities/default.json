@@ -24,7 +24,7 @@
 		"decorum:allow-show-snap-overlay",
 		{
 			"identifier": "shell:allow-spawn",
-			"allow": [{ "name": "binaries/bcrypt-worker", "sidecar": true }]
+			"allow": [{ "name": "binaries/worker", "sidecar": true }]
 		},
 		"shell:allow-kill"
 	]
