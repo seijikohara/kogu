@@ -1,14 +1,20 @@
-//! SSH key generation with CLI and library support
+//! SSH key generation with CLI, library, and process isolation support
 
-use rand::rngs::OsRng;
 use serde::{Deserialize, Serialize};
+use tauri::AppHandle;
+
+use super::worker::{self, SshKeyRequest, SshKeyResponse, WorkerProcessState};
+use super::{GenerationMethod, GeneratorError};
+
+#[cfg(test)]
+use rand::rngs::OsRng;
+#[cfg(test)]
 use ssh_key::{
     private::{EcdsaKeypair, Ed25519Keypair, RsaKeypair},
     HashAlg, LineEnding, PrivateKey,
 };
+#[cfg(test)]
 use std::process::{Command, Stdio};
-
-use super::{GenerationMethod, GeneratorError};
 
 /// SSH key algorithm options
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -28,6 +34,8 @@ pub enum SshKeyAlgorithm {
     Rsa4096,
 }
 
+/// Methods used only for testing (CLI/Library generation)
+#[cfg(test)]
 impl SshKeyAlgorithm {
     /// Get display name for the algorithm
     pub const fn display_name(self) -> &'static str {
@@ -60,12 +68,6 @@ impl SshKeyAlgorithm {
             Self::EcdsaP256 | Self::EcdsaP384 => "id_ecdsa",
             Self::Rsa2048 | Self::Rsa3072 | Self::Rsa4096 => "id_rsa",
         }
-    }
-
-    /// Whether this algorithm is recommended (used by frontend)
-    #[allow(dead_code)]
-    pub const fn is_recommended(self) -> bool {
-        matches!(self, Self::Ed25519)
     }
 }
 
@@ -100,7 +102,12 @@ pub struct SshKeyResult {
     pub method_used: String,
 }
 
-/// Generate SSH key pair
+// =============================================================================
+// Synchronous Operations (for testing only)
+// =============================================================================
+
+/// Generate SSH key pair (synchronous, for testing)
+#[cfg(test)]
 pub fn generate_key(options: SshKeyOptions) -> Result<SshKeyResult, GeneratorError> {
     match options.method {
         GenerationMethod::Cli => generate_with_cli(options),
@@ -109,6 +116,7 @@ pub fn generate_key(options: SshKeyOptions) -> Result<SshKeyResult, GeneratorErr
 }
 
 /// Generate SSH key pair using ssh-keygen CLI
+#[cfg(test)]
 fn generate_with_cli(options: SshKeyOptions) -> Result<SshKeyResult, GeneratorError> {
     // Destructure to consume ownership
     let SshKeyOptions {
@@ -206,6 +214,7 @@ fn generate_with_cli(options: SshKeyOptions) -> Result<SshKeyResult, GeneratorEr
 }
 
 /// Generate SSH key pair using Rust library
+#[cfg(test)]
 fn generate_with_library(options: SshKeyOptions) -> Result<SshKeyResult, GeneratorError> {
     // Destructure to consume ownership
     let SshKeyOptions {
@@ -304,6 +313,7 @@ fn generate_with_library(options: SshKeyOptions) -> Result<SshKeyResult, Generat
 }
 
 /// Build the equivalent ssh-keygen command string from individual parts
+#[cfg(test)]
 fn build_ssh_keygen_command_from_parts(
     algorithm: SshKeyAlgorithm,
     comment: Option<&str>,
@@ -328,6 +338,50 @@ fn build_ssh_keygen_command_from_parts(
     parts.push(format!("~/.ssh/{filename}"));
 
     parts.join(" ")
+}
+
+// =============================================================================
+// Process-Isolated Operations
+// =============================================================================
+
+/// Generate SSH key pair using process isolation
+///
+/// Spawns a separate process for the computation, allowing true cancellation.
+pub async fn generate_key_isolated(
+    app: &AppHandle,
+    options: SshKeyOptions,
+    state: &WorkerProcessState,
+) -> Result<SshKeyResult, GeneratorError> {
+    let algorithm_str = match options.algorithm {
+        SshKeyAlgorithm::Ed25519 => "ed25519",
+        SshKeyAlgorithm::Rsa2048 => "rsa2048",
+        SshKeyAlgorithm::Rsa3072 => "rsa3072",
+        SshKeyAlgorithm::Rsa4096 => "rsa4096",
+        SshKeyAlgorithm::EcdsaP256 => "ecdsa_p256",
+        SshKeyAlgorithm::EcdsaP384 => "ecdsa_p384",
+    };
+
+    let request = SshKeyRequest::new(algorithm_str, options.comment, options.passphrase);
+    let response: SshKeyResponse = worker::execute(app, &request, state).await?;
+
+    if response.success {
+        Ok(SshKeyResult {
+            algorithm: response.algorithm.unwrap_or_default(),
+            public_key: response.public_key.unwrap_or_default(),
+            private_key: response.private_key.unwrap_or_default(),
+            fingerprint: response.fingerprint.unwrap_or_default(),
+            ssh_keygen_command: response.ssh_keygen_command.unwrap_or_default(),
+            method_used: response
+                .method_used
+                .unwrap_or_else(|| "Process isolation".to_string()),
+        })
+    } else {
+        Err(GeneratorError::SshKey(
+            response
+                .error
+                .unwrap_or_else(|| "Unknown error".to_string()),
+        ))
+    }
 }
 
 #[cfg(test)]

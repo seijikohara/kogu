@@ -4,7 +4,9 @@
 	import { ActionButton, CopyButton } from '$lib/components/action';
 	import { FormCheckbox, FormInfo, FormInput, FormSection, FormSelect } from '$lib/components/form';
 	import { PageLayout } from '$lib/components/layout';
+	import { LoadingOverlay } from '$lib/components/status';
 	import {
+		cancelWorkerOperation,
 		type CliAvailability,
 		checkCliAvailability,
 		type GenerationMethod,
@@ -22,9 +24,33 @@
 
 	let keyResult = $state<SshKeyResult | null>(null);
 	let isGenerating = $state(false);
+	let isCancelled = $state(false);
 	let error = $state<string | null>(null);
 
 	let cliAvailability = $state<CliAvailability | null>(null);
+
+	// Elapsed time tracking
+	let elapsedMs = $state(0);
+	let timerInterval = $state<ReturnType<typeof setInterval> | null>(null);
+
+	const startTimer = () => {
+		elapsedMs = 0;
+		timerInterval = setInterval(() => {
+			elapsedMs += 100;
+		}, 100);
+	};
+
+	const stopTimer = () => {
+		if (timerInterval) {
+			clearInterval(timerInterval);
+			timerInterval = null;
+		}
+	};
+
+	const formatElapsedTime = (ms: number): string => {
+		if (ms < 1000) return `${Math.round(ms)}ms`;
+		return `${(ms / 1000).toFixed(1)}s`;
+	};
 
 	// UI options
 	let showOptions = $state(true);
@@ -46,6 +72,7 @@
 	const selectedAlgorithm = $derived(SSH_ALGORITHMS.find((a) => a.value === algorithm));
 	const canGenerate = $derived(true);
 	const sshKeygenAvailable = $derived(cliAvailability?.ssh_keygen ?? false);
+	const elapsedTimeDisplay = $derived(formatElapsedTime(elapsedMs));
 
 	// Get algorithm description
 	const algorithmDescription = $derived.by(() => {
@@ -70,23 +97,39 @@
 	// Handlers
 	const handleGenerate = async () => {
 		isGenerating = true;
+		isCancelled = false;
 		error = null;
 		keyResult = null;
+		startTimer();
 
 		try {
-			keyResult = await generateSshKeyPair({
+			const result = await generateSshKeyPair({
 				algorithm,
 				comment: comment.trim() || undefined,
 				passphrase: passphrase || undefined,
 				method,
 			});
-			toast.success('SSH key pair generated successfully');
+			if (!isCancelled) {
+				keyResult = result;
+				toast.success('SSH key pair generated successfully');
+			}
 		} catch (e) {
-			error = e instanceof Error ? e.message : String(e);
-			toast.error('Failed to generate SSH key', { description: error });
+			if (!isCancelled) {
+				error = e instanceof Error ? e.message : String(e);
+				toast.error('Failed to generate SSH key', { description: error });
+			}
 		} finally {
+			stopTimer();
 			isGenerating = false;
 		}
+	};
+
+	const handleCancel = async () => {
+		isCancelled = true;
+		await cancelWorkerOperation();
+		stopTimer();
+		isGenerating = false;
+		toast.info('Key generation cancelled');
 	};
 
 	const handleClear = () => {
@@ -222,7 +265,14 @@
 	{/snippet}
 
 	<!-- Results Panel -->
-	<div class="flex h-full flex-col overflow-hidden">
+	<div class="relative flex h-full flex-col overflow-hidden">
+		<LoadingOverlay
+			show={isGenerating}
+			title="Generating SSH Key..."
+			message="Key generation in progress"
+			elapsedTime={elapsedTimeDisplay}
+			oncancel={handleCancel}
+		/>
 		<div class="flex h-9 shrink-0 items-center border-b bg-muted/30 px-3">
 			<span class="text-xs font-medium text-muted-foreground">Generated Keys</span>
 		</div>

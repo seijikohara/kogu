@@ -54,10 +54,11 @@ use tauri_plugin_decorum::WebviewWindowExt;
 
 use ast::{AstLanguage, AstParseResult};
 use generators::{
-    bcrypt::{BcryptCostInfo, BcryptHashResult, BcryptProcessState, BcryptVerifyResult},
+    bcrypt::{BcryptCostInfo, BcryptHashResult, BcryptVerifyResult},
     cli::CliAvailability,
     gpg::{GpgKeyOptions, GpgKeyResult},
     ssh::{SshKeyOptions, SshKeyResult},
+    worker::WorkerProcessState,
 };
 
 #[tauri::command]
@@ -66,7 +67,17 @@ fn greet(name: &str) -> String {
 }
 
 // =============================================================================
-// BCrypt Commands (with process isolation for true cancellation)
+// Worker Commands (with process isolation for true cancellation)
+// =============================================================================
+
+/// Cancel any ongoing worker operation by killing the worker process
+#[tauri::command]
+fn cancel_worker_operation(state: tauri::State<'_, WorkerProcessState>) -> bool {
+    state.kill()
+}
+
+// =============================================================================
+// BCrypt Commands
 // =============================================================================
 
 /// Generate a `BCrypt` hash from a password (cancellable via process termination)
@@ -75,7 +86,7 @@ async fn generate_bcrypt_hash(
     password: String,
     cost: u32,
     app: tauri::AppHandle,
-    state: tauri::State<'_, BcryptProcessState>,
+    state: tauri::State<'_, WorkerProcessState>,
 ) -> Result<BcryptHashResult, String> {
     generators::bcrypt::generate_hash_isolated(&app, password, cost, &state)
         .await
@@ -88,17 +99,11 @@ async fn verify_bcrypt_hash(
     password: String,
     hash: String,
     app: tauri::AppHandle,
-    state: tauri::State<'_, BcryptProcessState>,
+    state: tauri::State<'_, WorkerProcessState>,
 ) -> Result<BcryptVerifyResult, String> {
     generators::bcrypt::verify_hash_isolated(&app, password, hash, &state)
         .await
         .map_err(|e| e.to_string())
-}
-
-/// Cancel any ongoing `BCrypt` operation by killing the worker process
-#[tauri::command]
-fn cancel_bcrypt_operation(state: tauri::State<'_, BcryptProcessState>) -> bool {
-    state.kill()
 }
 
 /// Get information about a `BCrypt` cost factor
@@ -111,32 +116,32 @@ fn get_bcrypt_cost_info(cost: u32) -> BcryptCostInfo {
 // SSH Key Commands
 // =============================================================================
 
-/// Generate an SSH key pair
-///
-/// Runs on a background thread to prevent UI freeze during key generation.
+/// Generate an SSH key pair (cancellable via process termination)
 #[tauri::command]
-async fn generate_ssh_keypair(options: SshKeyOptions) -> Result<SshKeyResult, String> {
-    tokio::task::spawn_blocking(move || {
-        generators::ssh::generate_key(options).map_err(|e| e.to_string())
-    })
-    .await
-    .map_err(|e| format!("Task join error: {e}"))?
+async fn generate_ssh_keypair(
+    options: SshKeyOptions,
+    app: tauri::AppHandle,
+    state: tauri::State<'_, WorkerProcessState>,
+) -> Result<SshKeyResult, String> {
+    generators::ssh::generate_key_isolated(&app, options, &state)
+        .await
+        .map_err(|e| e.to_string())
 }
 
 // =============================================================================
 // GPG Key Commands
 // =============================================================================
 
-/// Generate a GPG key pair
-///
-/// Runs on a background thread to prevent UI freeze during key generation.
+/// Generate a GPG key pair (cancellable via process termination)
 #[tauri::command]
-async fn generate_gpg_keypair(options: GpgKeyOptions) -> Result<GpgKeyResult, String> {
-    tokio::task::spawn_blocking(move || {
-        generators::gpg::generate_key(options).map_err(|e| e.to_string())
-    })
-    .await
-    .map_err(|e| format!("Task join error: {e}"))?
+async fn generate_gpg_keypair(
+    options: GpgKeyOptions,
+    app: tauri::AppHandle,
+    state: tauri::State<'_, WorkerProcessState>,
+) -> Result<GpgKeyResult, String> {
+    generators::gpg::generate_key_isolated(&app, options, &state)
+        .await
+        .map_err(|e| e.to_string())
 }
 
 // =============================================================================
@@ -201,7 +206,7 @@ pub fn run() {
     };
 
     builder
-        .manage(BcryptProcessState::new())
+        .manage(WorkerProcessState::new())
         .setup(|app| {
             let main_window = app
                 .get_webview_window("main")
@@ -219,9 +224,9 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             greet,
             parse_to_ast,
+            cancel_worker_operation,
             generate_bcrypt_hash,
             verify_bcrypt_hash,
-            cancel_bcrypt_operation,
             get_bcrypt_cost_info,
             generate_ssh_keypair,
             generate_gpg_keypair,

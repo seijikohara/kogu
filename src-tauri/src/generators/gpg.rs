@@ -1,9 +1,13 @@
-//! GPG/PGP key generation with CLI and library support
+//! GPG/PGP key generation with CLI, library, and process isolation support
 
 use serde::{Deserialize, Serialize};
-use std::process::{Command, Stdio};
+use tauri::AppHandle;
 
+use super::worker::{self, GpgKeyRequest, GpgKeyResponse, WorkerProcessState};
 use super::{GenerationMethod, GeneratorError};
+
+#[cfg(test)]
+use std::process::{Command, Stdio};
 
 /// GPG key algorithm options
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -21,6 +25,8 @@ pub enum GpgKeyAlgorithm {
     EcdsaP384,
 }
 
+/// Methods used only for testing (CLI/Library generation)
+#[cfg(test)]
 impl GpgKeyAlgorithm {
     /// Get display name for the algorithm
     pub const fn display_name(self) -> &'static str {
@@ -92,7 +98,12 @@ pub struct GpgKeyResult {
     pub method_used: String,
 }
 
-/// Generate GPG key pair
+// =============================================================================
+// Synchronous Operations (for testing only)
+// =============================================================================
+
+/// Generate GPG key pair (synchronous, for testing)
+#[cfg(test)]
 pub fn generate_key(options: GpgKeyOptions) -> Result<GpgKeyResult, GeneratorError> {
     // Validate input before consuming
     if options.name.trim().is_empty() {
@@ -113,6 +124,7 @@ pub fn generate_key(options: GpgKeyOptions) -> Result<GpgKeyResult, GeneratorErr
 }
 
 /// Generate GPG key pair using gpg CLI
+#[cfg(test)]
 fn generate_with_cli(options: GpgKeyOptions) -> Result<GpgKeyResult, GeneratorError> {
     // Destructure to consume ownership
     let GpgKeyOptions {
@@ -201,6 +213,7 @@ fn generate_with_cli(options: GpgKeyOptions) -> Result<GpgKeyResult, GeneratorEr
 }
 
 /// Generate GPG key pair using Rust library (pgp crate)
+#[cfg(test)]
 fn generate_with_library(options: GpgKeyOptions) -> Result<GpgKeyResult, GeneratorError> {
     use pgp::composed::{ArmorOptions, KeyType, SecretKeyParamsBuilder, SignedPublicKey};
     use pgp::types::{KeyDetails, Password};
@@ -286,6 +299,7 @@ fn generate_with_library(options: GpgKeyOptions) -> Result<GpgKeyResult, Generat
 }
 
 /// Build User ID string from parts
+#[cfg(test)]
 fn build_user_id(name: &str, email: &str, comment: Option<&str>) -> String {
     match comment {
         Some(c) if !c.is_empty() => {
@@ -296,6 +310,7 @@ fn build_user_id(name: &str, email: &str, comment: Option<&str>) -> String {
 }
 
 /// Build GPG batch file content from individual parts
+#[cfg(test)]
 fn build_batch_content_from_parts(
     name: &str,
     email: &str,
@@ -348,6 +363,7 @@ fn build_batch_content_from_parts(
 }
 
 /// Build the batch command string for display from individual parts
+#[cfg(test)]
 fn build_batch_command_from_parts(
     name: &str,
     email: &str,
@@ -360,6 +376,7 @@ fn build_batch_command_from_parts(
 }
 
 /// Export a key by email
+#[cfg(test)]
 fn export_key(email: &str, secret: bool) -> Result<String, GeneratorError> {
     let mut cmd = Command::new("gpg");
     cmd.args(["--armor"]);
@@ -387,6 +404,7 @@ fn export_key(email: &str, secret: bool) -> Result<String, GeneratorError> {
 }
 
 /// Extract fingerprint from gpg output
+#[cfg(test)]
 fn extract_fingerprint_from_output(output: &str) -> Option<String> {
     // Look for fingerprint in gpg output
     for line in output.lines() {
@@ -404,6 +422,7 @@ fn extract_fingerprint_from_output(output: &str) -> Option<String> {
 }
 
 /// Get fingerprint by email using gpg --list-keys
+#[cfg(test)]
 fn get_fingerprint_by_email(email: &str) -> Option<String> {
     let output = Command::new("gpg")
         .args(["--list-keys", "--fingerprint", email])
@@ -431,6 +450,7 @@ fn get_fingerprint_by_email(email: &str) -> Option<String> {
 }
 
 /// Format fingerprint with spaces for readability
+#[cfg(test)]
 fn format_fingerprint(fingerprint: &str) -> String {
     fingerprint
         .chars()
@@ -439,6 +459,71 @@ fn format_fingerprint(fingerprint: &str) -> String {
         .map(|chunk| chunk.iter().collect::<String>())
         .collect::<Vec<_>>()
         .join(" ")
+}
+
+// =============================================================================
+// Process-Isolated Operations
+// =============================================================================
+
+/// Generate GPG key pair using process isolation
+///
+/// Spawns a separate process for the computation, allowing true cancellation.
+pub async fn generate_key_isolated(
+    app: &AppHandle,
+    options: GpgKeyOptions,
+    state: &WorkerProcessState,
+) -> Result<GpgKeyResult, GeneratorError> {
+    // Validate input before sending to worker
+    if options.name.trim().is_empty() {
+        return Err(GeneratorError::InvalidParameter(
+            "Name is required".to_string(),
+        ));
+    }
+    if options.email.trim().is_empty() || !options.email.contains('@') {
+        return Err(GeneratorError::InvalidParameter(
+            "Valid email is required".to_string(),
+        ));
+    }
+
+    let algorithm_str = match options.algorithm {
+        GpgKeyAlgorithm::Rsa2048 => "rsa2048",
+        GpgKeyAlgorithm::Rsa3072 => "rsa3072",
+        GpgKeyAlgorithm::Rsa4096 => "rsa4096",
+        GpgKeyAlgorithm::EcdsaP256 => "ecdsa_p256",
+        GpgKeyAlgorithm::EcdsaP384 => "ecdsa_p384",
+    };
+
+    let request = GpgKeyRequest::new(
+        options.name,
+        options.email,
+        options.comment,
+        algorithm_str,
+        options.passphrase,
+    );
+    let response: GpgKeyResponse = worker::execute(app, &request, state).await?;
+
+    if response.success {
+        Ok(GpgKeyResult {
+            algorithm: response.algorithm.unwrap_or_default(),
+            user_id: response.user_id.unwrap_or_default(),
+            fingerprint: response.fingerprint.unwrap_or_default(),
+            public_key: response.public_key.unwrap_or_default(),
+            private_key: response.private_key.unwrap_or_default(),
+            gpg_command_interactive: response
+                .gpg_command_interactive
+                .unwrap_or_else(|| "gpg --full-generate-key".to_string()),
+            gpg_command_batch: response.gpg_command_batch.unwrap_or_default(),
+            method_used: response
+                .method_used
+                .unwrap_or_else(|| "Process isolation".to_string()),
+        })
+    } else {
+        Err(GeneratorError::Gpg(
+            response
+                .error
+                .unwrap_or_else(|| "Unknown error".to_string()),
+        ))
+    }
 }
 
 #[cfg(test)]
