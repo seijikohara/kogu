@@ -45,12 +45,25 @@ tauri-plugin-dialog = "2.4.2"
 tauri-plugin-fs = "2.4.4"
 tauri-plugin-shell = "2"
 
-# Async Runtime (for cancellable operations)
-tokio = { version = "1", features = ["sync"] }
+# Async Runtime (for cancellable operations and network)
+tokio = { version = "1", features = ["sync", "net", "time", "rt"] }
 
 # Cryptographic Generators
 bcrypt = "0.17"
 ssh-key = { version = "0.6", features = ["ed25519", "p256", "p384", "rsa", "encryption", "rand_core"] }
 pgp = "0.18"
 rand = "0.8"
+
+# Network Scanning
+ipnetwork = "0.20"
+socket2 = "0.5"
+dns-lookup = "2"
+uuid = { version = "1", features = ["v4"] }
+if-addrs = "0.13"
+mdns-sd = "0.11"
+
+# Host Discovery
+surge-ping = "0.8"
+pnet = "0.35"
+pnet_datalink = "0.35"
 
