@@ -48,6 +48,7 @@
 
 mod ast;
 mod generators;
+mod network;
 
 use tauri::Manager;
 use tauri_plugin_decorum::WebviewWindowExt;
@@ -59,6 +60,10 @@ use generators::{
     gpg::{GpgKeyOptions, GpgKeyResult},
     ssh::{SshKeyOptions, SshKeyResult},
     worker::WorkerProcessState,
+};
+use network::{
+    DiscoveryMethod, DiscoveryOptions, DiscoveryResult, LocalNetworkInfo, MdnsDiscoveryRequest,
+    MdnsDiscoveryResults, NetworkScannerState, ScanRequest, ScanResults,
 };
 
 #[tauri::command]
@@ -154,6 +159,100 @@ fn check_cli_availability() -> CliAvailability {
     generators::cli::check_cli_availability()
 }
 
+// =============================================================================
+// Network Scanner Commands
+// =============================================================================
+
+/// Start a network scan (async with progress events)
+#[tauri::command]
+async fn start_network_scan(
+    request: ScanRequest,
+    app: tauri::AppHandle,
+    state: tauri::State<'_, NetworkScannerState>,
+) -> Result<ScanResults, String> {
+    network::start_scan(request, app, &state)
+        .await
+        .map(|(_, results)| results)
+}
+
+/// Cancel a running network scan
+#[tauri::command]
+fn cancel_network_scan(scan_id: String, state: tauri::State<'_, NetworkScannerState>) -> bool {
+    state.cancel_scan(&scan_id)
+}
+
+/// Get local network interfaces
+#[tauri::command]
+fn get_local_network_interfaces() -> LocalNetworkInfo {
+    network::get_local_interfaces()
+}
+
+/// Discover mDNS/Bonjour services on the local network
+#[tauri::command]
+async fn discover_mdns_services(
+    request: MdnsDiscoveryRequest,
+) -> Result<MdnsDiscoveryResults, String> {
+    network::discover_mdns_services(request.service_types, request.duration_ms).await
+}
+
+// =============================================================================
+// Host Discovery Commands
+// =============================================================================
+
+/// Discover hosts using specified methods (ICMP, ARP, TCP SYN, mDNS)
+#[tauri::command]
+async fn discover_hosts(
+    targets: Vec<String>,
+    options: DiscoveryOptions,
+) -> Result<Vec<DiscoveryResult>, String> {
+    use std::net::IpAddr;
+
+    // Parse target strings to IpAddr
+    let mut ip_targets = Vec::new();
+    for target in &targets {
+        if let Ok(ip) = target.parse::<IpAddr>() {
+            ip_targets.push(ip);
+        } else if target.contains('/') {
+            // CIDR notation
+            if let Ok(network) = target.parse::<ipnetwork::IpNetwork>() {
+                ip_targets.extend(network.iter());
+            }
+        }
+    }
+
+    if ip_targets.is_empty() {
+        return Err("No valid IP addresses provided".to_string());
+    }
+
+    Ok(network::discover_hosts(&ip_targets, &options).await)
+}
+
+/// Get available discovery methods and their privilege status
+#[tauri::command]
+async fn get_discovery_methods() -> Vec<(String, bool)> {
+    network::get_available_methods()
+        .await
+        .into_iter()
+        .map(|(method, available)| {
+            let name = match method {
+                DiscoveryMethod::IcmpPing => "icmp_ping",
+                DiscoveryMethod::ArpScan => "arp_scan",
+                DiscoveryMethod::TcpSyn => "tcp_syn",
+                DiscoveryMethod::TcpConnect => "tcp_connect",
+                DiscoveryMethod::Mdns => "mdns",
+                DiscoveryMethod::None => "none",
+            };
+            (name.to_string(), available)
+        })
+        .collect()
+}
+
+/// Check if a specific discovery method is available
+#[tauri::command]
+async fn check_discovery_privilege(method: DiscoveryMethod) -> bool {
+    network::check_privileges(method).await
+}
+
 /// Parse text to AST based on language
 ///
 /// # Arguments
@@ -207,6 +306,7 @@ pub fn run() {
 
     builder
         .manage(WorkerProcessState::new())
+        .manage(NetworkScannerState::new())
         .setup(|app| {
             let main_window = app
                 .get_webview_window("main")
@@ -231,6 +331,13 @@ pub fn run() {
             generate_ssh_keypair,
             generate_gpg_keypair,
             check_cli_availability,
+            start_network_scan,
+            cancel_network_scan,
+            get_local_network_interfaces,
+            discover_mdns_services,
+            discover_hosts,
+            get_discovery_methods,
+            check_discovery_privilege,
         ])
         .run(tauri::generate_context!())
         .unwrap_or_else(|e| {

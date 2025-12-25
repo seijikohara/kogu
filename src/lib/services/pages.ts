@@ -22,7 +22,9 @@ import {
 	KeyRound,
 	Link,
 	Lock,
+	Network,
 	Play,
+	Radar,
 	Search,
 	Shield,
 	ShieldCheck,
@@ -32,7 +34,7 @@ import {
 /**
  * Page categories for sidebar grouping.
  */
-export type PageCategory = 'formatters' | 'encoders' | 'generators' | 'text';
+export type PageCategory = 'formatters' | 'encoders' | 'generators' | 'text' | 'network';
 
 export interface PageTab {
 	readonly id: string;
@@ -216,6 +218,15 @@ export const PAGES: readonly PageDefinition[] = [
 		color: 'text-teal-500',
 		category: 'text',
 	},
+	{
+		id: 'network-scanner',
+		title: 'Network Scanner',
+		url: '/network-scanner',
+		icon: Radar,
+		description: 'Scan networks for open ports and services',
+		color: 'text-rose-500',
+		category: 'network',
+	},
 ];
 
 /**
@@ -260,6 +271,7 @@ export const CATEGORIES: readonly CategoryInfo[] = [
 	{ id: 'encoders', label: 'Encoders', icon: Lock, defaultOpen: true },
 	{ id: 'generators', label: 'Generators', icon: Sparkles, defaultOpen: true },
 	{ id: 'text', label: 'Text', icon: CaseSensitive, defaultOpen: true },
+	{ id: 'network', label: 'Network', icon: Network, defaultOpen: true },
 ];
 
 /**
