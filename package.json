@@ -103,7 +103,7 @@
 		"bits-ui": "^2.14.4",
 		"bun-types": "^1.3.5",
 		"clsx": "^2.1.1",
-		"jsdom": "^27.3.0",
+		"jsdom": "^27.4.0",
 		"lefthook": "^2.0.12",
 		"mode-watcher": "^1.1.0",
 		"paneforge": "^1.0.2",
