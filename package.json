@@ -76,7 +76,7 @@
 		"markdown-it": "^14.1.0",
 		"markdown-it-texmath": "^1.0.0",
 		"mermaid": "^11.12.2",
-		"monaco-editor": "^0.52.2",
+		"monaco-editor": "^0.55.1",
 		"monaco-yaml": "^5.3.1",
 		"node-sql-parser": "^5.3.13",
 		"sql-formatter": "^15.6.12",
