@@ -61,7 +61,7 @@
 		"@tiptap/extension-task-item": "^3.14.0",
 		"@tiptap/extension-task-list": "^3.14.0",
 		"@tiptap/pm": "^3.14.0",
-		"@tiptap/starter-kit": "^3.14.0",
+		"@tiptap/starter-kit": "^3.17.1",
 		"@tiptap/suggestion": "^3.14.0",
 		"@viz-js/viz": "^3.24.0",
 		"@xml-tools/ast": "^5.0.5",
