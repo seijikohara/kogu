@@ -32,28 +32,31 @@ runs:
 
         mkdir -p binaries
 
-        # Create placeholder first (Tauri build.rs requires it)
-        touch "binaries/worker-${TARGET}"
-        chmod +x "binaries/worker-${TARGET}"
+        # Build each sidecar binary
+        for BIN in worker net-scanner; do
+          # Create placeholder first (Tauri build.rs requires it)
+          touch "binaries/${BIN}-${TARGET}"
+          chmod +x "binaries/${BIN}-${TARGET}"
 
-        # Build sidecar
-        if [ "$USE_TARGET_FLAG" = true ]; then
-          if [ "$PROFILE" = "release" ]; then
-            cargo build --bin worker --release --target "$TARGET"
-            cp "target/${TARGET}/release/worker" "binaries/worker-${TARGET}"
+          # Build sidecar
+          if [ "$USE_TARGET_FLAG" = true ]; then
+            if [ "$PROFILE" = "release" ]; then
+              cargo build --bin "$BIN" --release --target "$TARGET"
+              cp "target/${TARGET}/release/${BIN}" "binaries/${BIN}-${TARGET}"
+            else
+              cargo build --bin "$BIN" --target "$TARGET"
+              cp "target/${TARGET}/debug/${BIN}" "binaries/${BIN}-${TARGET}"
+            fi
           else
-            cargo build --bin worker --target "$TARGET"
-            cp "target/${TARGET}/debug/worker" "binaries/worker-${TARGET}"
+            if [ "$PROFILE" = "release" ]; then
+              cargo build --bin "$BIN" --release
+              cp "target/release/${BIN}" "binaries/${BIN}-${TARGET}"
+            else
+              cargo build --bin "$BIN"
+              cp "target/debug/${BIN}" "binaries/${BIN}-${TARGET}"
+            fi
           fi
-        else
-          if [ "$PROFILE" = "release" ]; then
-            cargo build --bin worker --release
-            cp "target/release/worker" "binaries/worker-${TARGET}"
-          else
-            cargo build --bin worker
-            cp "target/debug/worker" "binaries/worker-${TARGET}"
-          fi
-        fi
+        done
 
     - name: Build sidecar (Windows)
       if: runner.os == 'Windows'
@@ -73,24 +76,27 @@ runs:
 
         New-Item -ItemType Directory -Force -Path binaries | Out-Null
 
-        # Create placeholder first (Tauri build.rs requires it)
-        New-Item -ItemType File -Force -Path "binaries/worker-${Target}.exe" | Out-Null
+        # Build each sidecar binary
+        foreach ($Bin in @("worker", "net-scanner")) {
+          # Create placeholder first (Tauri build.rs requires it)
+          New-Item -ItemType File -Force -Path "binaries/${Bin}-${Target}.exe" | Out-Null
 
-        # Build sidecar
-        if ($UseTargetFlag) {
-          if ($Profile -eq "release") {
-            cargo build --bin worker --release --target $Target
-            Copy-Item "target/${Target}/release/worker.exe" "binaries/worker-${Target}.exe" -Force
+          # Build sidecar
+          if ($UseTargetFlag) {
+            if ($Profile -eq "release") {
+              cargo build --bin $Bin --release --target $Target
+              Copy-Item "target/${Target}/release/${Bin}.exe" "binaries/${Bin}-${Target}.exe" -Force
+            } else {
+              cargo build --bin $Bin --target $Target
+              Copy-Item "target/${Target}/debug/${Bin}.exe" "binaries/${Bin}-${Target}.exe" -Force
+            }
           } else {
-            cargo build --bin worker --target $Target
-            Copy-Item "target/${Target}/debug/worker.exe" "binaries/worker-${Target}.exe" -Force
-          }
-        } else {
-          if ($Profile -eq "release") {
-            cargo build --bin worker --release
-            Copy-Item "target/release/worker.exe" "binaries/worker-${Target}.exe" -Force
-          } else {
-            cargo build --bin worker
-            Copy-Item "target/debug/worker.exe" "binaries/worker-${Target}.exe" -Force
+            if ($Profile -eq "release") {
+              cargo build --bin $Bin --release
+              Copy-Item "target/release/${Bin}.exe" "binaries/${Bin}-${Target}.exe" -Force
+            } else {
+              cargo build --bin $Bin
+              Copy-Item "target/debug/${Bin}.exe" "binaries/${Bin}-${Target}.exe" -Force
+            }
           }
         }
