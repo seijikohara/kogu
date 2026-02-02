@@ -37,7 +37,7 @@
 
 <div class="space-y-1.5">
 	<div class="flex items-center justify-between">
-		<Label class="text-[10px] uppercase tracking-wide text-muted-foreground">{label}</Label>
+		<Label class="text-xs font-medium text-muted-foreground">{label}</Label>
 		{#if showValue}
 			<span class="text-xs font-medium">{displayValue}</span>
 		{/if}
@@ -52,6 +52,6 @@
 		class="h-1.5 w-full cursor-pointer appearance-none rounded-full bg-muted accent-primary"
 	/>
 	{#if hint}
-		<p class="text-[10px] text-muted-foreground">{hint}</p>
+		<p class="text-xs text-muted-foreground">{hint}</p>
 	{/if}
 </div>

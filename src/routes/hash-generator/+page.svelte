@@ -3,7 +3,9 @@
 	import { CopyButton } from '$lib/components/action';
 	import { CodeEditor } from '$lib/components/editor';
 	import { FormInfo, FormSection } from '$lib/components/form';
-	import { PageLayout } from '$lib/components/layout';
+	import { SectionHeader } from '$lib/components/layout';
+	import { ToolShell } from '$lib/components/shell';
+	import { EmptyState, StatItem } from '$lib/components/status';
 	import {
 		formatBytes,
 		generateAllHashes,
@@ -62,19 +64,15 @@
 	<title>Hash Generator - Kogu</title>
 </svelte:head>
 
-<PageLayout valid={textInput.trim() ? true : null} bind:showOptions>
+<ToolShell valid={textInput.trim() ? true : null} bind:showRail={showOptions}>
 	{#snippet statusContent()}
 		{#if textInput.trim()}
-			<span class="text-muted-foreground">
-				<strong class="text-foreground">{textStats.chars}</strong> chars
-			</span>
-			<span class="text-muted-foreground">
-				<strong class="text-foreground">{textStats.size}</strong>
-			</span>
+			<StatItem label="Chars" value={textStats.chars} />
+			<StatItem label="Size" value={textStats.size} />
 		{/if}
 	{/snippet}
 
-	{#snippet options()}
+	{#snippet rail()}
 		<FormSection title="About Hash">
 			<FormInfo>
 				<ul class="list-inside list-disc space-y-0.5">
@@ -90,13 +88,13 @@
 			<FormInfo showIcon={false}>
 				<div class="space-y-1">
 					<div class="flex items-center gap-2">
-						<ShieldCheck class="h-3 w-3 text-green-600 dark:text-green-400" />
-						<span class="text-green-600 dark:text-green-400">Secure:</span>
+						<ShieldCheck class="h-3 w-3 text-success" />
+						<span class="text-success">Secure:</span>
 						<span>SHA-256, SHA-384, SHA-512</span>
 					</div>
 					<div class="flex items-center gap-2">
-						<ShieldAlert class="h-3 w-3 text-amber-600 dark:text-amber-400" />
-						<span class="text-amber-600 dark:text-amber-400">Weak:</span>
+						<ShieldAlert class="h-3 w-3 text-warning" />
+						<span class="text-warning">Weak:</span>
 						<span>MD5, SHA-1</span>
 					</div>
 				</div>
@@ -123,9 +121,7 @@
 
 		<!-- Hash Results -->
 		<div class="flex flex-1 flex-col overflow-hidden">
-			<div class="flex h-9 shrink-0 items-center border-b bg-muted/30 px-3">
-				<span class="text-xs font-medium text-muted-foreground">Hash Results</span>
-			</div>
+			<SectionHeader title="Hash Results" />
 			<div class="flex-1 overflow-auto p-4">
 				{#if textHashes.length > 0}
 					<div class="space-y-3">
@@ -136,16 +132,12 @@
 										<span class="font-mono text-sm font-medium">{result.algorithm}</span>
 										<span class="text-xs text-muted-foreground">({result.bits} bits)</span>
 										{#if getSecurityBadge(result.algorithm)}
-											<span
-												class="flex items-center gap-1 text-xs text-green-600 dark:text-green-400"
-											>
+											<span class="flex items-center gap-1 text-xs text-success">
 												<ShieldCheck class="h-3 w-3" />
 												Secure
 											</span>
 										{:else}
-											<span
-												class="flex items-center gap-1 text-xs text-amber-600 dark:text-amber-400"
-											>
+											<span class="flex items-center gap-1 text-xs text-warning">
 												<ShieldAlert class="h-3 w-3" />
 												Weak
 											</span>
@@ -166,14 +158,9 @@
 						{/each}
 					</div>
 				{:else}
-					<div class="flex h-full items-center justify-center text-muted-foreground">
-						<div class="text-center">
-							<Hash class="mx-auto mb-2 h-12 w-12 opacity-50" />
-							<p class="text-sm">Enter text to generate hashes</p>
-						</div>
-					</div>
+					<EmptyState icon={Hash} title="Enter text to generate hashes" />
 				{/if}
 			</div>
 		</div>
 	</div>
-</PageLayout>
+</ToolShell>

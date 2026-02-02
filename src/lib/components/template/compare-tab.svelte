@@ -46,6 +46,8 @@
 		findLineForPath?: (content: string, path: string) => number | null;
 		/** Paste from clipboard function */
 		pasteFromClipboard: () => Promise<string | null>;
+		/** Snippet for format selection options */
+		formatSection?: Snippet<[boolean?]>;
 		/** Snippet for comparison options */
 		comparisonOptions?: Snippet;
 		/** Snippet for advanced options */
@@ -63,6 +65,7 @@
 		onStatsChange,
 		findLineForPath,
 		pasteFromClipboard,
+		formatSection,
 		comparisonOptions,
 		advancedOptions,
 	}: Props = $props();
@@ -166,6 +169,7 @@
 		onclose={() => (showOptions = false)}
 		onopen={() => (showOptions = true)}
 	>
+		{@render formatSection?.()}
 		<FormSection title="Actions">
 			<Button variant="outline" size="sm" class="w-full gap-1.5 text-xs" onclick={handleSwap}>
 				<ArrowRightLeft class="h-3.5 w-3.5" />

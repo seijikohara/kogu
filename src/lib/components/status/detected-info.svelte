@@ -24,7 +24,7 @@
 	<FormSection {title}>
 		<FormInfo {showIcon}>
 			{#each visibleItems as item}
-				<p class={item.warning ? 'text-amber-600 dark:text-amber-400' : ''}>
+				<p class={item.warning ? 'text-warning' : ''}>
 					<strong>{item.label}:</strong>
 					{typeof item.value === 'boolean' ? (item.value ? 'Yes' : 'No') : item.value}
 				</p>

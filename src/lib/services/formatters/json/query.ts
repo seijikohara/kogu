@@ -2,11 +2,12 @@
  * JSON Query - JSONPath Query Execution
  */
 
-import { parseJsonAuto } from './parser.js';
+import type { JsonInputFormat } from '../types.js';
+import { parseJson, parseJsonAuto } from './parser.js';
 
 /** Execute JSONPath query */
-export const executeJsonPath = (input: string, path: string): unknown => {
-	const { data: parsed } = parseJsonAuto(input);
+export const executeJsonPath = (input: string, path: string, format?: JsonInputFormat): unknown => {
+	const parsed = format ? parseJson(input, format) : parseJsonAuto(input).data;
 	const parts = path
 		.replace(/^\$\.?/, '')
 		.split(/\.|\[|\]/)

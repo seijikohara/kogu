@@ -11,6 +11,7 @@
 		showToggle?: boolean;
 		hint?: string;
 		onchange?: (value: string) => void;
+		onblur?: () => void;
 	}
 
 	let {
@@ -21,6 +22,7 @@
 		showToggle = false,
 		hint,
 		onchange,
+		onblur,
 	}: Props = $props();
 
 	let showValue = $state(false);
@@ -35,14 +37,15 @@
 </script>
 
 <div class="space-y-1">
-	<Label class="text-[10px] uppercase tracking-wide text-muted-foreground">{label}</Label>
+	<Label class="text-xs font-medium text-muted-foreground">{label}</Label>
 	<div class="relative">
 		<Input
 			type={inputType}
 			{placeholder}
 			{value}
 			oninput={handleInput}
-			class="h-7 text-xs {showToggle && type === 'password' ? 'pr-8' : ''}"
+			{onblur}
+			class="h-8 text-sm {showToggle && type === 'password' ? 'pr-8' : ''}"
 		/>
 		{#if showToggle && type === 'password'}
 			<button
@@ -59,6 +62,6 @@
 		{/if}
 	</div>
 	{#if hint}
-		<p class="text-[10px] text-muted-foreground">{hint}</p>
+		<p class="text-xs text-muted-foreground">{hint}</p>
 	{/if}
 </div>

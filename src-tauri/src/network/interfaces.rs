@@ -162,12 +162,34 @@ pub async fn discover_mdns_services(
         for (service_type, receiver) in &receivers {
             // Non-blocking receive with small timeout
             if let Ok(event) = receiver.recv_timeout(Duration::from_millis(50)) {
+                match &event {
+                    ServiceEvent::ServiceFound(svc_type, instance) => {
+                        // Service found, waiting for resolution
+                        #[cfg(debug_assertions)]
+                        eprintln!("[mDNS] ServiceFound: {} (type: {})", instance, svc_type);
+                    }
+                    ServiceEvent::ServiceResolved(info) => {
+                        #[cfg(debug_assertions)]
+                        eprintln!(
+                            "[mDNS] ServiceResolved: {} at {} (addresses: {:?})",
+                            info.get_fullname(),
+                            info.get_hostname(),
+                            info.get_addresses()
+                        );
+                    }
+                    _ => {}
+                }
+
                 if let ServiceEvent::ServiceResolved(info) = event {
                     let full_name = info.get_fullname().to_string();
 
-                    // Collect addresses
-                    let addresses: Vec<String> =
-                        info.get_addresses().iter().map(|a| a.to_string()).collect();
+                    // Collect addresses, filtering out loopback addresses
+                    let addresses: Vec<String> = info
+                        .get_addresses()
+                        .iter()
+                        .filter(|a| !a.is_loopback())
+                        .map(|a| a.to_string())
+                        .collect();
 
                     // Collect TXT properties
                     let properties: Vec<(String, String)> = info

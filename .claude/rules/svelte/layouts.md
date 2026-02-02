@@ -4,24 +4,25 @@ This document defines the standard layout patterns used in Kogu pages.
 
 ## Base Structure (All Pages)
 
-Every page in Kogu shares this common structure:
+Every page uses the `ToolShell` component (CSS Grid based):
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │                        TitleBar                             │
 │  [Traffic Lights]              [Minimize] [Maximize] [Close]│
 ├──────────┬──────────────────────────────────────────────────┤
-│          │                   PageLayout                     │
+│          │                    ToolShell                      │
 │          │ ┌──────────────────────────────────────────────┐ │
-│ AppSide  │ │ PageHeader                                   │ │
-│  bar     │ │  [Icon] Title  [Tabs...]     [Status] [Valid]│ │
-│          │ ├──────────────────────────────────────────────┤ │
-│  [Home]  │ │                                              │ │
-│  [JSON]  │ │              Main Content Area               │ │
-│  [XML]   │ │                                              │ │
-│  [YAML]  │ │         (varies by pattern below)            │ │
-│  [SQL]   │ │                                              │ │
-│  [...]   │ │                                              │ │
+│ AppSide  │ │ ToolBar (h-12)                               │ │
+│  bar     │ │  [Icon] Title  [Tabs...]                     │ │
+│          │ ├──────────┬─────────────────────────────────┐ │
+│  [Home]  │ │ Options  │                                  │ │
+│  [JSON]  │ │  Rail    │        Main Content Area         │ │
+│  [XML]   │ │ (w-64)   │                                  │ │
+│  [YAML]  │ │          │    (varies by pattern below)     │ │
+│  [SQL]   │ │          │                                  │ │
+│  [...]   │ ├──────────┴─────────────────────────────────┤ │
+│          │ │ StatusBar (h-7)   [Stats...]    [Validity]  │ │
 │          │ └──────────────────────────────────────────────┘ │
 └──────────┴──────────────────────────────────────────────────┘
 ```
@@ -30,7 +31,8 @@ Every page in Kogu shares this common structure:
 
 ```svelte
 <script lang="ts">
-	import { PageLayout } from '$lib/components/layout';
+	import { ToolShell } from '$lib/components/shell';
+	import { StatItem } from '$lib/components/status';
 </script>
 ```
 
@@ -41,114 +43,95 @@ Every page in Kogu shares this common structure:
 	<title>Page Title - Kogu</title>
 </svelte:head>
 
-<PageLayout {valid} {error} bind:showOptions>
+<ToolShell {valid} {error} bind:showRail={showOptions}>
 	{#snippet statusContent()}
-		<!-- Stats display in header right side -->
+		<StatItem label="Chars" value={stats.chars} />
+		<StatItem label="Size" value={stats.size} />
 	{/snippet}
 
-	{#snippet options()}
-		<!-- OptionsPanel content (FormSection components) -->
+	{#snippet rail()}
+		<FormSection title="Mode">...</FormSection>
+		<FormSection title="Settings">...</FormSection>
 	{/snippet}
 
 	<!-- Main content area -->
-</PageLayout>
+</ToolShell>
 ```
 
-### PageLayout Props (All Patterns)
+### ToolShell Props
 
-| Prop          | Type              | Default       | Description                         |
-| ------------- | ----------------- | ------------- | ----------------------------------- |
-| `title`       | `string`          | Auto from URL | Page title override                 |
-| `valid`       | `boolean \| null` | `null`        | Validation state indicator          |
-| `error`       | `string`          | `''`          | Error message to display            |
-| `showOptions` | `boolean`         | `true`        | Options panel visibility (bindable) |
+| Prop               | Type                                         | Default       | Description                        |
+| ------------------ | -------------------------------------------- | ------------- | ---------------------------------- |
+| `layout`           | `'tabbed' \| 'transform' \| 'master-detail'` | `'transform'` | Layout pattern                     |
+| `title`            | `string`                                     | Auto from URL | Page title override                |
+| `valid`            | `boolean \| null`                            | `undefined`   | Validation state                   |
+| `error`            | `string`                                     | `undefined`   | Error message                      |
+| `showRail`         | `boolean`                                    | `true`        | Options rail visibility (bindable) |
+| `railTitle`        | `string`                                     | `'Options'`   | Rail header title                  |
+| `tabs`             | `TabDefinition[]`                            | `undefined`   | Tab definitions                    |
+| `activeTab`        | `string`                                     | `undefined`   | Active tab ID                      |
+| `ontabchange`      | `(tab: string) => void`                      | `undefined`   | Tab change handler                 |
+| `preserveTabState` | `boolean`                                    | `false`       | Keep tab content mounted           |
 
-### PageLayout Snippets (All Patterns)
+### ToolShell Snippets
 
-| Snippet         | Description                                   |
-| --------------- | --------------------------------------------- |
-| `statusContent` | Status bar content (stats, indicators)        |
-| `options`       | OptionsPanel content (FormSection components) |
-| `children`      | Main content area (default slot)              |
+| Snippet           | Description                                     |
+| ----------------- | ----------------------------------------------- |
+| `statusContent`   | Status bar content (StatItem components)        |
+| `rail`            | Options rail content (FormSection components)   |
+| `toolbarLeading`  | Custom toolbar left area                        |
+| `toolbarCenter`   | Custom toolbar center (overrides tab rendering) |
+| `toolbarTrailing` | Custom toolbar right area                       |
+| `tabContent(tab)` | Tab content renderer (receives tab id)          |
+| `children`        | Main content area (default slot)                |
 
 ---
 
 ## Pattern Overview
 
-| Pattern | Description                   | Pages                         |
-| ------- | ----------------------------- | ----------------------------- |
-| A       | Tabbed + Shared Input         | JSON, XML, YAML Formatter     |
-| B       | Tabbed + Separate State       | URL Encoder                   |
-| C       | OptionsPanel + SplitPane      | Base64 Encoder, SQL Formatter |
-| D       | OptionsPanel + Vertical Split | Hash Generator, JWT Decoder   |
-| E       | OptionsPanel + Form Results   | BCrypt, SSH, GPG Generator    |
+| Pattern      | Description          | Pages                                                                 |
+| ------------ | -------------------- | --------------------------------------------------------------------- |
+| Tabbed       | Multi-tab tools      | JSON, XML, YAML Formatter, URL Encoder                                |
+| Transform    | Input → Output tools | Base64, SQL, Hash, JWT, BCrypt, SSH, GPG, String Case, Diff, Markdown |
+| MasterDetail | List + detail view   | Network Scanner                                                       |
 
 ---
 
-## Pattern A: Tabbed + Shared Input
+## Pattern: Tabbed
 
-Multi-tab interface with shared input state across tabs using `useTabSync`.
+Multi-tab interface. Each tab manages its own content and options internally.
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│ PageHeader  [Format] [Query] [Compare] [Convert] [Schema]   │
-├─────────────────────────────────────────────────────────────┤
-│                                                             │
-│  Tab Content (varies by tab)                                │
-│  - Format Tab: OptionsPanel + SplitPane                     │
-│  - Query Tab: OptionsPanel + Query Results                  │
-│  - Compare Tab: Diff View                                   │
-│                                                             │
-└─────────────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────┐
+│ ToolBar  [Icon] Title  [Format] [Query] [Compare] [Convert] │
+├──────────────────────────────────────────────────────────────┤
+│                                                              │
+│  Tab Content (each tab has own OptionsPanel + content)       │
+│  - Format Tab: OptionsPanel + SplitPane                      │
+│  - Query Tab: OptionsPanel + Query Results                   │
+│  - Compare Tab: Diff View                                    │
+│                                                              │
+├──────────────────────────────────────────────────────────────┤
+│ StatusBar  Keys: 42  Values: 120  Depth: 5  Size: 2.1 KB    │
+└──────────────────────────────────────────────────────────────┘
 ```
-
-### Additional Props (Pattern A/B)
-
-| Prop               | Type                    | Description                             |
-| ------------------ | ----------------------- | --------------------------------------- |
-| `tabs`             | `Tab[]`                 | Tab definitions with id, label, icon    |
-| `activeTab`        | `string`                | Currently active tab ID                 |
-| `ontabchange`      | `(tab: string) => void` | Tab change handler                      |
-| `preserveTabState` | `boolean`               | Keep tab content mounted when switching |
-
-### Additional Snippet (Pattern A/B)
-
-| Snippet                   | Description                            |
-| ------------------------- | -------------------------------------- |
-| `tabContent(tab: string)` | Tab content renderer (receives tab id) |
 
 ### Structure
 
 ```svelte
-<script lang="ts">
-	import { Play, Search } from '@lucide/svelte';
-	import { PageLayout } from '$lib/components/layout';
-	import { useTabSync } from '$lib/utils';
-	import { FormatTab, QueryTab } from './tabs/index.js';
+<ToolShell layout="tabbed" {tabs} {activeTab} ontabchange={handleTabChange} valid={...} error={...} preserveTabState>
+	{#snippet statusContent()}
+		<StatItem label="Keys" value={stats.keys} />
+	{/snippet}
 
-	const tabs = [
-		{ id: 'format' as const, label: 'Format', icon: Play },
-		{ id: 'query' as const, label: 'Query', icon: Search },
-	] as const;
-
-	const { activeTab, setActiveTab } = useTabSync({
-		tabs: tabs.map((t) => t.id),
-		defaultTab: 'format',
-	});
-
-	// Shared input across all tabs
-	let sharedInput = $state('');
-</script>
-
-<PageLayout {tabs} {activeTab} ontabchange={(tab) => setActiveTab(tab)} preserveTabState>
 	{#snippet tabContent(tab)}
 		{#if tab === 'format'}
-			<FormatTab input={sharedInput} onInputChange={(v) => (sharedInput = v)} />
+			<FormatTab input={sharedInput} onInputChange={setSharedInput} />
 		{:else if tab === 'query'}
-			<QueryTab input={sharedInput} onInputChange={(v) => (sharedInput = v)} />
+			<QueryTab input={sharedInput} onInputChange={setSharedInput} />
 		{/if}
 	{/snippet}
-</PageLayout>
+</ToolShell>
 ```
 
 ### Pages Using This Pattern
@@ -156,386 +139,199 @@ Multi-tab interface with shared input state across tabs using `useTabSync`.
 - `src/routes/json-formatter/+page.svelte`
 - `src/routes/xml-formatter/+page.svelte`
 - `src/routes/yaml-formatter/+page.svelte`
-
----
-
-## Pattern B: Tabbed + Separate State
-
-Multi-tab interface where each tab has independent state.
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│ PageHeader     [Encode/Decode] [Parse] [Build] [Reference]  │
-├─────────────────────────────────────────────────────────────┤
-│                                                             │
-│  Tab Content (each tab has own state)                       │
-│  - Encode Tab: OptionsPanel + SplitPane                     │
-│  - Parse Tab: Input + Parsed Components                     │
-│  - Build Tab: Form Builder                                  │
-│                                                             │
-└─────────────────────────────────────────────────────────────┘
-```
-
-### Structure
-
-```svelte
-<script lang="ts">
-  import { PageLayout, SplitPane } from '$lib/components/layout';
-  import { OptionsPanel } from '$lib/components/panel';
-  import { useTabSync } from '$lib/utils';
-
-  const { activeTab, setActiveTab } = useTabSync({ ... });
-
-  // Each tab has separate state
-  let encodeInput = $state('');
-  let parseInput = $state('');
-</script>
-
-<PageLayout {tabs} {activeTab} ontabchange={...} preserveTabState>
-  {#snippet tabContent(tab)}
-    {#if tab === 'encode'}
-      <div class="flex h-full">
-        <OptionsPanel ...>...</OptionsPanel>
-        <SplitPane>...</SplitPane>
-      </div>
-    {:else if tab === 'parse'}
-      <!-- Parse tab with parseInput state -->
-    {/if}
-  {/snippet}
-</PageLayout>
-```
-
-### Pages Using This Pattern
-
 - `src/routes/url-encoder/+page.svelte`
 
 ---
 
-## Pattern C: OptionsPanel + SplitPane
+## Pattern: Transform
 
-Simple encoder/formatter with options panel and split input/output.
+Single-flow tools with options rail. Has sub-variants for content layout.
+
+### Sub-variant: split-h (Horizontal Split)
 
 ```
-┌──────────────┬────────────────────────────────────────────┐
-│ OptionsPanel │              SplitPane                     │
-│              │  ┌─────────────────┬────────────────────┐  │
-│  Mode:       │  │   CodeEditor    │    CodeEditor      │  │
-│  [Format]    │  │   (Input)       │    (Output)        │  │
-│  [Minify]    │  │                 │                    │  │
-│              │  │                 │                    │  │
-│  [Options]   │  │                 │                    │  │
-│              │  └─────────────────┴────────────────────┘  │
-└──────────────┴────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────┐
+│ ToolBar  [Icon] Title                                        │
+├──────────┬───────────────────┬───────────────────────────────┤
+│ Options  │   CodeEditor      │    CodeEditor                 │
+│  Rail    │   (Input)         │    (Output)                   │
+│          │                   │                               │
+│  [Mode]  │                   │                               │
+│  [Opts]  │                   │                               │
+├──────────┴───────────────────┴───────────────────────────────┤
+│ StatusBar  Input: 42 chars  Output: 56 chars  Ratio: 1.33x   │
+└──────────────────────────────────────────────────────────────┘
 ```
 
-### Structure
+Pages: Base64 Encoder, SQL Formatter
 
-```svelte
-<script lang="ts">
-	import { PageLayout, SplitPane } from '$lib/components/layout';
-	import { CodeEditor } from '$lib/components/editor';
-	import { FormMode, FormSection, FormSelect } from '$lib/components/form';
+### Sub-variant: split-v (Vertical Split)
 
-	let mode = $state<'format' | 'minify'>('format');
-	let input = $state('');
-	let showOptions = $state(true);
-
-	const output = $derived(transform(input));
-</script>
-
-<PageLayout {valid} {error} bind:showOptions>
-	{#snippet statusContent()}
-		<!-- Stats display -->
-	{/snippet}
-
-	{#snippet options()}
-		<FormSection title="Mode">
-			<FormMode value={mode} onchange={(v) => (mode = v)} options={modeOptions} />
-		</FormSection>
-		<!-- Additional options -->
-	{/snippet}
-
-	<SplitPane class="h-full flex-1">
-		{#snippet left()}
-			<CodeEditor
-				title="Input"
-				value={input}
-				onchange={(v) => (input = v)}
-				mode="input"
-				editorMode="sql"
-				onsample={handleSample}
-				onpaste={handlePaste}
-				onclear={handleClear}
-			/>
-		{/snippet}
-		{#snippet right()}
-			<CodeEditor
-				title="Output"
-				value={output}
-				mode="readonly"
-				editorMode="sql"
-				oncopy={handleCopy}
-			/>
-		{/snippet}
-	</SplitPane>
-</PageLayout>
+```
+┌──────────────────────────────────────────────────────────────┐
+│ ToolBar  [Icon] Title                                        │
+├──────────┬───────────────────────────────────────────────────┤
+│ Options  │  CodeEditor (Input)  h-1/3                        │
+│  Rail    ├───────────────────────────────────────────────────┤
+│          │  SectionHeader "Results"                           │
+│  [Info]  │  Results Content  flex-1 overflow-auto p-4        │
+│  [Opts]  │                                                   │
+├──────────┴───────────────────────────────────────────────────┤
+│ StatusBar  Chars: 42  Size: 1.2 KB                           │
+└──────────────────────────────────────────────────────────────┘
 ```
 
-### Pages Using This Pattern
+Pages: Hash Generator, JWT Decoder, String Case Converter
 
-- `src/routes/base64-encoder/+page.svelte`
-- `src/routes/sql-formatter/+page.svelte`
+### Sub-variant: form-results
+
+```
+┌──────────────────────────────────────────────────────────────┐
+│ ToolBar  [Icon] Title                                        │
+├──────────┬───────────────────────────────────────────────────┤
+│ Options  │  SectionHeader "Generated Result"                 │
+│  Rail    │                                                   │
+│          │  Results Content / EmptyState                      │
+│  [Mode]  │                                                   │
+│  [Form]  │                                                   │
+│  [Action]│                                                   │
+├──────────┴───────────────────────────────────────────────────┤
+│ StatusBar                                                    │
+└──────────────────────────────────────────────────────────────┘
+```
+
+Pages: BCrypt Generator, SSH Key Generator, GPG Key Generator
+
+### Sub-variant: dual-view
+
+Pages: Diff Viewer, Markdown Editor
 
 ---
 
-## Pattern D: OptionsPanel + Vertical Split
+## Pattern: MasterDetail
 
-Input editor on top, results panel on bottom.
+Options rail with resizable two-pane layout for list + detail view.
 
 ```
-┌──────────────┬────────────────────────────────────────────┐
-│ OptionsPanel │              Main Area                     │
-│              │  ┌──────────────────────────────────────┐  │
-│  [Info]      │  │  CodeEditor (Input)                  │  │
-│              │  │  h-1/3 shrink-0 border-b             │  │
-│  [Security]  │  ├──────────────────────────────────────┤  │
-│              │  │  Results Panel Header                │  │
-│              │  │  h-9 bg-muted/30                     │  │
-│              │  ├──────────────────────────────────────┤  │
-│              │  │  Results Content                     │  │
-│              │  │  flex-1 overflow-auto p-4            │  │
-│              │  └──────────────────────────────────────┘  │
-└──────────────┴────────────────────────────────────────────┘
-```
-
-### Structure
-
-```svelte
-<script lang="ts">
-	import { PageLayout } from '$lib/components/layout';
-	import { CodeEditor } from '$lib/components/editor';
-	import { FormInfo, FormSection } from '$lib/components/form';
-
-	let input = $state('');
-	let showOptions = $state(true);
-
-	const results = $derived(parseInput(input));
-</script>
-
-<PageLayout {valid} {error} bind:showOptions>
-	{#snippet statusContent()}
-		<!-- Stats display -->
-	{/snippet}
-
-	{#snippet options()}
-		<FormSection title="About">
-			<FormInfo>...</FormInfo>
-		</FormSection>
-	{/snippet}
-
-	<div class="flex h-full flex-col overflow-hidden">
-		<!-- Input Editor -->
-		<div class="h-1/3 shrink-0 border-b">
-			<CodeEditor
-				title="Input"
-				bind:value={input}
-				mode="input"
-				editorMode="plain"
-				showViewToggle={false}
-				onpaste={handlePaste}
-				onclear={handleClear}
-				onsample={handleSample}
-			/>
-		</div>
-
-		<!-- Results Panel -->
-		<div class="flex flex-1 flex-col overflow-hidden">
-			<div class="flex h-9 shrink-0 items-center border-b bg-muted/30 px-3">
-				<span class="text-xs font-medium text-muted-foreground">Results</span>
-			</div>
-			<div class="flex-1 overflow-auto p-4">
-				{#if results.length > 0}
-					<!-- Result cards -->
-				{:else}
-					<!-- Empty state -->
-				{/if}
-			</div>
-		</div>
-	</div>
-</PageLayout>
+┌──────────────────────────────────────────────────────────────┐
+│ ToolBar  [Icon] Title                                        │
+├──────────┬────────────────────┬──────────────────────────────┤
+│ Options  │    Host List       │    Host Detail Panel         │
+│  Rail    │   (Resizable)      │      (Resizable)             │
+│          │  ┌──────────────┐  │  ┌────────────────────────┐  │
+│  [Target]│  │ Host Item 1  │  │  │ Host Info              │  │
+│  [Disc.] │  │ Host Item 2  │  │  │ - IP addresses         │  │
+│  [Ports] │  │ Host Item 3◄─┼──┼─▶│ - Ports/Services       │  │
+│  [Action]│  └──────────────┘  │  └────────────────────────┘  │
+├──────────┴────────────────────┴──────────────────────────────┤
+│ StatusBar  Hosts: 5  Ports: 23  Duration: 3.2s               │
+└──────────────────────────────────────────────────────────────┘
 ```
 
 ### Pages Using This Pattern
 
-- `src/routes/hash-generator/+page.svelte`
-- `src/routes/jwt-decoder/+page.svelte`
+- `src/routes/network-scanner/+page.svelte`
 
 ---
 
-## Pattern E: OptionsPanel + Form Results
+## Shell Components Reference
 
-Form inputs in options panel, results displayed in main area.
+### ToolShell (`src/lib/components/shell/tool-shell.svelte`)
 
-```
-┌──────────────┬────────────────────────────────────────────┐
-│ OptionsPanel │              Results Area                  │
-│              │  ┌──────────────────────────────────────┐  │
-│  [Mode]      │  │  Results Header                      │  │
-│              │  │  h-9 bg-muted/30                     │  │
-│  [Form       │  ├──────────────────────────────────────┤  │
-│   Inputs]    │  │                                      │  │
-│              │  │  Generated Results                   │  │
-│  [Actions]   │  │  (Keys, Hashes, etc.)                │  │
-│  - Generate  │  │                                      │  │
-│  - Clear     │  │  flex-1 overflow-auto p-4            │  │
-│              │  │                                      │  │
-│  [Info]      │  └──────────────────────────────────────┘  │
-└──────────────┴────────────────────────────────────────────┘
-```
+CSS Grid layout with areas: toolbar, rail, content, status.
 
-### Structure
+### ToolBar (`src/lib/components/shell/tool-bar.svelte`)
 
-```svelte
-<script lang="ts">
-	import { Key } from '@lucide/svelte';
-	import { PageLayout } from '$lib/components/layout';
-	import { ActionButton, CopyButton } from '$lib/components/action';
-	import { FormInfo, FormInput, FormMode, FormSection, FormSelect } from '$lib/components/form';
+- Height: `h-12` (48px)
+- Auto-detects page icon and title from URL
+- Renders tabs when provided
 
-	// Form state
-	let password = $state('');
-	let algorithm = $state('ed25519');
+### OptionsRail (`src/lib/components/shell/options-rail.svelte`)
 
-	// Result state
-	let result = $state<Result | null>(null);
-	let isGenerating = $state(false);
+- Width: `w-64` (256px), collapsed: `w-10` (40px)
+- Uses `ScrollArea` for content overflow
+- Background: `bg-surface-2`
+- Border: `border-r border-border/60`
 
-	const handleGenerate = async () => {
-		// Generate logic
-	};
-</script>
+### StatusBar (`src/lib/components/shell/status-bar.svelte`)
 
-<PageLayout valid={result ? true : null} bind:showOptions>
-	{#snippet statusContent()}
-		{#if result}
-			<!-- Result stats -->
-		{/if}
-	{/snippet}
-
-	{#snippet options()}
-		<FormSection title="Mode">
-			<FormMode value={mode} onchange={(v) => (mode = v)} options={modeOptions} />
-		</FormSection>
-
-		<FormSection title="Settings">
-			<FormInput label="Password" bind:value={password} />
-			<FormSelect label="Algorithm" bind:value={algorithm} options={algorithmOptions} />
-		</FormSection>
-
-		<FormSection title="Actions">
-			<div class="space-y-2">
-				<ActionButton label="Generate" icon={Key} loading={isGenerating} onclick={handleGenerate} />
-				{#if result}
-					<ActionButton label="Clear" variant="outline" onclick={handleClear} />
-				{/if}
-			</div>
-		</FormSection>
-
-		<FormSection title="About">
-			<FormInfo>...</FormInfo>
-		</FormSection>
-	{/snippet}
-
-	<!-- Results Panel -->
-	<div class="flex h-full flex-col overflow-hidden">
-		<div class="flex h-9 shrink-0 items-center border-b bg-muted/30 px-3">
-			<span class="text-xs font-medium text-muted-foreground">Generated Result</span>
-		</div>
-
-		<div class="flex-1 overflow-auto p-4">
-			{#if result}
-				<!-- Result cards with CopyButton -->
-			{:else if error}
-				<!-- Error display -->
-			{:else}
-				<!-- Empty state with icon -->
-			{/if}
-		</div>
-	</div>
-</PageLayout>
-```
-
-### Pages Using This Pattern
-
-- `src/routes/bcrypt-generator/+page.svelte`
-- `src/routes/ssh-key-generator/+page.svelte`
-- `src/routes/gpg-key-generator/+page.svelte`
+- Height: `h-7` (28px)
+- Shows StatItem components and ValidityBadge
+- Background: `bg-surface-2 border-t`
 
 ---
 
 ## Common Components Reference
 
-### CodeEditor Props
-
-| Prop             | Type                                            | Description           |
-| ---------------- | ----------------------------------------------- | --------------------- |
-| `title`          | `string`                                        | Panel header title    |
-| `value`          | `string`                                        | Editor content        |
-| `onchange`       | `(v: string) => void`                           | Value change handler  |
-| `mode`           | `'input' \| 'readonly'`                         | Editor mode           |
-| `editorMode`     | `'json' \| 'sql' \| 'xml' \| 'yaml' \| 'plain'` | Syntax highlighting   |
-| `placeholder`    | `string`                                        | Placeholder text      |
-| `showViewToggle` | `boolean`                                       | Show tree/text toggle |
-| `onpaste`        | `() => void`                                    | Paste button handler  |
-| `onclear`        | `() => void`                                    | Clear button handler  |
-| `onsample`       | `() => void`                                    | Sample button handler |
-| `oncopy`         | `() => void`                                    | Copy button handler   |
-
 ### Form Components
 
-| Component      | Usage                                              |
-| -------------- | -------------------------------------------------- |
-| `FormSection`  | Container with collapsible title                   |
-| `FormMode`     | Mode toggle buttons (encode/decode, format/minify) |
-| `FormSelect`   | Dropdown select                                    |
-| `FormInput`    | Text input with optional password toggle           |
-| `FormCheckbox` | Checkbox with label                                |
-| `FormSlider`   | Slider with value display                          |
-| `FormInfo`     | Info panel with icon                               |
+| Component      | Usage                         |
+| -------------- | ----------------------------- |
+| `FormSection`  | Collapsible section container |
+| `FormMode`     | Mode toggle buttons           |
+| `FormSelect`   | Dropdown select               |
+| `FormInput`    | Text input                    |
+| `FormCheckbox` | Checkbox with label           |
+| `FormSlider`   | Slider with value display     |
+| `FormInfo`     | Info panel                    |
+
+### Status Components
+
+| Component        | Usage                                  |
+| ---------------- | -------------------------------------- |
+| `StatItem`       | Label + value display in StatusBar     |
+| `EmptyState`     | Empty state with icon and message      |
+| `ErrorDisplay`   | Error display (inline/centered/banner) |
+| `SectionHeader`  | Section header with optional count     |
+| `LoadingOverlay` | Loading overlay with progress          |
 
 ### Action Components
 
 | Component      | Usage                                    |
 | -------------- | ---------------------------------------- |
 | `ActionButton` | Primary action button with loading state |
-| `CopyButton`   | Copy to clipboard with toast feedback    |
+| `CopyButton`   | Copy to clipboard with toast             |
+| `ResultBlock`  | Result display with copy button          |
+
+---
+
+## Design Tokens
+
+### Surface Hierarchy
+
+| Token       | Usage                                       |
+| ----------- | ------------------------------------------- |
+| `surface-1` | Page background (= `background`)            |
+| `surface-2` | Rail, StatusBar, card background (= `card`) |
+| `surface-3` | Muted areas (= `muted`)                     |
+| `surface-4` | Emphasized surfaces                         |
+
+### Semantic Colors
+
+| Token         | Usage                           |
+| ------------- | ------------------------------- |
+| `success`     | Valid states, secure indicators |
+| `warning`     | Weak/deprecated indicators      |
+| `info`        | Informational highlights        |
+| `destructive` | Errors, invalid states          |
+
+### Typography
+
+| Class      | Size | Usage                 |
+| ---------- | ---- | --------------------- |
+| `text-2xs` | 10px | Tiny labels, badges   |
+| `text-xs`  | 12px | Secondary info, hints |
+| `text-sm`  | 14px | Body text, tab labels |
 
 ---
 
 ## Pattern Selection Guide
 
-| Use Case                                 | Pattern |
-| ---------------------------------------- | ------- |
-| Multi-format tool with shared data       | A       |
-| Multi-feature tool with independent data | B       |
-| Simple encoder/formatter                 | C       |
-| Parser/decoder with structured output    | D       |
-| Generator with form input                | E       |
-
-### Decision Tree
-
-1. **Does the tool have multiple tabs?**
-   - Yes → Continue to 2
-   - No → Continue to 3
-
-2. **Do tabs share input data?**
-   - Yes → **Pattern A** (Tabbed + Shared Input)
-   - No → **Pattern B** (Tabbed + Separate State)
-
-3. **Does the tool have input/output transformation?**
-   - Yes → **Pattern C** (OptionsPanel + SplitPane)
-   - No → Continue to 4
-
-4. **Does the tool analyze input and show structured results?**
-   - Yes → **Pattern D** (OptionsPanel + Vertical Split)
-   - No → **Pattern E** (OptionsPanel + Form Results)
+| Use Case                       | Pattern                  |
+| ------------------------------ | ------------------------ |
+| Multi-format tool with tabs    | Tabbed                   |
+| Simple encoder/formatter       | Transform (split-h)      |
+| Parser with structured results | Transform (split-v)      |
+| Generator with form input      | Transform (form-results) |
+| Preview/comparison             | Transform (dual-view)    |
+| List + detail navigation       | MasterDetail             |

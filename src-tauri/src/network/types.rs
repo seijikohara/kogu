@@ -78,6 +78,37 @@ pub struct MdnsDiscoveryResults {
     pub duration_ms: u64,
 }
 
+// =============================================================================
+// SSDP/UPnP Types
+// =============================================================================
+
+/// Device information fetched from UPnP device description XML
+#[derive(Debug, Clone, Serialize, Default)]
+#[serde(rename_all = "camelCase")]
+pub struct SsdpDeviceInfo {
+    /// User-friendly device name (e.g., "Living Room Router")
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub friendly_name: Option<String>,
+    /// Device manufacturer (e.g., "NETGEAR")
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub manufacturer: Option<String>,
+    /// Device model name (e.g., "Nighthawk R7000")
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub model_name: Option<String>,
+    /// Device model number
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub model_number: Option<String>,
+    /// UPnP device type URN (e.g., "urn:schemas-upnp-org:device:InternetGatewayDevice:1")
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub device_type: Option<String>,
+    /// UPnP LOCATION URL
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub location: Option<String>,
+    /// SERVER header value from SSDP response
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub server: Option<String>,
+}
+
 /// Scan mode determining port range to scan
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
@@ -173,6 +204,23 @@ pub struct ScanRequest {
     pub resolution: Option<HostnameResolutionOptions>,
 }
 
+/// TLS certificate information extracted from HTTPS ports
+#[derive(Debug, Clone, Serialize, Default)]
+#[serde(rename_all = "camelCase")]
+pub struct TlsCertInfo {
+    /// Common Name (CN) from the certificate subject
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub common_name: Option<String>,
+    /// Subject Alternative Names (SAN)
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    pub subject_alt_names: Vec<String>,
+    /// Certificate issuer (CN or Organization)
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub issuer: Option<String>,
+    /// Whether the certificate is self-signed
+    pub is_self_signed: bool,
+}
+
 /// Information about a scanned port
 #[derive(Debug, Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -185,6 +233,9 @@ pub struct PortInfo {
     pub service: Option<String>,
     /// Banner grabbed from service
     pub banner: Option<String>,
+    /// TLS certificate info (for HTTPS ports)
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub tls_cert: Option<TlsCertInfo>,
 }
 
 /// Result for a single host

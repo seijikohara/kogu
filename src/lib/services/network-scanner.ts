@@ -84,11 +84,25 @@ export interface ScanRequest {
 	readonly resolution?: HostnameResolutionOptions;
 }
 
+/** TLS certificate information extracted from HTTPS ports */
+export interface TlsCertInfo {
+	/** Common Name (CN) from the certificate subject */
+	readonly commonName?: string;
+	/** Subject Alternative Names (SAN) */
+	readonly subjectAltNames?: readonly string[];
+	/** Certificate issuer (CN or Organization) */
+	readonly issuer?: string;
+	/** Whether the certificate is self-signed */
+	readonly isSelfSigned: boolean;
+}
+
 export interface PortInfo {
 	readonly port: number;
 	readonly state: PortState;
 	readonly service?: string;
 	readonly banner?: string;
+	/** TLS certificate info (for HTTPS ports) */
+	readonly tlsCert?: TlsCertInfo;
 }
 
 export interface HostResult {
@@ -252,6 +266,11 @@ export type DiscoveryMethod =
 	| 'tcp_syn'
 	| 'tcp_connect'
 	| 'mdns'
+	| 'ssdp'
+	| 'udp_scan'
+	| 'icmpv6_ping'
+	| 'ws_discovery'
+	| 'arp_cache'
 	| 'none';
 
 export interface DiscoveryOptions {
@@ -276,6 +295,34 @@ export interface MdnsServiceInfo {
 	readonly properties: readonly [string, string][];
 }
 
+/** SSDP/UPnP device information fetched from device description XML */
+export interface SsdpDeviceInfo {
+	/** User-friendly device name (e.g., "Living Room Router") */
+	readonly friendlyName?: string;
+	/** Device manufacturer (e.g., "NETGEAR") */
+	readonly manufacturer?: string;
+	/** Device model name (e.g., "Nighthawk R7000") */
+	readonly modelName?: string;
+	/** Device model number */
+	readonly modelNumber?: string;
+	/** UPnP device type URN */
+	readonly deviceType?: string;
+	/** UPnP LOCATION URL */
+	readonly location?: string;
+	/** SERVER header value from SSDP response */
+	readonly server?: string;
+}
+
+/** WS-Discovery device information */
+export interface WsDiscoveryInfo {
+	/** Device types (e.g., "wsdp:Device", "print:PrintDeviceType") */
+	readonly deviceTypes: readonly string[];
+	/** XAddrs - endpoint URLs for the device */
+	readonly xaddrs: readonly string[];
+	/** Scopes - URIs describing device capabilities */
+	readonly scopes: readonly string[];
+}
+
 /** Host metadata collected during discovery */
 export interface HostMetadata {
 	/** Hostname (from mDNS, DNS reverse lookup, NetBIOS, etc.) */
@@ -290,6 +337,10 @@ export interface HostMetadata {
 	readonly vendor?: string;
 	/** mDNS services advertised by this host */
 	readonly mdnsServices: readonly MdnsServiceInfo[];
+	/** SSDP/UPnP device information */
+	readonly ssdpDevice?: SsdpDeviceInfo;
+	/** WS-Discovery device information */
+	readonly wsDiscovery?: WsDiscoveryInfo;
 }
 
 export interface DiscoveryResult {
@@ -303,6 +354,26 @@ export interface DiscoveryResult {
 	readonly durationMs: number;
 	readonly error: string | null;
 	readonly requiresPrivileges: boolean;
+}
+
+// =============================================================================
+// Discovery Progress Types (for parallel execution)
+// =============================================================================
+
+export type ProgressStatus = 'running' | 'completed' | 'error';
+
+/** Real-time progress information for a discovery method */
+export interface DiscoveryProgress {
+	/** Discovery method name */
+	readonly method: string;
+	/** Current status of the method */
+	readonly status: ProgressStatus;
+	/** Number of hosts found so far */
+	readonly hostsFound: number;
+	/** Duration in milliseconds (only set when completed) */
+	readonly durationMs: number | null;
+	/** Error message (only set when status is Error) */
+	readonly error: string | null;
 }
 
 export const DISCOVERY_METHODS = [
@@ -334,6 +405,36 @@ export const DISCOVERY_METHODS = [
 		value: 'mdns' as const,
 		label: 'mDNS/Bonjour',
 		description: 'Discover advertised services, no privileges needed',
+		requiresPrivileges: false,
+	},
+	{
+		value: 'ssdp' as const,
+		label: 'SSDP/UPnP',
+		description: 'Discover UPnP devices (routers, media servers)',
+		requiresPrivileges: false,
+	},
+	{
+		value: 'udp_scan' as const,
+		label: 'UDP Scan',
+		description: 'Probe common UDP ports (DNS, NetBIOS, SNMP)',
+		requiresPrivileges: false,
+	},
+	{
+		value: 'icmpv6_ping' as const,
+		label: 'ICMPv6 Ping',
+		description: 'IPv6 Echo Request for remote host discovery',
+		requiresPrivileges: false,
+	},
+	{
+		value: 'ws_discovery' as const,
+		label: 'WS-Discovery',
+		description: 'Discover Windows devices and printers (SOAP/UDP)',
+		requiresPrivileges: false,
+	},
+	{
+		value: 'arp_cache' as const,
+		label: 'ARP Cache',
+		description: 'Read OS ARP cache for MAC addresses (no scan)',
 		requiresPrivileges: false,
 	},
 ] as const;
@@ -393,6 +494,38 @@ export const checkDiscoveryPrivilege = async (method: DiscoveryMethod): Promise<
 	invoke<boolean>('check_discovery_privilege', { method });
 
 // =============================================================================
+// Net-Scanner Privilege Management
+// =============================================================================
+
+/** Privilege status of the net-scanner sidecar */
+export interface PrivilegeStatus {
+	/** Whether TCP SYN scanning is available */
+	readonly tcpSyn: boolean;
+	/** Whether privilege setup has been completed */
+	readonly setupCompleted: boolean;
+	/** Whether privilege setup is available on this platform */
+	readonly setupAvailable: boolean;
+	/** Human-readable status message */
+	readonly message: string;
+}
+
+/**
+ * Check the current privilege status of the net-scanner sidecar.
+ * Returns whether raw socket operations are available.
+ */
+export const checkNetScannerPrivileges = async (): Promise<PrivilegeStatus> =>
+	invoke<PrivilegeStatus>('check_net_scanner_privileges');
+
+/**
+ * Set up persistent privileges for the net-scanner sidecar.
+ * Triggers a platform-specific admin password dialog:
+ * - macOS: osascript → admin dialog → chown root + chmod u+s
+ * - Linux: pkexec → setcap cap_net_raw,cap_net_admin+ep
+ */
+export const setupNetScannerPrivileges = async (): Promise<PrivilegeStatus> =>
+	invoke<PrivilegeStatus>('setup_net_scanner_privileges');
+
+// =============================================================================
 // mDNS Service Types
 // =============================================================================
 
@@ -436,6 +569,17 @@ export const listenToScanProgress = async (
 		callback(event.payload);
 	});
 
+/**
+ * Listen to discovery progress events for parallel execution.
+ * Each discovery method emits 'running' when started and 'completed'/'error' when done.
+ */
+export const listenToDiscoveryProgress = async (
+	callback: (progress: DiscoveryProgress) => void
+): Promise<UnlistenFn> =>
+	listen<DiscoveryProgress>('discovery-progress', (event) => {
+		callback(event.payload);
+	});
+
 // =============================================================================
 // Validation Helpers
 // =============================================================================
@@ -462,6 +606,305 @@ export const isValidPortRange = (range: string): boolean => {
 	// Pattern: single port, range (1-1024), or comma-separated
 	const pattern = /^(\d+(-\d+)?)(,\s*\d+(-\d+)?)*$/;
 	return pattern.test(trimmed);
+};
+
+// =============================================================================
+// Unified Host Types (for UI layer)
+// =============================================================================
+
+/** Discovery information for a single method */
+export interface DiscoveryInfo {
+	method: string;
+	durationMs: number;
+	error: string | null;
+}
+
+/**
+ * Unified host structure combining discovery and scan results.
+ * Note: This interface is mutable for internal state management.
+ * Phase 3.1 will introduce a pure mergeHosts function for better immutability.
+ */
+export interface UnifiedHost {
+	/** Unique identifier for UI key */
+	id: string;
+	/** All IP addresses (IPv4/IPv6) */
+	ips: string[];
+	/** Resolved hostname */
+	hostname: string | null;
+	/** Source of hostname resolution (dns, mdns, netbios) */
+	hostnameSource: string | null;
+	/** NetBIOS name */
+	netbiosName: string | null;
+	/** MAC address (from ARP scan) */
+	macAddress: string | null;
+	/** Vendor name (from OUI lookup) */
+	vendor: string | null;
+	/** mDNS services advertised by this host */
+	mdnsServices: MdnsServiceInfo[];
+	/** SSDP/UPnP device information */
+	ssdpDevice: SsdpDeviceInfo | null;
+	/** WS-Discovery device information */
+	wsDiscovery: WsDiscoveryInfo | null;
+	/** Discovery methods that found this host */
+	discoveryMethods: string[];
+	/** Discovery details */
+	discoveries: DiscoveryInfo[];
+	/** Port scan results */
+	ports: PortInfo[];
+	/** Port scan duration */
+	scanDurationMs: number | null;
+}
+
+// =============================================================================
+// Host Merging Utilities
+// =============================================================================
+
+/** Check if IP is IPv6 */
+const isIPv6 = (ip: string): boolean => ip.includes(':');
+
+/** Parse IPv4 address into a numeric value for comparison */
+const ipv4ToNumber = (ip: string): number => {
+	const parts = ip.split('.');
+	if (parts.length !== 4) return 0;
+	return parts.reduce((acc, octet) => acc * 256 + (Number.parseInt(octet, 10) || 0), 0);
+};
+
+/** Compare two IP addresses numerically (IPv4 before IPv6, then by numeric value) */
+const compareIpAddresses = (a: string, b: string): number => {
+	const aIsV6 = isIPv6(a);
+	const bIsV6 = isIPv6(b);
+	if (aIsV6 !== bIsV6) return aIsV6 ? 1 : -1;
+	if (!aIsV6) return ipv4ToNumber(a) - ipv4ToNumber(b);
+	return a.localeCompare(b);
+};
+
+/** Get merge key for a host (hostname if available, otherwise IP) */
+export const getMergeKey = (ip: string, hostname: string | null): string => {
+	if (hostname) return `host:${hostname.toLowerCase()}`;
+	return `ip:${ip}`;
+};
+
+/** Sort IPs: IPv4 first (numerically), then IPv6 */
+const sortIps = (ips: string[]): string[] => [...ips].sort(compareIpAddresses);
+
+/** Compare hosts by their primary IP address (numerically) */
+const compareByIp = (a: UnifiedHost, b: UnifiedHost): number => {
+	const aIp = a.ips[0] ?? '';
+	const bIp = b.ips[0] ?? '';
+	return compareIpAddresses(aIp, bIp);
+};
+
+/** Add an mDNS service to a host if not already present */
+const addMdnsServiceIfNew = (host: UnifiedHost, service: MdnsServiceInfo): void => {
+	const exists = host.mdnsServices.some(
+		(s) => s.instanceName === service.instanceName && s.serviceType === service.serviceType
+	);
+	if (!exists) host.mdnsServices.push(service);
+};
+
+/** Merge scalar metadata fields from source into target (target wins if non-null) */
+const mergeScalarMetadata = (host: UnifiedHost, metadata: HostMetadata): void => {
+	if (!host.hostnameSource && metadata.hostnameSource)
+		host.hostnameSource = metadata.hostnameSource;
+	if (!host.netbiosName && metadata.netbiosName) host.netbiosName = metadata.netbiosName;
+	if (!host.macAddress && metadata.macAddress) host.macAddress = metadata.macAddress;
+	if (!host.vendor && metadata.vendor) host.vendor = metadata.vendor;
+	if (!host.wsDiscovery && metadata.wsDiscovery) host.wsDiscovery = metadata.wsDiscovery;
+};
+
+/** Merge SSDP device info (field-level merge, preferring existing non-null values) */
+const mergeSsdpDevice = (host: UnifiedHost, ssdpDevice: SsdpDeviceInfo): void => {
+	if (!host.ssdpDevice) {
+		host.ssdpDevice = ssdpDevice;
+	} else {
+		host.ssdpDevice = {
+			friendlyName: host.ssdpDevice.friendlyName ?? ssdpDevice.friendlyName,
+			manufacturer: host.ssdpDevice.manufacturer ?? ssdpDevice.manufacturer,
+			modelName: host.ssdpDevice.modelName ?? ssdpDevice.modelName,
+			modelNumber: host.ssdpDevice.modelNumber ?? ssdpDevice.modelNumber,
+			deviceType: host.ssdpDevice.deviceType ?? ssdpDevice.deviceType,
+			location: host.ssdpDevice.location ?? ssdpDevice.location,
+			server: host.ssdpDevice.server ?? ssdpDevice.server,
+		};
+	}
+};
+
+/** Apply all metadata fields from HostMetadata to a UnifiedHost */
+const applyMetadata = (host: UnifiedHost, metadata: HostMetadata | undefined): void => {
+	if (!metadata) return;
+	mergeScalarMetadata(host, metadata);
+	if (metadata.ssdpDevice) mergeSsdpDevice(host, metadata.ssdpDevice);
+	if (metadata.mdnsServices) {
+		for (const service of metadata.mdnsServices) addMdnsServiceIfNew(host, service);
+	}
+};
+
+/** Absorb all data from source host into target, then delete source from maps */
+const absorbHost = (
+	target: UnifiedHost,
+	source: UnifiedHost,
+	hostMap: Map<string, UnifiedHost>,
+	ipToKey: Map<string, string>,
+	targetKey: string
+): void => {
+	for (const ip of source.ips) {
+		if (!target.ips.includes(ip)) target.ips.push(ip);
+		ipToKey.set(ip, targetKey);
+	}
+	target.ips = sortIps(target.ips);
+	for (const method of source.discoveryMethods) {
+		if (!target.discoveryMethods.includes(method)) target.discoveryMethods.push(method);
+	}
+	for (const discovery of source.discoveries) target.discoveries.push(discovery);
+	if (!target.macAddress && source.macAddress) target.macAddress = source.macAddress;
+	if (!target.vendor && source.vendor) target.vendor = source.vendor;
+	if (!target.netbiosName && source.netbiosName) target.netbiosName = source.netbiosName;
+	if (!target.ssdpDevice && source.ssdpDevice) target.ssdpDevice = source.ssdpDevice;
+	if (!target.wsDiscovery && source.wsDiscovery) target.wsDiscovery = source.wsDiscovery;
+	for (const service of source.mdnsServices) addMdnsServiceIfNew(target, service);
+	hostMap.delete(source.id);
+};
+
+/** Handle hostname update for an existing host, potentially re-keying or merging */
+const handleHostnameUpdate = (
+	host: UnifiedHost,
+	ip: string,
+	hostname: string,
+	metadata: HostMetadata | undefined,
+	hostMap: Map<string, UnifiedHost>,
+	ipToKey: Map<string, string>
+): UnifiedHost => {
+	host.hostname = hostname;
+	host.hostnameSource = metadata?.hostnameSource ?? null;
+	const newKey = getMergeKey(ip, hostname);
+	if (newKey === host.id) return host;
+
+	const existingHostAtNewKey = hostMap.get(newKey);
+	if (existingHostAtNewKey && existingHostAtNewKey !== host) {
+		absorbHost(existingHostAtNewKey, host, hostMap, ipToKey, newKey);
+		return existingHostAtNewKey;
+	}
+	// Re-key the host
+	hostMap.delete(host.id);
+	host.id = newKey;
+	hostMap.set(newKey, host);
+	for (const hostIp of host.ips) ipToKey.set(hostIp, newKey);
+	return host;
+};
+
+/** Create a new UnifiedHost */
+const createHost = (
+	key: string,
+	ip: string,
+	hostname: string | null,
+	metadata: HostMetadata | undefined
+): UnifiedHost => ({
+	id: key,
+	ips: [ip],
+	hostname: hostname ?? metadata?.hostname ?? null,
+	hostnameSource: metadata?.hostnameSource ?? null,
+	netbiosName: metadata?.netbiosName ?? null,
+	macAddress: metadata?.macAddress ?? null,
+	vendor: metadata?.vendor ?? null,
+	mdnsServices: metadata?.mdnsServices ? [...metadata.mdnsServices] : [],
+	ssdpDevice: metadata?.ssdpDevice ?? null,
+	wsDiscovery: metadata?.wsDiscovery ?? null,
+	discoveryMethods: [],
+	discoveries: [],
+	ports: [],
+	scanDurationMs: null,
+});
+
+/**
+ * Merge discovery and scan results into a unified host list.
+ * Uses O(n) algorithm with IP-to-key index for fast lookups.
+ */
+export const mergeHosts = (
+	discoveryResults: readonly DiscoveryResult[],
+	scanHosts: readonly HostResult[]
+): UnifiedHost[] => {
+	const hostMap = new Map<string, UnifiedHost>();
+	const ipToKey = new Map<string, string>();
+
+	const getOrCreateHost = (
+		ip: string,
+		hostname: string | null,
+		metadata?: HostMetadata
+	): UnifiedHost => {
+		// Check if IP already indexed
+		const existingKey = ipToKey.get(ip);
+		if (existingKey) {
+			const host = hostMap.get(existingKey);
+			if (host) {
+				const result =
+					hostname && !host.hostname
+						? handleHostnameUpdate(host, ip, hostname, metadata, hostMap, ipToKey)
+						: host;
+				applyMetadata(result, metadata);
+				return result;
+			}
+		}
+
+		// Check if hostname matches an existing host
+		if (hostname) {
+			const hostnameKey = getMergeKey(ip, hostname);
+			const hostByHostname = hostMap.get(hostnameKey);
+			if (hostByHostname) {
+				if (!hostByHostname.ips.includes(ip)) {
+					hostByHostname.ips.push(ip);
+					hostByHostname.ips = sortIps(hostByHostname.ips);
+					ipToKey.set(ip, hostnameKey);
+				}
+				return hostByHostname;
+			}
+		}
+
+		// Create new host
+		const key = getMergeKey(ip, hostname);
+		const host = createHost(key, ip, hostname, metadata);
+		hostMap.set(key, host);
+		ipToKey.set(ip, key);
+		return host;
+	};
+
+	// 1. Add hosts from discovery results
+	for (const result of discoveryResults) {
+		for (const ip of result.hosts) {
+			const host = getOrCreateHost(ip, result.hostnames[ip] ?? null, result.hostMetadata?.[ip]);
+			if (!host.discoveryMethods.includes(result.method)) host.discoveryMethods.push(result.method);
+			const hasDiscovery = host.discoveries.some(
+				(d) => d.method === result.method && d.durationMs === result.durationMs
+			);
+			if (!hasDiscovery) {
+				host.discoveries.push({
+					method: result.method,
+					durationMs: result.durationMs,
+					error: result.error,
+				});
+			}
+		}
+	}
+
+	// 2. Add/merge hosts from port scan results
+	for (const scanHost of scanHosts) {
+		const host = getOrCreateHost(scanHost.ip, scanHost.hostname ?? null);
+		for (const port of scanHost.ports) {
+			const existingIdx = host.ports.findIndex((p) => p.port === port.port);
+			if (existingIdx === -1) {
+				host.ports.push(port);
+			} else {
+				const existingPort = host.ports[existingIdx];
+				if (existingPort && port.state === 'open' && existingPort.state !== 'open') {
+					host.ports[existingIdx] = port;
+				}
+			}
+		}
+		host.ports.sort((a, b) => a.port - b.port);
+		if (scanHost.scanDurationMs)
+			host.scanDurationMs = (host.scanDurationMs ?? 0) + scanHost.scanDurationMs;
+	}
+
+	return [...hostMap.values()].sort(compareByIp);
 };
 
 // =============================================================================

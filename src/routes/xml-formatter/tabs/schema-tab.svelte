@@ -296,7 +296,7 @@
 			{#if schemaValidationResult}
 				<div
 					class="mt-2 rounded-md p-2 text-xs {schemaValidationResult.valid
-						? 'bg-green-500/10 text-green-600 dark:text-green-400'
+						? 'bg-success/10 text-success'
 						: 'bg-destructive/10 text-destructive'}"
 				>
 					{schemaValidationResult.valid
@@ -304,7 +304,7 @@
 						: `${schemaValidationResult.errors.length} error(s) found`}
 				</div>
 				{#if !schemaValidationResult.valid && schemaValidationResult.errors.length > 0}
-					<div class="mt-2 max-h-32 overflow-auto rounded-md bg-muted/50 p-2 text-[11px]">
+					<div class="mt-2 max-h-32 overflow-auto rounded-md bg-muted/50 p-2 text-xs">
 						{#each schemaValidationResult.errors as error}
 							<div class="text-destructive">{error}</div>
 						{/each}
@@ -319,10 +319,10 @@
 		</FormSection>
 
 		<FormSection title="Quick Help">
-			<div class="space-y-1.5 rounded-md bg-muted/50 p-2 text-[11px] text-muted-foreground">
+			<div class="space-y-1.5 rounded-md bg-muted/50 p-2 text-xs text-muted-foreground">
 				<p><strong class="text-foreground">Validate:</strong> Check XML against XSD schema</p>
 				<p><strong class="text-foreground">Infer:</strong> Generate XSD from XML structure</p>
-				<p class="text-[10px] italic">
+				<p class="text-2xs italic">
 					Note: Full XSD validation requires a backend service. This provides basic structure
 					validation.
 				</p>

@@ -1193,16 +1193,17 @@ mod tests {
                 if let Some(select_children) = &select_clause.children {
                     // Check columns clause
                     for child in select_children {
-                        if child.path.contains("columns") && child.children.is_some() {
-                            // Individual columns should have their own line numbers
-                            let cols = child.children.as_ref().unwrap();
-                            if cols.len() >= 2 {
-                                // Second column should be on line 2
-                                assert!(
-                                    cols[1].range.start.line >= 2,
-                                    "Second column should be on line 2 or later, got {}",
-                                    cols[1].range.start.line
-                                );
+                        if child.path.contains("columns") {
+                            if let Some(cols) = child.children.as_ref() {
+                                // Individual columns should have their own line numbers
+                                if cols.len() >= 2 {
+                                    // Second column should be on line 2
+                                    assert!(
+                                        cols[1].range.start.line >= 2,
+                                        "Second column should be on line 2 or later, got {}",
+                                        cols[1].range.start.line
+                                    );
+                                }
                             }
                         }
                     }

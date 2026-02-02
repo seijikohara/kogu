@@ -185,20 +185,18 @@
 			<FormSection title="Structure">
 				<div class="grid grid-cols-2 gap-2">
 					<div class="space-y-1">
-						<Label class="text-[10px] uppercase tracking-wide text-muted-foreground"
+						<Label class="text-2xs uppercase tracking-wide text-muted-foreground"
 							>Root Element</Label
 						>
 						<Input bind:value={xmlRootName} placeholder="root" class="h-7 text-xs" />
 					</div>
 					<div class="space-y-1">
-						<Label class="text-[10px] uppercase tracking-wide text-muted-foreground"
-							>Array Item</Label
-						>
+						<Label class="text-2xs uppercase tracking-wide text-muted-foreground">Array Item</Label>
 						<Input bind:value={xmlArrayItemName} placeholder="item" class="h-7 text-xs" />
 					</div>
 				</div>
 				<div class="space-y-1">
-					<Label class="text-[10px] uppercase tracking-wide text-muted-foreground"
+					<Label class="text-2xs uppercase tracking-wide text-muted-foreground"
 						>Attribute Prefix</Label
 					>
 					<Input bind:value={xmlAttributePrefix} placeholder="@" class="h-7 text-xs font-mono" />
@@ -244,9 +242,7 @@
 				{#if xmlDeclaration}
 					<div class="grid grid-cols-2 gap-2 pt-1">
 						<div class="space-y-1">
-							<Label class="text-[10px] uppercase tracking-wide text-muted-foreground"
-								>Version</Label
-							>
+							<Label class="text-2xs uppercase tracking-wide text-muted-foreground">Version</Label>
 							<Input
 								bind:value={xmlDeclarationVersion}
 								placeholder="1.0"
@@ -254,9 +250,7 @@
 							/>
 						</div>
 						<div class="space-y-1">
-							<Label class="text-[10px] uppercase tracking-wide text-muted-foreground"
-								>Encoding</Label
-							>
+							<Label class="text-2xs uppercase tracking-wide text-muted-foreground">Encoding</Label>
 							<Input
 								bind:value={xmlDeclarationEncoding}
 								placeholder="UTF-8"
@@ -279,7 +273,7 @@
 				<FormCheckbox label="Wrap text in CDATA" bind:checked={xmlCdata} />
 				{#if xmlCdata}
 					<div class="space-y-1 pt-1">
-						<Label class="text-[10px] uppercase tracking-wide text-muted-foreground"
+						<Label class="text-2xs uppercase tracking-wide text-muted-foreground"
 							>CDATA Threshold (chars)</Label
 						>
 						<Input
@@ -287,7 +281,7 @@
 							placeholder="0"
 							class="h-7 text-xs font-mono"
 						/>
-						<span class="text-[10px] text-muted-foreground">0 = always use CDATA</span>
+						<span class="text-2xs text-muted-foreground">0 = always use CDATA</span>
 					</div>
 				{/if}
 				<FormCheckbox label="Escape special characters" bind:checked={xmlEscapeText} />
@@ -300,7 +294,7 @@
 
 			<FormSection title="Comments">
 				<div class="space-y-1">
-					<Label class="text-[10px] uppercase tracking-wide text-muted-foreground"
+					<Label class="text-2xs uppercase tracking-wide text-muted-foreground"
 						>Header Comment</Label
 					>
 					<Input

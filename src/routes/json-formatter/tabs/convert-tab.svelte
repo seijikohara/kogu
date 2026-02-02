@@ -1,4 +1,5 @@
 <script lang="ts">
+	import type { Snippet } from 'svelte';
 	import { FormCheckbox, FormSection, FormSelect } from '$lib/components/form';
 	import { ConvertTab } from '$lib/components/template';
 	import { Button } from '$lib/components/ui/button/index.js';
@@ -15,17 +16,14 @@
 	import { copyToClipboard, downloadTextFile, pasteFromClipboard } from '../utils.js';
 
 	interface Props {
+		readonly formatSection?: Snippet<[boolean?]>;
+		readonly inputFormat: JsonInputFormat;
 		input: string;
 		onInputChange: (value: string) => void;
-		onStatsChange?: (stats: {
-			input: string;
-			valid: boolean | null;
-			error: string;
-			format: JsonInputFormat | null;
-		}) => void;
+		onStatsChange?: (stats: { input: string; valid: boolean | null; error: string }) => void;
 	}
 
-	let { input, onInputChange, onStatsChange }: Props = $props();
+	let { formatSection, inputFormat, input, onInputChange, onStatsChange }: Props = $props();
 
 	// State
 	let convertFormat = $state<'yaml' | 'xml'>('yaml');
@@ -153,34 +151,27 @@
 
 	// Validation function
 	const validate = (input: string) => {
-		if (!input.trim())
-			return { valid: null as boolean | null, format: null as JsonInputFormat | null };
-		const result = validateJson(input);
-		return { valid: result.valid, format: result.detectedFormat };
+		if (!input.trim()) return { valid: null as boolean | null };
+		const result = validateJson(input, inputFormat);
+		return { valid: result.valid };
 	};
 
 	// Convert function
 	const convert = (input: string) => {
 		try {
 			const output =
-				convertFormat === 'yaml' ? jsonToYaml(input, yamlOptions) : jsonToXml(input, xmlOptions);
+				convertFormat === 'yaml'
+					? jsonToYaml(input, yamlOptions, inputFormat)
+					: jsonToXml(input, xmlOptions, inputFormat);
 			return { output, error: '' };
 		} catch (e) {
 			return { output: '', error: e instanceof Error ? e.message : 'Conversion failed' };
 		}
 	};
 
-	// Stats handler wrapper to include format
-	const handleStatsChange = (stats: {
-		input: string;
-		valid: boolean | null;
-		error: string;
-		format?: JsonInputFormat | null;
-	}) => {
-		onStatsChange?.({
-			...stats,
-			format: stats.format ?? null,
-		});
+	// Stats handler
+	const handleStatsChange = (stats: { input: string; valid: boolean | null; error: string }) => {
+		onStatsChange?.(stats);
 	};
 
 	// Output editor mode based on format
@@ -204,6 +195,7 @@
 	onStatsChange={handleStatsChange}
 	{downloadFilename}
 	{copyToClipboard}
+	{formatSection}
 	{pasteFromClipboard}
 	{downloadTextFile}
 	{outputTitle}
@@ -297,15 +289,15 @@
 			<FormSection title="Special Values">
 				<div class="grid grid-cols-3 gap-2">
 					<div class="space-y-1">
-						<Label class="text-[10px] uppercase tracking-wide text-muted-foreground">Null</Label>
+						<Label class="text-2xs uppercase tracking-wide text-muted-foreground">Null</Label>
 						<Input bind:value={yamlNullStr} placeholder="null" class="h-7 text-xs font-mono" />
 					</div>
 					<div class="space-y-1">
-						<Label class="text-[10px] uppercase tracking-wide text-muted-foreground">True</Label>
+						<Label class="text-2xs uppercase tracking-wide text-muted-foreground">True</Label>
 						<Input bind:value={yamlTrueStr} placeholder="true" class="h-7 text-xs font-mono" />
 					</div>
 					<div class="space-y-1">
-						<Label class="text-[10px] uppercase tracking-wide text-muted-foreground">False</Label>
+						<Label class="text-2xs uppercase tracking-wide text-muted-foreground">False</Label>
 						<Input bind:value={yamlFalseStr} placeholder="false" class="h-7 text-xs font-mono" />
 					</div>
 				</div>
@@ -320,20 +312,18 @@
 			<FormSection title="Structure">
 				<div class="grid grid-cols-2 gap-2">
 					<div class="space-y-1">
-						<Label class="text-[10px] uppercase tracking-wide text-muted-foreground"
+						<Label class="text-2xs uppercase tracking-wide text-muted-foreground"
 							>Root Element</Label
 						>
 						<Input bind:value={xmlRootName} placeholder="root" class="h-7 text-xs" />
 					</div>
 					<div class="space-y-1">
-						<Label class="text-[10px] uppercase tracking-wide text-muted-foreground"
-							>Array Item</Label
-						>
+						<Label class="text-2xs uppercase tracking-wide text-muted-foreground">Array Item</Label>
 						<Input bind:value={xmlArrayItemName} placeholder="item" class="h-7 text-xs" />
 					</div>
 				</div>
 				<div class="space-y-1">
-					<Label class="text-[10px] uppercase tracking-wide text-muted-foreground"
+					<Label class="text-2xs uppercase tracking-wide text-muted-foreground"
 						>Attribute Prefix</Label
 					>
 					<Input bind:value={xmlAttributePrefix} placeholder="@" class="h-7 text-xs font-mono" />
@@ -379,9 +369,7 @@
 				{#if xmlDeclaration}
 					<div class="grid grid-cols-2 gap-2 pt-1">
 						<div class="space-y-1">
-							<Label class="text-[10px] uppercase tracking-wide text-muted-foreground"
-								>Version</Label
-							>
+							<Label class="text-2xs uppercase tracking-wide text-muted-foreground">Version</Label>
 							<Input
 								bind:value={xmlDeclarationVersion}
 								placeholder="1.0"
@@ -389,9 +377,7 @@
 							/>
 						</div>
 						<div class="space-y-1">
-							<Label class="text-[10px] uppercase tracking-wide text-muted-foreground"
-								>Encoding</Label
-							>
+							<Label class="text-2xs uppercase tracking-wide text-muted-foreground">Encoding</Label>
 							<Input
 								bind:value={xmlDeclarationEncoding}
 								placeholder="UTF-8"
@@ -414,7 +400,7 @@
 				<FormCheckbox label="Wrap text in CDATA" bind:checked={xmlCdata} />
 				{#if xmlCdata}
 					<div class="space-y-1 pt-1">
-						<Label class="text-[10px] uppercase tracking-wide text-muted-foreground"
+						<Label class="text-2xs uppercase tracking-wide text-muted-foreground"
 							>CDATA Threshold (chars)</Label
 						>
 						<Input
@@ -422,7 +408,7 @@
 							placeholder="0"
 							class="h-7 text-xs font-mono"
 						/>
-						<span class="text-[10px] text-muted-foreground">0 = always use CDATA</span>
+						<span class="text-2xs text-muted-foreground">0 = always use CDATA</span>
 					</div>
 				{/if}
 				<FormCheckbox label="Escape special characters" bind:checked={xmlEscapeText} />
@@ -435,7 +421,7 @@
 
 			<FormSection title="Comments">
 				<div class="space-y-1">
-					<Label class="text-[10px] uppercase tracking-wide text-muted-foreground"
+					<Label class="text-2xs uppercase tracking-wide text-muted-foreground"
 						>Header Comment</Label
 					>
 					<Input

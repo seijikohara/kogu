@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { ChevronLeft, ChevronRight, Settings2 } from '@lucide/svelte';
+	import { ChevronLeft, Settings2 } from '@lucide/svelte';
 	import type { Snippet } from 'svelte';
 	import { Button } from '$lib/components/ui/button/index.js';
 
@@ -14,7 +14,7 @@
 
 	let {
 		title = 'Options',
-		width = 'w-60',
+		width = 'w-64',
 		show = true,
 		onclose,
 		onopen,
@@ -23,22 +23,35 @@
 </script>
 
 {#if show}
-	<aside class="flex {width} flex-col border-r bg-muted/20">
-		<div class="flex h-10 items-center justify-between border-b bg-background px-3">
-			<span class="text-xs font-medium">{title}</span>
-			{#if onclose}
-				<Button variant="ghost" size="icon" class="h-6 w-6" onclick={onclose} title="Close options">
-					<ChevronLeft class="h-3.5 w-3.5" />
-				</Button>
-			{/if}
-		</div>
-		<div class="flex-1 space-y-0.5 overflow-y-auto py-1">
+	<aside class="flex {width} flex-col border-r border-border/60 bg-surface-2">
+		<div class="flex-1 space-y-1 overflow-y-auto py-2">
 			{@render children?.()}
 		</div>
+		{#if onclose}
+			<div class="flex h-8 shrink-0 items-center justify-end border-t border-border/30 px-2">
+				<Button
+					variant="ghost"
+					size="icon"
+					class="h-6 w-6"
+					onclick={onclose}
+					aria-label="Collapse {title}"
+					title="Collapse {title}"
+				>
+					<ChevronLeft class="h-3.5 w-3.5" />
+				</Button>
+			</div>
+		{/if}
 	</aside>
 {:else if onopen}
-	<aside class="flex w-8 shrink-0 flex-col border-r bg-muted/20">
-		<Button variant="ghost" size="icon" class="m-1 h-8 w-6" onclick={onopen} title="Show options">
+	<aside class="flex w-11 shrink-0 flex-col border-r border-border/60 bg-surface-2">
+		<Button
+			variant="ghost"
+			size="icon"
+			class="m-1.5 h-8 w-8"
+			onclick={onopen}
+			aria-label="Show options"
+			title="Show options"
+		>
 			<Settings2 class="h-4 w-4" />
 		</Button>
 	</aside>

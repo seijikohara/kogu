@@ -24,7 +24,19 @@
 		"decorum:allow-show-snap-overlay",
 		{
 			"identifier": "shell:allow-spawn",
-			"allow": [{ "name": "binaries/worker", "sidecar": true }]
+			"allow": [
+				{ "name": "binaries/worker", "sidecar": true },
+				{ "name": "binaries/net-scanner", "sidecar": true }
+			]
+		},
+		{
+			"identifier": "shell:allow-execute",
+			"allow": [
+				{ "name": "osascript", "cmd": "osascript", "args": true },
+				{ "name": "pkexec", "cmd": "pkexec", "args": true },
+				{ "name": "setcap", "cmd": "setcap", "args": true },
+				{ "name": "getcap", "cmd": "getcap", "args": true }
+			]
 		},
 		"shell:allow-kill"
 	]

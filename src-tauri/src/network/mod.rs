@@ -51,13 +51,18 @@
 //! - Host discovery (ICMP, ARP, TCP SYN, mDNS)
 //! - `NetBIOS` name resolution
 
+mod arp_cache;
 mod discovery;
 mod interfaces;
+mod llmnr;
 mod netbios;
 mod oui;
 mod ports;
+pub mod privileges;
 mod scanner;
+pub mod sidecar;
 mod types;
+mod ws_discovery;
 
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};

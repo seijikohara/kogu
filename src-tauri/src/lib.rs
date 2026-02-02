@@ -200,10 +200,14 @@ async fn discover_mdns_services(
 // =============================================================================
 
 /// Discover hosts using specified methods (ICMP, ARP, TCP SYN, mDNS)
+///
+/// Discovery methods run in parallel, emitting `discovery-progress` events
+/// for real-time progress updates.
 #[tauri::command]
 async fn discover_hosts(
     targets: Vec<String>,
     options: DiscoveryOptions,
+    app: tauri::AppHandle,
 ) -> Result<Vec<DiscoveryResult>, String> {
     use std::net::IpAddr;
 
@@ -213,8 +217,20 @@ async fn discover_hosts(
         if let Ok(ip) = target.parse::<IpAddr>() {
             ip_targets.push(ip);
         } else if target.contains('/') {
-            // CIDR notation
+            // CIDR notation — exclude network and broadcast addresses for IPv4
             if let Ok(network) = target.parse::<ipnetwork::IpNetwork>() {
+                if let ipnetwork::IpNetwork::V4(v4net) = network {
+                    if v4net.prefix() < 31 {
+                        let net_addr = IpAddr::V4(v4net.network());
+                        let bcast_addr = IpAddr::V4(v4net.broadcast());
+                        ip_targets.extend(
+                            network
+                                .iter()
+                                .filter(|ip| *ip != net_addr && *ip != bcast_addr),
+                        );
+                        continue;
+                    }
+                }
                 ip_targets.extend(network.iter());
             }
         }
@@ -224,7 +240,7 @@ async fn discover_hosts(
         return Err("No valid IP addresses provided".to_string());
     }
 
-    Ok(network::discover_hosts(&ip_targets, &options).await)
+    Ok(network::discover_hosts(&app, &ip_targets, &options).await)
 }
 
 /// Get available discovery methods and their privilege status
@@ -240,6 +256,11 @@ async fn get_discovery_methods() -> Vec<(String, bool)> {
                 DiscoveryMethod::TcpSyn => "tcp_syn",
                 DiscoveryMethod::TcpConnect => "tcp_connect",
                 DiscoveryMethod::Mdns => "mdns",
+                DiscoveryMethod::Ssdp => "ssdp",
+                DiscoveryMethod::UdpScan => "udp_scan",
+                DiscoveryMethod::Icmpv6Ping => "icmpv6_ping",
+                DiscoveryMethod::WsDiscovery => "ws_discovery",
+                DiscoveryMethod::ArpCache => "arp_cache",
                 DiscoveryMethod::None => "none",
             };
             (name.to_string(), available)
@@ -251,6 +272,22 @@ async fn get_discovery_methods() -> Vec<(String, bool)> {
 #[tauri::command]
 async fn check_discovery_privilege(method: DiscoveryMethod) -> bool {
     network::check_privileges(method).await
+}
+
+/// Check privilege status of the net-scanner sidecar
+#[tauri::command]
+async fn check_net_scanner_privileges(
+    app: tauri::AppHandle,
+) -> network::privileges::PrivilegeStatus {
+    network::privileges::check_status(&app).await
+}
+
+/// Set up persistent privileges for the net-scanner sidecar
+#[tauri::command]
+async fn setup_net_scanner_privileges(
+    app: tauri::AppHandle,
+) -> Result<network::privileges::PrivilegeStatus, String> {
+    network::privileges::setup(&app).await
 }
 
 /// Parse text to AST based on language
@@ -338,6 +375,8 @@ pub fn run() {
             discover_hosts,
             get_discovery_methods,
             check_discovery_privilege,
+            check_net_scanner_privileges,
+            setup_net_scanner_privileges,
         ])
         .run(tauri::generate_context!())
         .unwrap_or_else(|e| {

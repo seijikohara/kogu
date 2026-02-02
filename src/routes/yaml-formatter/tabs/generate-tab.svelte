@@ -331,7 +331,7 @@
 		{#if generateLanguage === 'typescript'}
 			<FormSection title="TypeScript Options">
 				<div class="space-y-1">
-					<Label class="text-[10px] uppercase tracking-wide text-muted-foreground"
+					<Label class="text-2xs uppercase tracking-wide text-muted-foreground"
 						>Root Type Name</Label
 					>
 					<Input bind:value={tsRootName} placeholder="Root" class="h-7 text-xs" />
@@ -347,7 +347,7 @@
 		{:else if generateLanguage === 'javascript'}
 			<FormSection title="JavaScript Options">
 				<div class="space-y-1">
-					<Label class="text-[10px] uppercase tracking-wide text-muted-foreground"
+					<Label class="text-2xs uppercase tracking-wide text-muted-foreground"
 						>Root Type Name</Label
 					>
 					<Input bind:value={jsRootName} placeholder="Root" class="h-7 text-xs" />
@@ -364,7 +364,7 @@
 		{:else if generateLanguage === 'go'}
 			<FormSection title="Go Options">
 				<div class="space-y-1">
-					<Label class="text-[10px] uppercase tracking-wide text-muted-foreground"
+					<Label class="text-2xs uppercase tracking-wide text-muted-foreground"
 						>Root Type Name</Label
 					>
 					<Input bind:value={goRootName} placeholder="Root" class="h-7 text-xs" />
@@ -379,7 +379,7 @@
 		{:else if generateLanguage === 'python'}
 			<FormSection title="Python Options">
 				<div class="space-y-1">
-					<Label class="text-[10px] uppercase tracking-wide text-muted-foreground"
+					<Label class="text-2xs uppercase tracking-wide text-muted-foreground"
 						>Root Type Name</Label
 					>
 					<Input bind:value={pyRootName} placeholder="Root" class="h-7 text-xs" />
@@ -405,7 +405,7 @@
 		{:else if generateLanguage === 'rust'}
 			<FormSection title="Rust Options">
 				<div class="space-y-1">
-					<Label class="text-[10px] uppercase tracking-wide text-muted-foreground"
+					<Label class="text-2xs uppercase tracking-wide text-muted-foreground"
 						>Root Type Name</Label
 					>
 					<Input bind:value={rsRootName} placeholder="Root" class="h-7 text-xs" />
@@ -422,15 +422,13 @@
 		{:else if generateLanguage === 'java'}
 			<FormSection title="Java Options">
 				<div class="space-y-1">
-					<Label class="text-[10px] uppercase tracking-wide text-muted-foreground"
+					<Label class="text-2xs uppercase tracking-wide text-muted-foreground"
 						>Root Type Name</Label
 					>
 					<Input bind:value={javaRootName} placeholder="Root" class="h-7 text-xs" />
 				</div>
 				<div class="space-y-1">
-					<Label class="text-[10px] uppercase tracking-wide text-muted-foreground"
-						>Package Name</Label
-					>
+					<Label class="text-2xs uppercase tracking-wide text-muted-foreground">Package Name</Label>
 					<Input bind:value={javaPackageName} placeholder="com.example" class="h-7 text-xs" />
 				</div>
 				<FormSelect
@@ -458,7 +456,7 @@
 		{:else if generateLanguage === 'csharp'}
 			<FormSection title="C# Options">
 				<div class="space-y-1">
-					<Label class="text-[10px] uppercase tracking-wide text-muted-foreground"
+					<Label class="text-2xs uppercase tracking-wide text-muted-foreground"
 						>Root Type Name</Label
 					>
 					<Input bind:value={csRootName} placeholder="Root" class="h-7 text-xs" />
@@ -478,7 +476,7 @@
 		{:else if generateLanguage === 'kotlin'}
 			<FormSection title="Kotlin Options">
 				<div class="space-y-1">
-					<Label class="text-[10px] uppercase tracking-wide text-muted-foreground"
+					<Label class="text-2xs uppercase tracking-wide text-muted-foreground"
 						>Root Type Name</Label
 					>
 					<Input bind:value={ktRootName} placeholder="Root" class="h-7 text-xs" />
@@ -497,7 +495,7 @@
 		{:else if generateLanguage === 'swift'}
 			<FormSection title="Swift Options">
 				<div class="space-y-1">
-					<Label class="text-[10px] uppercase tracking-wide text-muted-foreground"
+					<Label class="text-2xs uppercase tracking-wide text-muted-foreground"
 						>Root Type Name</Label
 					>
 					<Input bind:value={swiftRootName} placeholder="Root" class="h-7 text-xs" />
@@ -512,13 +510,13 @@
 		{:else if generateLanguage === 'php'}
 			<FormSection title="PHP Options">
 				<div class="space-y-1">
-					<Label class="text-[10px] uppercase tracking-wide text-muted-foreground"
+					<Label class="text-2xs uppercase tracking-wide text-muted-foreground"
 						>Root Type Name</Label
 					>
 					<Input bind:value={phpRootName} placeholder="Root" class="h-7 text-xs" />
 				</div>
 				<div class="space-y-1">
-					<Label class="text-[10px] uppercase tracking-wide text-muted-foreground">Namespace</Label>
+					<Label class="text-2xs uppercase tracking-wide text-muted-foreground">Namespace</Label>
 					<Input bind:value={phpNamespace} placeholder="App\\Models" class="h-7 text-xs" />
 				</div>
 				<div class="space-y-1.5 pt-1">

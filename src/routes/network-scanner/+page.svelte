@@ -1,6 +1,7 @@
 <script lang="ts">
 	import {
 		AlertCircle,
+		Check,
 		CheckCircle2,
 		ChevronRight,
 		Clock,
@@ -11,6 +12,7 @@
 		Radar,
 		RefreshCw,
 		Server,
+		Shield,
 		Square,
 		X,
 	} from '@lucide/svelte';
@@ -24,7 +26,8 @@
 		FormSection,
 		FormSlider,
 	} from '$lib/components/form';
-	import { PageLayout } from '$lib/components/layout';
+	import { ToolShell } from '$lib/components/shell';
+	import { StatItem } from '$lib/components/status';
 	import * as Resizable from '$lib/components/ui/resizable';
 	import {
 		DATABASE_PORTS,
@@ -38,11 +41,14 @@
 		formatDuration,
 		getDiscoveryMethods,
 		getLocalNetworkInterfaces,
+		getMergeKey,
 		isValidPortRange,
 		isValidTarget,
+		listenToDiscoveryProgress,
 		listenToScanProgress,
 		MAX_CONCURRENCY,
 		MAX_TIMEOUT_MS,
+		mergeHosts,
 		MIN_CONCURRENCY,
 		MIN_TIMEOUT_MS,
 		PORT_PRESETS,
@@ -51,8 +57,12 @@
 		startNetworkScan,
 		WEB_PORTS,
 		WELL_KNOWN_SERVICES,
+		checkNetScannerPrivileges,
+		setupNetScannerPrivileges,
+		type DiscoveryInfo,
 		type DiscoveryMethod,
 		type DiscoveryOptions,
+		type DiscoveryProgress,
 		type DiscoveryResult,
 		type HostMetadata,
 		type HostResult,
@@ -61,47 +71,14 @@
 		type NetworkInterface,
 		type PortInfo,
 		type PortPreset,
+		type PrivilegeStatus,
 		type ScanMode,
 		type ScanProgress,
 		type ScanResults,
+		type UnifiedHost,
 	} from '$lib/services/network-scanner.js';
+	import { classifyHosts } from '$lib/services/device-classifier.js';
 	import { UnifiedHostDetailPanel, UnifiedHostListItem } from './components/index.js';
-
-	// =========================================================================
-	// Unified Host Structure
-	// =========================================================================
-	interface DiscoveryInfo {
-		method: string;
-		durationMs: number;
-		error: string | null;
-	}
-
-	interface UnifiedHost {
-		/** Unique identifier for UI key */
-		id: string;
-		/** All IP addresses (IPv4/IPv6) */
-		ips: string[];
-		/** Resolved hostname */
-		hostname: string | null;
-		/** Source of hostname resolution (dns, mdns, netbios) */
-		hostnameSource: string | null;
-		/** NetBIOS name */
-		netbiosName: string | null;
-		/** MAC address (from ARP scan) */
-		macAddress: string | null;
-		/** Vendor name (from OUI lookup) */
-		vendor: string | null;
-		/** mDNS services advertised by this host */
-		mdnsServices: MdnsServiceInfo[];
-		/** Discovery methods that found this host */
-		discoveryMethods: string[];
-		/** Discovery details */
-		discoveries: DiscoveryInfo[];
-		/** Port scan results */
-		ports: PortInfo[];
-		/** Port scan duration */
-		scanDurationMs: number | null;
-	}
 
 	// Form state
 	let target = $state('');
@@ -122,11 +99,19 @@
 
 	// Discovery options (all methods enabled by default)
 	let discoveryMethods = $state<Set<DiscoveryMethod>>(
-		new Set(['icmp_ping', 'arp_scan', 'tcp_syn', 'tcp_connect', 'mdns'])
+		new Set(['icmp_ping', 'tcp_connect', 'mdns', 'ssdp', 'arp_cache'])
 	);
 	let availableMethods = $state<Map<string, boolean>>(new Map());
 	let discoveryResults = $state<DiscoveryResult[]>([]);
 	let isDiscovering = $state(false);
+
+	// Per-method progress tracking
+	let methodProgress = $state<Map<string, DiscoveryProgress>>(new Map());
+	let unlistenDiscoveryProgressFn = $state<(() => void) | null>(null);
+
+	// Privilege state
+	let privilegeStatus = $state<PrivilegeStatus | null>(null);
+	let isSettingUpPrivileges = $state(false);
 
 	// Network interface state
 	let networkInfo = $state<LocalNetworkInfo | null>(null);
@@ -143,185 +128,44 @@
 	let showOptions = $state(true);
 	let selectedHostId = $state<string | null>(null);
 	let recentlyDiscoveredIds = $state<Set<string>>(new Set());
+	let portRangeTouched = $state(false);
+	let hasAutoSelected = $state(false); // Only auto-select on first host discovery
+
+	// Elapsed time tracking for LoadingOverlay
+	let elapsedMs = $state(0);
+	let timerInterval = $state<ReturnType<typeof setInterval> | null>(null);
+
+	const startTimer = () => {
+		elapsedMs = 0;
+		timerInterval = setInterval(() => {
+			elapsedMs += 100;
+		}, 100);
+	};
+
+	const stopTimer = () => {
+		if (timerInterval) {
+			clearInterval(timerInterval);
+			timerInterval = null;
+		}
+	};
+
+	const formatElapsedTime = (ms: number): string => {
+		if (ms < 1000) return `${Math.round(ms)}ms`;
+		return `${(ms / 1000).toFixed(1)}s`;
+	};
+
+	const elapsedTimeDisplay = $derived(formatElapsedTime(elapsedMs));
 
 	// =========================================================================
 	// Unified Host List (merges Find Hosts + Scan Ports results)
 	// =========================================================================
 
-	/** Check if IP is IPv6 */
-	const isIPv6 = (ip: string): boolean => ip.includes(':');
-
-	/** Get merge key for a host (hostname if available, otherwise IP) */
-	const getMergeKey = (ip: string, hostname: string | null): string => {
-		// If hostname exists, use it as merge key (allows IPv4/IPv6 merge)
-		if (hostname) return `host:${hostname.toLowerCase()}`;
-		return `ip:${ip}`;
-	};
-
-	/** Sort IPs: IPv4 first, then IPv6 */
-	const sortIps = (ips: string[]): string[] =>
-		[...ips].sort((a, b) => {
-			const aIsV6 = isIPv6(a);
-			const bIsV6 = isIPv6(b);
-			if (aIsV6 !== bIsV6) return aIsV6 ? 1 : -1;
-			return a.localeCompare(b);
-		});
-
 	// Derived: unified host list from both discovery and scan results
-	const unifiedHosts = $derived.by((): UnifiedHost[] => {
-		const hostMap = new Map<string, UnifiedHost>();
+	// Uses optimized O(n) mergeHosts function from service layer
+	const unifiedHosts = $derived(mergeHosts(discoveryResults, discoveredHosts));
 
-		// Helper: get or create host entry
-		const getOrCreateHost = (
-			ip: string,
-			hostname: string | null,
-			metadata?: HostMetadata
-		): UnifiedHost => {
-			const key = getMergeKey(ip, hostname);
-			let host = hostMap.get(key);
-
-			// Also check if this IP exists under a different key
-			if (!host) {
-				for (const [existingKey, existingHost] of hostMap) {
-					if (existingHost.ips.includes(ip)) {
-						host = existingHost;
-						break;
-					}
-					// Merge if hostname matches
-					if (hostname && existingHost.hostname?.toLowerCase() === hostname.toLowerCase()) {
-						host = existingHost;
-						break;
-					}
-				}
-			}
-
-			if (!host) {
-				host = {
-					id: key,
-					ips: [ip],
-					hostname: hostname ?? metadata?.hostname ?? null,
-					hostnameSource: metadata?.hostnameSource ?? null,
-					netbiosName: metadata?.netbiosName ?? null,
-					macAddress: metadata?.macAddress ?? null,
-					vendor: metadata?.vendor ?? null,
-					mdnsServices: metadata?.mdnsServices ? [...metadata.mdnsServices] : [],
-					discoveryMethods: [],
-					discoveries: [],
-					ports: [],
-					scanDurationMs: null,
-				};
-				hostMap.set(key, host);
-			} else {
-				// Add IP if not already present
-				if (!host.ips.includes(ip)) {
-					host.ips.push(ip);
-					host.ips = sortIps(host.ips);
-				}
-				// Update hostname if we have one and host doesn't
-				if (hostname && !host.hostname) {
-					host.hostname = hostname;
-					// Update the key
-					const newKey = getMergeKey(ip, hostname);
-					if (newKey !== host.id) {
-						hostMap.delete(host.id);
-						host.id = newKey;
-						hostMap.set(newKey, host);
-					}
-				}
-				// Update hostname from metadata if not set
-				if (!host.hostname && metadata?.hostname) {
-					host.hostname = metadata.hostname;
-					host.hostnameSource = metadata.hostnameSource ?? null;
-				}
-				// Update hostname source if not set
-				if (!host.hostnameSource && metadata?.hostnameSource) {
-					host.hostnameSource = metadata.hostnameSource;
-				}
-				// Update NetBIOS name if not set
-				if (!host.netbiosName && metadata?.netbiosName) {
-					host.netbiosName = metadata.netbiosName;
-				}
-				// Update MAC address if not set
-				if (!host.macAddress && metadata?.macAddress) {
-					host.macAddress = metadata.macAddress;
-				}
-				// Update vendor if not set
-				if (!host.vendor && metadata?.vendor) {
-					host.vendor = metadata.vendor;
-				}
-				// Merge mDNS services (avoid duplicates)
-				if (metadata?.mdnsServices) {
-					for (const service of metadata.mdnsServices) {
-						const exists = host.mdnsServices.some(
-							(s) =>
-								s.instanceName === service.instanceName && s.serviceType === service.serviceType
-						);
-						if (!exists) {
-							host.mdnsServices.push(service);
-						}
-					}
-				}
-			}
-			return host;
-		};
-
-		// 1. Add hosts from discovery results
-		for (const result of discoveryResults) {
-			for (const ip of result.hosts) {
-				// Use hostname from discovery if available (e.g., from mDNS)
-				const hostname = result.hostnames[ip] ?? null;
-				// Get extended metadata if available
-				const metadata = result.hostMetadata?.[ip];
-				const host = getOrCreateHost(ip, hostname, metadata);
-				if (!host.discoveryMethods.includes(result.method)) {
-					host.discoveryMethods.push(result.method);
-				}
-				// Add discovery info if not duplicate
-				const hasDiscovery = host.discoveries.some(
-					(d) => d.method === result.method && d.durationMs === result.durationMs
-				);
-				if (!hasDiscovery) {
-					host.discoveries.push({
-						method: result.method,
-						durationMs: result.durationMs,
-						error: result.error,
-					});
-				}
-			}
-		}
-
-		// 2. Add/merge hosts from port scan results
-		for (const scanHost of discoveredHosts) {
-			const host = getOrCreateHost(scanHost.ip, scanHost.hostname ?? null);
-
-			// Merge ports (avoid duplicates)
-			for (const port of scanHost.ports) {
-				const existingPort = host.ports.find((p) => p.port === port.port);
-				if (!existingPort) {
-					host.ports.push(port);
-				} else if (port.state === 'open' && existingPort.state !== 'open') {
-					// Update to open state if we found it open
-					const idx = host.ports.indexOf(existingPort);
-					host.ports[idx] = port;
-				}
-			}
-
-			// Sort ports by number
-			host.ports.sort((a, b) => a.port - b.port);
-
-			// Update scan duration
-			if (scanHost.scanDurationMs) {
-				host.scanDurationMs = (host.scanDurationMs ?? 0) + scanHost.scanDurationMs;
-			}
-		}
-
-		// Sort hosts: by first IP
-		return [...hostMap.values()].sort((a, b) => {
-			const aIp = a.ips[0] ?? '';
-			const bIp = b.ips[0] ?? '';
-			return aIp.localeCompare(bIp);
-		});
-	});
+	// Derived: device classifications for all hosts
+	const hostClassifications = $derived(classifyHosts(unifiedHosts));
 
 	// Derived: selected unified host
 	const selectedHost = $derived(unifiedHosts.find((h) => h.id === selectedHostId) ?? null);
@@ -361,9 +205,15 @@
 	// Event listener cleanup
 	let unlistenFn = $state<(() => void) | null>(null);
 
-	// Load available discovery methods on mount
+	// Load available discovery methods and privilege status on mount, cleanup on unmount
 	$effect(() => {
 		handleLoadDiscoveryMethods();
+		handleCheckPrivileges();
+
+		return () => {
+			stopTimer();
+			unlistenFn?.();
+		};
 	});
 
 	const handleProgressEvent = (event: ScanProgress) => {
@@ -381,9 +231,10 @@
 				recentlyDiscoveredIds = new Set([...recentlyDiscoveredIds].filter((id) => id !== hostKey));
 			}, 1500);
 
-			// Auto-select first host if none selected
-			if (selectedHostId === null) {
+			// Auto-select first host only once (don't override user selection)
+			if (!hasAutoSelected && selectedHostId === null) {
 				selectedHostId = hostKey;
+				hasAutoSelected = true;
 			}
 		} else if (event.type === 'completed') {
 			results = event.results;
@@ -404,6 +255,7 @@
 		if (!canScan || !isPortRangeValid) return;
 
 		isScanning = true;
+		startTimer();
 		error = null;
 		results = null;
 		// Don't clear discoveredHosts to allow merging with discovery results
@@ -415,6 +267,7 @@
 			unlistenFn = await listenToScanProgress(handleProgressEvent);
 		} catch (e) {
 			error = 'Failed to setup event listener';
+			stopTimer();
 			isScanning = false;
 			return;
 		}
@@ -447,6 +300,7 @@
 				unlistenFn();
 				unlistenFn = null;
 			}
+			stopTimer();
 			isScanning = false;
 		}
 	};
@@ -456,6 +310,7 @@
 			unlistenFn();
 			unlistenFn = null;
 		}
+		stopTimer();
 		isScanning = false;
 		toast.info('Scan cancelled');
 	};
@@ -468,6 +323,9 @@
 		error = null;
 		selectedHostId = null;
 		recentlyDiscoveredIds = new Set();
+		portRangeTouched = false;
+		hasAutoSelected = false; // Reset auto-selection flag
+		methodProgress = new Map(); // Clear discovery method progress
 	};
 
 	const handleExportJson = () => {
@@ -543,6 +401,36 @@
 		}
 	};
 
+	const handleCheckPrivileges = async () => {
+		try {
+			privilegeStatus = await checkNetScannerPrivileges();
+		} catch {
+			// Net-scanner sidecar not available - silently handle
+			privilegeStatus = null;
+		}
+	};
+
+	const handleSetupPrivileges = async () => {
+		isSettingUpPrivileges = true;
+		try {
+			privilegeStatus = await setupNetScannerPrivileges();
+			if (privilegeStatus.setupCompleted) {
+				toast.success('Privilege setup completed', {
+					description: 'Advanced scanning methods are now available',
+				});
+				// Reload discovery methods to reflect new availability
+				await handleLoadDiscoveryMethods();
+			}
+		} catch (e) {
+			const msg = e instanceof Error ? e.message : String(e);
+			if (!msg.includes('cancelled')) {
+				toast.error('Privilege setup failed', { description: msg });
+			}
+		} finally {
+			isSettingUpPrivileges = false;
+		}
+	};
+
 	const toggleDiscoveryMethod = (method: DiscoveryMethod) => {
 		const newSet = new Set(discoveryMethods);
 		if (newSet.has(method)) {
@@ -557,8 +445,20 @@
 		if (!isValidTarget(target) || discoveryMethods.size === 0) return;
 
 		isDiscovering = true;
+		startTimer();
+		// Clear per-method progress
+		methodProgress = new Map();
 		// Don't clear discoveryResults to allow merging with scan results
 		// discoveryResults = [];
+
+		// Setup discovery progress listener
+		try {
+			unlistenDiscoveryProgressFn = await listenToDiscoveryProgress((progress) => {
+				methodProgress = new Map(methodProgress).set(progress.method, progress);
+			});
+		} catch (e) {
+			// Continue without progress tracking if listener fails
+		}
 
 		try {
 			const options: DiscoveryOptions = {
@@ -573,13 +473,14 @@
 			// Merge with existing results
 			discoveryResults = [...discoveryResults, ...newResults];
 
-			// Auto-select first discovered host if none selected
+			// Auto-select first discovered host only once (don't override user selection)
 			const allHosts = [...new Set(newResults.flatMap((r) => r.hosts))];
 			if (allHosts.length > 0) {
-				if (selectedHostId === null) {
+				if (!hasAutoSelected && selectedHostId === null) {
 					const firstIp = allHosts.sort()[0];
 					if (firstIp) {
 						selectedHostId = getMergeKey(firstIp, null);
+						hasAutoSelected = true;
 					}
 				}
 				toast.success('Discovery completed', {
@@ -594,6 +495,11 @@
 			const msg = e instanceof Error ? e.message : String(e);
 			toast.error('Discovery failed', { description: msg });
 		} finally {
+			if (unlistenDiscoveryProgressFn) {
+				unlistenDiscoveryProgressFn();
+				unlistenDiscoveryProgressFn = null;
+			}
+			stopTimer();
 			isDiscovering = false;
 		}
 	};
@@ -612,26 +518,18 @@
 	<title>Network Scanner - Kogu</title>
 </svelte:head>
 
-<PageLayout valid={results ? true : null} bind:showOptions>
+<ToolShell layout="master-detail" valid={results ? true : null} bind:showRail={showOptions}>
 	{#snippet statusContent()}
 		{#if results}
-			<span class="text-muted-foreground">
-				Hosts: <strong class="text-foreground">{results.hostsWithOpenPorts}</strong>
-			</span>
-			<span class="text-muted-foreground">
-				Ports: <strong class="text-foreground">{results.totalOpenPorts}</strong>
-			</span>
-			<span class="text-muted-foreground">
-				Duration: <strong class="text-foreground">{formatDuration(results.scanDurationMs)}</strong>
-			</span>
+			<StatItem label="Hosts" value={results.hostsWithOpenPorts} />
+			<StatItem label="Ports" value={results.totalOpenPorts} />
+			<StatItem label="Duration" value={formatDuration(results.scanDurationMs)} />
 		{:else if isScanning && progress?.type === 'progress'}
-			<span class="text-muted-foreground">
-				Progress: <strong class="text-foreground">{progress.percentage.toFixed(0)}%</strong>
-			</span>
+			<StatItem label="Progress" value="{progress.percentage.toFixed(0)}%" />
 		{/if}
 	{/snippet}
 
-	{#snippet options()}
+	{#snippet rail()}
 		<!-- 1. Target -->
 		<FormSection title="Target">
 			<div class="space-y-2">
@@ -641,7 +539,7 @@
 					placeholder="192.168.1.1 or 192.168.1.0/24"
 				/>
 				{#if target && !isValidTarget(target)}
-					<p class="text-[10px] text-destructive">Invalid target format</p>
+					<p class="text-2xs text-destructive">Invalid target format</p>
 				{/if}
 				<button
 					type="button"
@@ -660,12 +558,12 @@
 			</div>
 			{#if networkInfo && networkInfo.interfaces.length > 0}
 				<div class="mt-2 space-y-1">
-					<p class="text-[10px] font-medium text-muted-foreground">Available interfaces:</p>
+					<p class="text-2xs font-medium text-muted-foreground">Available interfaces:</p>
 					<div class="max-h-24 space-y-1 overflow-y-auto">
 						{#each networkInfo.interfaces.filter((i) => !i.isLoopback && i.suggestedCidr) as iface (iface.ip)}
 							<button
 								type="button"
-								class="flex w-full items-center justify-between rounded border border-input bg-background px-2 py-1 text-left text-[10px] transition-colors hover:bg-accent"
+								class="flex w-full items-center justify-between rounded border border-input bg-background px-2 py-1 text-left text-2xs transition-colors hover:bg-accent"
 								onclick={() => handleSelectInterface(iface)}
 							>
 								<span class="font-medium">{iface.name}</span>
@@ -679,26 +577,32 @@
 
 		<!-- 2. Host Discovery -->
 		<FormSection title="Host Discovery">
-			<p class="mb-2 text-[10px] text-muted-foreground">Find active hosts before port scanning:</p>
+			<p class="mb-2 text-2xs text-muted-foreground">Find active hosts before port scanning:</p>
 			<div class="space-y-1">
 				{#each DISCOVERY_METHODS as method (method.value)}
 					{@const isAvailable = availableMethods.get(method.value) ?? !method.requiresPrivileges}
 					{@const isSelected = discoveryMethods.has(method.value)}
-					<button
-						type="button"
-						class="flex w-full items-center justify-between rounded border px-2 py-1.5 text-left text-xs transition-colors
+					{@const isDisabled = !isAvailable || isDiscovering || isScanning}
+					<label
+						class="flex w-full cursor-pointer items-center justify-between rounded border px-2 py-1.5 text-left text-xs transition-colors
 							{isSelected
 							? 'border-primary bg-primary/10 text-foreground'
 							: 'border-input bg-background text-muted-foreground hover:bg-accent'}
-							{!isAvailable && 'opacity-50'}"
-						onclick={() => toggleDiscoveryMethod(method.value)}
-						disabled={!isAvailable || isDiscovering || isScanning}
+							{isDisabled && 'pointer-events-none opacity-50'}"
 					>
 						<div class="flex items-center gap-2">
+							<input
+								type="checkbox"
+								class="sr-only"
+								checked={isSelected}
+								disabled={isDisabled}
+								onchange={() => toggleDiscoveryMethod(method.value)}
+							/>
 							<div
-								class="h-3 w-3 rounded border {isSelected
+								class="flex h-3 w-3 items-center justify-center rounded border {isSelected
 									? 'border-primary bg-primary'
 									: 'border-input'}"
+								aria-hidden="true"
 							>
 								{#if isSelected}
 									<svg class="h-full w-full text-primary-foreground" viewBox="0 0 12 12">
@@ -711,16 +615,51 @@
 							</div>
 							<span class="font-medium">{method.label}</span>
 						</div>
-						<span class="text-[10px] text-muted-foreground">
+						<span class="text-2xs text-muted-foreground">
 							{#if !isAvailable}
 								(no privileges)
 							{:else if method.requiresPrivileges}
 								(available)
 							{/if}
 						</span>
-					</button>
+					</label>
 				{/each}
 			</div>
+
+			<!-- Name Resolution (collapsible) -->
+			<details class="mt-3 rounded border border-border bg-muted/30">
+				<summary
+					class="flex cursor-pointer items-center gap-1 px-2 py-1.5 text-2xs font-medium text-muted-foreground hover:text-foreground"
+				>
+					<ChevronRight class="h-3 w-3 transition-transform [[open]>&]:rotate-90" />
+					Name Resolution
+					{#if resolveHostname}
+						<span class="ml-auto text-2xs">
+							({[resolveDns && 'DNS', resolveMdns && 'mDNS', resolveNetbios && 'NetBIOS']
+								.filter(Boolean)
+								.join(', ')})
+						</span>
+					{/if}
+				</summary>
+				<div class="border-t border-border p-2 space-y-1.5">
+					<FormCheckbox label="DNS Reverse Lookup (PTR)" bind:checked={resolveDns} />
+					<FormCheckbox label="mDNS / Bonjour (.local)" bind:checked={resolveMdns} />
+					<FormCheckbox label="NetBIOS (Windows)" bind:checked={resolveNetbios} />
+					{#if resolveHostname}
+						<div class="mt-2 border-t border-border pt-2">
+							<FormSlider
+								label="Timeout"
+								bind:value={resolveTimeoutMs}
+								min={500}
+								max={5000}
+								step={500}
+								hint={`${resolveTimeoutMs}ms`}
+							/>
+						</div>
+					{/if}
+				</div>
+			</details>
+
 			{#if discoveryMethods.size > 0}
 				<div class="mt-3">
 					<ActionButton
@@ -735,10 +674,10 @@
 			{/if}
 			{#if discoveryResults.length > 0}
 				<div class="mt-2 rounded border border-border bg-muted/30 p-2">
-					<p class="text-[10px] font-medium text-muted-foreground">Results:</p>
+					<p class="text-2xs font-medium text-muted-foreground">Results:</p>
 					<div class="mt-1 max-h-20 space-y-0.5 overflow-y-auto">
 						{#each discoveryResults as result (result.method)}
-							<div class="text-[10px]">
+							<div class="text-2xs">
 								<span class="font-medium">{result.method}:</span>
 								{#if result.error}
 									<span class="text-destructive">{result.error}</span>
@@ -752,38 +691,16 @@
 			{/if}
 		</FormSection>
 
-		<!-- 3. Name Resolution -->
-		<FormSection title="Name Resolution">
-			<p class="mb-2 text-[10px] text-muted-foreground">Resolve IP addresses to hostnames:</p>
-			<div class="space-y-1.5">
-				<FormCheckbox label="DNS Reverse Lookup (PTR)" bind:checked={resolveDns} />
-				<FormCheckbox label="mDNS / Bonjour (.local)" bind:checked={resolveMdns} />
-				<FormCheckbox label="NetBIOS (Windows)" bind:checked={resolveNetbios} />
-			</div>
-			{#if resolveHostname}
-				<div class="mt-3 border-t border-border pt-3">
-					<FormSlider
-						label="Timeout"
-						bind:value={resolveTimeoutMs}
-						min={500}
-						max={5000}
-						step={500}
-						hint={`${resolveTimeoutMs}ms`}
-					/>
-				</div>
-			{/if}
-		</FormSection>
-
-		<!-- 4. Port Scan -->
+		<!-- 3. Port Scan -->
 		<FormSection title="Port Scan">
 			<!-- Mode -->
-			<p class="mb-1.5 text-[10px] font-medium text-muted-foreground">Scan Mode</p>
+			<p class="mb-1.5 text-2xs font-medium text-muted-foreground">Scan Mode</p>
 			<FormMode
 				value={scanMode}
 				options={SCAN_MODES.map((m) => ({ value: m.value, label: m.label }))}
 				onchange={(v) => (scanMode = v as ScanMode)}
 			/>
-			<p class="mt-1 text-[10px] text-muted-foreground">
+			<p class="mt-1 text-2xs text-muted-foreground">
 				{SCAN_MODES.find((m) => m.value === scanMode)?.description}
 			</p>
 
@@ -791,7 +708,7 @@
 			{#if scanMode === 'quick'}
 				<details class="mt-2 rounded border border-border bg-muted/30">
 					<summary
-						class="flex cursor-pointer items-center gap-1 px-2 py-1.5 text-[10px] font-medium text-muted-foreground hover:text-foreground"
+						class="flex cursor-pointer items-center gap-1 px-2 py-1.5 text-2xs font-medium text-muted-foreground hover:text-foreground"
 					>
 						<ChevronRight class="h-3 w-3 transition-transform [[open]>&]:rotate-90" />
 						Target Ports ({QUICK_SCAN_PORTS.length})
@@ -803,8 +720,8 @@
 									class="flex items-center justify-between bg-background px-2 py-1"
 									title={WELL_KNOWN_SERVICES[port] ?? `Port ${port}`}
 								>
-									<span class="font-mono text-[10px] font-medium">{port}</span>
-									<span class="truncate text-[9px] text-muted-foreground">
+									<span class="font-mono text-2xs font-medium">{port}</span>
+									<span class="truncate text-2xs text-muted-foreground">
 										{WELL_KNOWN_SERVICES[port] ?? ''}
 									</span>
 								</div>
@@ -817,7 +734,7 @@
 			<!-- Port Selection (custom時のみ) -->
 			{#if scanMode === 'custom'}
 				<div class="mt-3 border-t border-border pt-3">
-					<p class="mb-1.5 text-[10px] font-medium text-muted-foreground">Port Selection</p>
+					<p class="mb-1.5 text-2xs font-medium text-muted-foreground">Port Selection</p>
 					<FormMode
 						value={portPreset}
 						options={PORT_PRESETS.map((p) => ({ value: p.value, label: p.label }))}
@@ -826,13 +743,11 @@
 
 					<!-- Port Details for each preset -->
 					{#if portPreset === 'well_known'}
-						<p class="mt-1.5 text-[10px] text-muted-foreground">
-							Standard ports 1-1024 (1,024 ports)
-						</p>
+						<p class="mt-1.5 text-2xs text-muted-foreground">Standard ports 1-1024 (1,024 ports)</p>
 					{:else if portPreset === 'web'}
 						<details class="mt-2 rounded border border-border bg-muted/30">
 							<summary
-								class="flex cursor-pointer items-center gap-1 px-2 py-1.5 text-[10px] font-medium text-muted-foreground hover:text-foreground"
+								class="flex cursor-pointer items-center gap-1 px-2 py-1.5 text-2xs font-medium text-muted-foreground hover:text-foreground"
 							>
 								<ChevronRight class="h-3 w-3 transition-transform [[open]>&]:rotate-90" />
 								Web Ports ({WEB_PORTS.length})
@@ -844,8 +759,8 @@
 											class="flex items-center justify-between bg-background px-2 py-1"
 											title={WELL_KNOWN_SERVICES[port] ?? `Port ${port}`}
 										>
-											<span class="font-mono text-[10px] font-medium">{port}</span>
-											<span class="truncate text-[9px] text-muted-foreground">
+											<span class="font-mono text-2xs font-medium">{port}</span>
+											<span class="truncate text-2xs text-muted-foreground">
 												{WELL_KNOWN_SERVICES[port] ?? ''}
 											</span>
 										</div>
@@ -856,7 +771,7 @@
 					{:else if portPreset === 'database'}
 						<details class="mt-2 rounded border border-border bg-muted/30">
 							<summary
-								class="flex cursor-pointer items-center gap-1 px-2 py-1.5 text-[10px] font-medium text-muted-foreground hover:text-foreground"
+								class="flex cursor-pointer items-center gap-1 px-2 py-1.5 text-2xs font-medium text-muted-foreground hover:text-foreground"
 							>
 								<ChevronRight class="h-3 w-3 transition-transform [[open]>&]:rotate-90" />
 								Database Ports ({DATABASE_PORTS.length})
@@ -868,8 +783,8 @@
 											class="flex items-center justify-between bg-background px-2 py-1"
 											title={WELL_KNOWN_SERVICES[port] ?? `Port ${port}`}
 										>
-											<span class="font-mono text-[10px] font-medium">{port}</span>
-											<span class="truncate text-[9px] text-muted-foreground">
+											<span class="font-mono text-2xs font-medium">{port}</span>
+											<span class="truncate text-2xs text-muted-foreground">
 												{WELL_KNOWN_SERVICES[port] ?? ''}
 											</span>
 										</div>
@@ -883,11 +798,12 @@
 								label="Port Range"
 								bind:value={portRange}
 								placeholder="80,443,8080 or 1-1024"
+								onblur={() => (portRangeTouched = true)}
 							/>
-							{#if portRange && !isValidPortRange(portRange)}
-								<p class="mt-1 text-[10px] text-destructive">Invalid port range format</p>
+							{#if portRangeTouched && portRange && !isValidPortRange(portRange)}
+								<p class="mt-1 text-2xs text-destructive">Invalid port range format</p>
 							{:else}
-								<p class="mt-1 text-[10px] text-muted-foreground">
+								<p class="mt-1 text-2xs text-muted-foreground">
 									Examples: 80,443,8080 or 1-1024 or 22,80-100,443
 								</p>
 							{/if}
@@ -898,7 +814,7 @@
 
 			<!-- Scan Settings -->
 			<div class="mt-3 border-t border-border pt-3">
-				<p class="mb-2 text-[10px] font-medium text-muted-foreground">Scan Settings</p>
+				<p class="mb-2 text-2xs font-medium text-muted-foreground">Scan Settings</p>
 				<FormSlider
 					label="Concurrent Connections"
 					bind:value={concurrency}
@@ -939,7 +855,7 @@
 			</div>
 		</FormSection>
 
-		<!-- 4. Results Actions -->
+		<!-- 4. Results -->
 		{#if results}
 			<FormSection title="Results">
 				<div class="space-y-2">
@@ -959,48 +875,92 @@
 				</div>
 			</FormSection>
 		{/if}
-
-		<!-- 6. Help Info -->
-		<FormSection title="Help">
-			<FormInfo showIcon={false}>
-				<div class="space-y-2">
-					<div>
-						<p class="text-[10px] font-medium">Host Discovery Methods</p>
-						<ul class="mt-0.5 list-inside list-disc text-[10px] text-muted-foreground">
-							<li>ICMP Ping: needs root privileges</li>
-							<li>ARP Scan: local network, needs libpcap</li>
-							<li>TCP SYN: needs raw socket</li>
-							<li>TCP Connect: no privileges needed</li>
-							<li>mDNS: Bonjour/Avahi devices</li>
-						</ul>
-					</div>
-					<div>
-						<p class="text-[10px] font-medium">Port Scan Modes</p>
-						<ul class="mt-0.5 list-inside list-disc text-[10px] text-muted-foreground">
-							<li>Quick: 25 common ports</li>
-							<li>Full: All 65535 ports</li>
-							<li>Custom: User-defined range</li>
-						</ul>
-					</div>
-				</div>
-			</FormInfo>
-		</FormSection>
 	{/snippet}
 
 	<!-- Results Panel -->
-	<div class="flex h-full flex-col overflow-hidden">
-		<!-- Progress Bar -->
+	<div class="relative flex h-full flex-col overflow-hidden">
+		<!-- Privilege Setup Banner -->
+		{#if privilegeStatus && !privilegeStatus.setupCompleted && privilegeStatus.setupAvailable}
+			<div class="flex shrink-0 items-center gap-3 border-b bg-warning/10 px-4 py-2">
+				<Shield class="h-4 w-4 text-warning" />
+				<span class="flex-1 text-xs text-amber-700 dark:text-amber-300">
+					Advanced scanning (TCP SYN) requires privilege setup
+				</span>
+				<button
+					class="rounded-md bg-amber-600 px-3 py-1 text-xs font-medium text-white transition-colors hover:bg-amber-700 disabled:opacity-50"
+					disabled={isSettingUpPrivileges}
+					onclick={handleSetupPrivileges}
+				>
+					{#if isSettingUpPrivileges}
+						<Loader2 class="inline-block h-3 w-3 animate-spin" />
+					{:else}
+						Setup Privileges
+					{/if}
+				</button>
+			</div>
+		{/if}
+
+		<!-- Discovery Progress Panel -->
 		{#if isDiscovering}
 			<div class="shrink-0 border-b bg-muted/20 px-4 py-3">
 				<div class="mb-2 flex items-center gap-2">
 					<Loader2 class="h-4 w-4 animate-spin text-primary" />
 					<span class="text-sm font-medium">Finding Hosts...</span>
 					<span class="text-xs text-muted-foreground">
-						{discoveryMethods.size} method{discoveryMethods.size > 1 ? 's' : ''} selected
+						Running {discoveryMethods.size} method{discoveryMethods.size > 1 ? 's' : ''} in parallel
 					</span>
 				</div>
-				<div class="h-2 w-full overflow-hidden rounded-full bg-muted">
-					<div class="h-full animate-pulse bg-primary" style="width: 100%"></div>
+				<!-- Per-method progress -->
+				<div
+					class="grid gap-2"
+					style="grid-template-columns: repeat({Math.min(discoveryMethods.size, 5)}, 1fr);"
+				>
+					{#each [...discoveryMethods] as method (method)}
+						{@const progress = methodProgress.get(method)}
+						<div class="space-y-1">
+							<div class="flex items-center justify-between text-xs">
+								<span
+									class="font-medium truncate"
+									title={DISCOVERY_METHODS.find((m) => m.value === method)?.label ?? method}
+								>
+									{DISCOVERY_METHODS.find((m) => m.value === method)?.label ?? method}
+								</span>
+								{#if progress?.status === 'completed'}
+									<Check class="h-3 w-3 shrink-0 text-green-500" />
+								{:else if progress?.status === 'error'}
+									<X class="h-3 w-3 shrink-0 text-destructive" />
+								{:else if progress?.status === 'running'}
+									<Loader2 class="h-3 w-3 shrink-0 animate-spin text-primary" />
+								{:else}
+									<Clock class="h-3 w-3 shrink-0 text-muted-foreground" />
+								{/if}
+							</div>
+							<div class="h-1.5 w-full overflow-hidden rounded-full bg-muted">
+								<div
+									class="h-full transition-all duration-300"
+									class:bg-primary={progress?.status === 'running'}
+									class:bg-green-500={progress?.status === 'completed'}
+									class:bg-destructive={progress?.status === 'error'}
+									class:animate-pulse={progress?.status === 'running'}
+									style="width: {progress?.status === 'completed' || progress?.status === 'error'
+										? 100
+										: progress?.status === 'running'
+											? 60
+											: 0}%"
+								></div>
+							</div>
+							<div class="flex items-center justify-between text-2xs text-muted-foreground">
+								{#if progress?.hostsFound !== undefined && progress.hostsFound > 0}
+									<span class="text-success">{progress.hostsFound} hosts</span>
+								{:else}
+									<span>&nbsp;</span>
+								{/if}
+								{#if progress?.durationMs !== undefined && progress.durationMs !== null}
+									<span>{(progress.durationMs / 1000).toFixed(1)}s</span>
+								{/if}
+							</div>
+						</div>
+					{/each}
 				</div>
 			</div>
 		{:else if isScanning}
@@ -1012,7 +972,16 @@
 						<span class="text-sm font-medium">Scanning Ports...</span>
 						<span class="text-xs text-muted-foreground">{progressText}</span>
 					</div>
-					<span class="text-sm font-medium text-primary">{progressPercentage.toFixed(0)}%</span>
+					<div class="flex items-center gap-3">
+						<span class="text-sm font-medium text-primary">{progressPercentage.toFixed(0)}%</span>
+						<button
+							type="button"
+							class="rounded px-2 py-0.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
+							onclick={handleCancel}
+						>
+							Cancel
+						</button>
+					</div>
 				</div>
 
 				<!-- Progress bar -->
@@ -1024,7 +993,7 @@
 				</div>
 
 				<!-- Detailed stats -->
-				<div class="flex items-center justify-between text-[10px]">
+				<div class="flex items-center justify-between text-2xs">
 					<div class="flex items-center gap-4">
 						{#if progressCurrentIp}
 							<span class="flex items-center gap-1 text-muted-foreground">
@@ -1035,14 +1004,14 @@
 					</div>
 					<div class="flex items-center gap-4">
 						{#if progressDiscoveredHosts > 0}
-							<span class="flex items-center gap-1 text-green-600 dark:text-green-400">
+							<span class="flex items-center gap-1 text-success">
 								<Server class="h-3 w-3" />
 								<span class="font-medium">{progressDiscoveredHosts}</span>
 								<span>hosts found</span>
 							</span>
 						{/if}
 						{#if progressDiscoveredPorts > 0}
-							<span class="flex items-center gap-1 text-green-600 dark:text-green-400">
+							<span class="flex items-center gap-1 text-success">
 								<Network class="h-3 w-3" />
 								<span class="font-medium">{progressDiscoveredPorts}</span>
 								<span>ports open</span>
@@ -1067,7 +1036,7 @@
 									Hosts ({unifiedHosts.length})
 								</span>
 								{#if totalOpenPorts > 0}
-									<span class="text-[10px] text-green-600 dark:text-green-400">
+									<span class="text-2xs text-success">
 										{totalOpenPorts} open ports
 									</span>
 								{/if}
@@ -1077,11 +1046,17 @@
 								{#each unifiedHosts as host (host.id)}
 									<UnifiedHostListItem
 										ips={host.ips}
-										hostname={host.hostname ?? host.netbiosName}
+										hostname={host.hostname ??
+											host.netbiosName ??
+											host.ssdpDevice?.friendlyName ??
+											null}
+										vendor={host.vendor}
 										openPortCount={host.ports.filter((p) => p.state === 'open').length}
 										discoveryMethodCount={host.discoveryMethods.length}
+										mdnsServiceCount={host.mdnsServices.length}
 										selected={selectedHostId === host.id}
 										isNew={recentlyDiscoveredIds.has(host.id)}
+										deviceCategory={hostClassifications.get(host.id)?.category}
 										onclick={() => selectHost(host.id)}
 									/>
 								{/each}
@@ -1119,6 +1094,9 @@
 								macAddress={selectedHost.macAddress}
 								vendor={selectedHost.vendor}
 								mdnsServices={selectedHost.mdnsServices}
+								ssdpDevice={selectedHost.ssdpDevice}
+								wsDiscovery={selectedHost.wsDiscovery}
+								classification={hostClassifications.get(selectedHost.id) ?? null}
 								discoveryMethods={selectedHost.discoveryMethods}
 								discoveries={selectedHost.discoveries}
 								ports={selectedHost.ports}
@@ -1180,4 +1158,4 @@
 			</div>
 		{/if}
 	</div>
-</PageLayout>
+</ToolShell>

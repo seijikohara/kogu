@@ -1,4 +1,5 @@
 <script lang="ts">
+	import type { Snippet } from 'svelte';
 	import { CodeEditor } from '$lib/components/editor';
 	import { FormCheckbox, FormSection, FormSelect } from '$lib/components/form';
 	import SplitPane from '$lib/components/layout/split-pane.svelte';
@@ -9,17 +10,14 @@
 	import { copyToClipboard, downloadTextFile, pasteFromClipboard } from '../utils.js';
 
 	interface Props {
+		readonly formatSection?: Snippet<[boolean?]>;
+		readonly inputFormat: JsonInputFormat;
 		input: string;
 		onInputChange: (value: string) => void;
-		onStatsChange?: (stats: {
-			input: string;
-			valid: boolean | null;
-			error: string;
-			format: JsonInputFormat | null;
-		}) => void;
+		onStatsChange?: (stats: { input: string; valid: boolean | null; error: string }) => void;
 	}
 
-	let { input, onInputChange, onStatsChange }: Props = $props();
+	let { formatSection, inputFormat, input, onInputChange, onStatsChange }: Props = $props();
 
 	// State
 	let queryPath = $state('$.');
@@ -35,10 +33,9 @@
 
 	// Validation
 	const inputValidation = $derived.by(() => {
-		if (!input.trim())
-			return { valid: null as boolean | null, format: null as JsonInputFormat | null };
-		const result = validateJson(input);
-		return { valid: result.valid, format: result.detectedFormat };
+		if (!input.trim()) return { valid: null as boolean | null };
+		const result = validateJson(input, inputFormat);
+		return { valid: result.valid };
 	});
 
 	// Derived numeric values
@@ -78,7 +75,7 @@
 			return { result: '', error: '' };
 		}
 		try {
-			const rawResult = executeJsonPath(input, queryPath);
+			const rawResult = executeJsonPath(input, queryPath, inputFormat);
 			const opts: QueryOptions = {
 				flattenArrays: queryFlattenArrays,
 				firstMatchOnly: queryFirstMatchOnly,
@@ -105,7 +102,6 @@
 			input,
 			valid: inputValidation.valid,
 			error: queryError,
-			format: inputValidation.format,
 		});
 	});
 
@@ -133,10 +129,10 @@
 		onclose={() => (showOptions = false)}
 		onopen={() => (showOptions = true)}
 	>
+		{@render formatSection?.()}
 		<FormSection title="JSONPath Query">
 			<div class="space-y-1">
-				<Label class="text-[10px] uppercase tracking-wide text-muted-foreground"
-					>Path Expression</Label
+				<Label class="text-2xs uppercase tracking-wide text-muted-foreground">Path Expression</Label
 				>
 				<Input bind:value={queryPath} placeholder="$.path.to.value" class="h-7 font-mono text-xs" />
 			</div>
@@ -174,9 +170,7 @@
 		</FormSection>
 
 		<FormSection title="JSONPath Examples">
-			<div
-				class="space-y-1.5 rounded-md bg-muted/50 p-2 font-mono text-[11px] text-muted-foreground"
-			>
+			<div class="space-y-1.5 rounded-md bg-muted/50 p-2 font-mono text-xs text-muted-foreground">
 				<div class="truncate" title="All books">$.store.book[*]</div>
 				<div class="truncate" title="All authors">$..author</div>
 				<div class="truncate" title="Books under $10">$.store.book[?(@.price&lt;10)]</div>

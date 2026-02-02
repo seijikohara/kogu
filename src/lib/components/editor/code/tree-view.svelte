@@ -138,8 +138,8 @@
 			case 'number':
 			case 'literal':
 				return {
-					text: 'text-blue-600 dark:text-blue-400',
-					bg: 'bg-blue-500/10',
+					text: 'text-info',
+					bg: 'bg-info/10',
 					icon: 'text-blue-500',
 				};
 			case 'boolean':
@@ -158,8 +158,8 @@
 			case 'object':
 			case 'element':
 				return {
-					text: 'text-amber-600 dark:text-amber-400',
-					bg: 'bg-amber-500/10',
+					text: 'text-warning',
+					bg: 'bg-warning/10',
 					icon: 'text-amber-500',
 				};
 			case 'array':
@@ -232,8 +232,8 @@
 				};
 			case 'code_block':
 				return {
-					text: 'text-amber-600 dark:text-amber-400',
-					bg: 'bg-amber-500/10',
+					text: 'text-warning',
+					bg: 'bg-warning/10',
 					icon: 'text-amber-500',
 				};
 			case 'blockquote':
@@ -433,7 +433,7 @@
 
 			<!-- Type badge -->
 			<span
-				class="rounded px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide {styles.bg} {styles.text}"
+				class="rounded px-1.5 py-0.5 text-2xs font-medium uppercase tracking-wide {styles.bg} {styles.text}"
 			>
 				{getBadgeText()}
 			</span>
@@ -448,7 +448,7 @@
 					onclick={handleCopyPath}
 					title="Copy path"
 				>
-					<span class="text-[9px] font-mono">$</span>
+					<span class="text-2xs font-mono">$</span>
 				</button>
 				<button
 					type="button"
@@ -511,7 +511,7 @@
 				</span>
 			{:else}
 				<span
-					class="rounded px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide {styles.bg} {styles.text}"
+					class="rounded px-1.5 py-0.5 text-2xs font-medium uppercase tracking-wide {styles.bg} {styles.text}"
 				>
 					{node.type}
 				</span>
@@ -527,7 +527,7 @@
 					onclick={handleCopyPath}
 					title="Copy path"
 				>
-					<span class="text-[9px] font-mono">$</span>
+					<span class="text-2xs font-mono">$</span>
 				</button>
 				<button
 					type="button"

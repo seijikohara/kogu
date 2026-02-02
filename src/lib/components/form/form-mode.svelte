@@ -27,7 +27,7 @@
 
 <div class="space-y-1.5">
 	{#if label}
-		<Label class="text-[10px] uppercase tracking-wide text-muted-foreground">{label}</Label>
+		<Label class="text-xs font-medium text-muted-foreground">{label}</Label>
 	{/if}
 	<div class="flex gap-0.5 rounded-md bg-muted p-0.5">
 		{#each options as option (option.value)}
@@ -39,7 +39,7 @@
 					'flex flex-1 items-center justify-center gap-1.5 rounded-sm transition-all',
 					size === 'sm' ? 'px-2 py-1 text-xs' : 'px-3 py-1.5 text-sm',
 					isSelected
-						? 'bg-background text-foreground shadow-sm'
+						? 'bg-background text-foreground shadow-sm ring-1 ring-border/30'
 						: 'text-muted-foreground hover:text-foreground'
 				)}
 				onclick={() => handleSelect(option.value)}

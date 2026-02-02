@@ -22,6 +22,10 @@ crate-type = ["staticlib", "cdylib", "rlib"]
 name = "worker"
 path = "src/bin/worker.rs"
 
+[[bin]]
+name = "net-scanner"
+path = "src/bin/net-scanner.rs"
+
 [build-dependencies]
 tauri-build = { version = "2", features = [] }
 
@@ -55,6 +59,7 @@ pgp = "0.18"
 rand = "0.8"
 
 # Network Scanning
+futures = "0.3"
 ipnetwork = "0.20"
 socket2 = "0.5"
 dns-lookup = "2"
@@ -66,4 +71,15 @@ mdns-sd = "0.11"
 surge-ping = "0.8"
 pnet = "0.35"
 pnet_datalink = "0.35"
+
+# UPnP Device Description Fetch
+reqwest = { version = "0.12", default-features = false, features = ["rustls-tls"] }
+
+# XML Parsing (for SSDP/WS-Discovery device descriptions)
+quick-xml = "0.37"
+
+# TLS Certificate Inspection
+rustls = "0.23"
+tokio-rustls = "0.26"
+x509-parser = "0.16"
 

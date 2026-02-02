@@ -7,11 +7,15 @@ use std::sync::Arc;
 use std::time::{Duration, Instant};
 
 use ipnetwork::IpNetwork;
+use rustls::client::danger::{HandshakeSignatureValid, ServerCertVerified, ServerCertVerifier};
+use rustls::pki_types::{CertificateDer, ServerName, UnixTime};
+use rustls::{ClientConfig, DigitallySignedStruct, SignatureScheme};
 use tauri::{AppHandle, Emitter};
 use tokio::io::{AsyncBufReadExt, AsyncWriteExt, BufReader};
 use tokio::net::TcpStream;
 use tokio::sync::{broadcast, Semaphore};
 use tokio::time::timeout;
+use tokio_rustls::TlsConnector;
 
 use super::netbios::resolve_netbios_name;
 use super::ports::{
@@ -19,8 +23,70 @@ use super::ports::{
 };
 use super::types::{
     HostResult, HostnameResolutionOptions, PortInfo, PortPreset, PortState, ScanMode, ScanProgress,
-    ScanRequest, ScanResults,
+    ScanRequest, ScanResults, TlsCertInfo,
 };
+
+// =============================================================================
+// TLS Certificate Verification (accept-all for inspection)
+// =============================================================================
+
+/// TLS certificate verifier that accepts all certificates for inspection purposes.
+/// Used only during port scanning to extract certificate information.
+#[derive(Debug)]
+struct AcceptAllVerifier;
+
+impl ServerCertVerifier for AcceptAllVerifier {
+    fn verify_server_cert(
+        &self,
+        _end_entity: &CertificateDer<'_>,
+        _intermediates: &[CertificateDer<'_>],
+        _server_name: &ServerName<'_>,
+        _ocsp_response: &[u8],
+        _now: UnixTime,
+    ) -> Result<ServerCertVerified, rustls::Error> {
+        Ok(ServerCertVerified::assertion())
+    }
+
+    fn verify_tls12_signature(
+        &self,
+        _message: &[u8],
+        _cert: &CertificateDer<'_>,
+        _dss: &DigitallySignedStruct,
+    ) -> Result<HandshakeSignatureValid, rustls::Error> {
+        Ok(HandshakeSignatureValid::assertion())
+    }
+
+    fn verify_tls13_signature(
+        &self,
+        _message: &[u8],
+        _cert: &CertificateDer<'_>,
+        _dss: &DigitallySignedStruct,
+    ) -> Result<HandshakeSignatureValid, rustls::Error> {
+        Ok(HandshakeSignatureValid::assertion())
+    }
+
+    fn supported_verify_schemes(&self) -> Vec<SignatureScheme> {
+        rustls::crypto::ring::default_provider()
+            .signature_verification_algorithms
+            .supported_schemes()
+    }
+}
+
+// =============================================================================
+// Port Classification
+// =============================================================================
+
+const fn is_tls_port(port: u16) -> bool {
+    matches!(port, 443 | 636 | 853 | 993 | 995 | 8443 | 9443)
+}
+
+const fn is_http_port(port: u16) -> bool {
+    matches!(port, 80 | 8080 | 8000 | 8888)
+}
+
+// =============================================================================
+// Scan State
+// =============================================================================
 
 /// Scan state for managing cancellation
 pub struct ScanState {
@@ -54,6 +120,10 @@ impl ScanState {
         self.cancelled.load(Ordering::SeqCst)
     }
 }
+
+// =============================================================================
+// Main Scan Logic
+// =============================================================================
 
 /// Run a network scan
 pub async fn run_scan(
@@ -180,6 +250,10 @@ pub async fn run_scan(
     Ok(scan_results)
 }
 
+// =============================================================================
+// Target & Port Parsing
+// =============================================================================
+
 /// Parse target string into list of IP addresses
 fn parse_targets(target: &str) -> Result<Vec<IpAddr>, String> {
     let target = target.trim();
@@ -189,6 +263,18 @@ fn parse_targets(target: &str) -> Result<Vec<IpAddr>, String> {
         let network: IpNetwork = target
             .parse()
             .map_err(|e| format!("Invalid CIDR notation: {e}"))?;
+
+        // For IPv4 networks with prefix < 31, exclude network and broadcast addresses
+        if let IpNetwork::V4(v4net) = network {
+            if v4net.prefix() < 31 {
+                let network_addr = IpAddr::V4(v4net.network());
+                let broadcast_addr = IpAddr::V4(v4net.broadcast());
+                return Ok(network
+                    .iter()
+                    .filter(|ip| *ip != network_addr && *ip != broadcast_addr)
+                    .collect());
+            }
+        }
         return Ok(network.iter().collect());
     }
 
@@ -232,6 +318,10 @@ fn resolve_ports(request: &ScanRequest) -> Result<Vec<u16>, String> {
     }
 }
 
+// =============================================================================
+// Port Scanning
+// =============================================================================
+
 /// Scan all ports on a single host
 async fn scan_host_ports(
     ip: IpAddr,
@@ -265,13 +355,14 @@ async fn scan_host_ports(
         handles.push(handle);
     }
 
-    let mut port_results: HashMap<u16, (PortState, Option<String>)> = HashMap::new();
+    let mut port_results: HashMap<u16, (PortState, Option<String>, Option<TlsCertInfo>)> =
+        HashMap::new();
 
     for handle in handles {
         if let Ok(Some((port, result))) = handle.await {
-            if let Some((state, banner)) = result {
+            if let Some((state, banner, tls_cert)) = result {
                 if state == PortState::Open {
-                    port_results.insert(port, (state, banner));
+                    port_results.insert(port, (state, banner, tls_cert));
                 }
             }
         }
@@ -280,11 +371,12 @@ async fn scan_host_ports(
     // Convert to sorted PortInfo list
     let mut open_ports: Vec<PortInfo> = port_results
         .into_iter()
-        .map(|(port, (state, banner))| PortInfo {
+        .map(|(port, (state, banner, tls_cert))| PortInfo {
             port,
             state,
             service: get_service_name(port).map(String::from),
             banner,
+            tls_cert,
         })
         .collect();
 
@@ -292,67 +384,247 @@ async fn scan_host_ports(
     open_ports
 }
 
-/// Scan a single port
+/// Scan a single port with banner grabbing and optional TLS cert extraction
 async fn scan_port(
     addr: SocketAddr,
     timeout_duration: Duration,
-) -> Option<(PortState, Option<String>)> {
+) -> Option<(PortState, Option<String>, Option<TlsCertInfo>)> {
+    let start = Instant::now();
+
     match timeout(timeout_duration, TcpStream::connect(addr)).await {
         Ok(Ok(stream)) => {
-            // Port is open, try banner grabbing
-            let banner = grab_banner(stream, timeout_duration).await;
-            Some((PortState::Open, banner))
+            // Port is open, try banner grabbing with remaining time budget
+            let remaining = timeout_duration.saturating_sub(start.elapsed());
+            let remaining = remaining.max(Duration::from_millis(200));
+            let (banner, tls_cert) = grab_banner_and_tls(stream, remaining).await;
+            Some((PortState::Open, banner, tls_cert))
         }
         Ok(Err(_)) => {
             // Connection refused = closed
-            Some((PortState::Closed, None))
+            Some((PortState::Closed, None, None))
         }
         Err(_) => {
             // Timeout = filtered
-            Some((PortState::Filtered, None))
+            Some((PortState::Filtered, None, None))
         }
     }
 }
 
-/// Try to grab a banner from an open port
-async fn grab_banner(stream: TcpStream, timeout_duration: Duration) -> Option<String> {
-    // Only attempt banner grabbing for specific ports
-    let port = stream.peer_addr().ok()?.port();
+// =============================================================================
+// Banner Grabbing & TLS Inspection
+// =============================================================================
 
-    // HTTP/HTTPS ports - send HTTP request
-    if matches!(port, 80 | 8080 | 8000 | 8888) {
-        return grab_http_banner(stream, timeout_duration).await;
+/// Grab banner and optionally extract TLS certificate info
+async fn grab_banner_and_tls(
+    stream: TcpStream,
+    timeout_duration: Duration,
+) -> (Option<String>, Option<TlsCertInfo>) {
+    let port = match stream.peer_addr() {
+        Ok(addr) => addr.port(),
+        Err(_) => return (None, None),
+    };
+
+    // TLS ports: do TLS handshake + cert extraction + HTTP over TLS
+    if is_tls_port(port) {
+        return grab_tls_info(stream, timeout_duration).await;
     }
 
-    // For other ports, try to read initial banner
-    grab_raw_banner(stream, timeout_duration).await
+    // Plain HTTP ports: send HTTP request and parse Server header
+    if is_http_port(port) {
+        let banner = grab_http_banner(stream, timeout_duration).await;
+        return (banner, None);
+    }
+
+    // RTSP port: send RTSP OPTIONS request
+    if port == 554 {
+        let banner = grab_rtsp_banner(stream, timeout_duration).await;
+        return (banner, None);
+    }
+
+    // Other ports: try to read initial banner (SSH, FTP, SMTP, etc.)
+    let banner = grab_raw_banner(stream, timeout_duration).await;
+    (banner, None)
 }
 
-/// Grab HTTP banner
+/// Perform TLS handshake, extract certificate info, and grab HTTP banner over TLS
+async fn grab_tls_info(
+    stream: TcpStream,
+    timeout_duration: Duration,
+) -> (Option<String>, Option<TlsCertInfo>) {
+    let addr = match stream.peer_addr() {
+        Ok(a) => a,
+        Err(_) => return (None, None),
+    };
+
+    // Build TLS config with accept-all verifier
+    let provider = Arc::new(rustls::crypto::ring::default_provider());
+    let config =
+        match ClientConfig::builder_with_provider(provider).with_safe_default_protocol_versions() {
+            Ok(builder) => builder
+                .dangerous()
+                .with_custom_certificate_verifier(Arc::new(AcceptAllVerifier))
+                .with_no_client_auth(),
+            Err(_) => return (None, None),
+        };
+
+    let connector = TlsConnector::from(Arc::new(config));
+
+    // Use IP address as server name (we're scanning by IP, not hostname)
+    let ip_addr = rustls::pki_types::IpAddr::from(addr.ip());
+    let server_name = ServerName::from(ip_addr);
+
+    // TLS handshake with timeout
+    let tls_stream = match timeout(timeout_duration, connector.connect(server_name, stream)).await {
+        Ok(Ok(s)) => s,
+        _ => return (None, None),
+    };
+
+    // Extract certificate info from the connection
+    let tls_cert = tls_stream
+        .get_ref()
+        .1
+        .peer_certificates()
+        .and_then(|certs| certs.first())
+        .and_then(|cert| parse_x509_cert(cert.as_ref()));
+
+    // Try to grab HTTP banner over TLS
+    let banner = grab_http_banner_tls(tls_stream, timeout_duration).await;
+
+    (banner, tls_cert)
+}
+
+/// Parse X.509 certificate DER bytes to extract key information
+fn parse_x509_cert(der: &[u8]) -> Option<TlsCertInfo> {
+    let (_, cert) = x509_parser::parse_x509_certificate(der).ok()?;
+
+    // Extract Common Name from subject
+    let common_name = cert
+        .subject()
+        .iter_common_name()
+        .next()
+        .and_then(|cn| cn.as_str().ok())
+        .map(String::from);
+
+    // Extract Subject Alternative Names
+    let subject_alt_names = cert
+        .subject_alternative_name()
+        .ok()
+        .flatten()
+        .map(|san| {
+            san.value
+                .general_names
+                .iter()
+                .filter_map(|name| match name {
+                    x509_parser::extensions::GeneralName::DNSName(dns) => Some((*dns).to_string()),
+                    x509_parser::extensions::GeneralName::IPAddress(ip_bytes) => {
+                        match ip_bytes.len() {
+                            4 => Some(format!(
+                                "{}.{}.{}.{}",
+                                ip_bytes[0], ip_bytes[1], ip_bytes[2], ip_bytes[3]
+                            )),
+                            16 => {
+                                let addr =
+                                    std::net::Ipv6Addr::from(<[u8; 16]>::try_from(*ip_bytes).ok()?);
+                                Some(addr.to_string())
+                            }
+                            _ => None,
+                        }
+                    }
+                    _ => None,
+                })
+                .collect()
+        })
+        .unwrap_or_default();
+
+    // Extract issuer CN
+    let issuer = cert
+        .issuer()
+        .iter_common_name()
+        .next()
+        .and_then(|cn| cn.as_str().ok())
+        .map(String::from);
+
+    // Self-signed check: subject == issuer
+    let is_self_signed = cert.subject() == cert.issuer();
+
+    Some(TlsCertInfo {
+        common_name,
+        subject_alt_names,
+        issuer,
+        is_self_signed,
+    })
+}
+
+/// Grab HTTP banner by sending HEAD request and extracting Server header
 async fn grab_http_banner(mut stream: TcpStream, timeout_duration: Duration) -> Option<String> {
-    let request = "HEAD / HTTP/1.0\r\nHost: localhost\r\nConnection: close\r\n\r\n";
+    let host = stream.peer_addr().ok()?.ip().to_string();
+    let request = format!("HEAD / HTTP/1.0\r\nHost: {host}\r\nConnection: close\r\n\r\n");
 
-    if stream.write_all(request.as_bytes()).await.is_err() {
-        return None;
-    }
-
-    let mut reader = BufReader::new(stream);
-    let mut first_line = String::new();
-
-    match timeout(timeout_duration, reader.read_line(&mut first_line)).await {
-        Ok(Ok(_)) => {
-            let banner = first_line.trim().to_string();
-            if banner.is_empty() {
-                None
-            } else {
-                Some(banner)
-            }
-        }
-        _ => None,
-    }
+    stream.write_all(request.as_bytes()).await.ok()?;
+    extract_server_header(stream, timeout_duration).await
 }
 
-/// Grab raw banner (for SSH, FTP, etc.)
+/// Grab HTTP banner over an established TLS connection
+async fn grab_http_banner_tls(
+    mut stream: tokio_rustls::client::TlsStream<TcpStream>,
+    timeout_duration: Duration,
+) -> Option<String> {
+    let host = stream.get_ref().0.peer_addr().ok()?.ip().to_string();
+    let request = format!("HEAD / HTTP/1.0\r\nHost: {host}\r\nConnection: close\r\n\r\n");
+
+    stream.write_all(request.as_bytes()).await.ok()?;
+    extract_server_header(stream, timeout_duration).await
+}
+
+/// Read HTTP response headers and extract Server header value
+async fn extract_server_header<R: tokio::io::AsyncRead + Unpin>(
+    reader: R,
+    timeout_duration: Duration,
+) -> Option<String> {
+    let mut reader = BufReader::new(reader);
+    let mut status_line: Option<String> = None;
+    let mut server: Option<String> = None;
+
+    // Read up to 20 header lines
+    for _ in 0..20 {
+        let mut line = String::new();
+        match timeout(timeout_duration, reader.read_line(&mut line)).await {
+            Ok(Ok(0)) => break,
+            Ok(Ok(_)) => {
+                let trimmed = line.trim();
+                if trimmed.is_empty() {
+                    break;
+                }
+                if status_line.is_none() {
+                    status_line = Some(trimmed.to_string());
+                } else {
+                    let lower = trimmed.to_ascii_lowercase();
+                    if lower.starts_with("server:") {
+                        server = Some(trimmed[7..].trim().to_string());
+                    }
+                }
+            }
+            _ => break,
+        }
+    }
+
+    // Prefer Server header, fall back to status line
+    server.or(status_line)
+}
+
+/// Grab RTSP banner by sending OPTIONS request
+async fn grab_rtsp_banner(mut stream: TcpStream, timeout_duration: Duration) -> Option<String> {
+    let addr = stream.peer_addr().ok()?;
+    let request = format!(
+        "OPTIONS rtsp://{}:{} RTSP/1.0\r\nCSeq: 1\r\n\r\n",
+        addr.ip(),
+        addr.port()
+    );
+    stream.write_all(request.as_bytes()).await.ok()?;
+    extract_server_header(stream, timeout_duration).await
+}
+
+/// Grab raw banner (for SSH, FTP, SMTP, etc. that send banner on connect)
 async fn grab_raw_banner(stream: TcpStream, timeout_duration: Duration) -> Option<String> {
     let mut reader = BufReader::new(stream);
     let mut banner = String::new();
@@ -370,6 +642,10 @@ async fn grab_raw_banner(stream: TcpStream, timeout_duration: Duration) -> Optio
         _ => None,
     }
 }
+
+// =============================================================================
+// Hostname Resolution
+// =============================================================================
 
 /// Resolve IP to hostname using configured methods
 async fn resolve_hostname_with_options(
@@ -455,6 +731,10 @@ async fn resolve_netbios(ip: IpAddr, timeout_duration: Duration) -> Option<Strin
         .ok()
         .flatten()
 }
+
+// =============================================================================
+// Time Utilities
+// =============================================================================
 
 /// Get current time as ISO 8601 string
 fn chrono_format_now() -> String {

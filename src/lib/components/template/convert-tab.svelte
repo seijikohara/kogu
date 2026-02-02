@@ -38,6 +38,8 @@
 		downloadTextFile: (content: string, filename: string) => void;
 		/** Output title (e.g., "Output (YAML)") */
 		outputTitle?: string;
+		/** Snippet for format selection options */
+		formatSection?: Snippet<[boolean?]>;
 		/** Options snippet */
 		options?: Snippet;
 	}
@@ -56,6 +58,7 @@
 		pasteFromClipboard,
 		downloadTextFile,
 		outputTitle = 'Output',
+		formatSection,
 		options,
 	}: Props = $props();
 	let showOptions = $state(true);
@@ -111,6 +114,7 @@
 		onclose={() => (showOptions = false)}
 		onopen={() => (showOptions = true)}
 	>
+		{@render formatSection?.()}
 		{#if options}
 			{@render options()}
 		{/if}

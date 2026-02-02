@@ -19,8 +19,10 @@
 		FormSelect,
 		FormSlider,
 	} from '$lib/components/form';
-	import { PageLayout, SplitPane } from '$lib/components/layout';
+	import { SplitPane } from '$lib/components/layout';
 	import { OptionsPanel } from '$lib/components/panel';
+	import { ToolShell } from '$lib/components/shell';
+	import { StatItem } from '$lib/components/status';
 	import { Button } from '$lib/components/ui/button/index.js';
 	import { Input } from '$lib/components/ui/input/index.js';
 	import {
@@ -58,14 +60,14 @@
 
 	const tabIds = tabs.map((t) => t.id);
 
-	// Tab sync with URL
-	const { activeTab, setActiveTab } = useTabSync({
+	// Tab sync with URL (keep as object reference to preserve reactivity)
+	const tabSync = useTabSync({
 		tabs: tabIds,
 		defaultTab: 'encode',
 	});
 
-	// Type-safe tab change handler for PageLayout
-	const handleTabChange = (tab: string) => setActiveTab(tab as Tab);
+	// Type-safe tab change handler for ToolShell
+	const handleTabChange = (tab: string) => tabSync.setActiveTab(tab as Tab);
 
 	// Encode/Decode tab state
 	let mode = $state<Mode>('encode');
@@ -154,11 +156,11 @@
 
 	// Validation state per tab
 	const valid = $derived.by((): boolean | null => {
-		if (activeTab === 'encode') {
+		if (tabSync.activeTab === 'encode') {
 			if (!input.trim()) return null;
 			return !error;
 		}
-		if (activeTab === 'parse') {
+		if (tabSync.activeTab === 'parse') {
 			if (!parseInput.trim()) return null;
 			return parsedUrl !== null;
 		}
@@ -214,40 +216,33 @@
 	<title>URL Encoder - Kogu</title>
 </svelte:head>
 
-<PageLayout
+<ToolShell
+	layout="tabbed"
 	{tabs}
-	{activeTab}
+	activeTab={tabSync.activeTab}
 	ontabchange={handleTabChange}
 	{valid}
-	error={activeTab === 'encode' ? error : undefined}
+	error={tabSync.activeTab === 'encode' ? error : undefined}
 	preserveTabState
 >
 	{#snippet statusContent()}
-		{#if activeTab === 'encode'}
+		{#if tabSync.activeTab === 'encode'}
 			{#if input.trim() && output}
-				<span class="text-muted-foreground">
-					Input: <strong class="text-foreground">{input.length}</strong> chars
-				</span>
-				<span class="text-muted-foreground">
-					Output: <strong class="text-foreground">{output.length}</strong> chars
-				</span>
+				<StatItem label="Input" value="{input.length} chars" />
+				<StatItem label="Output" value="{output.length} chars" />
 			{/if}
-		{:else if activeTab === 'parse'}
+		{:else if tabSync.activeTab === 'parse'}
 			{#if parsedUrl}
-				<span class="text-muted-foreground">
-					Params: <strong class="text-foreground">{parsedUrl.params.length}</strong>
-				</span>
+				<StatItem label="Params" value={parsedUrl.params.length} />
 			{/if}
-		{:else if activeTab === 'build'}
-			<span class="text-muted-foreground">
-				Params: <strong class="text-foreground">{queryParams.length}</strong>
-			</span>
+		{:else if tabSync.activeTab === 'build'}
+			<StatItem label="Params" value={queryParams.length} />
 		{/if}
 	{/snippet}
 
 	{#snippet tabContent(tab)}
 		{#if tab === 'encode'}
-			<div class="flex h-full">
+			<div class="flex flex-1 overflow-hidden">
 				<OptionsPanel
 					show={showOptions}
 					onclose={() => (showOptions = false)}
@@ -579,4 +574,4 @@
 			</div>
 		{/if}
 	{/snippet}
-</PageLayout>
+</ToolShell>

@@ -909,9 +909,9 @@ export const getDiffUnifiedLineClass = (type: DiffType): string => {
 export const getDiffPrefixClass = (type: DiffType): string => {
 	switch (type) {
 		case 'insert':
-			return 'text-green-600 dark:text-green-400 font-bold';
+			return 'text-success font-bold';
 		case 'delete':
-			return 'text-red-600 dark:text-red-400 font-bold';
+			return 'text-destructive font-bold';
 		default:
 			return 'text-muted-foreground';
 	}
