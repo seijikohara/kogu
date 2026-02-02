@@ -1,7 +1,9 @@
 <script lang="ts">
 	import { CodeEditor } from '$lib/components/editor';
 	import { FormCheckbox, FormInfo, FormMode, FormSection, FormSelect } from '$lib/components/form';
-	import { PageLayout, SplitPane } from '$lib/components/layout';
+	import { SplitPane } from '$lib/components/layout';
+	import { ToolShell } from '$lib/components/shell';
+	import { StatItem } from '$lib/components/status';
 	import {
 		BASE64_MIME_TYPES,
 		type Base64DecodeOptions,
@@ -133,24 +135,16 @@
 	<title>Base64 Encoder - Kogu</title>
 </svelte:head>
 
-<PageLayout {valid} {error} bind:showOptions>
+<ToolShell {valid} {error} bind:showRail={showOptions}>
 	{#snippet statusContent()}
 		{#if stats}
-			<span class="text-muted-foreground">
-				Input: <strong class="text-foreground">{stats.inputChars}</strong> chars (<strong
-					class="text-foreground">{stats.inputBytes}</strong
-				> bytes)
-			</span>
-			<span class="text-muted-foreground">
-				Output: <strong class="text-foreground">{stats.outputChars}</strong> chars
-			</span>
-			<span class="text-muted-foreground">
-				Ratio: <strong class="text-foreground">{stats.ratio}</strong>
-			</span>
+			<StatItem label="Input" value="{stats.inputChars} chars ({stats.inputBytes} bytes)" />
+			<StatItem label="Output" value="{stats.outputChars} chars" />
+			<StatItem label="Ratio" value={stats.ratio} />
 		{/if}
 	{/snippet}
 
-	{#snippet options()}
+	{#snippet rail()}
 		<FormSection title="Mode">
 			<FormMode
 				value={mode}
@@ -259,4 +253,4 @@
 			/>
 		{/snippet}
 	</SplitPane>
-</PageLayout>
+</ToolShell>

@@ -5,8 +5,8 @@
 import xmlFormatter from 'xml-formatter';
 
 import { defaultJsonToXmlOptions } from '../constants.js';
-import { parseJsonAuto } from '../json/parser.js';
-import type { JsonToXmlOptions } from '../types.js';
+import { parseJson, parseJsonAuto } from '../json/parser.js';
+import type { JsonInputFormat, JsonToXmlOptions } from '../types.js';
 import { sortKeysDeep } from '../utils.js';
 
 // ============================================================================
@@ -139,15 +139,18 @@ const determineXmlContent = (
 // ============================================================================
 
 /** Convert JSON to XML */
-export const jsonToXml = (input: string, options: JsonToXmlOptions | string = {}): string => {
+export const jsonToXml = (
+	input: string,
+	options: JsonToXmlOptions | string = {},
+	format?: JsonInputFormat
+): string => {
 	const opts =
 		typeof options === 'string'
 			? { ...defaultJsonToXmlOptions, rootName: options }
 			: { ...defaultJsonToXmlOptions, ...options };
 
-	const parsed = opts.sortKeys
-		? sortKeysDeep(parseJsonAuto(input).data)
-		: parseJsonAuto(input).data;
+	const rawData = format ? parseJson(input, format) : parseJsonAuto(input).data;
+	const parsed = opts.sortKeys ? sortKeysDeep(rawData) : rawData;
 
 	const { content } = determineXmlContent(parsed, opts);
 	const lineSep = opts.lineSeparator ?? '\n';

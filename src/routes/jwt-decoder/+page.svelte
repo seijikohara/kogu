@@ -3,7 +3,9 @@
 	import { CopyButton } from '$lib/components/action';
 	import { CodeEditor } from '$lib/components/editor';
 	import { FormInfo, FormSection } from '$lib/components/form';
-	import { PageLayout } from '$lib/components/layout';
+	import { SectionHeader } from '$lib/components/layout';
+	import { ToolShell } from '$lib/components/shell';
+	import { EmptyState } from '$lib/components/status';
 	import {
 		decodeJwt,
 		JWT_STANDARD_CLAIMS,
@@ -102,7 +104,7 @@
 	<title>JWT Decoder - Kogu</title>
 </svelte:head>
 
-<PageLayout {valid} {error} bind:showOptions>
+<ToolShell {valid} {error} bind:showRail={showOptions}>
 	{#snippet statusContent()}
 		{#if decoded}
 			{#if decoded.isExpired}
@@ -111,7 +113,7 @@
 					Expired
 				</span>
 			{:else}
-				<span class="flex items-center gap-1 text-green-600 dark:text-green-400">
+				<span class="flex items-center gap-1 text-success">
 					<CheckCircle class="h-3 w-3" />
 					Valid
 				</span>
@@ -125,7 +127,7 @@
 		{/if}
 	{/snippet}
 
-	{#snippet options()}
+	{#snippet rail()}
 		<FormSection title="About JWT">
 			<FormInfo>
 				<ul class="list-inside list-disc space-y-0.5">
@@ -142,7 +144,7 @@
 				<div class="space-y-1.5">
 					<div class="flex items-center gap-2">
 						<span class="h-2 w-2 rounded-full bg-red-500"></span>
-						<span class="text-red-600 dark:text-red-400">Header:</span>
+						<span class="text-destructive">Header:</span>
 						<span>Algorithm & type</span>
 					</div>
 					<div class="flex items-center gap-2">
@@ -179,9 +181,7 @@
 
 		<!-- Decoded Results -->
 		<div class="flex flex-1 flex-col overflow-hidden">
-			<div class="flex h-9 shrink-0 items-center border-b bg-muted/30 px-3">
-				<span class="text-xs font-medium text-muted-foreground">Decoded Token</span>
-			</div>
+			<SectionHeader title="Decoded Token" />
 			{#if decoded}
 				<div class="flex-1 space-y-4 overflow-auto p-4">
 					<!-- Expiration banner -->
@@ -201,7 +201,7 @@
 					<!-- Header section -->
 					<div class="rounded-lg border bg-muted/30">
 						<div class="flex items-center justify-between border-b px-4 py-2">
-							<h3 class="text-sm font-medium text-red-600 dark:text-red-400">Header</h3>
+							<h3 class="text-sm font-medium text-destructive">Header</h3>
 							<CopyButton
 								text={formatJson(decoded.header)}
 								toastLabel="Header"
@@ -285,20 +285,19 @@
 					</div>
 				</div>
 			{:else}
-				<div class="flex flex-1 items-center justify-center text-muted-foreground">
+				<div class="flex-1">
 					{#if error}
-						<div class="text-center">
-							<AlertTriangle class="mx-auto mb-2 h-8 w-8 text-destructive" />
-							<p class="text-sm">{error}</p>
+						<div class="flex h-full items-center justify-center text-muted-foreground">
+							<div class="text-center">
+								<AlertTriangle class="mx-auto mb-2 h-8 w-8 text-destructive" />
+								<p class="text-sm">{error}</p>
+							</div>
 						</div>
 					{:else}
-						<div class="text-center">
-							<KeyRound class="mx-auto mb-2 h-12 w-12 opacity-50" />
-							<p class="text-sm">Enter a JWT token to decode</p>
-						</div>
+						<EmptyState icon={KeyRound} title="Enter a JWT token to decode" />
 					{/if}
 				</div>
 			{/if}
 		</div>
 	</div>
-</PageLayout>
+</ToolShell>

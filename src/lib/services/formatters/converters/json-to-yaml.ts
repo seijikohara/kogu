@@ -5,18 +5,23 @@
 import * as yaml from 'yaml';
 
 import { defaultJsonToYamlOptions } from '../constants.js';
-import { parseJsonAuto } from '../json/parser.js';
-import type { JsonToYamlOptions } from '../types.js';
+import { parseJson, parseJsonAuto } from '../json/parser.js';
+import type { JsonInputFormat, JsonToYamlOptions } from '../types.js';
 import { sortKeysDeep } from '../utils.js';
 
 /** Convert JSON to YAML */
-export const jsonToYaml = (input: string, options: JsonToYamlOptions | number = {}): string => {
+export const jsonToYaml = (
+	input: string,
+	options: JsonToYamlOptions | number = {},
+	format?: JsonInputFormat
+): string => {
 	const opts =
 		typeof options === 'number'
 			? { ...defaultJsonToYamlOptions, indent: options }
 			: { ...defaultJsonToYamlOptions, ...options };
 
-	const data = opts.sortKeys ? sortKeysDeep(parseJsonAuto(input).data) : parseJsonAuto(input).data;
+	const parsed = format ? parseJson(input, format) : parseJsonAuto(input).data;
+	const data = opts.sortKeys ? sortKeysDeep(parsed) : parsed;
 
 	// Determine string type
 	const stringType = opts.singleQuote

@@ -1,4 +1,5 @@
 <script lang="ts">
+	import type { Snippet } from 'svelte';
 	import type { ContextMenuItem } from '$lib/components/editor';
 	import { CodeEditor } from '$lib/components/editor';
 	import { FormCheckbox, FormMode, FormSection, FormSelect } from '$lib/components/form';
@@ -7,11 +8,10 @@
 	import {
 		defaultJsonFormatOptions,
 		JSON_FORMAT_INFO,
-		JSON_FORMAT_OPTIONS,
 		type JsonFormatOptions,
 		type JsonInputFormat,
 		type JsonOutputFormat,
-		parseJsonAuto,
+		parseJson,
 		processJsonWithOptions,
 		SAMPLE_JSON,
 		stringifyJson,
@@ -19,24 +19,20 @@
 	} from '$lib/services/formatters';
 
 	interface Props {
+		readonly formatSection?: Snippet<[boolean?]>;
+		readonly inputFormat: JsonInputFormat;
+		readonly outputFormat: JsonOutputFormat;
 		input: string;
 		onInputChange: (value: string) => void;
-		onStatsChange?: (stats: {
-			input: string;
-			valid: boolean | null;
-			error: string;
-			format: JsonInputFormat | null;
-		}) => void;
+		onStatsChange?: (stats: { input: string; valid: boolean | null; error: string }) => void;
 	}
 
-	let { input, onInputChange, onStatsChange }: Props = $props();
+	let { formatSection, inputFormat, outputFormat, input, onInputChange, onStatsChange }: Props =
+		$props();
 
 	// Mode and UI state
 	let formatMode = $state<'format' | 'minify'>('format');
 	let showOptions = $state(true);
-
-	// Output format
-	let outputFormat = $state<JsonOutputFormat>('json');
 
 	// Format options
 	let indentSizeStr = $state(String(defaultJsonFormatOptions.indentSize));
@@ -78,23 +74,21 @@
 		maxDepth,
 	});
 
-	// Validation and detected format
+	// Validation
 	const validation = $derived.by(() => {
 		if (!input.trim()) {
-			return { valid: null as boolean | null, format: null as JsonInputFormat | null };
+			return { valid: null as boolean | null };
 		}
-		const result = validateJson(input);
-		return { valid: result.valid, format: result.detectedFormat };
+		const result = validateJson(input, inputFormat);
+		return { valid: result.valid };
 	});
-
-	const detectedFormat = $derived(validation.format);
 
 	// Output calculation
 	const formatResult = $derived.by((): { output: string; error: string } => {
 		if (!input.trim()) return { output: '', error: '' };
 
 		try {
-			const { data } = parseJsonAuto(input);
+			const data = parseJson(input, inputFormat);
 
 			// Apply filtering options (removeNulls, removeEmptyStrings, etc.)
 			const processedData = processJsonWithOptions(data, formatOptions);
@@ -152,7 +146,6 @@
 			input,
 			valid: validation.valid,
 			error: formatError,
-			format: detectedFormat,
 		});
 	});
 
@@ -188,7 +181,7 @@
 	// Format input JSON
 	const handleFormatInput = () => {
 		try {
-			const { data } = parseJsonAuto(input);
+			const data = parseJson(input, inputFormat);
 			const formatted = JSON.stringify(data, null, 2);
 			onInputChange(formatted);
 		} catch {
@@ -199,7 +192,7 @@
 	// Minify input JSON
 	const handleMinifyInput = () => {
 		try {
-			const { data } = parseJsonAuto(input);
+			const data = parseJson(input, inputFormat);
 			const minified = JSON.stringify(data);
 			onInputChange(minified);
 		} catch {
@@ -228,6 +221,7 @@
 		onclose={() => (showOptions = false)}
 		onopen={() => (showOptions = true)}
 	>
+		{@render formatSection?.(true)}
 		<FormSection title="Mode">
 			<FormMode
 				bind:value={formatMode}
@@ -236,12 +230,6 @@
 					{ value: 'minify', label: 'Minify' },
 				]}
 			/>
-			{#if detectedFormat && detectedFormat !== 'json'}
-				<div class="mt-2 rounded-md bg-muted/50 p-2 text-[11px] text-muted-foreground">
-					<span class="font-medium text-foreground">Detected:</span>
-					{JSON_FORMAT_INFO[detectedFormat].label}
-				</div>
-			{/if}
 		</FormSection>
 
 		<FormSection title="Indentation">
@@ -325,9 +313,6 @@
 				mode="output"
 				editorMode="json"
 				placeholder="Formatted output..."
-				formatOptions={JSON_FORMAT_OPTIONS}
-				selectedFormat={outputFormat}
-				onformatchange={(f) => (outputFormat = f as JsonOutputFormat)}
 				oncopy={handleCopy}
 			/>
 		{/snippet}

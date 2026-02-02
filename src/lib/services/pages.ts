@@ -22,7 +22,9 @@ import {
 	KeyRound,
 	Link,
 	Lock,
+	Network,
 	Play,
+	Radar,
 	Search,
 	Shield,
 	ShieldCheck,
@@ -32,7 +34,7 @@ import {
 /**
  * Page categories for sidebar grouping.
  */
-export type PageCategory = 'formatters' | 'encoders' | 'generators' | 'text';
+export type PageCategory = 'formatters' | 'encoders' | 'generators' | 'text' | 'network';
 
 export interface PageTab {
 	readonly id: string;
@@ -216,6 +218,15 @@ export const PAGES: readonly PageDefinition[] = [
 		color: 'text-teal-500',
 		category: 'text',
 	},
+	{
+		id: 'network-scanner',
+		title: 'Network Scanner',
+		url: '/network-scanner',
+		icon: Radar,
+		description: 'Scan networks for open ports and services',
+		color: 'text-rose-500',
+		category: 'network',
+	},
 ];
 
 /**
@@ -250,16 +261,54 @@ export interface CategoryInfo {
 	readonly label: string;
 	readonly icon: typeof Icon;
 	readonly defaultOpen: boolean;
+	readonly borderClass: string;
+	readonly iconClass: string;
 }
 
 /**
  * All categories with display info.
  */
 export const CATEGORIES: readonly CategoryInfo[] = [
-	{ id: 'formatters', label: 'Formatters', icon: FileText, defaultOpen: true },
-	{ id: 'encoders', label: 'Encoders', icon: Lock, defaultOpen: true },
-	{ id: 'generators', label: 'Generators', icon: Sparkles, defaultOpen: true },
-	{ id: 'text', label: 'Text', icon: CaseSensitive, defaultOpen: true },
+	{
+		id: 'formatters',
+		label: 'Formatters',
+		icon: FileText,
+		defaultOpen: true,
+		borderClass: 'border-accent-brand/40',
+		iconClass: 'text-accent-brand',
+	},
+	{
+		id: 'encoders',
+		label: 'Encoders',
+		icon: Lock,
+		defaultOpen: true,
+		borderClass: 'border-success/40',
+		iconClass: 'text-success',
+	},
+	{
+		id: 'generators',
+		label: 'Generators',
+		icon: Sparkles,
+		defaultOpen: true,
+		borderClass: 'border-warning/40',
+		iconClass: 'text-warning',
+	},
+	{
+		id: 'text',
+		label: 'Text',
+		icon: CaseSensitive,
+		defaultOpen: true,
+		borderClass: 'border-info/40',
+		iconClass: 'text-info',
+	},
+	{
+		id: 'network',
+		label: 'Network',
+		icon: Network,
+		defaultOpen: true,
+		borderClass: 'border-destructive/40',
+		iconClass: 'text-destructive',
+	},
 ];
 
 /**

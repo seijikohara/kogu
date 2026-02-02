@@ -3,8 +3,9 @@
 	import { toast } from 'svelte-sonner';
 	import { ActionButton, CopyButton } from '$lib/components/action';
 	import { FormInfo, FormInput, FormMode, FormSection, FormSlider } from '$lib/components/form';
-	import { PageLayout } from '$lib/components/layout';
-	import { LoadingOverlay } from '$lib/components/status';
+	import { SectionHeader } from '$lib/components/layout';
+	import { ToolShell } from '$lib/components/shell';
+	import { EmptyState, ErrorDisplay, LoadingOverlay, StatItem } from '$lib/components/status';
 	import {
 		type BcryptCostInfo,
 		type BcryptHashResult,
@@ -177,7 +178,7 @@
 	<title>BCrypt Generator - Kogu</title>
 </svelte:head>
 
-<PageLayout
+<ToolShell
 	valid={activeTab === 'generate'
 		? hashResult
 			? true
@@ -185,30 +186,26 @@
 		: verifyResult
 			? verifyResult.valid
 			: null}
-	bind:showOptions
+	bind:showRail={showOptions}
 >
 	{#snippet statusContent()}
 		{#if activeTab === 'generate' && hashResult}
-			<span class="text-muted-foreground">
-				Cost: <strong class="text-foreground">{hashResult.cost}</strong>
-			</span>
-			<span class="text-muted-foreground">
-				Algorithm: <strong class="text-foreground">$2b$</strong>
-			</span>
+			<StatItem label="Cost" value={hashResult.cost} />
+			<StatItem label="Algorithm" value="$2b$" />
 		{:else if activeTab === 'verify' && verifyResult}
 			<span class="flex items-center gap-1">
 				{#if verifyResult.valid}
-					<Check class="h-3 w-3 text-green-600" />
-					<span class="text-green-600 dark:text-green-400">Valid</span>
+					<Check class="h-3 w-3 text-success" />
+					<span class="text-success">Valid</span>
 				{:else}
-					<X class="h-3 w-3 text-red-600" />
-					<span class="text-red-600 dark:text-red-400">Invalid</span>
+					<X class="h-3 w-3 text-destructive" />
+					<span class="text-destructive">Invalid</span>
 				{/if}
 			</span>
 		{/if}
 	{/snippet}
 
-	{#snippet options()}
+	{#snippet rail()}
 		<FormSection title="Mode">
 			<FormMode
 				value={activeTab}
@@ -306,7 +303,7 @@
 				<div class="space-y-0.5">
 					<div class="flex justify-between">
 						<span>4-7:</span>
-						<span class="text-amber-600 dark:text-amber-400">Development only</span>
+						<span class="text-warning">Development only</span>
 					</div>
 					<div class="flex justify-between">
 						<span>8-9:</span>
@@ -314,7 +311,7 @@
 					</div>
 					<div class="flex justify-between">
 						<span>10-11:</span>
-						<span class="text-green-600 dark:text-green-400">Standard</span>
+						<span class="text-success">Standard</span>
 					</div>
 					<div class="flex justify-between">
 						<span>12-13:</span>
@@ -339,11 +336,7 @@
 			elapsedTime={elapsedTimeDisplay}
 			oncancel={isGenerating ? handleCancelGenerate : handleCancelVerify}
 		/>
-		<div class="flex h-9 shrink-0 items-center border-b bg-muted/30 px-3">
-			<span class="text-xs font-medium text-muted-foreground">
-				{activeTab === 'generate' ? 'Generated Hash' : 'Verification Result'}
-			</span>
-		</div>
+		<SectionHeader title={activeTab === 'generate' ? 'Generated Hash' : 'Verification Result'} />
 
 		<div class="flex-1 overflow-auto p-4">
 			{#if activeTab === 'generate'}
@@ -390,40 +383,27 @@
 						</div>
 					</div>
 				{:else if generateError}
-					<div class="flex h-full items-center justify-center">
-						<div class="rounded-lg border border-destructive/50 bg-destructive/10 p-6 text-center">
-							<p class="text-sm text-destructive">{generateError}</p>
-						</div>
-					</div>
+					<ErrorDisplay variant="centered" message={generateError} />
 				{:else}
-					<div class="flex h-full items-center justify-center text-muted-foreground">
-						<div class="text-center">
-							<Hash class="mx-auto mb-2 h-12 w-12 opacity-50" />
-							<p class="text-sm">Enter a password and generate a BCrypt hash</p>
-						</div>
-					</div>
+					<EmptyState icon={Hash} title="Enter a password and generate a BCrypt hash" />
 				{/if}
 			{:else if verifyResult}
 				<div class="space-y-4">
 					<!-- Verification Result -->
 					<div
-						class={`rounded-lg border p-6 ${verifyResult.valid ? 'border-green-500/30 bg-green-500/10' : 'border-red-500/30 bg-red-500/10'}`}
+						class={`rounded-lg border p-6 ${verifyResult.valid ? 'border-success/30 bg-success/10' : 'border-destructive/30 bg-destructive/10'}`}
 					>
 						<div class="flex items-center justify-center gap-3">
 							{#if verifyResult.valid}
-								<Check class="h-8 w-8 text-green-600 dark:text-green-400" />
+								<Check class="h-8 w-8 text-success" />
 								<div class="text-center">
-									<p class="text-lg font-semibold text-green-600 dark:text-green-400">
-										Password Valid
-									</p>
+									<p class="text-lg font-semibold text-success">Password Valid</p>
 									<p class="text-sm text-muted-foreground">The password matches the hash</p>
 								</div>
 							{:else}
-								<X class="h-8 w-8 text-red-600 dark:text-red-400" />
+								<X class="h-8 w-8 text-destructive" />
 								<div class="text-center">
-									<p class="text-lg font-semibold text-red-600 dark:text-red-400">
-										Password Invalid
-									</p>
+									<p class="text-lg font-semibold text-destructive">Password Invalid</p>
 									<p class="text-sm text-muted-foreground">The password does not match the hash</p>
 								</div>
 							{/if}
@@ -431,19 +411,10 @@
 					</div>
 				</div>
 			{:else if verifyError}
-				<div class="flex h-full items-center justify-center">
-					<div class="rounded-lg border border-destructive/50 bg-destructive/10 p-6 text-center">
-						<p class="text-sm text-destructive">{verifyError}</p>
-					</div>
-				</div>
+				<ErrorDisplay variant="centered" message={verifyError} />
 			{:else}
-				<div class="flex h-full items-center justify-center text-muted-foreground">
-					<div class="text-center">
-						<ShieldCheck class="mx-auto mb-2 h-12 w-12 opacity-50" />
-						<p class="text-sm">Enter a password and hash to verify</p>
-					</div>
-				</div>
+				<EmptyState icon={ShieldCheck} title="Enter a password and hash to verify" />
 			{/if}
 		</div>
 	</div>
-</PageLayout>
+</ToolShell>

@@ -2,7 +2,9 @@
 	import type { SqlLanguage } from 'sql-formatter';
 	import { CodeEditor } from '$lib/components/editor';
 	import { FormCheckbox, FormMode, FormSection, FormSelect } from '$lib/components/form';
-	import { PageLayout, SplitPane } from '$lib/components/layout';
+	import { SplitPane } from '$lib/components/layout';
+	import { ToolShell } from '$lib/components/shell';
+	import { StatItem } from '$lib/components/status';
 	import {
 		calculateSqlStats,
 		defaultSqlFormatOptions,
@@ -125,19 +127,15 @@
 	<title>SQL Formatter - Kogu</title>
 </svelte:head>
 
-<PageLayout {valid} {error} bind:showOptions>
+<ToolShell {valid} {error} bind:showRail={showOptions}>
 	{#snippet statusContent()}
 		{#if stats}
-			<span class="text-muted-foreground"
-				>Statements: <strong class="text-foreground">{stats.statements}</strong></span
-			>
-			<span class="text-muted-foreground"
-				>Size: <strong class="text-foreground">{stats.size}</strong></span
-			>
+			<StatItem label="Statements" value={stats.statements} />
+			<StatItem label="Size" value={stats.size} />
 		{/if}
 	{/snippet}
 
-	{#snippet options()}
+	{#snippet rail()}
 		<FormSection title="Mode">
 			<FormMode
 				value={mode}
@@ -147,7 +145,7 @@
 					{ value: 'minify', label: 'Minify' },
 				]}
 			/>
-			<div class="mt-2 rounded-md bg-muted/50 p-2 text-[11px] text-muted-foreground">
+			<div class="mt-2 rounded-md bg-muted/50 p-2 text-xs text-muted-foreground">
 				<span class="font-medium text-foreground">Dialect:</span>
 				{selectedLanguageLabel}
 			</div>
@@ -250,4 +248,4 @@
 			/>
 		{/snippet}
 	</SplitPane>
-</PageLayout>
+</ToolShell>

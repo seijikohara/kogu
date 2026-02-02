@@ -30,7 +30,9 @@
 	import { toast } from 'svelte-sonner';
 	import { CodeEditor, type FormatCommand, TiptapEditor } from '$lib/components/editor';
 	import { FormInfo, FormMode, FormSection } from '$lib/components/form';
-	import { PageLayout, SplitPane } from '$lib/components/layout';
+	import { SplitPane } from '$lib/components/layout';
+	import { ToolShell } from '$lib/components/shell';
+	import { StatItem } from '$lib/components/status';
 	import { Button } from '$lib/components/ui/button';
 	import * as ContextMenu from '$lib/components/ui/context-menu';
 	import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
@@ -369,25 +371,17 @@ ${tocToMarkdown(toc)}
 	<title>Markdown Editor - Kogu</title>
 </svelte:head>
 
-<PageLayout {valid} bind:showOptions>
+<ToolShell {valid} bind:showRail={showOptions}>
 	{#snippet statusContent()}
 		{#if input.trim()}
-			<span class="text-muted-foreground">
-				<strong class="text-foreground">{stats.words}</strong> words
-			</span>
-			<span class="text-muted-foreground">
-				<strong class="text-foreground">{stats.chars}</strong> chars
-			</span>
-			<span class="text-muted-foreground">
-				<strong class="text-foreground">{stats.lines}</strong> lines
-			</span>
-			<span class="text-muted-foreground">
-				<strong class="text-foreground">{stats.headers}</strong> headers
-			</span>
+			<StatItem label="words" value={stats.words} />
+			<StatItem label="chars" value={stats.chars} />
+			<StatItem label="lines" value={stats.lines} />
+			<StatItem label="headers" value={stats.headers} />
 		{/if}
 	{/snippet}
 
-	{#snippet options()}
+	{#snippet rail()}
 		<FormSection title="Right Panel">
 			<FormMode
 				value={rightPanelMode}
@@ -559,7 +553,7 @@ ${tocToMarkdown(toc)}
 				>
 					{#snippet actions()}
 						{#if activeEditor === 'monaco'}
-							<span class="ml-2 rounded bg-primary/20 px-1.5 py-0.5 text-[10px] text-primary">
+							<span class="ml-2 rounded bg-primary/20 px-1.5 py-0.5 text-2xs text-primary">
 								Active
 							</span>
 						{/if}
@@ -572,7 +566,7 @@ ${tocToMarkdown(toc)}
 						<ContextMenu.Trigger class="relative h-full">
 							{#if activeEditor === 'tiptap'}
 								<span
-									class="absolute right-3 top-2 z-10 rounded bg-primary/20 px-1.5 py-0.5 text-[10px] text-primary"
+									class="absolute right-3 top-2 z-10 rounded bg-primary/20 px-1.5 py-0.5 text-2xs text-primary"
 								>
 									Active
 								</span>
@@ -614,7 +608,7 @@ ${tocToMarkdown(toc)}
 			{/snippet}
 		</SplitPane>
 	</div>
-</PageLayout>
+</ToolShell>
 
 <style>
 	.markdown-preview :global(h1) {

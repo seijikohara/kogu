@@ -208,4 +208,4 @@ export type ParseAttempt =
 
 export type StatsAccumulator = { keys: number; values: number; maxDepth: number };
 
-export type FormatOption = { value: JsonInputFormat; label: string };
+export type FormatOption = { value: JsonInputFormat & JsonOutputFormat; label: string };

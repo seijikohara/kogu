@@ -2,7 +2,8 @@
  * JSON Schema - Schema Inference
  */
 
-import { parseJsonAuto } from './parser.js';
+import type { JsonInputFormat } from '../types.js';
+import { parseJson, parseJsonAuto } from './parser.js';
 
 // ============================================================================
 // Schema Inference
@@ -45,5 +46,5 @@ const inferSchema = (data: unknown): Record<string, unknown> => {
 };
 
 /** Infer JSON Schema from input */
-export const inferJsonSchema = (input: string): Record<string, unknown> =>
-	inferSchema(parseJsonAuto(input).data);
+export const inferJsonSchema = (input: string, format?: JsonInputFormat): Record<string, unknown> =>
+	inferSchema(format ? parseJson(input, format) : parseJsonAuto(input).data);

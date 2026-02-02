@@ -104,20 +104,19 @@
 	>
 		<FormSection title="XPath Expression">
 			<div class="space-y-1">
-				<Label class="text-[10px] uppercase tracking-wide text-muted-foreground"
-					>Path Expression</Label
+				<Label class="text-2xs uppercase tracking-wide text-muted-foreground">Path Expression</Label
 				>
 				<Input bind:value={xpathExpression} placeholder="//element" class="h-7 font-mono text-xs" />
 			</div>
 			{#if resultCount > 0}
-				<div class="rounded-md bg-primary/10 p-2 text-[11px] text-primary">
+				<div class="rounded-md bg-primary/10 p-2 text-xs text-primary">
 					Found <strong>{resultCount}</strong> match{resultCount > 1 ? 'es' : ''}
 				</div>
 			{/if}
 		</FormSection>
 
 		<FormSection title="Examples">
-			<div class="space-y-1.5 text-[11px]">
+			<div class="space-y-1.5 text-xs">
 				<div class="space-y-1">
 					<code class="text-muted-foreground">//element</code>
 					<p class="text-muted-foreground/70">Select all elements named "element"</p>

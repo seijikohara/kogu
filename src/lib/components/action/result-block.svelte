@@ -12,6 +12,7 @@
 		copyable?: boolean;
 		copyLabel?: string;
 		variant?: 'default' | 'success' | 'warning' | 'error';
+		size?: 'default' | 'compact';
 		mono?: boolean;
 		maxHeight?: string;
 		children?: Snippet;
@@ -24,6 +25,7 @@
 		copyable = true,
 		copyLabel,
 		variant = 'default',
+		size = 'default',
 		mono = true,
 		maxHeight,
 		children,
@@ -31,8 +33,8 @@
 
 	const variantStyles = {
 		default: 'border bg-muted/30',
-		success: 'border-green-500/30 bg-green-500/10',
-		warning: 'border-amber-500/30 bg-amber-500/10',
+		success: 'border-success/30 bg-success/10',
+		warning: 'border-warning/30 bg-warning/10',
 		error: 'border-destructive/50 bg-destructive/10',
 	};
 
@@ -46,8 +48,8 @@
 	};
 </script>
 
-<div class={cn('rounded-lg p-4', variantStyles[variant])}>
-	<div class="mb-2 flex items-center justify-between">
+<div class={cn('rounded-lg', size === 'compact' ? 'p-3' : 'p-4', variantStyles[variant])}>
+	<div class={cn('flex items-center justify-between', size === 'compact' ? 'mb-1.5' : 'mb-2')}>
 		<div class="flex items-center gap-2">
 			{#if Icon}
 				<Icon class="h-4 w-4" />

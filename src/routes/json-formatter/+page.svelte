@@ -1,10 +1,14 @@
 <script lang="ts">
 	import { ArrowRightLeft, CodeXml, FileCheck, GitCompare, Play, Search } from '@lucide/svelte';
-	import { PageLayout } from '$lib/components/layout';
+	import { FormSection, FormSelect } from '$lib/components/form';
+	import { ToolShell } from '$lib/components/shell';
+	import { StatItem } from '$lib/components/status';
 	import {
 		calculateJsonStats,
 		JSON_FORMAT_INFO,
+		JSON_FORMAT_OPTIONS,
 		type JsonInputFormat,
+		type JsonOutputFormat,
 		type JsonStats,
 	} from '$lib/services/formatters';
 	import { useTabSync } from '$lib/utils';
@@ -32,20 +36,24 @@
 
 	const tabIds = tabs.map((t) => t.id);
 
-	// Tab sync with URL
-	const { activeTab, setActiveTab } = useTabSync({
+	// Tab sync with URL (keep as object reference to preserve reactivity)
+	const tabSync = useTabSync({
 		tabs: tabIds,
 		defaultTab: 'format',
 	});
 
-	// Type-safe tab change handler for PageLayout
-	const handleTabChange = (tab: string) => setActiveTab(tab as TabType);
+	// Type-safe tab change handler for ToolShell
+	const handleTabChange = (tab: string) => tabSync.setActiveTab(tab as TabType);
 
 	// Shared input across all tabs
 	let sharedInput = $state('');
 	const setSharedInput = (value: string) => {
 		sharedInput = value;
 	};
+
+	// Page-level format state
+	let inputFormat = $state<JsonInputFormat>('json');
+	let outputFormat = $state<JsonOutputFormat>('json');
 
 	// Tab-specific stats tracking
 	interface TabStats {
@@ -64,22 +72,13 @@
 	});
 
 	// Current tab stats
-	const currentStats = $derived(tabStats[activeTab as TabType]);
+	const currentStats = $derived(tabStats[tabSync.activeTab as TabType]);
 
-	// Extended stats type for JSON formatter
-	interface JsonTabStats extends TabStats {
-		format: JsonInputFormat | null;
-	}
-
-	// Format info for display
-	let currentFormat = $state<JsonInputFormat | null>(null);
-
-	// Stats handler wrapper that includes format info
+	// Stats handler
 	const handleStatsChange =
 		(tab: TabType) =>
-		(stats: JsonTabStats): void => {
-			currentFormat = stats.format;
-			tabStats[tab] = { input: stats.input, valid: stats.valid, error: stats.error };
+		(stats: TabStats): void => {
+			tabStats[tab] = stats;
 		};
 
 	// Live stats calculation
@@ -87,7 +86,7 @@
 		const input = sharedInput.trim();
 		if (!input) return null;
 		try {
-			return calculateJsonStats(input);
+			return calculateJsonStats(input, inputFormat);
 		} catch {
 			return null;
 		}
@@ -98,10 +97,19 @@
 	<title>JSON Formatter - Kogu</title>
 </svelte:head>
 
-<PageLayout
-	title="JSON Formatter"
+{#snippet formatSection(showOutput?: boolean)}
+	<FormSection title="Format">
+		<FormSelect label="Input" bind:value={inputFormat} options={JSON_FORMAT_OPTIONS} />
+		{#if showOutput}
+			<FormSelect label="Output" bind:value={outputFormat} options={JSON_FORMAT_OPTIONS} />
+		{/if}
+	</FormSection>
+{/snippet}
+
+<ToolShell
+	layout="tabbed"
 	{tabs}
-	{activeTab}
+	activeTab={tabSync.activeTab}
 	ontabchange={handleTabChange}
 	valid={currentStats.valid}
 	error={currentStats.error}
@@ -109,63 +117,66 @@
 >
 	{#snippet statusContent()}
 		{#if liveStats}
-			{#if currentFormat && currentFormat !== 'json'}
-				<span class="rounded bg-primary/10 px-1.5 py-0.5 font-medium text-primary"
-					>{JSON_FORMAT_INFO[currentFormat].label}</span
-				>
-			{/if}
-			<span class="text-muted-foreground"
-				>Keys: <strong class="text-foreground">{liveStats.keys}</strong></span
-			>
-			<span class="text-muted-foreground"
-				>Values: <strong class="text-foreground">{liveStats.values}</strong></span
-			>
-			<span class="text-muted-foreground"
-				>Depth: <strong class="text-foreground">{liveStats.depth}</strong></span
-			>
-			<span class="text-muted-foreground"
-				>Size: <strong class="text-foreground">{liveStats.size}</strong></span
-			>
+			<span class="rounded bg-primary/10 px-1.5 py-0.5 text-2xs font-medium text-primary">
+				{JSON_FORMAT_INFO[inputFormat].label} → {JSON_FORMAT_INFO[outputFormat].label}
+			</span>
+			<StatItem label="Keys" value={liveStats.keys} />
+			<StatItem label="Values" value={liveStats.values} />
+			<StatItem label="Depth" value={liveStats.depth} />
+			<StatItem label="Size" value={liveStats.size} />
 		{/if}
 	{/snippet}
 
 	{#snippet tabContent(tab)}
 		{#if tab === 'format'}
 			<FormatTab
+				{formatSection}
+				{inputFormat}
+				{outputFormat}
 				input={sharedInput}
 				onInputChange={setSharedInput}
 				onStatsChange={handleStatsChange('format')}
 			/>
 		{:else if tab === 'query'}
 			<QueryTab
+				{formatSection}
+				{inputFormat}
 				input={sharedInput}
 				onInputChange={setSharedInput}
 				onStatsChange={handleStatsChange('query')}
 			/>
 		{:else if tab === 'compare'}
 			<CompareTab
+				{formatSection}
+				{inputFormat}
 				input={sharedInput}
 				onInputChange={setSharedInput}
 				onStatsChange={handleStatsChange('compare')}
 			/>
 		{:else if tab === 'convert'}
 			<ConvertTab
+				{formatSection}
+				{inputFormat}
 				input={sharedInput}
 				onInputChange={setSharedInput}
 				onStatsChange={handleStatsChange('convert')}
 			/>
 		{:else if tab === 'schema'}
 			<SchemaTab
+				{formatSection}
+				{inputFormat}
 				input={sharedInput}
 				onInputChange={setSharedInput}
 				onStatsChange={handleStatsChange('schema')}
 			/>
 		{:else if tab === 'generate'}
 			<GenerateTab
+				{formatSection}
+				{inputFormat}
 				input={sharedInput}
 				onInputChange={setSharedInput}
 				onStatsChange={handleStatsChange('generate')}
 			/>
 		{/if}
 	{/snippet}
-</PageLayout>
+</ToolShell>

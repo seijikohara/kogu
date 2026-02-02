@@ -15,19 +15,19 @@
 	const statusConfig = {
 		success: {
 			defaultIcon: Check,
-			className: 'text-green-600 dark:text-green-400',
+			className: 'text-success',
 		},
 		warning: {
 			defaultIcon: AlertTriangle,
-			className: 'text-amber-600 dark:text-amber-400',
+			className: 'text-warning',
 		},
 		error: {
 			defaultIcon: X,
-			className: 'text-red-600 dark:text-red-400',
+			className: 'text-destructive',
 		},
 		info: {
 			defaultIcon: Info,
-			className: 'text-blue-600 dark:text-blue-400',
+			className: 'text-info',
 		},
 	};
 

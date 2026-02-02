@@ -1,4 +1,5 @@
 <script lang="ts">
+	import type { Snippet } from 'svelte';
 	import { FileCheck, Wand2 } from '@lucide/svelte';
 	import Ajv from 'ajv';
 	import addFormats from 'ajv-formats';
@@ -8,21 +9,23 @@
 	import SplitPane from '$lib/components/layout/split-pane.svelte';
 	import { OptionsPanel } from '$lib/components/panel';
 	import { Button } from '$lib/components/ui/button/index.js';
-	import { inferJsonSchema, type JsonInputFormat, validateJson } from '$lib/services/formatters';
+	import {
+		inferJsonSchema,
+		type JsonInputFormat,
+		parseJson,
+		validateJson,
+	} from '$lib/services/formatters';
 	import { copyToClipboard, downloadTextFile, pasteFromClipboard } from '../utils.js';
 
 	interface Props {
+		readonly formatSection?: Snippet<[boolean?]>;
+		readonly inputFormat: JsonInputFormat;
 		input: string;
 		onInputChange: (value: string) => void;
-		onStatsChange?: (stats: {
-			input: string;
-			valid: boolean | null;
-			error: string;
-			format: JsonInputFormat | null;
-		}) => void;
+		onStatsChange?: (stats: { input: string; valid: boolean | null; error: string }) => void;
 	}
 
-	let { input, onInputChange, onStatsChange }: Props = $props();
+	let { formatSection, inputFormat, input, onInputChange, onStatsChange }: Props = $props();
 
 	// State
 	let schemaDefinition = $state('');
@@ -41,10 +44,9 @@
 
 	// Validation
 	const inputValidation = $derived.by(() => {
-		if (!input.trim())
-			return { valid: null as boolean | null, format: null as JsonInputFormat | null };
-		const result = validateJson(input);
-		return { valid: result.valid, format: result.detectedFormat };
+		if (!input.trim()) return { valid: null as boolean | null };
+		const result = validateJson(input, inputFormat);
+		return { valid: result.valid };
 	});
 
 	// Inferred schema
@@ -53,7 +55,7 @@
 			return '';
 		}
 		try {
-			return JSON.stringify(inferJsonSchema(input), null, 2);
+			return JSON.stringify(inferJsonSchema(input, inputFormat), null, 2);
 		} catch {
 			return '';
 		}
@@ -73,7 +75,6 @@
 			input,
 			valid: inputValidation.valid,
 			error: combinedError,
-			format: inputValidation.format,
 		});
 	});
 
@@ -84,7 +85,7 @@
 			return;
 		}
 		try {
-			const data = JSON.parse(input);
+			const data = parseJson(input, inputFormat);
 			const schema = JSON.parse(schemaDefinition);
 			const ajv = new Ajv({
 				allErrors: schemaAllErrors,
@@ -155,6 +156,7 @@
 		onclose={() => (showOptions = false)}
 		onopen={() => (showOptions = true)}
 	>
+		{@render formatSection?.()}
 		<FormSection title="Actions">
 			<div class="flex flex-col gap-1.5">
 				<Button
@@ -181,7 +183,7 @@
 			{#if schemaValidationResult}
 				<div
 					class="mt-2 rounded-md p-2 text-xs {schemaValidationResult.valid
-						? 'bg-green-500/10 text-green-600 dark:text-green-400'
+						? 'bg-success/10 text-success'
 						: 'bg-destructive/10 text-destructive'}"
 				>
 					{schemaValidationResult.valid
@@ -205,7 +207,7 @@
 		</FormSection>
 
 		<FormSection title="Quick Help">
-			<div class="space-y-1.5 rounded-md bg-muted/50 p-2 text-[11px] text-muted-foreground">
+			<div class="space-y-1.5 rounded-md bg-muted/50 p-2 text-xs text-muted-foreground">
 				<p><strong class="text-foreground">Validate:</strong> Check JSON against schema</p>
 				<p><strong class="text-foreground">Infer:</strong> Generate schema from JSON</p>
 				<p><strong class="text-foreground">Strict:</strong> Enforce JSON Schema draft rules</p>

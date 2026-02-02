@@ -2,13 +2,13 @@
  * JSON Stats - Calculate Statistics
  */
 
-import type { JsonStats } from '../types.js';
+import type { JsonInputFormat, JsonStats } from '../types.js';
 import { calculateStats, formatBytes } from '../utils.js';
-import { parseJsonAuto } from './parser.js';
+import { parseJson, parseJsonAuto } from './parser.js';
 
 /** Calculate JSON statistics */
-export const calculateJsonStats = (input: string): JsonStats => {
-	const { data } = parseJsonAuto(input);
+export const calculateJsonStats = (input: string, format?: JsonInputFormat): JsonStats => {
+	const data = format ? parseJson(input, format) : parseJsonAuto(input).data;
 	const stats = calculateStats(data);
 	return {
 		keys: stats.keys,

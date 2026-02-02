@@ -3,8 +3,8 @@
  */
 
 import { defaultJsonDiffOptions } from '../constants.js';
-import type { DiffItem, JsonDiffOptions } from '../types.js';
-import { parseJsonAuto } from './parser.js';
+import type { DiffItem, JsonDiffOptions, JsonInputFormat } from '../types.js';
+import { parseJson, parseJsonAuto } from './parser.js';
 
 // ============================================================================
 // Helper Functions
@@ -153,8 +153,10 @@ const findDifferences = (
 export const findJsonDifferences = (
 	json1: string,
 	json2: string,
-	options: JsonDiffOptions = {}
+	options: JsonDiffOptions = {},
+	format?: JsonInputFormat
 ): DiffItem[] => {
+	const parse = (s: string) => (format ? parseJson(s, format) : parseJsonAuto(s).data);
 	const opts = { ...defaultJsonDiffOptions, ...options };
-	return findDifferences(parseJsonAuto(json1).data, parseJsonAuto(json2).data, '$', opts);
+	return findDifferences(parse(json1), parse(json2), '$', opts);
 };

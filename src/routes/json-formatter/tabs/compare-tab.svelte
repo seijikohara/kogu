@@ -1,4 +1,5 @@
 <script lang="ts">
+	import type { Snippet } from 'svelte';
 	import { FormCheckbox } from '$lib/components/form';
 	import { CompareTab } from '$lib/components/template';
 	import { Input } from '$lib/components/ui/input/index.js';
@@ -13,17 +14,14 @@
 	import { pasteFromClipboard } from '../utils.js';
 
 	interface Props {
+		readonly formatSection?: Snippet<[boolean?]>;
+		readonly inputFormat: JsonInputFormat;
 		input: string;
 		onInputChange: (value: string) => void;
-		onStatsChange?: (stats: {
-			input: string;
-			valid: boolean | null;
-			error: string;
-			format: JsonInputFormat | null;
-		}) => void;
+		onStatsChange?: (stats: { input: string; valid: boolean | null; error: string }) => void;
 	}
 
-	let { input, onInputChange, onStatsChange }: Props = $props();
+	let { formatSection, inputFormat, input, onInputChange, onStatsChange }: Props = $props();
 
 	// Options state
 	let compareIgnoreWhitespace = $state(false);
@@ -56,13 +54,13 @@
 	// Validation function
 	const validate = (input: string) => {
 		if (!input.trim()) return { valid: null as boolean | null };
-		const result = validateJson(input);
+		const result = validateJson(input, inputFormat);
 		return { valid: result.valid };
 	};
 
 	// Compare function
 	const compare = (input1: string, input2: string): GenericDiffItem[] => {
-		return findJsonDifferences(input1, input2, diffOptions);
+		return findJsonDifferences(input1, input2, diffOptions, inputFormat);
 	};
 
 	// Types for line search state
@@ -167,12 +165,9 @@
 		return result.found;
 	};
 
-	// Stats handler wrapper to include format
+	// Stats handler
 	const handleStatsChange = (stats: { input: string; valid: boolean | null; error: string }) => {
-		onStatsChange?.({
-			...stats,
-			format: null,
-		});
+		onStatsChange?.(stats);
 	};
 </script>
 
@@ -187,6 +182,7 @@
 	onStatsChange={handleStatsChange}
 	{findLineForPath}
 	{pasteFromClipboard}
+	{formatSection}
 >
 	{#snippet comparisonOptions()}
 		<FormCheckbox label="Deep compare" bind:checked={compareDeepCompare} />
@@ -199,9 +195,9 @@
 		<FormCheckbox label="Ignore numeric type" bind:checked={compareIgnoreNumericType} />
 		<FormCheckbox label="Ignore empty values" bind:checked={compareIgnoreEmpty} />
 		<div class="space-y-1 pt-1">
-			<Label class="text-[10px] uppercase tracking-wide text-muted-foreground">Ignore Keys</Label>
+			<Label class="text-2xs uppercase tracking-wide text-muted-foreground">Ignore Keys</Label>
 			<Input bind:value={compareIgnoreKeys} placeholder="key1, key2, key3" class="h-7 text-xs" />
-			<span class="text-[10px] text-muted-foreground">Comma-separated list of keys to ignore</span>
+			<span class="text-2xs text-muted-foreground">Comma-separated list of keys to ignore</span>
 		</div>
 	{/snippet}
 </CompareTab>

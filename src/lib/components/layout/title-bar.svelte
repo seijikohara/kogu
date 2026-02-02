@@ -77,7 +77,7 @@
 				bind:ref={inputElement}
 				type="text"
 				placeholder="Search pages and tabs..."
-				class="h-6 pl-8 pr-3 text-xs"
+				class="h-6 rounded-lg bg-surface-2 pl-8 pr-3 text-xs"
 				bind:value={searchQuery}
 				onfocus={openSearch}
 				onblur={() => setTimeout(closeSearch, 150)}
@@ -113,7 +113,7 @@
 									<span class="truncate font-medium">{result.title}</span>
 									{#if result.type === 'tab'}
 										<span
-											class="shrink-0 rounded bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground"
+											class="shrink-0 rounded bg-muted px-1.5 py-0.5 text-2xs text-muted-foreground"
 											>Tab</span
 										>
 									{/if}

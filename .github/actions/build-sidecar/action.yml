@@ -32,28 +32,43 @@ runs:
 
         mkdir -p binaries
 
-        # Create placeholder first (Tauri build.rs requires it)
-        touch "binaries/worker-${TARGET}"
-        chmod +x "binaries/worker-${TARGET}"
+        # Create ALL placeholders first (Tauri build.rs requires all sidecar paths to exist)
+        for BIN in worker net-scanner; do
+          touch "binaries/${BIN}-${TARGET}"
+          chmod +x "binaries/${BIN}-${TARGET}"
+        done
 
-        # Build sidecar
+        # Build all sidecar binaries
         if [ "$USE_TARGET_FLAG" = true ]; then
           if [ "$PROFILE" = "release" ]; then
-            cargo build --bin worker --release --target "$TARGET"
-            cp "target/${TARGET}/release/worker" "binaries/worker-${TARGET}"
+            cargo build --bin worker --bin net-scanner --release --target "$TARGET"
           else
-            cargo build --bin worker --target "$TARGET"
-            cp "target/${TARGET}/debug/worker" "binaries/worker-${TARGET}"
+            cargo build --bin worker --bin net-scanner --target "$TARGET"
           fi
         else
           if [ "$PROFILE" = "release" ]; then
-            cargo build --bin worker --release
-            cp "target/release/worker" "binaries/worker-${TARGET}"
+            cargo build --bin worker --bin net-scanner --release
           else
-            cargo build --bin worker
-            cp "target/debug/worker" "binaries/worker-${TARGET}"
+            cargo build --bin worker --bin net-scanner
           fi
         fi
+
+        # Copy built binaries to sidecar path
+        for BIN in worker net-scanner; do
+          if [ "$USE_TARGET_FLAG" = true ]; then
+            if [ "$PROFILE" = "release" ]; then
+              cp "target/${TARGET}/release/${BIN}" "binaries/${BIN}-${TARGET}"
+            else
+              cp "target/${TARGET}/debug/${BIN}" "binaries/${BIN}-${TARGET}"
+            fi
+          else
+            if [ "$PROFILE" = "release" ]; then
+              cp "target/release/${BIN}" "binaries/${BIN}-${TARGET}"
+            else
+              cp "target/debug/${BIN}" "binaries/${BIN}-${TARGET}"
+            fi
+          fi
+        done
 
     - name: Build sidecar (Windows)
       if: runner.os == 'Windows'
@@ -73,24 +88,39 @@ runs:
 
         New-Item -ItemType Directory -Force -Path binaries | Out-Null
 
-        # Create placeholder first (Tauri build.rs requires it)
-        New-Item -ItemType File -Force -Path "binaries/worker-${Target}.exe" | Out-Null
+        # Create ALL placeholders first (Tauri build.rs requires all sidecar paths to exist)
+        foreach ($Bin in @("worker", "net-scanner")) {
+          New-Item -ItemType File -Force -Path "binaries/${Bin}-${Target}.exe" | Out-Null
+        }
 
-        # Build sidecar
+        # Build all sidecar binaries
         if ($UseTargetFlag) {
           if ($Profile -eq "release") {
-            cargo build --bin worker --release --target $Target
-            Copy-Item "target/${Target}/release/worker.exe" "binaries/worker-${Target}.exe" -Force
+            cargo build --bin worker --bin net-scanner --release --target $Target
           } else {
-            cargo build --bin worker --target $Target
-            Copy-Item "target/${Target}/debug/worker.exe" "binaries/worker-${Target}.exe" -Force
+            cargo build --bin worker --bin net-scanner --target $Target
           }
         } else {
           if ($Profile -eq "release") {
-            cargo build --bin worker --release
-            Copy-Item "target/release/worker.exe" "binaries/worker-${Target}.exe" -Force
+            cargo build --bin worker --bin net-scanner --release
           } else {
-            cargo build --bin worker
-            Copy-Item "target/debug/worker.exe" "binaries/worker-${Target}.exe" -Force
+            cargo build --bin worker --bin net-scanner
+          }
+        }
+
+        # Copy built binaries to sidecar path
+        foreach ($Bin in @("worker", "net-scanner")) {
+          if ($UseTargetFlag) {
+            if ($Profile -eq "release") {
+              Copy-Item "target/${Target}/release/${Bin}.exe" "binaries/${Bin}-${Target}.exe" -Force
+            } else {
+              Copy-Item "target/${Target}/debug/${Bin}.exe" "binaries/${Bin}-${Target}.exe" -Force
+            }
+          } else {
+            if ($Profile -eq "release") {
+              Copy-Item "target/release/${Bin}.exe" "binaries/${Bin}-${Target}.exe" -Force
+            } else {
+              Copy-Item "target/debug/${Bin}.exe" "binaries/${Bin}-${Target}.exe" -Force
+            }
           }
         }

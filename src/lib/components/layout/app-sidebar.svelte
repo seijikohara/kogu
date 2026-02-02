@@ -16,7 +16,7 @@
 
 <Sidebar.Root collapsible="icon">
 	<!-- Header with Logo -->
-	<Sidebar.Header>
+	<Sidebar.Header class="border-b border-sidebar-border/50 pb-2">
 		<Sidebar.Menu>
 			<Sidebar.MenuItem>
 				<Sidebar.MenuButton
@@ -48,9 +48,13 @@
 					<Sidebar.GroupLabel
 						class="group/label text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground p-0"
 					>
-						<Collapsible.Trigger class="flex w-full items-center gap-2 px-2 py-1.5">
-							<CategoryIcon class="size-4" />
-							<span class="flex-1 text-left">{category.label}</span>
+						<Collapsible.Trigger
+							class="flex w-full items-center gap-2 border-l-2 {category.borderClass} px-2 py-1.5"
+						>
+							<CategoryIcon class="size-4 opacity-70" />
+							<span class="flex-1 text-left text-xs font-semibold uppercase tracking-wider"
+								>{category.label}</span
+							>
 							<ChevronRight
 								class="size-4 transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90"
 							/>
@@ -83,7 +87,7 @@
 	</Sidebar.Content>
 
 	<!-- Footer with Theme Toggle and Collapse Button -->
-	<Sidebar.Footer>
+	<Sidebar.Footer class="border-t border-sidebar-border py-1.5">
 		<Sidebar.Menu>
 			<Sidebar.MenuItem>
 				<Sidebar.MenuButton onclick={toggleMode} tooltipContent="Toggle theme">

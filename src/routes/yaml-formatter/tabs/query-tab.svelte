@@ -138,8 +138,7 @@
 	>
 		<FormSection title="JSONPath Query">
 			<div class="space-y-1">
-				<Label class="text-[10px] uppercase tracking-wide text-muted-foreground"
-					>Path Expression</Label
+				<Label class="text-2xs uppercase tracking-wide text-muted-foreground">Path Expression</Label
 				>
 				<Input bind:value={queryPath} placeholder="$.path.to.value" class="h-7 font-mono text-xs" />
 			</div>
@@ -177,9 +176,7 @@
 		</FormSection>
 
 		<FormSection title="JSONPath Examples">
-			<div
-				class="space-y-1.5 rounded-md bg-muted/50 p-2 font-mono text-[11px] text-muted-foreground"
-			>
+			<div class="space-y-1.5 rounded-md bg-muted/50 p-2 font-mono text-xs text-muted-foreground">
 				<div class="truncate" title="All items">$.store.book[*]</div>
 				<div class="truncate" title="All authors">$..author</div>
 				<div class="truncate" title="Items with condition">$.store.book[?(@.price&lt;10)]</div>

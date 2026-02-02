@@ -195,7 +195,7 @@
 			{#if schemaValidationResult}
 				<div
 					class="mt-2 rounded-md p-2 text-xs {schemaValidationResult.valid
-						? 'bg-green-500/10 text-green-600 dark:text-green-400'
+						? 'bg-success/10 text-success'
 						: 'bg-destructive/10 text-destructive'}"
 				>
 					{schemaValidationResult.valid
@@ -240,7 +240,7 @@
 		</FormSection>
 
 		<FormSection title="Quick Help">
-			<div class="space-y-1.5 rounded-md bg-muted/50 p-2 text-[11px] text-muted-foreground">
+			<div class="space-y-1.5 rounded-md bg-muted/50 p-2 text-xs text-muted-foreground">
 				<p><strong class="text-foreground">Validate:</strong> Check YAML against JSON Schema</p>
 				<p><strong class="text-foreground">Infer:</strong> Generate schema from YAML</p>
 				<p><strong class="text-foreground">Strict:</strong> Enforce JSON Schema draft rules</p>

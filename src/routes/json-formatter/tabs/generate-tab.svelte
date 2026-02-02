@@ -1,4 +1,5 @@
 <script lang="ts">
+	import type { Snippet } from 'svelte';
 	import { CodeEditor } from '$lib/components/editor';
 	import { FormCheckbox, FormSection, FormSelect } from '$lib/components/form';
 	import SplitPane from '$lib/components/layout/split-pane.svelte';
@@ -26,21 +27,18 @@
 		type TargetLanguage,
 		type TypeScriptOptions,
 	} from '$lib/services/code-generators/index.js';
-	import { type JsonInputFormat, validateJson } from '$lib/services/formatters';
+	import { type JsonInputFormat, parseJson, validateJson } from '$lib/services/formatters';
 	import { copyToClipboard, downloadTextFile, pasteFromClipboard } from '../utils.js';
 
 	interface Props {
+		readonly formatSection?: Snippet<[boolean?]>;
+		readonly inputFormat: JsonInputFormat;
 		input: string;
 		onInputChange: (value: string) => void;
-		onStatsChange?: (stats: {
-			input: string;
-			valid: boolean | null;
-			error: string;
-			format: JsonInputFormat | null;
-		}) => void;
+		onStatsChange?: (stats: { input: string; valid: boolean | null; error: string }) => void;
 	}
 
-	let { input, onInputChange, onStatsChange }: Props = $props();
+	let { formatSection, inputFormat, input, onInputChange, onStatsChange }: Props = $props();
 
 	// State
 	let generateLanguage = $state<TargetLanguage>('typescript');
@@ -132,10 +130,9 @@
 
 	// Validation
 	const inputValidation = $derived.by(() => {
-		if (!input.trim())
-			return { valid: null as boolean | null, format: null as JsonInputFormat | null };
-		const result = validateJson(input);
-		return { valid: result.valid, format: result.detectedFormat };
+		if (!input.trim()) return { valid: null as boolean | null };
+		const result = validateJson(input, inputFormat);
+		return { valid: result.valid };
 	});
 
 	// Get current language options
@@ -268,7 +265,7 @@
 	const generateResult = $derived.by(() => {
 		if (!input.trim()) return { code: '', error: '' };
 		try {
-			const data = JSON.parse(input);
+			const data = parseJson(input, inputFormat);
 			const options = getCurrentLanguageOptions();
 			return { code: generateCode(data, generateLanguage, options), error: '' };
 		} catch (e) {
@@ -286,7 +283,6 @@
 			input,
 			valid: inputValidation.valid,
 			error: generateError,
-			format: inputValidation.format,
 		});
 	});
 
@@ -315,6 +311,7 @@
 		onclose={() => (showOptions = false)}
 		onopen={() => (showOptions = true)}
 	>
+		{@render formatSection?.()}
 		<FormSection title="Target Language">
 			<div class="grid grid-cols-2 gap-1">
 				{#each LANGUAGE_OPTIONS as lang}
@@ -333,7 +330,7 @@
 		{#if generateLanguage === 'typescript'}
 			<FormSection title="TypeScript Options">
 				<div class="space-y-1">
-					<Label class="text-[10px] uppercase tracking-wide text-muted-foreground"
+					<Label class="text-2xs uppercase tracking-wide text-muted-foreground"
 						>Root Type Name</Label
 					>
 					<Input bind:value={tsRootName} placeholder="Root" class="h-7 text-xs" />
@@ -349,7 +346,7 @@
 		{:else if generateLanguage === 'javascript'}
 			<FormSection title="JavaScript Options">
 				<div class="space-y-1">
-					<Label class="text-[10px] uppercase tracking-wide text-muted-foreground"
+					<Label class="text-2xs uppercase tracking-wide text-muted-foreground"
 						>Root Type Name</Label
 					>
 					<Input bind:value={jsRootName} placeholder="Root" class="h-7 text-xs" />
@@ -366,7 +363,7 @@
 		{:else if generateLanguage === 'go'}
 			<FormSection title="Go Options">
 				<div class="space-y-1">
-					<Label class="text-[10px] uppercase tracking-wide text-muted-foreground"
+					<Label class="text-2xs uppercase tracking-wide text-muted-foreground"
 						>Root Type Name</Label
 					>
 					<Input bind:value={goRootName} placeholder="Root" class="h-7 text-xs" />
@@ -381,7 +378,7 @@
 		{:else if generateLanguage === 'python'}
 			<FormSection title="Python Options">
 				<div class="space-y-1">
-					<Label class="text-[10px] uppercase tracking-wide text-muted-foreground"
+					<Label class="text-2xs uppercase tracking-wide text-muted-foreground"
 						>Root Type Name</Label
 					>
 					<Input bind:value={pyRootName} placeholder="Root" class="h-7 text-xs" />
@@ -407,7 +404,7 @@
 		{:else if generateLanguage === 'rust'}
 			<FormSection title="Rust Options">
 				<div class="space-y-1">
-					<Label class="text-[10px] uppercase tracking-wide text-muted-foreground"
+					<Label class="text-2xs uppercase tracking-wide text-muted-foreground"
 						>Root Type Name</Label
 					>
 					<Input bind:value={rsRootName} placeholder="Root" class="h-7 text-xs" />
@@ -424,15 +421,13 @@
 		{:else if generateLanguage === 'java'}
 			<FormSection title="Java Options">
 				<div class="space-y-1">
-					<Label class="text-[10px] uppercase tracking-wide text-muted-foreground"
+					<Label class="text-2xs uppercase tracking-wide text-muted-foreground"
 						>Root Type Name</Label
 					>
 					<Input bind:value={javaRootName} placeholder="Root" class="h-7 text-xs" />
 				</div>
 				<div class="space-y-1">
-					<Label class="text-[10px] uppercase tracking-wide text-muted-foreground"
-						>Package Name</Label
-					>
+					<Label class="text-2xs uppercase tracking-wide text-muted-foreground">Package Name</Label>
 					<Input bind:value={javaPackageName} placeholder="com.example" class="h-7 text-xs" />
 				</div>
 				<FormSelect
@@ -460,7 +455,7 @@
 		{:else if generateLanguage === 'csharp'}
 			<FormSection title="C# Options">
 				<div class="space-y-1">
-					<Label class="text-[10px] uppercase tracking-wide text-muted-foreground"
+					<Label class="text-2xs uppercase tracking-wide text-muted-foreground"
 						>Root Type Name</Label
 					>
 					<Input bind:value={csRootName} placeholder="Root" class="h-7 text-xs" />
@@ -480,7 +475,7 @@
 		{:else if generateLanguage === 'kotlin'}
 			<FormSection title="Kotlin Options">
 				<div class="space-y-1">
-					<Label class="text-[10px] uppercase tracking-wide text-muted-foreground"
+					<Label class="text-2xs uppercase tracking-wide text-muted-foreground"
 						>Root Type Name</Label
 					>
 					<Input bind:value={ktRootName} placeholder="Root" class="h-7 text-xs" />
@@ -499,7 +494,7 @@
 		{:else if generateLanguage === 'swift'}
 			<FormSection title="Swift Options">
 				<div class="space-y-1">
-					<Label class="text-[10px] uppercase tracking-wide text-muted-foreground"
+					<Label class="text-2xs uppercase tracking-wide text-muted-foreground"
 						>Root Type Name</Label
 					>
 					<Input bind:value={swiftRootName} placeholder="Root" class="h-7 text-xs" />
@@ -514,13 +509,13 @@
 		{:else if generateLanguage === 'php'}
 			<FormSection title="PHP Options">
 				<div class="space-y-1">
-					<Label class="text-[10px] uppercase tracking-wide text-muted-foreground"
+					<Label class="text-2xs uppercase tracking-wide text-muted-foreground"
 						>Root Type Name</Label
 					>
 					<Input bind:value={phpRootName} placeholder="Root" class="h-7 text-xs" />
 				</div>
 				<div class="space-y-1">
-					<Label class="text-[10px] uppercase tracking-wide text-muted-foreground">Namespace</Label>
+					<Label class="text-2xs uppercase tracking-wide text-muted-foreground">Namespace</Label>
 					<Input bind:value={phpNamespace} placeholder="App\\Models" class="h-7 text-xs" />
 				</div>
 				<div class="space-y-1.5 pt-1">

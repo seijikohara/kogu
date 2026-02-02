@@ -14,10 +14,12 @@
 
 <Collapsible.Root {open} class="group">
 	<Collapsible.Trigger
-		class="flex h-8 w-full items-center justify-between px-3 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground"
+		class="flex h-8 w-full items-center justify-between px-3.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground"
 	>
 		{title}
-		<ChevronDown class="h-3.5 w-3.5 transition-transform group-data-[state=closed]:-rotate-90" />
+		<ChevronDown
+			class="h-3.5 w-3.5 text-muted-foreground/50 transition-transform group-data-[state=closed]:-rotate-90"
+		/>
 	</Collapsible.Trigger>
 	<Collapsible.Content class="space-y-2 px-3 pb-2">
 		{@render children?.()}

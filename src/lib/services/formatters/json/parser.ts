@@ -209,5 +209,11 @@ export const validateJson = (
 export const convertJsonFormat = (
 	input: string,
 	targetFormat: JsonOutputFormat,
-	options: JsonStringifyOptions = {}
-): string => stringifyJson(parseJsonAuto(input).data, targetFormat, options);
+	options: JsonStringifyOptions = {},
+	format?: JsonInputFormat
+): string =>
+	stringifyJson(
+		format ? parseJson(input, format) : parseJsonAuto(input).data,
+		targetFormat,
+		options
+	);

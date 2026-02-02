@@ -3,7 +3,7 @@
 	import { readText } from '@tauri-apps/plugin-clipboard-manager';
 	import { CodeEditor } from '$lib/components/editor';
 	import { FormCheckbox, FormInfo, FormMode, FormSection, FormSlider } from '$lib/components/form';
-	import { PageLayout } from '$lib/components/layout';
+	import { ToolShell } from '$lib/components/shell';
 	import {
 		areTextsIdentical,
 		computeEnhancedDiff,
@@ -211,14 +211,14 @@
 	<title>Diff Viewer - Kogu</title>
 </svelte:head>
 
-<PageLayout {valid} bind:showOptions>
+<ToolShell {valid} bind:showRail={showOptions}>
 	{#snippet statusContent()}
 		{#if stats}
-			<span class="flex items-center gap-1 text-green-600 dark:text-green-400">
+			<span class="flex items-center gap-1 text-success">
 				<Plus class="h-3 w-3" />
 				<strong>{stats.addedLines}</strong>
 			</span>
-			<span class="flex items-center gap-1 text-red-600 dark:text-red-400">
+			<span class="flex items-center gap-1 text-destructive">
 				<Minus class="h-3 w-3" />
 				<strong>{stats.removedLines}</strong>
 			</span>
@@ -249,7 +249,7 @@
 		{/if}
 	{/snippet}
 
-	{#snippet options()}
+	{#snippet rail()}
 		<FormSection title="View">
 			<FormMode
 				value={viewMode}
@@ -297,11 +297,11 @@
 					{#if showInlineDiff}
 						<div class="mt-2 border-t pt-2">
 							<div class="flex items-center gap-2">
-								<span class="inline-block rounded-sm bg-red-500/40 px-1 text-[10px]">abc</span>
+								<span class="inline-block rounded-sm bg-red-500/40 px-1 text-2xs">abc</span>
 								<span>Deleted chars</span>
 							</div>
 							<div class="flex items-center gap-2">
-								<span class="inline-block rounded-sm bg-green-500/40 px-1 text-[10px]">xyz</span>
+								<span class="inline-block rounded-sm bg-green-500/40 px-1 text-2xs">xyz</span>
 								<span>Added chars</span>
 							</div>
 						</div>
@@ -371,7 +371,7 @@
 							{#each enhancedDiff.hunks as hunk, hunkIdx}
 								<!-- Hunk Header (spans both sides) -->
 								<div
-									class="sticky top-0 z-10 flex min-h-7 items-center border-y bg-blue-500/10 px-3 text-xs font-semibold text-blue-600 dark:text-blue-400"
+									class="sticky top-0 z-10 flex min-h-7 items-center border-y bg-info/10 px-3 text-xs font-semibold text-info"
 								>
 									<span class="font-mono">{formatHunkHeader(hunk)}</span>
 								</div>
@@ -390,7 +390,7 @@
 											</span>
 											<!-- Symbol -->
 											<span
-												class={`w-6 shrink-0 select-none text-center text-xs font-bold ${line.type === 'delete' || line.type === 'modified' ? 'text-red-600 dark:text-red-400' : 'text-transparent'}`}
+												class={`w-6 shrink-0 select-none text-center text-xs font-bold ${line.type === 'delete' || line.type === 'modified' ? 'text-destructive' : 'text-transparent'}`}
 											>
 												{line.type === 'delete' || line.type === 'modified' ? '−' : ''}
 											</span>
@@ -425,7 +425,7 @@
 											</span>
 											<!-- Symbol -->
 											<span
-												class={`w-6 shrink-0 select-none text-center text-xs font-bold ${line.type === 'insert' || line.type === 'modified' ? 'text-green-600 dark:text-green-400' : 'text-transparent'}`}
+												class={`w-6 shrink-0 select-none text-center text-xs font-bold ${line.type === 'insert' || line.type === 'modified' ? 'text-success' : 'text-transparent'}`}
 											>
 												{line.type === 'insert' || line.type === 'modified' ? '+' : ''}
 											</span>
@@ -468,11 +468,9 @@
 								<div
 									class="mx-auto mb-3 flex h-16 w-16 items-center justify-center rounded-full bg-green-500/20"
 								>
-									<Equal class="h-8 w-8 text-green-600 dark:text-green-400" />
+									<Equal class="h-8 w-8 text-success" />
 								</div>
-								<p class="text-lg font-medium text-green-600 dark:text-green-400">
-									Files are identical
-								</p>
+								<p class="text-lg font-medium text-success">Files are identical</p>
 								<p class="mt-1 text-xs text-muted-foreground">No differences found</p>
 							</div>
 						</div>
@@ -531,7 +529,7 @@
 								{#if line.kind === 'hunk-header'}
 									<!-- Hunk header (like @@ -1,4 +1,5 @@) -->
 									<div
-										class="sticky top-0 z-10 flex min-h-7 items-center border-y bg-blue-500/10 px-3 text-xs font-semibold text-blue-600 dark:text-blue-400"
+										class="sticky top-0 z-10 flex min-h-7 items-center border-y bg-info/10 px-3 text-xs font-semibold text-info"
 									>
 										<span class="font-mono">{line.content}</span>
 									</div>
@@ -588,11 +586,9 @@
 								<div
 									class="mx-auto mb-3 flex h-16 w-16 items-center justify-center rounded-full bg-green-500/20"
 								>
-									<Equal class="h-8 w-8 text-green-600 dark:text-green-400" />
+									<Equal class="h-8 w-8 text-success" />
 								</div>
-								<p class="text-lg font-medium text-green-600 dark:text-green-400">
-									Files are identical
-								</p>
+								<p class="text-lg font-medium text-success">Files are identical</p>
 								<p class="mt-1 text-xs text-muted-foreground">No differences found</p>
 							</div>
 						</div>
@@ -601,4 +597,4 @@
 			</div>
 		</div>
 	{/if}
-</PageLayout>
+</ToolShell>

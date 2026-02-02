@@ -4,7 +4,9 @@
 	import { CopyButton } from '$lib/components/action';
 	import { CodeEditor } from '$lib/components/editor';
 	import { FormCheckbox, FormInfo, FormSection, FormSelect } from '$lib/components/form';
-	import { PageLayout } from '$lib/components/layout';
+	import { SectionHeader } from '$lib/components/layout';
+	import { ToolShell } from '$lib/components/shell';
+	import { EmptyState, StatItem } from '$lib/components/status';
 	import {
 		CASE_DEFINITIONS,
 		type CaseResult,
@@ -94,22 +96,16 @@
 	<title>String Case Converter - Kogu</title>
 </svelte:head>
 
-<PageLayout valid={input.trim() ? true : null} bind:showOptions>
+<ToolShell valid={input.trim() ? true : null} bind:showRail={showOptions}>
 	{#snippet statusContent()}
 		{#if input.trim()}
-			<span class="text-muted-foreground">
-				<strong class="text-foreground">{stats.lines}</strong> lines
-			</span>
-			<span class="text-muted-foreground">
-				<strong class="text-foreground">{stats.words}</strong> words
-			</span>
-			<span class="text-muted-foreground">
-				<strong class="text-foreground">{stats.chars}</strong> chars
-			</span>
+			<StatItem label="lines" value={stats.lines} />
+			<StatItem label="words" value={stats.words} />
+			<StatItem label="chars" value={stats.chars} />
 		{/if}
 	{/snippet}
 
-	{#snippet options()}
+	{#snippet rail()}
 		<FormSection title="Line Processing">
 			<FormSelect
 				label="Sort Lines"
@@ -171,9 +167,7 @@
 
 		<!-- Case Results -->
 		<div class="flex flex-1 flex-col overflow-hidden">
-			<div class="flex h-9 shrink-0 items-center border-b bg-muted/30 px-3">
-				<span class="text-xs font-medium text-muted-foreground">Converted Results</span>
-			</div>
+			<SectionHeader title="Converted Results" />
 			<div class="flex-1 overflow-auto p-4">
 				{#if caseResults.length > 0}
 					<div class="space-y-2">
@@ -197,14 +191,9 @@
 						{/each}
 					</div>
 				{:else}
-					<div class="flex h-full items-center justify-center text-muted-foreground">
-						<div class="text-center">
-							<CaseSensitive class="mx-auto mb-2 h-12 w-12 opacity-50" />
-							<p class="text-sm">Enter text to see case conversions</p>
-						</div>
-					</div>
+					<EmptyState icon={CaseSensitive} title="Enter text to see case conversions" />
 				{/if}
 			</div>
 		</div>
 	</div>
-</PageLayout>
+</ToolShell>

@@ -47,13 +47,13 @@
 	<div class="flex items-center gap-4 border-t bg-muted/30 px-3 py-1.5 text-xs">
 		<span class="font-medium">{summary.total} difference{summary.total !== 1 ? 's' : ''}</span>
 		{#if summary.added > 0}
-			<span class="flex items-center gap-1 text-green-600 dark:text-green-400">
+			<span class="flex items-center gap-1 text-success">
 				<Plus class="h-3 w-3" />
 				{summary.added}
 			</span>
 		{/if}
 		{#if summary.removed > 0}
-			<span class="flex items-center gap-1 text-red-600 dark:text-red-400">
+			<span class="flex items-center gap-1 text-destructive">
 				<Minus class="h-3 w-3" />
 				{summary.removed}
 			</span>
@@ -93,7 +93,7 @@
 	</div>
 {:else if checkIdentical && hasContent}
 	<div
-		class="flex h-8 items-center justify-center border-t bg-green-500/20 text-xs font-medium text-green-600 dark:text-green-400"
+		class="flex h-8 items-center justify-center border-t bg-green-500/20 text-xs font-medium text-success"
 	>
 		✓ Identical
 	</div>

@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { ArrowRightLeft, Code2, FileCheck, GitCompare, Play, Search } from '@lucide/svelte';
-	import { PageLayout } from '$lib/components/layout';
+	import { ToolShell } from '$lib/components/shell';
+	import { StatItem } from '$lib/components/status';
 	import { calculateYamlStats, type YamlStats } from '$lib/services/formatters';
 	import { useTabSync } from '$lib/utils';
 	import {
@@ -27,14 +28,14 @@
 
 	const tabIds = tabs.map((t) => t.id);
 
-	// Tab sync with URL
-	const { activeTab, setActiveTab } = useTabSync({
+	// Tab sync with URL (keep as object reference to preserve reactivity)
+	const tabSync = useTabSync({
 		tabs: tabIds,
 		defaultTab: 'format',
 	});
 
-	// Type-safe tab change handler for PageLayout
-	const handleTabChange = (tab: string) => setActiveTab(tab as TabType);
+	// Type-safe tab change handler for ToolShell
+	const handleTabChange = (tab: string) => tabSync.setActiveTab(tab as TabType);
 
 	// Shared input across all tabs
 	let sharedInput = $state('');
@@ -59,7 +60,7 @@
 	});
 
 	// Current tab stats
-	const currentStats = $derived(tabStats[activeTab as TabType]);
+	const currentStats = $derived(tabStats[tabSync.activeTab as TabType]);
 
 	// Stats handler
 	const handleStatsChange =
@@ -84,10 +85,10 @@
 	<title>YAML Formatter - Kogu</title>
 </svelte:head>
 
-<PageLayout
-	title="YAML Formatter"
+<ToolShell
+	layout="tabbed"
 	{tabs}
-	{activeTab}
+	activeTab={tabSync.activeTab}
 	ontabchange={handleTabChange}
 	valid={currentStats.valid}
 	error={currentStats.error}
@@ -95,18 +96,10 @@
 >
 	{#snippet statusContent()}
 		{#if liveStats}
-			<span class="text-muted-foreground"
-				>Keys: <strong class="text-foreground">{liveStats.keys}</strong></span
-			>
-			<span class="text-muted-foreground"
-				>Values: <strong class="text-foreground">{liveStats.values}</strong></span
-			>
-			<span class="text-muted-foreground"
-				>Depth: <strong class="text-foreground">{liveStats.depth}</strong></span
-			>
-			<span class="text-muted-foreground"
-				>Size: <strong class="text-foreground">{liveStats.size}</strong></span
-			>
+			<StatItem label="Keys" value={liveStats.keys} />
+			<StatItem label="Values" value={liveStats.values} />
+			<StatItem label="Depth" value={liveStats.depth} />
+			<StatItem label="Size" value={liveStats.size} />
 		{/if}
 	{/snippet}
 
@@ -149,4 +142,4 @@
 			/>
 		{/if}
 	{/snippet}
-</PageLayout>
+</ToolShell>

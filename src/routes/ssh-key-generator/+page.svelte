@@ -3,8 +3,9 @@
 	import { toast } from 'svelte-sonner';
 	import { ActionButton, CopyButton } from '$lib/components/action';
 	import { FormCheckbox, FormInfo, FormInput, FormSection, FormSelect } from '$lib/components/form';
-	import { PageLayout } from '$lib/components/layout';
-	import { LoadingOverlay } from '$lib/components/status';
+	import { SectionHeader } from '$lib/components/layout';
+	import { ToolShell } from '$lib/components/shell';
+	import { EmptyState, ErrorDisplay, LoadingOverlay, StatItem } from '$lib/components/status';
 	import {
 		cancelWorkerOperation,
 		type CliAvailability,
@@ -142,19 +143,15 @@
 	<title>SSH Key Generator - Kogu</title>
 </svelte:head>
 
-<PageLayout valid={keyResult ? true : null} bind:showOptions>
+<ToolShell valid={keyResult ? true : null} bind:showRail={showOptions}>
 	{#snippet statusContent()}
 		{#if keyResult}
-			<span class="text-muted-foreground">
-				Algorithm: <strong class="text-foreground">{keyResult.algorithm}</strong>
-			</span>
-			<span class="text-muted-foreground">
-				Method: <strong class="text-foreground">{keyResult.method_used}</strong>
-			</span>
+			<StatItem label="Algorithm" value={keyResult.algorithm} />
+			<StatItem label="Method" value={keyResult.method_used} />
 		{/if}
 	{/snippet}
 
-	{#snippet options()}
+	{#snippet rail()}
 		<FormSection title="Algorithm">
 			<FormSelect
 				label="Type"
@@ -198,7 +195,7 @@
 				]}
 			/>
 			{#if cliAvailability?.ssh_keygen_version}
-				<p class="mt-1 text-[10px] text-muted-foreground">{cliAvailability.ssh_keygen_version}</p>
+				<p class="mt-1 text-2xs text-muted-foreground">{cliAvailability.ssh_keygen_version}</p>
 			{/if}
 		</FormSection>
 
@@ -273,9 +270,7 @@
 			elapsedTime={elapsedTimeDisplay}
 			oncancel={handleCancel}
 		/>
-		<div class="flex h-9 shrink-0 items-center border-b bg-muted/30 px-3">
-			<span class="text-xs font-medium text-muted-foreground">Generated Keys</span>
-		</div>
+		<SectionHeader title="Generated Keys" />
 
 		<div class="flex-1 overflow-auto p-4">
 			{#if keyResult}
@@ -303,7 +298,7 @@
 					<div class="rounded-lg border bg-muted/30 p-4">
 						<div class="mb-2 flex items-center justify-between">
 							<div class="flex items-center gap-2">
-								<Unlock class="h-4 w-4 text-green-600 dark:text-green-400" />
+								<Unlock class="h-4 w-4 text-success" />
 								<span class="text-sm font-medium">Public Key</span>
 							</div>
 							<CopyButton
@@ -322,12 +317,12 @@
 					</div>
 
 					<!-- Private Key -->
-					<div class="rounded-lg border border-amber-500/30 bg-amber-500/5 p-4">
+					<div class="rounded-lg border border-warning/30 bg-amber-500/5 p-4">
 						<div class="mb-2 flex items-center justify-between">
 							<div class="flex items-center gap-2">
-								<Lock class="h-4 w-4 text-amber-600 dark:text-amber-400" />
+								<Lock class="h-4 w-4 text-warning" />
 								<span class="text-sm font-medium">Private Key</span>
-								<span class="text-xs text-amber-600 dark:text-amber-400">(Keep Secret!)</span>
+								<span class="text-xs text-warning">(Keep Secret!)</span>
 							</div>
 							<CopyButton
 								text={keyResult.private_key}
@@ -339,7 +334,7 @@
 						</div>
 						<pre
 							class="max-h-48 overflow-auto whitespace-pre-wrap break-all rounded bg-muted p-2 font-mono text-xs">{keyResult.private_key}</pre>
-						<p class="mt-2 text-xs text-amber-600 dark:text-amber-400">
+						<p class="mt-2 text-xs text-warning">
 							Save this to <code
 								>~/.ssh/{algorithm === 'ed25519'
 									? 'id_ed25519'
@@ -373,19 +368,10 @@
 					{/if}
 				</div>
 			{:else if error}
-				<div class="flex h-full items-center justify-center">
-					<div class="rounded-lg border border-destructive/50 bg-destructive/10 p-6 text-center">
-						<p class="text-sm text-destructive">{error}</p>
-					</div>
-				</div>
+				<ErrorDisplay variant="centered" message={error} />
 			{:else}
-				<div class="flex h-full items-center justify-center text-muted-foreground">
-					<div class="text-center">
-						<Key class="mx-auto mb-2 h-12 w-12 opacity-50" />
-						<p class="text-sm">Configure options and generate an SSH key pair</p>
-					</div>
-				</div>
+				<EmptyState icon={Key} title="Configure options and generate an SSH key pair" />
 			{/if}
 		</div>
 	</div>
-</PageLayout>
+</ToolShell>
