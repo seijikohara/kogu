@@ -18,8 +18,10 @@ use pnet::datalink::{self, Channel as PnetChannel, NetworkInterface};
 use pnet::packet::arp::{ArpHardwareTypes, ArpOperations, ArpPacket, MutableArpPacket};
 use pnet::packet::ethernet::{EtherTypes, EthernetPacket, MutableEthernetPacket};
 use pnet::packet::ip::IpNextHeaderProtocols;
+#[cfg(unix)]
 use pnet::packet::tcp::{MutableTcpPacket, TcpFlags, TcpPacket};
 use pnet::packet::Packet;
+#[cfg(unix)]
 use pnet::transport::{
     self, tcp_packet_iter, TransportChannelType, TransportProtocol, TransportReceiver,
     TransportSender,
@@ -1360,6 +1362,7 @@ async fn tcp_connect_discovery(targets: &[IpAddr], options: &DiscoveryOptions) -
 // =============================================================================
 
 /// Default source port for TCP SYN scanning
+#[cfg(unix)]
 const TCP_SYN_SOURCE_PORT: u16 = 54321;
 
 /// Discover hosts using TCP SYN scan (half-open scan, requires privileges)
@@ -1514,13 +1517,11 @@ fn tcp_syn_scan_blocking(
 /// TCP SYN scan stub for Windows (not supported due to pnet limitations)
 #[cfg(windows)]
 fn tcp_syn_scan_blocking(
-    targets: &[Ipv4Addr],
+    _targets: &[Ipv4Addr],
     _ports: &[u16],
     _timeout: Duration,
 ) -> Result<(Vec<String>, Vec<String>), String> {
     // TCP SYN scan requires raw socket access which pnet doesn't fully support on Windows
-    // Return all targets as unreachable with an error message
-    let unreachable: Vec<String> = targets.iter().map(ToString::to_string).collect();
     Err("TCP SYN scan is not supported on Windows. Use TCP Connect scan instead.".to_string())
 }
 
@@ -1609,6 +1610,7 @@ fn receive_syn_responses(
 }
 
 /// Get the source IP address to use for a given target
+#[cfg(unix)]
 fn get_source_ip_for_target(target: Ipv4Addr) -> Ipv4Addr {
     // Find an appropriate interface for the target
     for iface in datalink::interfaces() {
@@ -1627,6 +1629,7 @@ fn get_source_ip_for_target(target: Ipv4Addr) -> Ipv4Addr {
 }
 
 /// Calculate TCP checksum with pseudo-header
+#[cfg(unix)]
 fn tcp_checksum(tcp: &TcpPacket<'_>, source: Ipv4Addr, dest: Ipv4Addr) -> u16 {
     // Create a pseudo-header for checksum calculation
     // The proper way is to use pnet's checksum utilities
