@@ -195,7 +195,7 @@
 				]}
 			/>
 			{#if cliAvailability?.ssh_keygen_version}
-				<p class="mt-1 text-2xs text-muted-foreground">{cliAvailability.ssh_keygen_version}</p>
+				<p class="mt-1 text-xs text-muted-foreground">{cliAvailability.ssh_keygen_version}</p>
 			{/if}
 		</FormSection>
 
@@ -277,7 +277,7 @@
 				<div class="space-y-4">
 					<!-- Fingerprint -->
 					{#if showFingerprint}
-						<div class="rounded-lg border bg-muted/30 p-4">
+						<div class="rounded-lg border bg-surface-3 p-4">
 							<div class="mb-2 flex items-center justify-between">
 								<span class="text-sm font-medium">Fingerprint (SHA-256)</span>
 								<CopyButton
@@ -295,7 +295,7 @@
 					{/if}
 
 					<!-- Public Key -->
-					<div class="rounded-lg border bg-muted/30 p-4">
+					<div class="rounded-lg border bg-surface-3 p-4">
 						<div class="mb-2 flex items-center justify-between">
 							<div class="flex items-center gap-2">
 								<Unlock class="h-4 w-4 text-success" />
@@ -317,7 +317,7 @@
 					</div>
 
 					<!-- Private Key -->
-					<div class="rounded-lg border border-warning/30 bg-amber-500/5 p-4">
+					<div class="rounded-lg border border-warning/30 bg-warning/5 p-4">
 						<div class="mb-2 flex items-center justify-between">
 							<div class="flex items-center gap-2">
 								<Lock class="h-4 w-4 text-warning" />
@@ -347,7 +347,7 @@
 
 					<!-- ssh-keygen Command -->
 					{#if showEquivalentCommand}
-						<div class="rounded-lg border bg-muted/30 p-4">
+						<div class="rounded-lg border bg-surface-3 p-4">
 							<div class="mb-2 flex items-center justify-between">
 								<div class="flex items-center gap-2">
 									<Terminal class="h-4 w-4" />

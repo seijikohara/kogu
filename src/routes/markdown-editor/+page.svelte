@@ -456,7 +456,7 @@ ${tocToMarkdown(toc)}
 
 	<div class="flex h-full flex-col overflow-hidden">
 		<!-- Toolbar -->
-		<div class="flex h-9 shrink-0 items-center gap-0.5 border-b bg-muted/30 px-2">
+		<div class="flex h-9 shrink-0 items-center gap-0.5 border-b bg-surface-3 px-2">
 			<!-- Text Formatting -->
 			{#each textFormatButtons as btn}
 				<Button
@@ -553,7 +553,7 @@ ${tocToMarkdown(toc)}
 				>
 					{#snippet actions()}
 						{#if activeEditor === 'monaco'}
-							<span class="ml-2 rounded bg-primary/20 px-1.5 py-0.5 text-2xs text-primary">
+							<span class="ml-2 rounded bg-primary/20 px-1.5 py-0.5 text-xs text-primary">
 								Active
 							</span>
 						{/if}
@@ -566,7 +566,7 @@ ${tocToMarkdown(toc)}
 						<ContextMenu.Trigger class="relative h-full">
 							{#if activeEditor === 'tiptap'}
 								<span
-									class="absolute right-3 top-2 z-10 rounded bg-primary/20 px-1.5 py-0.5 text-2xs text-primary"
+									class="absolute right-3 top-2 z-10 rounded bg-primary/20 px-1.5 py-0.5 text-xs text-primary"
 								>
 									Active
 								</span>
@@ -587,7 +587,7 @@ ${tocToMarkdown(toc)}
 					</ContextMenu.Root>
 				{:else}
 					<div class="flex h-full flex-col">
-						<div class="flex h-9 shrink-0 items-center border-b bg-muted/30 px-3">
+						<div class="flex h-9 shrink-0 items-center border-b bg-surface-3 px-3">
 							<Eye class="mr-2 h-3.5 w-3.5 text-muted-foreground" />
 							<span class="text-xs font-medium text-muted-foreground">Preview</span>
 						</div>

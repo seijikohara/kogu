@@ -37,7 +37,7 @@
 </script>
 
 <div class="space-y-1">
-	<Label class="text-xs font-medium text-muted-foreground">{label}</Label>
+	<Label class="text-sm font-medium">{label}</Label>
 	<div class="relative">
 		<Input
 			type={inputType}
@@ -45,7 +45,7 @@
 			{value}
 			oninput={handleInput}
 			{onblur}
-			class="h-8 text-sm {showToggle && type === 'password' ? 'pr-8' : ''}"
+			class="h-9 text-sm bg-background {showToggle && type === 'password' ? 'pr-9' : ''}"
 		/>
 		{#if showToggle && type === 'password'}
 			<button

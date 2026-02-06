@@ -113,7 +113,7 @@
 									<span class="truncate font-medium">{result.title}</span>
 									{#if result.type === 'tab'}
 										<span
-											class="shrink-0 rounded bg-muted px-1.5 py-0.5 text-2xs text-muted-foreground"
+											class="shrink-0 rounded bg-muted px-1.5 py-0.5 text-xs text-muted-foreground"
 											>Tab</span
 										>
 									{/if}

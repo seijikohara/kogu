@@ -36,9 +36,9 @@
 </script>
 
 <div class="space-y-1">
-	<Label class="text-xs font-medium text-muted-foreground">{label}</Label>
+	<Label class="text-sm font-medium">{label}</Label>
 	<Select.Root type="single" {value} onValueChange={handleChange}>
-		<Select.Trigger class="h-8 w-full text-sm">{display}</Select.Trigger>
+		<Select.Trigger class="h-9 w-full text-sm bg-background">{display}</Select.Trigger>
 		<Select.Content>
 			{#each normalizedOptions as opt}
 				<Select.Item value={opt.value}>{opt.label}</Select.Item>

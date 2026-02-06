@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <!-- Unique identifier for this launch daemon -->
+    <key>Label</key>
+    <string>io.github.seijikohara.kogu.NetScannerDaemon</string>
+
+    <!-- Path to the daemon binary (relative to app bundle) -->
+    <key>BundleProgram</key>
+    <string>Contents/Library/LaunchServices/NetScannerDaemon</string>
+
+    <!-- XPC Mach services this daemon provides -->
+    <key>MachServices</key>
+    <dict>
+        <key>io.github.seijikohara.kogu.scanner</key>
+        <true/>
+    </dict>
+
+    <!-- Associated application bundle identifiers -->
+    <key>AssociatedBundleIdentifiers</key>
+    <array>
+        <string>io.github.seijikohara.kogu</string>
+    </array>
+
+    <!-- Keep daemon alive -->
+    <key>KeepAlive</key>
+    <dict>
+        <key>SuccessfulExit</key>
+        <false/>
+    </dict>
+
+    <!-- Run as root for raw socket access -->
+    <key>UserName</key>
+    <string>root</string>
+
+    <!-- Process type for better system integration -->
+    <key>ProcessType</key>
+    <string>Interactive</string>
+</dict>
+</plist>

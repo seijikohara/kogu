@@ -5,255 +5,201 @@
 //! privileges via setuid (macOS) or setcap (Linux) without elevating the
 //! main application process.
 //!
-//! Supported operations:
-//! - Privilege check (test raw socket creation)
-//! - TCP SYN scan (host discovery via half-open connections)
+//! # Supported Operations
 //!
-//! Communication protocol:
-//! - Input: JSON on stdin (single line)
-//! - Output: JSON on stdout (single line)
+//! - Privilege check (raw socket creation test)
+//! - Host discovery (ICMP, ARP, TCP, mDNS, SSDP, UDP, WS-Discovery)
+//! - Port scanning with service detection
+//! - Local network interface enumeration
+//! - mDNS/Bonjour service discovery
+//! - Discovery method availability check
+//!
+//! # Communication Protocol
+//!
+//! - **Input**: Single JSON line on stdin ([`Request`])
+//! - **Output**: JSON Lines on stdout (each a [`Response`])
+//! - **Cancellation**: Main process kills this process
 
-use std::collections::HashSet;
-use std::io::{self, BufRead, Write};
-use std::net::{IpAddr, Ipv4Addr};
-use std::time::Duration;
+// Inherit clippy settings from library but allow print_stdout for JSON Lines output
+#![allow(clippy::print_stdout)]
 
+use std::io::{self, BufRead};
+use std::net::IpAddr;
+use std::sync::Arc;
+
+use kogu_lib::network::sidecar::{MethodAvailability, Request, Response};
+use kogu_lib::network::{
+    check_privileges as check_method_privilege, discover_hosts, discover_mdns_services,
+    get_available_methods, get_local_interfaces, scanner, DiscoveryEvent, DiscoveryEventSink,
+    ScanProgress, ScanProgressSink,
+};
 use pnet::packet::ip::IpNextHeaderProtocols;
-use pnet::packet::tcp::{ipv4_checksum, MutableTcpPacket, TcpFlags, TcpPacket};
-use pnet::packet::Packet;
 use pnet::transport::{self, TransportChannelType, TransportProtocol};
-use serde::{Deserialize, Serialize};
 
 // =============================================================================
-// Request Types
+// Stdout Event Sinks (JSON Lines streaming)
 // =============================================================================
 
-/// Top-level request envelope
-#[derive(Debug, Deserialize)]
-#[serde(tag = "type", rename_all = "snake_case")]
-enum Request {
-    /// Check if this binary has raw socket privileges
-    Check,
-    /// Perform TCP SYN scan
-    TcpSyn(TcpSynRequest),
-}
+/// Streams discovery events to stdout as JSON Lines
+struct StdoutDiscoveryEventSink;
 
-/// TCP SYN scan request
-#[derive(Debug, Deserialize)]
-struct TcpSynRequest {
-    /// Target IPv4 addresses to scan
-    targets: Vec<String>,
-    /// Ports to send SYN packets to
-    ports: Vec<u16>,
-    /// Source IP address for packets
-    source_ip: String,
-    /// Timeout in milliseconds for response collection
-    timeout_ms: u64,
-}
-
-// =============================================================================
-// Response Types
-// =============================================================================
-
-/// Privilege check result
-#[derive(Debug, Serialize)]
-struct CheckResponse {
-    success: bool,
-    /// Whether raw TCP sockets can be created
-    tcp_syn: bool,
-}
-
-/// TCP SYN scan result
-#[derive(Debug, Serialize)]
-struct TcpSynResponse {
-    success: bool,
-    /// Discovered host IPs (responded with SYN-ACK or RST)
-    discovered: Vec<String>,
-    /// Duration of the scan in milliseconds
-    duration_ms: u64,
-}
-
-/// Error response
-#[derive(Debug, Serialize)]
-struct ErrorResponse {
-    success: bool,
-    error: String,
-}
-
-// =============================================================================
-// Privilege Check
-// =============================================================================
-
-fn handle_check() -> String {
-    let protocol =
-        TransportChannelType::Layer4(TransportProtocol::Ipv4(IpNextHeaderProtocols::Tcp));
-    let tcp_syn = transport::transport_channel(4096, protocol).is_ok();
-
-    to_json(&CheckResponse {
-        success: true,
-        tcp_syn,
-    })
-}
-
-// =============================================================================
-// TCP SYN Scan
-// =============================================================================
-
-fn handle_tcp_syn(req: TcpSynRequest) -> String {
-    let start = std::time::Instant::now();
-
-    // Parse target IPs
-    let ipv4_targets: Vec<Ipv4Addr> = req
-        .targets
-        .iter()
-        .filter_map(|s| s.parse::<Ipv4Addr>().ok())
-        .collect();
-
-    if ipv4_targets.is_empty() {
-        return to_json(&ErrorResponse {
-            success: false,
-            error: "No valid IPv4 targets provided".to_string(),
-        });
+impl DiscoveryEventSink for StdoutDiscoveryEventSink {
+    fn send(&self, event: DiscoveryEvent) -> Result<(), String> {
+        let response = Response::DiscoveryEvent { event };
+        let json = serde_json::to_string(&response)
+            .map_err(|e| format!("Failed to serialize discovery event: {e}"))?;
+        println!("{json}");
+        Ok(())
     }
+}
 
-    // Parse source IP
-    let source_ip: Ipv4Addr = match req.source_ip.parse() {
-        Ok(ip) => ip,
-        Err(_) => {
-            return to_json(&ErrorResponse {
-                success: false,
-                error: format!("Invalid source IP: {}", req.source_ip),
-            })
-        }
-    };
+/// Streams scan progress to stdout as JSON Lines
+struct StdoutScanProgressSink;
 
-    // Validate ports
-    if req.ports.is_empty() {
-        return to_json(&ErrorResponse {
-            success: false,
-            error: "No ports specified".to_string(),
-        });
+impl ScanProgressSink for StdoutScanProgressSink {
+    fn emit(&self, progress: ScanProgress) -> Result<(), String> {
+        let response = Response::ScanProgress { progress };
+        let json = serde_json::to_string(&response)
+            .map_err(|e| format!("Failed to serialize scan progress: {e}"))?;
+        println!("{json}");
+        Ok(())
     }
+}
 
-    // Create raw socket transport channel
-    let protocol =
-        TransportChannelType::Layer4(TransportProtocol::Ipv4(IpNextHeaderProtocols::Tcp));
+// =============================================================================
+// Response Helpers
+// =============================================================================
 
-    let (mut tx, mut rx) = match transport::transport_channel(4096, protocol) {
-        Ok(pair) => pair,
+/// Serialize and print a single response line to stdout
+fn write_response(response: &Response) {
+    match serde_json::to_string(response) {
+        Ok(json) => println!("{json}"),
         Err(e) => {
-            return to_json(&ErrorResponse {
-                success: false,
-                error: format!("Failed to create raw socket: {e}. Requires elevated privileges."),
-            })
-        }
-    };
-
-    let mut discovered = HashSet::new();
-    let timeout_duration = Duration::from_millis(req.timeout_ms);
-
-    // Send SYN packets to all targets and ports
-    for target in &ipv4_targets {
-        for &port in &req.ports {
-            let _ = send_syn_packet(&mut tx, source_ip, *target, port);
+            // Last resort: print a manually constructed error
+            println!(r#"{{"type":"error","message":"Failed to serialize response: {e}"}}"#);
         }
     }
+}
 
-    // Collect SYN-ACK / RST responses
-    let start_recv = std::time::Instant::now();
-    let target_set: HashSet<IpAddr> = ipv4_targets.iter().map(|ip| IpAddr::V4(*ip)).collect();
+/// Write an error response to stdout
+fn write_error(message: impl Into<String>) {
+    write_response(&Response::Error {
+        message: message.into(),
+    });
+}
 
-    while start_recv.elapsed() < timeout_duration {
-        let mut iter = transport::tcp_packet_iter(&mut rx);
-        match iter.next_with_timeout(Duration::from_millis(100)) {
-            Ok(Some((packet, addr))) => {
-                if target_set.contains(&addr) {
-                    let flags = packet.get_flags();
-                    // SYN-ACK (port open) or RST (port closed) both indicate host is alive
-                    let is_syn_ack =
-                        flags & (TcpFlags::SYN | TcpFlags::ACK) == (TcpFlags::SYN | TcpFlags::ACK);
-                    let is_rst = flags & TcpFlags::RST != 0;
-                    if is_syn_ack || is_rst {
-                        discovered.insert(addr);
+// =============================================================================
+// Command Handlers
+// =============================================================================
+
+/// Check raw socket privileges (synchronous — no tokio needed)
+fn handle_check() {
+    let protocol =
+        TransportChannelType::Layer4(TransportProtocol::Ipv4(IpNextHeaderProtocols::Tcp));
+    let has_privileges = transport::transport_channel(4096, protocol).is_ok();
+    write_response(&Response::CheckResult {
+        success: has_privileges,
+    });
+}
+
+/// Parse target strings to IP addresses, expanding CIDR ranges
+fn parse_targets(targets: &[String]) -> Vec<IpAddr> {
+    let mut ip_targets = Vec::new();
+    for target in targets {
+        if let Ok(ip) = target.parse::<IpAddr>() {
+            ip_targets.push(ip);
+        } else if target.contains('/') {
+            if let Ok(network) = target.parse::<ipnetwork::IpNetwork>() {
+                if let ipnetwork::IpNetwork::V4(v4net) = network {
+                    if v4net.prefix() < 31 {
+                        let net_addr = IpAddr::V4(v4net.network());
+                        let bcast_addr = IpAddr::V4(v4net.broadcast());
+                        ip_targets.extend(
+                            network
+                                .iter()
+                                .filter(|ip| *ip != net_addr && *ip != bcast_addr),
+                        );
+                        continue;
                     }
                 }
-            }
-            Ok(None) | Err(_) => {
-                std::thread::sleep(Duration::from_millis(10));
+                ip_targets.extend(network.iter());
             }
         }
     }
-
-    to_json(&TcpSynResponse {
-        success: true,
-        discovered: discovered.iter().map(ToString::to_string).collect(),
-        duration_ms: start.elapsed().as_millis() as u64,
-    })
+    ip_targets
 }
 
-/// Send a TCP SYN packet with proper checksum calculation
-fn send_syn_packet(
-    tx: &mut transport::TransportSender,
-    source: Ipv4Addr,
-    target: Ipv4Addr,
-    port: u16,
-) -> Result<(), String> {
-    let mut tcp_buffer = [0u8; 20];
-    let mut tcp_packet =
-        MutableTcpPacket::new(&mut tcp_buffer).ok_or("Failed to create TCP packet")?;
+/// Run host discovery with streaming events
+async fn handle_discover(targets: Vec<String>, options: kogu_lib::network::DiscoveryOptions) {
+    let ip_targets = parse_targets(&targets);
+    if ip_targets.is_empty() {
+        write_error("No valid IP addresses provided");
+        return;
+    }
 
-    tcp_packet.set_source(rand::random::<u16>().max(1024));
-    tcp_packet.set_destination(port);
-    tcp_packet.set_sequence(rand::random());
-    tcp_packet.set_acknowledgement(0);
-    tcp_packet.set_data_offset(5);
-    tcp_packet.set_flags(TcpFlags::SYN);
-    tcp_packet.set_window(64240);
-    tcp_packet.set_urgent_ptr(0);
+    let (scan_state, _rx) = scanner::ScanState::new();
+    let scan_state = Arc::new(scan_state);
+    let event_sink = StdoutDiscoveryEventSink;
 
-    // Calculate TCP checksum using pseudo-header (RFC 793)
-    let checksum = {
-        let tcp_packet_ref =
-            TcpPacket::new(tcp_packet.packet()).ok_or("Failed to create TcpPacket for checksum")?;
-        ipv4_checksum(&tcp_packet_ref, &source, &target)
-    };
-    tcp_packet.set_checksum(checksum);
+    let results = discover_hosts(&ip_targets, &options, &event_sink, &scan_state).await;
 
-    tx.send_to(tcp_packet, IpAddr::V4(target))
-        .map_err(|e| format!("Failed to send packet: {e}"))?;
-
-    Ok(())
+    write_response(&Response::DiscoveryComplete { results });
 }
 
-// =============================================================================
-// Utilities
-// =============================================================================
+/// Run a port scan with streaming progress
+async fn handle_scan(request: kogu_lib::network::ScanRequest) {
+    let (scan_state, _rx) = scanner::ScanState::new();
+    let scan_state = Arc::new(scan_state);
+    let progress_sink = StdoutScanProgressSink;
 
-fn to_json<T: Serialize>(value: &T) -> String {
-    serde_json::to_string(value).unwrap_or_else(|_| {
-        r#"{"success":false,"error":"Failed to serialize response"}"#.to_string()
-    })
+    match scanner::run_scan(request, &progress_sink, scan_state).await {
+        Ok(results) => write_response(&Response::ScanComplete { results }),
+        Err(e) => write_error(e),
+    }
+}
+
+/// Get local network interfaces
+fn handle_get_interfaces() {
+    let info = get_local_interfaces();
+    write_response(&Response::LocalInterfaces { info });
+}
+
+/// Discover mDNS/Bonjour services
+async fn handle_discover_mdns(service_types: Vec<String>, duration_ms: u32) {
+    match discover_mdns_services(service_types, duration_ms).await {
+        Ok(results) => write_response(&Response::MdnsResults { results }),
+        Err(e) => write_error(e),
+    }
+}
+
+/// Get available discovery methods and their privilege status
+async fn handle_get_methods() {
+    let raw_methods = get_available_methods().await;
+    let methods = raw_methods
+        .into_iter()
+        .map(|(method, available)| MethodAvailability { method, available })
+        .collect();
+    write_response(&Response::DiscoveryMethods { methods });
+}
+
+/// Check if a specific discovery method has required privileges
+async fn handle_check_privilege(method: kogu_lib::network::DiscoveryMethod) {
+    let available = check_method_privilege(method).await;
+    write_response(&Response::DiscoveryPrivilege { available });
 }
 
 // =============================================================================
 // Main
 // =============================================================================
 
-fn main() {
+#[tokio::main(flavor = "current_thread")]
+async fn main() {
     let stdin = io::stdin();
-    let mut stdout = io::stdout();
 
-    // Read single line from stdin
+    // Read single JSON line from stdin
     let mut input = String::new();
     if stdin.lock().read_line(&mut input).is_err() {
-        let _ = writeln!(
-            stdout,
-            "{}",
-            to_json(&ErrorResponse {
-                success: false,
-                error: "Failed to read input".to_string(),
-            })
-        );
+        write_error("Failed to read input");
         return;
     }
 
@@ -261,26 +207,24 @@ fn main() {
     let request: Request = match serde_json::from_str(&input) {
         Ok(req) => req,
         Err(e) => {
-            let _ = writeln!(
-                stdout,
-                "{}",
-                to_json(&ErrorResponse {
-                    success: false,
-                    error: format!("Invalid request: {e}"),
-                })
-            );
+            write_error(format!("Invalid request: {e}"));
             return;
         }
     };
 
-    // Process request
-    let response = match request {
+    // Dispatch to handler
+    match request {
         Request::Check => handle_check(),
-        Request::TcpSyn(req) => handle_tcp_syn(req),
-    };
-
-    // Write response
-    let _ = writeln!(stdout, "{response}");
+        Request::Discover { targets, options } => handle_discover(targets, options).await,
+        Request::Scan { request } => handle_scan(request).await,
+        Request::GetLocalInterfaces => handle_get_interfaces(),
+        Request::DiscoverMdns {
+            service_types,
+            duration_ms,
+        } => handle_discover_mdns(service_types, duration_ms).await,
+        Request::GetDiscoveryMethods => handle_get_methods().await,
+        Request::CheckDiscoveryPrivilege { method } => handle_check_privilege(method).await,
+    }
 }
 
 #[cfg(test)]
@@ -290,62 +234,68 @@ mod tests {
     #[test]
     fn test_check_request_deserialize() {
         let input = r#"{"type": "check"}"#;
-        let req: Request = serde_json::from_str(input).unwrap();
+        let req: Request = serde_json::from_str(input).ok().unwrap();
         assert!(matches!(req, Request::Check));
     }
 
     #[test]
-    fn test_tcp_syn_request_deserialize() {
-        let input = r#"{
-            "type": "tcp_syn",
-            "targets": ["192.168.1.1", "192.168.1.2"],
-            "ports": [22, 80, 443],
-            "source_ip": "192.168.1.100",
-            "timeout_ms": 1000
-        }"#;
-        let req: Request = serde_json::from_str(input).unwrap();
-        match req {
-            Request::TcpSyn(syn) => {
-                assert_eq!(syn.targets.len(), 2);
-                assert_eq!(syn.ports, vec![22, 80, 443]);
-                assert_eq!(syn.source_ip, "192.168.1.100");
-                assert_eq!(syn.timeout_ms, 1000);
-            }
-            _ => panic!("Expected TcpSyn request"),
-        }
+    fn test_discover_request_deserialize() {
+        let input = r#"{"type": "discover", "targets": ["192.168.1.0/24"], "options": {"methods": ["tcp_connect"], "timeoutMs": 3000, "concurrency": 100}}"#;
+        let req: Request = serde_json::from_str(input).ok().unwrap();
+        assert!(matches!(req, Request::Discover { .. }));
     }
 
     #[test]
-    fn test_check_response_serialize() {
-        let resp = CheckResponse {
-            success: true,
-            tcp_syn: false,
-        };
-        let json = to_json(&resp);
-        assert!(json.contains(r#""success":true"#));
-        assert!(json.contains(r#""tcp_syn":false"#));
+    fn test_scan_request_deserialize() {
+        let input = r#"{"type": "scan", "request": {"target": "192.168.1.1", "mode": "quick", "portPreset": "web", "concurrency": 100, "timeoutMs": 3000}}"#;
+        let req: Request = serde_json::from_str(input).ok().unwrap();
+        assert!(matches!(req, Request::Scan { .. }));
     }
 
     #[test]
-    fn test_tcp_syn_response_serialize() {
-        let resp = TcpSynResponse {
-            success: true,
-            discovered: vec!["192.168.1.1".to_string()],
-            duration_ms: 500,
-        };
-        let json = to_json(&resp);
+    fn test_get_local_interfaces_request_deserialize() {
+        let input = r#"{"type": "get_local_interfaces"}"#;
+        let req: Request = serde_json::from_str(input).ok().unwrap();
+        assert!(matches!(req, Request::GetLocalInterfaces));
+    }
+
+    #[test]
+    fn test_discover_mdns_request_deserialize() {
+        let input =
+            r#"{"type": "discover_mdns", "service_types": ["_http._tcp"], "duration_ms": 5000}"#;
+        let req: Request = serde_json::from_str(input).ok().unwrap();
+        assert!(matches!(req, Request::DiscoverMdns { .. }));
+    }
+
+    #[test]
+    fn test_get_discovery_methods_request_deserialize() {
+        let input = r#"{"type": "get_discovery_methods"}"#;
+        let req: Request = serde_json::from_str(input).ok().unwrap();
+        assert!(matches!(req, Request::GetDiscoveryMethods));
+    }
+
+    #[test]
+    fn test_check_discovery_privilege_request_deserialize() {
+        let input = r#"{"type": "check_discovery_privilege", "method": "icmp_ping"}"#;
+        let req: Request = serde_json::from_str(input).ok().unwrap();
+        assert!(matches!(req, Request::CheckDiscoveryPrivilege { .. }));
+    }
+
+    #[test]
+    fn test_check_result_response_serialize() {
+        let resp = Response::CheckResult { success: true };
+        let json = serde_json::to_string(&resp).ok().unwrap();
+        assert!(json.contains(r#""type":"check_result""#));
         assert!(json.contains(r#""success":true"#));
-        assert!(json.contains("192.168.1.1"));
     }
 
     #[test]
     fn test_error_response_serialize() {
-        let resp = ErrorResponse {
-            success: false,
-            error: "test error".to_string(),
+        let resp = Response::Error {
+            message: "test error".to_string(),
         };
-        let json = to_json(&resp);
-        assert!(json.contains(r#""success":false"#));
+        let json = serde_json::to_string(&resp).ok().unwrap();
+        assert!(json.contains(r#""type":"error""#));
         assert!(json.contains("test error"));
     }
 
@@ -357,38 +307,24 @@ mod tests {
     }
 
     #[test]
-    fn test_tcp_syn_no_targets() {
-        let req = TcpSynRequest {
-            targets: vec![],
-            ports: vec![80],
-            source_ip: "192.168.1.100".to_string(),
-            timeout_ms: 1000,
-        };
-        let response = handle_tcp_syn(req);
-        assert!(response.contains("No valid IPv4 targets"));
+    fn test_parse_targets_single_ip() {
+        let targets = vec!["192.168.1.1".to_string()];
+        let result = parse_targets(&targets);
+        assert_eq!(result.len(), 1);
     }
 
     #[test]
-    fn test_tcp_syn_invalid_source_ip() {
-        let req = TcpSynRequest {
-            targets: vec!["192.168.1.1".to_string()],
-            ports: vec![80],
-            source_ip: "not-an-ip".to_string(),
-            timeout_ms: 1000,
-        };
-        let response = handle_tcp_syn(req);
-        assert!(response.contains("Invalid source IP"));
+    fn test_parse_targets_cidr() {
+        let targets = vec!["192.168.1.0/30".to_string()];
+        let result = parse_targets(&targets);
+        // /30 has 4 IPs, minus network and broadcast = 2 usable
+        assert_eq!(result.len(), 2);
     }
 
     #[test]
-    fn test_tcp_syn_no_ports() {
-        let req = TcpSynRequest {
-            targets: vec!["192.168.1.1".to_string()],
-            ports: vec![],
-            source_ip: "192.168.1.100".to_string(),
-            timeout_ms: 1000,
-        };
-        let response = handle_tcp_syn(req);
-        assert!(response.contains("No ports specified"));
+    fn test_parse_targets_invalid() {
+        let targets = vec!["not-an-ip".to_string()];
+        let result = parse_targets(&targets);
+        assert!(result.is_empty());
     }
 }

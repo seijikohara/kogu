@@ -27,9 +27,9 @@ export interface DiffSummary {
  * CSS classes for diff type styling.
  */
 export const DIFF_TYPE_CLASSES = {
-	added: 'bg-green-500/20 border-green-500/50 text-green-700 dark:text-green-300',
-	removed: 'bg-red-500/20 border-red-500/50 text-red-700 dark:text-red-300',
-	changed: 'bg-yellow-500/20 border-yellow-500/50 text-yellow-700 dark:text-yellow-300',
+	added: 'bg-success/20 border-success/50 text-success',
+	removed: 'bg-destructive/20 border-destructive/50 text-destructive',
+	changed: 'bg-warning/20 border-warning/50 text-warning',
 } as const satisfies Record<DiffType, string>;
 
 /**

@@ -2,6 +2,7 @@
 	import { ChevronLeft, Settings2 } from '@lucide/svelte';
 	import type { Snippet } from 'svelte';
 	import { Button } from '$lib/components/ui/button/index.js';
+	import * as ScrollArea from '$lib/components/ui/scroll-area/index.js';
 
 	interface Props {
 		title?: string;
@@ -23,10 +24,14 @@
 </script>
 
 {#if show}
-	<aside class="flex {width} flex-col border-r border-border/60 bg-surface-2">
-		<div class="flex-1 space-y-1 overflow-y-auto py-2">
-			{@render children?.()}
-		</div>
+	<aside
+		class="flex h-full {width} flex-col overflow-hidden border-r border-border/50 bg-surface-2"
+	>
+		<ScrollArea.Root class="min-h-0 flex-1">
+			<div class="py-3">
+				{@render children?.()}
+			</div>
+		</ScrollArea.Root>
 		{#if onclose}
 			<div class="flex h-8 shrink-0 items-center justify-end border-t border-border/30 px-2">
 				<Button
@@ -43,7 +48,7 @@
 		{/if}
 	</aside>
 {:else if onopen}
-	<aside class="flex w-11 shrink-0 flex-col border-r border-border/60 bg-surface-2">
+	<aside class="flex w-11 shrink-0 flex-col border-r border-border/50 bg-surface-2">
 		<Button
 			variant="ghost"
 			size="icon"

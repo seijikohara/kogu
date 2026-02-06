@@ -104,8 +104,7 @@
 	>
 		<FormSection title="XPath Expression">
 			<div class="space-y-1">
-				<Label class="text-2xs uppercase tracking-wide text-muted-foreground">Path Expression</Label
-				>
+				<Label class="text-xs uppercase tracking-wide text-muted-foreground">Path Expression</Label>
 				<Input bind:value={xpathExpression} placeholder="//element" class="h-7 font-mono text-xs" />
 			</div>
 			{#if resultCount > 0}

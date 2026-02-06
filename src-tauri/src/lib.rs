@@ -6,8 +6,8 @@
 #![warn(clippy::all)]
 #![warn(clippy::pedantic)]
 #![warn(clippy::nursery)]
-// Safety lints - forbid unsafe code
-#![forbid(unsafe_code)]
+// Safety lints - deny unsafe code (allow override in FFI modules)
+#![deny(unsafe_code)]
 // Documentation requirements
 #![warn(missing_docs)]
 // Rust idioms
@@ -48,7 +48,8 @@
 
 mod ast;
 mod generators;
-mod network;
+/// Network scanning module (pub for sidecar binary access)
+pub mod network;
 
 use tauri::Manager;
 use tauri_plugin_decorum::WebviewWindowExt;
@@ -62,8 +63,7 @@ use generators::{
     worker::WorkerProcessState,
 };
 use network::{
-    DiscoveryMethod, DiscoveryOptions, DiscoveryResult, LocalNetworkInfo, MdnsDiscoveryRequest,
-    MdnsDiscoveryResults, NetworkScannerState, ScanRequest, ScanResults,
+    DiscoveryMethod, DiscoveryOptions, MdnsDiscoveryRequest, NetworkScannerState, ScanRequest,
 };
 
 #[tauri::command]
@@ -160,118 +160,195 @@ fn check_cli_availability() -> CliAvailability {
 }
 
 // =============================================================================
-// Network Scanner Commands
+// Network Scanner Commands (delegated to net-scanner sidecar)
 // =============================================================================
 
-/// Start a network scan (async with progress events)
+/// Start a network scan via sidecar with streaming progress events
 #[tauri::command]
 async fn start_network_scan(
     request: ScanRequest,
+    scan_id: String,
     app: tauri::AppHandle,
     state: tauri::State<'_, NetworkScannerState>,
-) -> Result<ScanResults, String> {
-    network::start_scan(request, app, &state)
-        .await
-        .map(|(_, results)| results)
+) -> Result<serde_json::Value, String> {
+    use tauri::Emitter;
+    use tauri_plugin_shell::process::CommandEvent;
+
+    let sidecar_request = network::sidecar::Request::Scan { request };
+    let (mut rx, child) = network::sidecar::spawn_with_request(&app, &sidecar_request)?;
+    state.register(scan_id.clone(), child);
+
+    let mut final_results: Option<serde_json::Value> = None;
+
+    while let Some(event) = rx.recv().await {
+        match event {
+            CommandEvent::Stdout(line_bytes) => {
+                let line = String::from_utf8_lossy(&line_bytes);
+                let trimmed = line.trim();
+                if trimmed.is_empty() {
+                    continue;
+                }
+                match serde_json::from_str::<network::sidecar::ResponseEnvelope>(trimmed) {
+                    Ok(network::sidecar::ResponseEnvelope::ScanProgress { progress }) => {
+                        let _ = app.emit("network-scan-progress", progress);
+                    }
+                    Ok(network::sidecar::ResponseEnvelope::ScanComplete { results }) => {
+                        final_results = Some(results);
+                    }
+                    Ok(network::sidecar::ResponseEnvelope::Error { message }) => {
+                        state.remove(&scan_id);
+                        return Err(message);
+                    }
+                    _ => {}
+                }
+            }
+            CommandEvent::Error(e) => {
+                state.remove(&scan_id);
+                return Err(format!("Net-scanner process error: {e}"));
+            }
+            CommandEvent::Terminated(_) => break,
+            _ => {}
+        }
+    }
+
+    state.remove(&scan_id);
+    final_results.ok_or_else(|| "No results from net-scanner".to_string())
 }
 
-/// Cancel a running network scan
+/// Cancel a running network scan by killing the sidecar process
 #[tauri::command]
 fn cancel_network_scan(scan_id: String, state: tauri::State<'_, NetworkScannerState>) -> bool {
-    state.cancel_scan(&scan_id)
+    state.cancel(&scan_id)
 }
 
-/// Get local network interfaces
+/// Get local network interfaces via sidecar
 #[tauri::command]
-fn get_local_network_interfaces() -> LocalNetworkInfo {
-    network::get_local_interfaces()
+async fn get_local_network_interfaces(app: tauri::AppHandle) -> Result<serde_json::Value, String> {
+    let request = network::sidecar::Request::GetLocalInterfaces;
+    match network::sidecar::execute_oneshot(&app, &request).await? {
+        network::sidecar::ResponseEnvelope::LocalInterfaces { info } => Ok(info),
+        network::sidecar::ResponseEnvelope::Error { message } => Err(message),
+        _ => Err("Unexpected response from net-scanner".to_string()),
+    }
 }
 
-/// Discover mDNS/Bonjour services on the local network
+/// Discover mDNS/Bonjour services on the local network via sidecar
 #[tauri::command]
 async fn discover_mdns_services(
     request: MdnsDiscoveryRequest,
-) -> Result<MdnsDiscoveryResults, String> {
-    network::discover_mdns_services(request.service_types, request.duration_ms).await
+    app: tauri::AppHandle,
+) -> Result<serde_json::Value, String> {
+    let sidecar_request = network::sidecar::Request::DiscoverMdns {
+        service_types: request.service_types,
+        duration_ms: request.duration_ms,
+    };
+    match network::sidecar::execute_oneshot(&app, &sidecar_request).await? {
+        network::sidecar::ResponseEnvelope::MdnsResults { results } => Ok(results),
+        network::sidecar::ResponseEnvelope::Error { message } => Err(message),
+        _ => Err("Unexpected response from net-scanner".to_string()),
+    }
 }
 
-// =============================================================================
-// Host Discovery Commands
-// =============================================================================
-
-/// Discover hosts using specified methods (ICMP, ARP, TCP SYN, mDNS)
+/// Discover hosts via sidecar with streaming results via Channel API
 ///
-/// Discovery methods run in parallel, emitting `discovery-progress` events
-/// for real-time progress updates.
+/// Each method's result is streamed to the frontend as it completes.
+/// Cancellation kills the sidecar process.
 #[tauri::command]
 async fn discover_hosts(
     targets: Vec<String>,
     options: DiscoveryOptions,
+    on_event: tauri::ipc::Channel<serde_json::Value>,
+    discovery_id: String,
     app: tauri::AppHandle,
-) -> Result<Vec<DiscoveryResult>, String> {
-    use std::net::IpAddr;
+    state: tauri::State<'_, NetworkScannerState>,
+) -> Result<serde_json::Value, String> {
+    use tauri_plugin_shell::process::CommandEvent;
 
-    // Parse target strings to IpAddr
-    let mut ip_targets = Vec::new();
-    for target in &targets {
-        if let Ok(ip) = target.parse::<IpAddr>() {
-            ip_targets.push(ip);
-        } else if target.contains('/') {
-            // CIDR notation — exclude network and broadcast addresses for IPv4
-            if let Ok(network) = target.parse::<ipnetwork::IpNetwork>() {
-                if let ipnetwork::IpNetwork::V4(v4net) = network {
-                    if v4net.prefix() < 31 {
-                        let net_addr = IpAddr::V4(v4net.network());
-                        let bcast_addr = IpAddr::V4(v4net.broadcast());
-                        ip_targets.extend(
-                            network
-                                .iter()
-                                .filter(|ip| *ip != net_addr && *ip != bcast_addr),
-                        );
-                        continue;
-                    }
+    let sidecar_request = network::sidecar::Request::Discover { targets, options };
+    let (mut rx, child) = network::sidecar::spawn_with_request(&app, &sidecar_request)?;
+    state.register(discovery_id.clone(), child);
+
+    let mut final_results: Option<serde_json::Value> = None;
+
+    while let Some(event) = rx.recv().await {
+        match event {
+            CommandEvent::Stdout(line_bytes) => {
+                let line = String::from_utf8_lossy(&line_bytes);
+                let trimmed = line.trim();
+                if trimmed.is_empty() {
+                    continue;
                 }
-                ip_targets.extend(network.iter());
+                match serde_json::from_str::<network::sidecar::ResponseEnvelope>(trimmed) {
+                    Ok(network::sidecar::ResponseEnvelope::DiscoveryEvent { event }) => {
+                        let _ = on_event.send(event);
+                    }
+                    Ok(network::sidecar::ResponseEnvelope::DiscoveryComplete { results }) => {
+                        final_results = Some(results);
+                    }
+                    Ok(network::sidecar::ResponseEnvelope::Error { message }) => {
+                        state.remove(&discovery_id);
+                        return Err(message);
+                    }
+                    _ => {}
+                }
             }
+            CommandEvent::Error(e) => {
+                state.remove(&discovery_id);
+                return Err(format!("Net-scanner process error: {e}"));
+            }
+            CommandEvent::Terminated(_) => break,
+            _ => {}
         }
     }
 
-    if ip_targets.is_empty() {
-        return Err("No valid IP addresses provided".to_string());
+    state.remove(&discovery_id);
+    final_results.ok_or_else(|| "No results from net-scanner".to_string())
+}
+
+/// Cancel a running host discovery by killing the sidecar process
+#[tauri::command]
+fn cancel_discovery(discovery_id: String, state: tauri::State<'_, NetworkScannerState>) -> bool {
+    state.cancel(&discovery_id)
+}
+
+/// Get available discovery methods and their privilege status via sidecar
+///
+/// Converts from sidecar format `[{method, available}]` to frontend
+/// tuple format `[[name, available]]`.
+#[tauri::command]
+async fn get_discovery_methods(app: tauri::AppHandle) -> Result<Vec<(String, bool)>, String> {
+    let request = network::sidecar::Request::GetDiscoveryMethods;
+    match network::sidecar::execute_oneshot(&app, &request).await? {
+        network::sidecar::ResponseEnvelope::DiscoveryMethods { methods } => {
+            let arr = methods
+                .as_array()
+                .ok_or("Invalid methods response from net-scanner")?;
+            Ok(arr
+                .iter()
+                .filter_map(|v| {
+                    let method = v.get("method")?.as_str()?;
+                    let available = v.get("available")?.as_bool()?;
+                    Some((method.to_string(), available))
+                })
+                .collect())
+        }
+        network::sidecar::ResponseEnvelope::Error { message } => Err(message),
+        _ => Err("Unexpected response from net-scanner".to_string()),
     }
-
-    Ok(network::discover_hosts(&app, &ip_targets, &options).await)
 }
 
-/// Get available discovery methods and their privilege status
+/// Check if a specific discovery method has required privileges via sidecar
 #[tauri::command]
-async fn get_discovery_methods() -> Vec<(String, bool)> {
-    network::get_available_methods()
-        .await
-        .into_iter()
-        .map(|(method, available)| {
-            let name = match method {
-                DiscoveryMethod::IcmpPing => "icmp_ping",
-                DiscoveryMethod::ArpScan => "arp_scan",
-                DiscoveryMethod::TcpSyn => "tcp_syn",
-                DiscoveryMethod::TcpConnect => "tcp_connect",
-                DiscoveryMethod::Mdns => "mdns",
-                DiscoveryMethod::Ssdp => "ssdp",
-                DiscoveryMethod::UdpScan => "udp_scan",
-                DiscoveryMethod::Icmpv6Ping => "icmpv6_ping",
-                DiscoveryMethod::WsDiscovery => "ws_discovery",
-                DiscoveryMethod::ArpCache => "arp_cache",
-                DiscoveryMethod::None => "none",
-            };
-            (name.to_string(), available)
-        })
-        .collect()
-}
-
-/// Check if a specific discovery method is available
-#[tauri::command]
-async fn check_discovery_privilege(method: DiscoveryMethod) -> bool {
-    network::check_privileges(method).await
+async fn check_discovery_privilege(
+    method: DiscoveryMethod,
+    app: tauri::AppHandle,
+) -> Result<bool, String> {
+    let request = network::sidecar::Request::CheckDiscoveryPrivilege { method };
+    match network::sidecar::execute_oneshot(&app, &request).await? {
+        network::sidecar::ResponseEnvelope::DiscoveryPrivilege { available } => Ok(available),
+        network::sidecar::ResponseEnvelope::Error { message } => Err(message),
+        _ => Err("Unexpected response from net-scanner".to_string()),
+    }
 }
 
 /// Check privilege status of the net-scanner sidecar
@@ -373,6 +450,7 @@ pub fn run() {
             get_local_network_interfaces,
             discover_mdns_services,
             discover_hosts,
+            cancel_discovery,
             get_discovery_methods,
             check_discovery_privilege,
             check_net_scanner_privileges,

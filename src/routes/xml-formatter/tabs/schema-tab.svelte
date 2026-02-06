@@ -322,7 +322,7 @@
 			<div class="space-y-1.5 rounded-md bg-muted/50 p-2 text-xs text-muted-foreground">
 				<p><strong class="text-foreground">Validate:</strong> Check XML against XSD schema</p>
 				<p><strong class="text-foreground">Infer:</strong> Generate XSD from XML structure</p>
-				<p class="text-2xs italic">
+				<p class="text-xs italic">
 					Note: Full XSD validation requires a backend service. This provides basic structure
 					validation.
 				</p>

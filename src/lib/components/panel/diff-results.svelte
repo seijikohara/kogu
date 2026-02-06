@@ -44,7 +44,7 @@
 
 {#if diffs.length > 0}
 	<!-- Diff Summary -->
-	<div class="flex items-center gap-4 border-t bg-muted/30 px-3 py-1.5 text-xs">
+	<div class="flex items-center gap-4 border-t bg-surface-3 px-3 py-1.5 text-xs">
 		<span class="font-medium">{summary.total} difference{summary.total !== 1 ? 's' : ''}</span>
 		{#if summary.added > 0}
 			<span class="flex items-center gap-1 text-success">
@@ -59,14 +59,14 @@
 			</span>
 		{/if}
 		{#if summary.changed > 0}
-			<span class="flex items-center gap-1 text-yellow-600 dark:text-yellow-400">
+			<span class="flex items-center gap-1 text-warning">
 				<RefreshCw class="h-3 w-3" />
 				{summary.changed}
 			</span>
 		{/if}
 	</div>
 	<!-- Diff Results -->
-	<div class="max-h-64 overflow-auto border-t bg-muted/20 p-2">
+	<div class="max-h-64 overflow-auto border-t bg-surface-2 p-2">
 		<div class="space-y-1">
 			{#each diffs as diff}
 				<button
@@ -75,11 +75,11 @@
 					onclick={() => handleClick(diff)}
 				>
 					{#if diff.type === 'added'}
-						<Plus class="h-3.5 w-3.5 shrink-0 text-green-500" />
+						<Plus class="h-4 w-4 shrink-0 text-success" />
 					{:else if diff.type === 'removed'}
-						<Minus class="h-3.5 w-3.5 shrink-0 text-red-500" />
+						<Minus class="h-4 w-4 shrink-0 text-destructive" />
 					{:else}
-						<RefreshCw class="h-3.5 w-3.5 shrink-0 text-yellow-500" />
+						<RefreshCw class="h-4 w-4 shrink-0 text-warning" />
 					{/if}
 					<span class="shrink-0 font-mono text-xs font-medium">{diff.path}</span>
 					<span class="truncate text-xs opacity-80">
@@ -93,7 +93,7 @@
 	</div>
 {:else if checkIdentical && hasContent}
 	<div
-		class="flex h-8 items-center justify-center border-t bg-green-500/20 text-xs font-medium text-success"
+		class="flex h-8 items-center justify-center border-t bg-success/20 text-xs font-medium text-success"
 	>
 		✓ Identical
 	</div>

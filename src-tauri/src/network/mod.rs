@@ -50,40 +50,51 @@
 //! - mDNS/Bonjour service discovery
 //! - Host discovery (ICMP, ARP, TCP SYN, mDNS)
 //! - `NetBIOS` name resolution
+//!
+//! All scanning operations are delegated to the `net-scanner` sidecar binary
+//! for privilege isolation. The main process acts as a thin proxy.
 
 mod arp_cache;
-mod discovery;
+pub mod discovery;
 mod interfaces;
 mod llmnr;
 mod netbios;
 mod oui;
 mod ports;
 pub mod privileges;
-mod scanner;
+pub mod scanner;
 pub mod sidecar;
-mod types;
+mod snmp;
+#[cfg(target_os = "macos")]
+pub mod swift_bridge;
+mod tls_info;
+pub mod types;
 mod ws_discovery;
 
 use std::collections::HashMap;
-use std::sync::{Arc, Mutex};
+use std::sync::Mutex;
 
-use tauri::AppHandle;
+use tauri_plugin_shell::process::CommandChild;
 
 pub use discovery::{
-    check_privileges, discover_hosts, get_available_methods, DiscoveryMethod, DiscoveryOptions,
-    DiscoveryResult,
+    check_privileges, discover_hosts, get_available_methods, DiscoveryEvent, DiscoveryEventSink,
+    DiscoveryMethod, DiscoveryOptions,
 };
 pub use interfaces::{discover_mdns_services, get_local_interfaces};
-pub use scanner::ScanState;
-pub use types::{
-    LocalNetworkInfo, MdnsDiscoveryRequest, MdnsDiscoveryResults, ScanRequest, ScanResults,
-};
+pub use types::{MdnsDiscoveryRequest, ScanProgress, ScanProgressSink, ScanRequest};
 
-/// State for managing network scans
+// =============================================================================
+// Scan State Management (process-based cancellation)
+// =============================================================================
+
+/// State for managing active sidecar processes.
+///
+/// Each active scan/discovery operation is tracked by its ID and associated
+/// sidecar child process. Cancellation is achieved by killing the process.
 #[derive(Default)]
 pub struct NetworkScannerState {
-    /// Active scans indexed by scan ID
-    scans: Mutex<HashMap<String, Arc<ScanState>>>,
+    /// Active sidecar processes indexed by operation ID
+    processes: Mutex<HashMap<String, CommandChild>>,
 }
 
 impl NetworkScannerState {
@@ -92,50 +103,32 @@ impl NetworkScannerState {
         Self::default()
     }
 
-    /// Start a new scan and return the scan state
-    pub fn start_scan(&self, scan_id: String) -> Arc<ScanState> {
-        let (state, _rx) = ScanState::new();
-        let state = Arc::new(state);
-        self.scans
+    /// Register a sidecar child process for an operation
+    pub fn register(&self, operation_id: String, child: CommandChild) {
+        self.processes
             .lock()
             .unwrap_or_else(std::sync::PoisonError::into_inner)
-            .insert(scan_id, Arc::clone(&state));
-        state
+            .insert(operation_id, child);
     }
 
-    /// Cancel a running scan
-    pub fn cancel_scan(&self, scan_id: &str) -> bool {
-        self.scans
+    /// Cancel an active operation by killing its sidecar process
+    pub fn cancel(&self, operation_id: &str) -> bool {
+        let mut map = self
+            .processes
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner);
+        if let Some(child) = map.remove(operation_id) {
+            child.kill().is_ok()
+        } else {
+            false
+        }
+    }
+
+    /// Remove a completed operation
+    pub fn remove(&self, operation_id: &str) {
+        self.processes
             .lock()
             .unwrap_or_else(std::sync::PoisonError::into_inner)
-            .get(scan_id)
-            .map_or(false, |state| {
-                state.cancel();
-                true
-            })
+            .remove(operation_id);
     }
-
-    /// Remove a completed scan
-    pub fn remove_scan(&self, scan_id: &str) {
-        self.scans
-            .lock()
-            .unwrap_or_else(std::sync::PoisonError::into_inner)
-            .remove(scan_id);
-    }
-}
-
-/// Start a network scan
-pub async fn start_scan(
-    request: ScanRequest,
-    app: AppHandle,
-    state: &NetworkScannerState,
-) -> Result<(String, ScanResults), String> {
-    let scan_id = uuid::Uuid::new_v4().to_string();
-    let scan_state = state.start_scan(scan_id.clone());
-
-    let result = scanner::run_scan(request, app, scan_state).await;
-
-    state.remove_scan(&scan_id);
-
-    result.map(|results| (scan_id, results))
 }

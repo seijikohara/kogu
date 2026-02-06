@@ -36,10 +36,10 @@
 </script>
 
 <div class="space-y-1.5">
-	<div class="flex items-center justify-between">
-		<Label class="text-xs font-medium text-muted-foreground">{label}</Label>
+	<div class="flex items-center justify-between gap-2">
+		<Label class="min-w-0 truncate text-sm font-medium">{label}</Label>
 		{#if showValue}
-			<span class="text-xs font-medium">{displayValue}</span>
+			<span class="shrink-0 text-sm font-medium tabular-nums">{displayValue}</span>
 		{/if}
 	</div>
 	<input
@@ -49,7 +49,7 @@
 		{max}
 		{step}
 		oninput={handleInput}
-		class="h-1.5 w-full cursor-pointer appearance-none rounded-full bg-muted accent-primary"
+		class="h-1.5 w-full cursor-pointer appearance-none rounded-full bg-border accent-primary"
 	/>
 	{#if hint}
 		<p class="text-xs text-muted-foreground">{hint}</p>

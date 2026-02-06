@@ -3,7 +3,7 @@
 //! Provides multiple methods for discovering live hosts:
 //! - ICMP Ping (cross-platform, may require elevated privileges on some systems)
 //! - ARP Scan (local network only, requires libpcap and elevated privileges)
-//! - TCP SYN Scan (requires raw socket and elevated privileges)
+//! - TCP Connect (no special privileges, uses standard OS connect)
 //! - mDNS/Bonjour (no special privileges, discovers advertised services)
 
 use std::collections::HashSet;
@@ -11,21 +11,26 @@ use std::net::{IpAddr, Ipv4Addr, Ipv6Addr, SocketAddr};
 use std::sync::Arc;
 use std::time::Duration;
 
-use futures::future::join_all;
+use futures::stream::FuturesUnordered;
+use futures::StreamExt;
 use ipnetwork::IpNetwork;
-use pnet::datalink::{self, Channel, NetworkInterface};
+use pnet::datalink::{self, Channel as PnetChannel, NetworkInterface};
 use pnet::packet::arp::{ArpHardwareTypes, ArpOperations, ArpPacket, MutableArpPacket};
 use pnet::packet::ethernet::{EtherTypes, EthernetPacket, MutableEthernetPacket};
 use pnet::packet::ip::IpNextHeaderProtocols;
-use pnet::packet::tcp::{ipv4_checksum, MutableTcpPacket, TcpFlags, TcpPacket};
+use pnet::packet::tcp::{MutableTcpPacket, TcpFlags, TcpPacket};
 use pnet::packet::Packet;
-use pnet::transport::{self, TransportChannelType, TransportProtocol, TransportSender};
+use pnet::transport::{
+    self, tcp_packet_iter, TransportChannelType, TransportProtocol, TransportReceiver,
+    TransportSender,
+};
 use pnet::util::MacAddr;
 use serde::{Deserialize, Serialize};
 use surge_ping::{Client, Config, PingIdentifier, PingSequence};
-use tauri::Emitter;
 use tokio::sync::Semaphore;
 use tokio::time::timeout;
+
+use super::scanner::ScanState;
 
 use super::interfaces::discover_mdns_services;
 
@@ -38,10 +43,10 @@ pub enum DiscoveryMethod {
     IcmpPing,
     /// ARP scan (local network only)
     ArpScan,
-    /// TCP SYN scan to common ports (requires raw sockets)
-    TcpSyn,
     /// TCP Connect scan to common ports (no privileges needed)
     TcpConnect,
+    /// TCP SYN scan (half-open) - requires raw socket privileges
+    TcpSyn,
     /// mDNS/Bonjour service discovery
     Mdns,
     /// SSDP/UPnP discovery for smart devices
@@ -63,8 +68,8 @@ impl std::fmt::Display for DiscoveryMethod {
         let name = match self {
             Self::IcmpPing => "icmp_ping",
             Self::ArpScan => "arp_scan",
-            Self::TcpSyn => "tcp_syn",
             Self::TcpConnect => "tcp_connect",
+            Self::TcpSyn => "tcp_syn",
             Self::Mdns => "mdns",
             Self::Ssdp => "ssdp",
             Self::UdpScan => "udp_scan",
@@ -77,34 +82,6 @@ impl std::fmt::Display for DiscoveryMethod {
     }
 }
 
-/// Progress status for discovery method execution
-#[derive(Debug, Clone, Copy, Serialize)]
-#[serde(rename_all = "lowercase")]
-pub enum ProgressStatus {
-    /// Method is currently running
-    Running,
-    /// Method completed successfully
-    Completed,
-    /// Method encountered an error
-    Error,
-}
-
-/// Real-time progress information for a discovery method
-#[derive(Debug, Clone, Serialize)]
-#[serde(rename_all = "camelCase")]
-pub struct DiscoveryProgress {
-    /// Discovery method name
-    pub method: String,
-    /// Current status of the method
-    pub status: ProgressStatus,
-    /// Number of hosts found so far
-    pub hosts_found: usize,
-    /// Duration in milliseconds (only set when completed)
-    pub duration_ms: Option<u64>,
-    /// Error message (only set when status is Error)
-    pub error: Option<String>,
-}
-
 /// Host metadata collected during discovery
 #[derive(Debug, Clone, Serialize, Default)]
 #[serde(rename_all = "camelCase")]
@@ -112,7 +89,7 @@ pub struct HostMetadata {
     /// Hostname (from mDNS, DNS reverse lookup, `NetBIOS`, etc.)
     #[serde(skip_serializing_if = "Option::is_none")]
     pub hostname: Option<String>,
-    /// Source of the hostname resolution (dns, mdns, netbios)
+    /// Source of the hostname resolution (dns, mdns, netbios, snmp, tls)
     #[serde(skip_serializing_if = "Option::is_none")]
     pub hostname_source: Option<String>,
     /// `NetBIOS` name (from `NetBIOS` Node Status query)
@@ -133,6 +110,12 @@ pub struct HostMetadata {
     /// WS-Discovery device information
     #[serde(skip_serializing_if = "Option::is_none")]
     pub ws_discovery: Option<super::ws_discovery::WsDiscoveryInfo>,
+    /// SNMP device information (sysName, sysDescr, etc.)
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub snmp_info: Option<super::snmp::SnmpDeviceInfo>,
+    /// TLS certificate Subject Alternative Names (dNSName)
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    pub tls_names: Vec<String>,
 }
 
 /// mDNS service information for a host
@@ -173,7 +156,7 @@ pub struct DiscoveryResult {
 }
 
 /// Discovery options
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct DiscoveryOptions {
     /// Methods to use (in order of preference)
@@ -204,16 +187,42 @@ impl Default for DiscoveryOptions {
     }
 }
 
-/// Common ports for TCP SYN discovery
-pub const SYN_DISCOVERY_PORTS: &[u16] = &[
-    22,   // SSH
-    80,   // HTTP
-    443,  // HTTPS
-    445,  // SMB
-    139,  // NetBIOS
-    3389, // RDP
-    8080, // HTTP Alt
-];
+/// Streaming event sent to the frontend via Tauri Channel API
+///
+/// Uses discriminated union serialization for type-safe handling in TypeScript.
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase", tag = "event", content = "data")]
+pub enum DiscoveryEvent {
+    /// A discovery method has started execution
+    MethodStarted {
+        /// Name of the discovery method
+        method: String,
+    },
+    /// A discovery method completed — hosts are immediately available for display
+    MethodCompleted {
+        /// The discovery result for this method
+        result: DiscoveryResult,
+    },
+    /// Hostname resolution phase has started
+    ResolvingHostnames,
+    /// All discovery and resolution completed — final merged results
+    Completed {
+        /// Final merged results from all methods
+        results: Vec<DiscoveryResult>,
+    },
+    /// Discovery was cancelled by the user
+    Cancelled,
+}
+
+/// Generic event sink for streaming discovery results (Tauri-independent)
+///
+/// Implementations:
+/// - Main process: forwards events to Tauri `Channel<DiscoveryEvent>`
+/// - Sidecar: writes JSON Lines to stdout
+pub trait DiscoveryEventSink: Send + Sync {
+    /// Send a discovery event to the consumer
+    fn send(&self, event: DiscoveryEvent) -> Result<(), String>;
+}
 
 /// Extended ports for TCP connect discovery (includes IoT and common services)
 pub const CONNECT_DISCOVERY_PORTS: &[u16] = &[
@@ -256,15 +265,16 @@ pub const CONNECT_DISCOVERY_PORTS: &[u16] = &[
     62078, // iPhone sync
 ];
 
-/// Discover live hosts using specified methods in parallel
+/// Discover live hosts using specified methods in parallel with streaming results
 ///
-/// All discovery methods run concurrently, emitting progress events for each method.
-/// This significantly reduces total discovery time compared to sequential execution.
-/// Local IP addresses are automatically included in the results.
+/// Discovery methods run concurrently via `FuturesUnordered`, streaming each method's
+/// result to the frontend via the Tauri Channel API as soon as it completes.
+/// Supports cancellation via `ScanState`. Local IP addresses are automatically included.
 pub async fn discover_hosts(
-    app: &tauri::AppHandle,
     targets: &[IpAddr],
     options: &DiscoveryOptions,
+    on_event: &dyn DiscoveryEventSink,
+    cancel_state: &Arc<ScanState>,
 ) -> Vec<DiscoveryResult> {
     let methods = options.methods.clone();
 
@@ -286,16 +296,33 @@ pub async fn discover_hosts(
         .copied()
         .collect();
 
-    // Phase 1: Execute non-ARP-cache methods in parallel
-    let mut results = run_discovery_methods(&phase1_methods, targets, options, app).await;
+    // Phase 1: Execute non-ARP-cache methods in parallel, streaming results
+    let mut results =
+        run_discovery_methods_streaming(&phase1_methods, targets, options, on_event, cancel_state)
+            .await;
+
+    // Check cancellation after Phase 1
+    if cancel_state.is_cancelled() {
+        return results;
+    }
 
     // Phase 2: Execute ARP cache after other methods complete
     // Brief delay allows OS ARP table to be populated by Phase 1 packets
     if has_arp_cache {
         tokio::time::sleep(std::time::Duration::from_millis(100)).await;
-        let arp_results =
-            run_discovery_methods(&[DiscoveryMethod::ArpCache], targets, options, app).await;
+        let arp_results = run_discovery_methods_streaming(
+            &[DiscoveryMethod::ArpCache],
+            targets,
+            options,
+            on_event,
+            cancel_state,
+        )
+        .await;
         results.extend(arp_results);
+
+        if cancel_state.is_cancelled() {
+            return results;
+        }
     }
 
     // Add local IP addresses to results (they are always "alive")
@@ -316,7 +343,7 @@ pub async fn discover_hosts(
         }
 
         // Also add a special "local" discovery result for tracking
-        results.push(DiscoveryResult {
+        let local_result = DiscoveryResult {
             method: "local".to_string(),
             hosts: local_ips_in_targets.clone(),
             hostnames: std::collections::HashMap::new(),
@@ -328,13 +355,23 @@ pub async fn discover_hosts(
             duration_ms: 0,
             error: None,
             requires_privileges: false,
+        };
+        let _ = on_event.send(DiscoveryEvent::MethodCompleted {
+            result: local_result.clone(),
         });
+        results.push(local_result);
     }
 
-    // Resolve NetBIOS names for all discovered hosts if enabled
+    // Resolve hostnames for all discovered hosts if enabled
     if options.resolve_netbios {
+        let _ = on_event.send(DiscoveryEvent::ResolvingHostnames);
         resolve_hostnames_for_results(&mut results, options).await;
     }
+
+    // Send final completed event with fully resolved results
+    let _ = on_event.send(DiscoveryEvent::Completed {
+        results: results.clone(),
+    });
 
     results
 }
@@ -344,13 +381,12 @@ async fn execute_discovery_method(
     method: DiscoveryMethod,
     targets: &[IpAddr],
     options: &DiscoveryOptions,
-    app: &tauri::AppHandle,
 ) -> DiscoveryResult {
     match method {
         DiscoveryMethod::IcmpPing => icmp_ping_discovery(targets, options).await,
         DiscoveryMethod::ArpScan => arp_scan_discovery(targets, options).await,
-        DiscoveryMethod::TcpSyn => tcp_syn_discovery(targets, options, app).await,
         DiscoveryMethod::TcpConnect => tcp_connect_discovery(targets, options).await,
+        DiscoveryMethod::TcpSyn => tcp_syn_discovery(targets, options).await,
         DiscoveryMethod::Mdns => mdns_discovery(options).await,
         DiscoveryMethod::Ssdp => ssdp_discovery(options).await,
         DiscoveryMethod::UdpScan => udp_scan_discovery(targets, options).await,
@@ -370,66 +406,65 @@ async fn execute_discovery_method(
     }
 }
 
-/// Execute multiple discovery methods in parallel with progress event emission
+/// Execute multiple discovery methods in parallel, streaming results as each completes
 ///
-/// For each method, emits a `discovery-progress` event when starting (Running)
-/// and when completed (Completed/Error). All methods execute concurrently via `join_all`.
-async fn run_discovery_methods(
+/// Uses `FuturesUnordered` instead of `join_all` to emit each method's result to the
+/// frontend via Channel as soon as it completes. Supports cancellation between method
+/// completions via `ScanState`.
+async fn run_discovery_methods_streaming(
     methods: &[DiscoveryMethod],
     targets: &[IpAddr],
     options: &DiscoveryOptions,
-    app: &tauri::AppHandle,
+    on_event: &dyn DiscoveryEventSink,
+    cancel_state: &Arc<ScanState>,
 ) -> Vec<DiscoveryResult> {
     if methods.is_empty() {
         return vec![];
     }
 
-    let futures: Vec<_> = methods
+    let mut futs: FuturesUnordered<_> = methods
         .iter()
         .map(|method| {
             let method = *method;
             let method_name = method.to_string();
             async move {
-                // Emit "running" progress event
-                let _ = app.emit(
-                    "discovery-progress",
-                    DiscoveryProgress {
-                        method: method_name.clone(),
-                        status: ProgressStatus::Running,
-                        hosts_found: 0,
-                        duration_ms: None,
-                        error: None,
-                    },
-                );
+                // Notify frontend that this method has started
+                let _ = on_event.send(DiscoveryEvent::MethodStarted {
+                    method: method_name,
+                });
 
-                let result = execute_discovery_method(method, targets, options, app).await;
-
-                // Emit completion/error progress event
-                let status = if result.error.is_some() {
-                    ProgressStatus::Error
-                } else {
-                    ProgressStatus::Completed
-                };
-                let _ = app.emit(
-                    "discovery-progress",
-                    DiscoveryProgress {
-                        method: method_name,
-                        status,
-                        hosts_found: result.hosts.len(),
-                        duration_ms: Some(result.duration_ms),
-                        error: result.error.clone(),
-                    },
-                );
-
-                result
+                execute_discovery_method(method, targets, options).await
             }
         })
         .collect();
 
-    join_all(futures).await
+    let mut results = Vec::with_capacity(methods.len());
+
+    while let Some(result) = futs.next().await {
+        // Check cancellation between method completions
+        if cancel_state.is_cancelled() {
+            let _ = on_event.send(DiscoveryEvent::Cancelled);
+            break;
+        }
+
+        // Stream the completed result to the frontend
+        let _ = on_event.send(DiscoveryEvent::MethodCompleted {
+            result: result.clone(),
+        });
+        results.push(result);
+    }
+
+    results
 }
 
-/// Resolve hostnames for all discovered hosts via `NetBIOS` and LLMNR
+/// Resolve hostnames for all discovered hosts via DNS PTR, `NetBIOS`, and LLMNR
+///
+/// Resolution priority (highest to lowest):
+/// 1. mDNS (already resolved during discovery)
+/// 2. DNS PTR (reverse lookup)
+/// 3. NetBIOS (Windows hosts)
+/// 4. LLMNR (Link-Local Multicast Name Resolution)
+#[allow(clippy::cognitive_complexity, clippy::too_many_lines)]
 async fn resolve_hostnames_for_results(
     results: &mut [DiscoveryResult],
     options: &DiscoveryOptions,
@@ -446,7 +481,131 @@ async fn resolve_hostnames_for_results(
         .collect();
     let all_ips: Vec<IpAddr> = all_ips_set.iter().copied().collect();
 
-    // Resolve NetBIOS names concurrently
+    // Phase 1: DNS PTR reverse lookup (fastest, works on corporate networks)
+    // Use shorter timeout for DNS as it's typically fast
+    let dns_timeout = Duration::from_millis(u64::from(options.timeout_ms).min(3000));
+    let dns_ptr_names =
+        resolve_dns_ptr_batch(&all_ips, dns_timeout, options.concurrency as usize).await;
+
+    // Apply DNS PTR results to metadata (only if no hostname exists yet)
+    for result in results.iter_mut() {
+        for host_ip in &result.hosts {
+            if let Some(dns_name) = dns_ptr_names.get(host_ip) {
+                let metadata = result.host_metadata.entry(host_ip.clone()).or_default();
+
+                // Only set if no hostname exists (mDNS has higher priority)
+                if metadata.hostname.is_none() {
+                    metadata.hostname = Some(dns_name.clone());
+                    metadata.hostname_source = Some("dns".to_string());
+                }
+            }
+        }
+    }
+
+    // Phase 2: Query SNMP device info concurrently (sysName, sysDescr, etc.)
+    // Use shorter timeout for SNMP as it should respond quickly or not at all
+    let snmp_timeout = Duration::from_millis(u64::from(options.timeout_ms).min(2000));
+    let snmp_sem = Arc::new(Semaphore::new(options.concurrency as usize));
+    let mut snmp_handles = Vec::new();
+
+    for &ip in &all_ips {
+        let sem = Arc::clone(&snmp_sem);
+        let timeout = snmp_timeout;
+
+        snmp_handles.push(tokio::spawn(async move {
+            let _permit = sem.acquire().await.ok()?;
+
+            // SNMP is blocking, run in a blocking task
+            let result = tokio::task::spawn_blocking(move || {
+                super::snmp::query_snmp_device_info(ip, timeout)
+            })
+            .await
+            .ok()
+            .flatten();
+
+            result.map(|info| (ip.to_string(), info))
+        }));
+    }
+
+    // Collect SNMP results
+    let mut snmp_info_map: std::collections::HashMap<String, super::snmp::SnmpDeviceInfo> =
+        std::collections::HashMap::new();
+    for handle in snmp_handles {
+        if let Ok(Some((ip, info))) = handle.await {
+            snmp_info_map.insert(ip, info);
+        }
+    }
+
+    // Apply SNMP results to metadata
+    for result in results.iter_mut() {
+        for host_ip in &result.hosts {
+            if let Some(snmp_info) = snmp_info_map.remove(host_ip) {
+                let metadata = result.host_metadata.entry(host_ip.clone()).or_default();
+
+                // Use sysName as hostname if no hostname exists yet
+                if metadata.hostname.is_none() {
+                    if let Some(ref sys_name) = snmp_info.sys_name {
+                        metadata.hostname = Some(sys_name.clone());
+                        metadata.hostname_source = Some("snmp".to_string());
+                    }
+                }
+
+                metadata.snmp_info = Some(snmp_info);
+            }
+        }
+    }
+
+    // Phase 3: Extract TLS certificate SAN names (HTTPS hosts)
+    // Use short timeout as we only probe port 443
+    let tls_timeout = Duration::from_millis(u64::from(options.timeout_ms).min(2000));
+    let tls_sem = Arc::new(Semaphore::new(options.concurrency as usize));
+    let mut tls_handles = Vec::new();
+
+    for &ip in &all_ips {
+        let sem = Arc::clone(&tls_sem);
+        let timeout = tls_timeout;
+
+        tls_handles.push(tokio::spawn(async move {
+            let _permit = sem.acquire().await.ok()?;
+
+            // Only probe port 443 for TLS
+            let names = super::tls_info::extract_tls_san_names(ip, 443, timeout).await;
+
+            if names.is_empty() {
+                None
+            } else {
+                Some((ip.to_string(), names))
+            }
+        }));
+    }
+
+    // Collect TLS SAN results
+    let mut tls_names_map: std::collections::HashMap<String, Vec<String>> =
+        std::collections::HashMap::new();
+    for handle in tls_handles {
+        if let Ok(Some((ip, names))) = handle.await {
+            tls_names_map.insert(ip, names);
+        }
+    }
+
+    // Apply TLS SAN results to metadata
+    for result in results.iter_mut() {
+        for host_ip in &result.hosts {
+            if let Some(tls_names) = tls_names_map.remove(host_ip) {
+                let metadata = result.host_metadata.entry(host_ip.clone()).or_default();
+
+                // Use first TLS SAN as hostname if no hostname exists yet
+                if metadata.hostname.is_none() && !tls_names.is_empty() {
+                    metadata.hostname = Some(tls_names[0].clone());
+                    metadata.hostname_source = Some("tls".to_string());
+                }
+
+                metadata.tls_names = tls_names;
+            }
+        }
+    }
+
+    // Phase 4: Resolve NetBIOS names concurrently (Windows hosts)
     let semaphore = Arc::new(Semaphore::new(options.concurrency as usize));
     let mut handles: Vec<tokio::task::JoinHandle<Option<(String, String)>>> = Vec::new();
 
@@ -478,17 +637,24 @@ async fn resolve_hostnames_for_results(
         }
     }
 
-    // Try LLMNR for IPs without a hostname (fallback resolution)
+    // Phase 5: Try LLMNR for IPs without a hostname (fallback resolution)
     let llmnr_timeout = Duration::from_millis(u64::from(options.timeout_ms).min(2000));
     let mut llmnr_names: std::collections::HashMap<String, String> =
         std::collections::HashMap::new();
 
-    // Collect IPs that don't have a hostname from any discovery method
+    // Collect IPs that don't have a hostname from any discovery method or DNS PTR
     let ips_without_hostname: Vec<String> = {
         let mut has_hostname: HashSet<String> = HashSet::new();
         for result in results.iter() {
+            // Check mDNS hostnames
             for ip in result.hostnames.keys() {
                 has_hostname.insert(ip.clone());
+            }
+            // Check host_metadata for DNS PTR resolved hostnames
+            for (ip, metadata) in &result.host_metadata {
+                if metadata.hostname.is_some() {
+                    has_hostname.insert(ip.clone());
+                }
             }
         }
         all_ips_set
@@ -550,6 +716,61 @@ async fn resolve_hostnames_for_results(
             }
         }
     }
+}
+
+// =============================================================================
+// DNS PTR Reverse Lookup
+// =============================================================================
+
+/// Resolve hostname via DNS PTR (reverse lookup) for a single IP
+async fn resolve_dns_ptr(ip: IpAddr) -> Option<String> {
+    use hickory_resolver::Resolver;
+
+    // Create resolver with system configuration
+    let resolver = Resolver::builder_tokio().ok()?.build();
+
+    // Perform reverse lookup
+    let response = resolver.reverse_lookup(ip).await.ok()?;
+
+    // Get the first PTR record and clean up the hostname
+    response.iter().next().map(|name| {
+        let hostname = name.to_string();
+        // Remove trailing dot if present
+        hostname.strip_suffix('.').unwrap_or(&hostname).to_string()
+    })
+}
+
+/// Resolve DNS PTR names for multiple IPs concurrently
+async fn resolve_dns_ptr_batch(
+    ips: &[IpAddr],
+    timeout_duration: Duration,
+    concurrency: usize,
+) -> std::collections::HashMap<String, String> {
+    let semaphore = Arc::new(Semaphore::new(concurrency));
+    let mut handles = Vec::new();
+
+    for &ip in ips {
+        let sem = Arc::clone(&semaphore);
+        let timeout_dur = timeout_duration;
+
+        handles.push(tokio::spawn(async move {
+            let _permit = sem.acquire().await.ok()?;
+
+            // Apply timeout to DNS lookup
+            let result = timeout(timeout_dur, resolve_dns_ptr(ip)).await.ok()?;
+
+            result.map(|name| (ip.to_string(), name))
+        }));
+    }
+
+    let mut results = std::collections::HashMap::new();
+    for handle in handles {
+        if let Ok(Some((ip, name))) = handle.await {
+            results.insert(ip, name);
+        }
+    }
+
+    results
 }
 
 // =============================================================================
@@ -792,7 +1013,7 @@ async fn perform_arp_scan(
 
     // Create datalink channel
     let (mut tx, mut rx) = match datalink::channel(interface, Default::default()) {
-        Ok(Channel::Ethernet(tx, rx)) => (tx, rx),
+        Ok(PnetChannel::Ethernet(tx, rx)) => (tx, rx),
         Ok(_) => return Err("Unsupported channel type".to_string()),
         Err(e) => {
             return Err(format!(
@@ -911,274 +1132,6 @@ fn send_arp_request(
 
     ethernet_packet.set_payload(arp_packet.packet());
     tx.send_to(ethernet_packet.packet(), None);
-    Ok(())
-}
-
-// =============================================================================
-// TCP SYN Scan Discovery
-// =============================================================================
-
-/// Build an error `DiscoveryResult` for TCP SYN scan failures
-fn tcp_syn_error_result(
-    start: std::time::Instant,
-    targets: &[IpAddr],
-    error: Option<String>,
-) -> DiscoveryResult {
-    DiscoveryResult {
-        method: "tcp_syn".to_string(),
-        hosts: vec![],
-        hostnames: std::collections::HashMap::new(),
-        host_metadata: std::collections::HashMap::new(),
-        unreachable: targets.iter().map(ToString::to_string).collect(),
-        duration_ms: start.elapsed().as_millis() as u64,
-        error,
-        requires_privileges: true,
-    }
-}
-
-/// Discover hosts using TCP SYN scan
-///
-/// Attempts direct raw socket access first; falls back to the net-scanner
-/// sidecar if the main process lacks privileges.
-async fn tcp_syn_discovery(
-    targets: &[IpAddr],
-    options: &DiscoveryOptions,
-    app: &tauri::AppHandle,
-) -> DiscoveryResult {
-    let start = std::time::Instant::now();
-
-    // TCP SYN only works for IPv4
-    let ipv4_targets: Vec<Ipv4Addr> = targets
-        .iter()
-        .filter_map(|ip| match ip {
-            IpAddr::V4(v4) => Some(*v4),
-            IpAddr::V6(_) => None,
-        })
-        .collect();
-
-    if ipv4_targets.is_empty() {
-        return DiscoveryResult {
-            method: "tcp_syn".to_string(),
-            hosts: vec![],
-            hostnames: std::collections::HashMap::new(),
-            host_metadata: std::collections::HashMap::new(),
-            unreachable: vec![],
-            duration_ms: start.elapsed().as_millis() as u64,
-            error: None,
-            requires_privileges: false,
-        };
-    }
-
-    // Find a suitable network interface to get source IP
-    let interface = match find_interface_for_targets(&ipv4_targets) {
-        Some(iface) => iface,
-        None => {
-            return tcp_syn_error_result(
-                start,
-                targets,
-                Some("No suitable network interface found for TCP SYN scan".to_string()),
-            );
-        }
-    };
-
-    // Get source IPv4 address from interface
-    let source_ip = interface
-        .ips
-        .iter()
-        .find_map(|ip| match ip {
-            IpNetwork::V4(network) => Some(network.ip()),
-            IpNetwork::V6(_) => None,
-        })
-        .unwrap_or(Ipv4Addr::UNSPECIFIED);
-
-    let ports: Vec<u16> = options
-        .syn_ports
-        .as_ref()
-        .map_or_else(|| SYN_DISCOVERY_PORTS.to_vec(), Clone::clone);
-
-    // Try direct raw socket access first
-    let protocol =
-        TransportChannelType::Layer4(TransportProtocol::Ipv4(IpNextHeaderProtocols::Tcp));
-
-    match transport::transport_channel(4096, protocol) {
-        Ok((mut tx, mut rx)) => {
-            // Direct raw socket access available
-            tcp_syn_direct(
-                &ipv4_targets,
-                &ports,
-                source_ip,
-                &mut tx,
-                &mut rx,
-                options,
-                start,
-            )
-            .await
-        }
-        Err(_) => {
-            // Fall back to net-scanner sidecar
-            tcp_syn_via_sidecar(app, &ipv4_targets, &ports, source_ip, options, start).await
-        }
-    }
-}
-
-/// TCP SYN scan using direct raw socket access (main process has privileges)
-async fn tcp_syn_direct(
-    ipv4_targets: &[Ipv4Addr],
-    ports: &[u16],
-    source_ip: Ipv4Addr,
-    tx: &mut transport::TransportSender,
-    rx: &mut transport::TransportReceiver,
-    options: &DiscoveryOptions,
-    start: std::time::Instant,
-) -> DiscoveryResult {
-    let mut discovered = HashSet::new();
-    let timeout_duration = Duration::from_millis(u64::from(options.timeout_ms));
-
-    // Send SYN packets with proper checksum
-    for target in ipv4_targets {
-        for &port in ports {
-            if let Err(e) = send_syn_packet(tx, source_ip, *target, port) {
-                eprintln!("Failed to send SYN to {}:{}: {}", target, port, e);
-            }
-        }
-    }
-
-    // Collect SYN-ACK responses
-    let start_recv = std::time::Instant::now();
-    let target_set: HashSet<IpAddr> = ipv4_targets.iter().map(|ip| IpAddr::V4(*ip)).collect();
-
-    while start_recv.elapsed() < timeout_duration {
-        let mut iter = transport::tcp_packet_iter(rx);
-        match iter.next_with_timeout(Duration::from_millis(100)) {
-            Ok(Some((packet, addr))) => {
-                if target_set.contains(&addr) {
-                    let flags = packet.get_flags();
-                    let is_syn_ack =
-                        flags & (TcpFlags::SYN | TcpFlags::ACK) == (TcpFlags::SYN | TcpFlags::ACK);
-                    let is_rst = flags & TcpFlags::RST != 0;
-                    if is_syn_ack || is_rst {
-                        discovered.insert(addr);
-                    }
-                }
-            }
-            Ok(None) | Err(_) => {
-                tokio::time::sleep(Duration::from_millis(10)).await;
-            }
-        }
-    }
-
-    let hosts: Vec<String> = discovered.iter().map(ToString::to_string).collect();
-    let unreachable: Vec<String> = ipv4_targets
-        .iter()
-        .filter(|ip| !discovered.contains(&IpAddr::V4(**ip)))
-        .map(ToString::to_string)
-        .collect();
-
-    DiscoveryResult {
-        method: "tcp_syn".to_string(),
-        hosts,
-        hostnames: std::collections::HashMap::new(),
-        host_metadata: std::collections::HashMap::new(),
-        unreachable,
-        duration_ms: start.elapsed().as_millis() as u64,
-        error: None,
-        requires_privileges: true,
-    }
-}
-
-/// TCP SYN scan via the net-scanner sidecar (main process lacks privileges)
-async fn tcp_syn_via_sidecar(
-    app: &tauri::AppHandle,
-    ipv4_targets: &[Ipv4Addr],
-    ports: &[u16],
-    source_ip: Ipv4Addr,
-    options: &DiscoveryOptions,
-    start: std::time::Instant,
-) -> DiscoveryResult {
-    let targets: Vec<String> = ipv4_targets.iter().map(ToString::to_string).collect();
-
-    match super::sidecar::tcp_syn_scan(
-        app,
-        targets.clone(),
-        ports.to_vec(),
-        source_ip.to_string(),
-        u64::from(options.timeout_ms),
-    )
-    .await
-    {
-        Ok(resp) if resp.success => {
-            let hosts = resp.discovered.unwrap_or_default();
-            let discovered_set: HashSet<String> = hosts.iter().cloned().collect();
-            let unreachable: Vec<String> = targets
-                .into_iter()
-                .filter(|t| !discovered_set.contains(t))
-                .collect();
-
-            DiscoveryResult {
-                method: "tcp_syn".to_string(),
-                hosts,
-                hostnames: std::collections::HashMap::new(),
-                host_metadata: std::collections::HashMap::new(),
-                unreachable,
-                duration_ms: start.elapsed().as_millis() as u64,
-                error: None,
-                requires_privileges: true,
-            }
-        }
-        Ok(resp) => tcp_syn_error_result(
-            start,
-            &ipv4_targets
-                .iter()
-                .map(|ip| IpAddr::V4(*ip))
-                .collect::<Vec<_>>(),
-            resp.error,
-        ),
-        Err(e) => tcp_syn_error_result(
-            start,
-            &ipv4_targets
-                .iter()
-                .map(|ip| IpAddr::V4(*ip))
-                .collect::<Vec<_>>(),
-            Some(format!(
-                "TCP SYN scan unavailable: {e}. Requires privilege setup."
-            )),
-        ),
-    }
-}
-
-/// Send a TCP SYN packet with proper checksum calculation
-fn send_syn_packet(
-    tx: &mut TransportSender,
-    source: Ipv4Addr,
-    target: Ipv4Addr,
-    port: u16,
-) -> Result<(), String> {
-    let mut tcp_buffer = [0u8; 20];
-    let mut tcp_packet =
-        MutableTcpPacket::new(&mut tcp_buffer).ok_or("Failed to create TCP packet")?;
-
-    tcp_packet.set_source(rand::random::<u16>().max(1024));
-    tcp_packet.set_destination(port);
-    tcp_packet.set_sequence(rand::random());
-    tcp_packet.set_acknowledgement(0);
-    tcp_packet.set_data_offset(5);
-    tcp_packet.set_flags(TcpFlags::SYN);
-    tcp_packet.set_window(64240);
-    tcp_packet.set_urgent_ptr(0);
-
-    // Calculate TCP checksum using pseudo-header (RFC 793)
-    // The checksum covers the TCP header, data, and a pseudo-header containing
-    // source IP, destination IP, protocol, and TCP length
-    let checksum = {
-        let tcp_packet_ref =
-            TcpPacket::new(tcp_packet.packet()).ok_or("Failed to create TcpPacket for checksum")?;
-        ipv4_checksum(&tcp_packet_ref, &source, &target)
-    };
-    tcp_packet.set_checksum(checksum);
-
-    tx.send_to(tcp_packet, IpAddr::V4(target))
-        .map_err(|e| format!("Failed to send packet: {e}"))?;
-
     Ok(())
 }
 
@@ -1403,6 +1356,297 @@ async fn tcp_connect_discovery(targets: &[IpAddr], options: &DiscoveryOptions) -
 }
 
 // =============================================================================
+// TCP SYN Discovery (Half-Open Scan) - Requires Raw Socket Privileges
+// =============================================================================
+
+/// Default source port for TCP SYN scanning
+const TCP_SYN_SOURCE_PORT: u16 = 54321;
+
+/// Discover hosts using TCP SYN scan (half-open scan, requires privileges)
+///
+/// This method sends TCP SYN packets and listens for SYN-ACK or RST responses.
+/// It's faster than TCP connect scan because it doesn't complete the 3-way handshake.
+async fn tcp_syn_discovery(targets: &[IpAddr], options: &DiscoveryOptions) -> DiscoveryResult {
+    let start = std::time::Instant::now();
+    let timeout_duration = Duration::from_millis(u64::from(options.timeout_ms));
+
+    // Only support IPv4 for now (IPv6 raw sockets are more complex)
+    let ipv4_targets: Vec<Ipv4Addr> = targets
+        .iter()
+        .filter_map(|ip| match ip {
+            IpAddr::V4(v4) => Some(*v4),
+            IpAddr::V6(_) => None,
+        })
+        .collect();
+
+    if ipv4_targets.is_empty() {
+        return DiscoveryResult {
+            method: "tcp_syn".to_string(),
+            hosts: vec![],
+            hostnames: std::collections::HashMap::new(),
+            host_metadata: std::collections::HashMap::new(),
+            unreachable: targets.iter().map(ToString::to_string).collect(),
+            duration_ms: start.elapsed().as_millis() as u64,
+            error: Some("TCP SYN scan only supports IPv4 addresses".to_string()),
+            requires_privileges: true,
+        };
+    }
+
+    // Use ports from options or default discovery ports
+    let ports = options
+        .syn_ports
+        .as_ref()
+        .map_or(CONNECT_DISCOVERY_PORTS, Vec::as_slice);
+
+    // Pre-calculate the list of all targets as strings for error cases
+    let all_targets_str: Vec<String> = ipv4_targets.iter().map(ToString::to_string).collect();
+
+    // Perform the TCP SYN scan in a blocking task since pnet is synchronous
+    let ports_vec = ports.to_vec();
+    let result = tokio::task::spawn_blocking(move || {
+        tcp_syn_scan_blocking(&ipv4_targets, &ports_vec, timeout_duration)
+    })
+    .await;
+
+    match result {
+        Ok(Ok((hosts, unreachable))) => DiscoveryResult {
+            method: "tcp_syn".to_string(),
+            hosts,
+            hostnames: std::collections::HashMap::new(),
+            host_metadata: std::collections::HashMap::new(),
+            unreachable,
+            duration_ms: start.elapsed().as_millis() as u64,
+            error: None,
+            requires_privileges: true,
+        },
+        Ok(Err(e)) => DiscoveryResult {
+            method: "tcp_syn".to_string(),
+            hosts: vec![],
+            hostnames: std::collections::HashMap::new(),
+            host_metadata: std::collections::HashMap::new(),
+            unreachable: all_targets_str.clone(),
+            duration_ms: start.elapsed().as_millis() as u64,
+            error: Some(e),
+            requires_privileges: true,
+        },
+        Err(e) => DiscoveryResult {
+            method: "tcp_syn".to_string(),
+            hosts: vec![],
+            hostnames: std::collections::HashMap::new(),
+            host_metadata: std::collections::HashMap::new(),
+            unreachable: all_targets_str,
+            duration_ms: start.elapsed().as_millis() as u64,
+            error: Some(format!("Task join error: {e}")),
+            requires_privileges: true,
+        },
+    }
+}
+
+/// Perform TCP SYN scan synchronously (runs in blocking task)
+#[allow(clippy::significant_drop_tightening)]
+fn tcp_syn_scan_blocking(
+    targets: &[Ipv4Addr],
+    ports: &[u16],
+    timeout: Duration,
+) -> Result<(Vec<String>, Vec<String>), String> {
+    use std::collections::HashSet;
+    use std::sync::atomic::{AtomicBool, Ordering};
+    use std::sync::Arc;
+
+    // Create transport channel for sending TCP packets
+    let protocol =
+        TransportChannelType::Layer4(TransportProtocol::Ipv4(IpNextHeaderProtocols::Tcp));
+
+    let (mut tx, mut rx) = transport::transport_channel(4096, protocol)
+        .map_err(|e| format!("Failed to create transport channel: {e}"))?;
+
+    let alive_hosts: Arc<std::sync::Mutex<HashSet<Ipv4Addr>>> =
+        Arc::new(std::sync::Mutex::new(HashSet::new()));
+    let stop_flag = Arc::new(AtomicBool::new(false));
+
+    // Spawn receiver thread
+    let alive_hosts_clone = Arc::clone(&alive_hosts);
+    let stop_flag_clone = Arc::clone(&stop_flag);
+    let targets_set: HashSet<Ipv4Addr> = targets.iter().copied().collect();
+
+    let receiver_handle = std::thread::spawn(move || {
+        receive_syn_responses(&mut rx, &targets_set, &alive_hosts_clone, &stop_flag_clone);
+    });
+
+    // Send SYN packets to all targets and ports
+    let source_port = TCP_SYN_SOURCE_PORT;
+    for &target in targets {
+        for &port in ports {
+            if let Err(e) = send_syn_packet(&mut tx, target, port, source_port) {
+                eprintln!("Failed to send SYN to {target}:{port}: {e}");
+            }
+        }
+    }
+
+    // Wait for responses (with timeout)
+    std::thread::sleep(timeout);
+
+    // Signal receiver to stop
+    stop_flag.store(true, Ordering::SeqCst);
+
+    // Wait for receiver thread to finish (with small timeout)
+    let _ = receiver_handle.join();
+
+    // Collect results - acquire lock, collect data, release lock immediately
+    let (hosts, unreachable) = {
+        let alive = alive_hosts
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner);
+        let hosts: Vec<String> = alive.iter().map(ToString::to_string).collect();
+        let unreachable: Vec<String> = targets
+            .iter()
+            .filter(|t| !alive.contains(t))
+            .map(ToString::to_string)
+            .collect();
+        (hosts, unreachable)
+    };
+
+    Ok((hosts, unreachable))
+}
+
+/// Send a TCP SYN packet to the specified target
+fn send_syn_packet(
+    tx: &mut TransportSender,
+    target: Ipv4Addr,
+    dest_port: u16,
+    source_port: u16,
+) -> Result<(), String> {
+    // Build TCP SYN packet
+    let mut tcp_buffer = [0u8; 20]; // Minimum TCP header size
+    let mut tcp_packet =
+        MutableTcpPacket::new(&mut tcp_buffer).ok_or("Failed to create TCP packet buffer")?;
+
+    tcp_packet.set_source(source_port);
+    tcp_packet.set_destination(dest_port);
+    tcp_packet.set_sequence(rand::random::<u32>());
+    tcp_packet.set_acknowledgement(0);
+    tcp_packet.set_data_offset(5); // 5 * 4 = 20 bytes (minimum header)
+    tcp_packet.set_reserved(0);
+    tcp_packet.set_flags(TcpFlags::SYN);
+    tcp_packet.set_window(65535);
+    tcp_packet.set_urgent_ptr(0);
+
+    // Calculate checksum (pseudo-header required)
+    let source_ip = get_source_ip_for_target(target);
+    let checksum = tcp_checksum(&tcp_packet.to_immutable(), source_ip, target);
+    tcp_packet.set_checksum(checksum);
+
+    // Send the packet
+    tx.send_to(tcp_packet, IpAddr::V4(target))
+        .map_err(|e| format!("Send error: {e}"))?;
+
+    Ok(())
+}
+
+/// Receive TCP responses (SYN-ACK or RST) and mark hosts as alive
+fn receive_syn_responses(
+    rx: &mut TransportReceiver,
+    targets: &HashSet<Ipv4Addr>,
+    alive_hosts: &Arc<std::sync::Mutex<HashSet<Ipv4Addr>>>,
+    stop_flag: &Arc<std::sync::atomic::AtomicBool>,
+) {
+    use std::sync::atomic::Ordering;
+
+    let mut iter = tcp_packet_iter(rx);
+
+    while !stop_flag.load(Ordering::SeqCst) {
+        // Use a short timeout for each receive attempt
+        match iter.next_with_timeout(Duration::from_millis(100)) {
+            Ok(Some((packet, source))) => {
+                let source_ip = match source {
+                    IpAddr::V4(v4) => v4,
+                    IpAddr::V6(_) => continue,
+                };
+
+                // Check if this is from one of our targets
+                if !targets.contains(&source_ip) {
+                    continue;
+                }
+
+                // Check if it's a response to our SYN (SYN-ACK or RST)
+                let flags = packet.get_flags();
+                if (flags & TcpFlags::SYN != 0 && flags & TcpFlags::ACK != 0)
+                    || (flags & TcpFlags::RST != 0)
+                {
+                    // Host is alive (responded to our SYN)
+                    if let Ok(mut hosts) = alive_hosts.lock() {
+                        hosts.insert(source_ip);
+                    }
+                }
+            }
+            Ok(None) => {
+                // Timeout, continue checking stop flag
+                continue;
+            }
+            Err(_) => {
+                // Error receiving, break out
+                break;
+            }
+        }
+    }
+}
+
+/// Get the source IP address to use for a given target
+fn get_source_ip_for_target(target: Ipv4Addr) -> Ipv4Addr {
+    // Find an appropriate interface for the target
+    for iface in datalink::interfaces() {
+        for ip in &iface.ips {
+            if let IpNetwork::V4(v4_net) = ip {
+                // Simple heuristic: use this interface if target is in same subnet
+                // or if it's a non-loopback interface
+                if v4_net.contains(target) || (!iface.is_loopback() && iface.is_up()) {
+                    return v4_net.ip();
+                }
+            }
+        }
+    }
+    // Fallback to unspecified address
+    Ipv4Addr::UNSPECIFIED
+}
+
+/// Calculate TCP checksum with pseudo-header
+fn tcp_checksum(tcp: &TcpPacket<'_>, source: Ipv4Addr, dest: Ipv4Addr) -> u16 {
+    // Create a pseudo-header for checksum calculation
+    // The proper way is to use pnet's checksum utilities
+    let tcp_len = tcp.packet().len();
+
+    // Build pseudo-header: source IP, dest IP, zero, protocol, TCP length
+    let mut pseudo_header = Vec::with_capacity(12 + tcp_len);
+    pseudo_header.extend_from_slice(&source.octets());
+    pseudo_header.extend_from_slice(&dest.octets());
+    pseudo_header.push(0); // Zero
+    pseudo_header.push(6); // TCP protocol number
+    pseudo_header.push((tcp_len >> 8) as u8);
+    pseudo_header.push((tcp_len & 0xff) as u8);
+    pseudo_header.extend_from_slice(tcp.packet());
+
+    // Calculate checksum
+    let mut sum: u32 = 0;
+    let mut i = 0;
+    while i < pseudo_header.len() {
+        let word = if i + 1 < pseudo_header.len() {
+            u16::from_be_bytes([pseudo_header[i], pseudo_header[i + 1]])
+        } else {
+            u16::from_be_bytes([pseudo_header[i], 0])
+        };
+        sum = sum.wrapping_add(u32::from(word));
+        i += 2;
+    }
+
+    // Fold 32-bit sum to 16-bit
+    while sum >> 16 != 0 {
+        sum = (sum & 0xFFFF) + (sum >> 16);
+    }
+
+    !sum as u16
+}
+
+// =============================================================================
 // Utility Functions
 // =============================================================================
 
@@ -1428,7 +1672,7 @@ pub async fn check_privileges(method: DiscoveryMethod) -> bool {
             false
         }
         DiscoveryMethod::TcpSyn => {
-            // Try to create a raw socket
+            // TCP SYN requires raw socket - check by trying to create one
             let protocol =
                 TransportChannelType::Layer4(TransportProtocol::Ipv4(IpNextHeaderProtocols::Tcp));
             transport::transport_channel(4096, protocol).is_ok()

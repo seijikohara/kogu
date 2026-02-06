@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <!-- Hardened Runtime: Allow JIT compilation (for WebView) -->
+    <key>com.apple.security.cs.allow-jit</key>
+    <true/>
+
+    <!-- Hardened Runtime: Allow unsigned executable memory (for WebView) -->
+    <key>com.apple.security.cs.allow-unsigned-executable-memory</key>
+    <true/>
+
+    <!-- Hardened Runtime: Disable library validation (for plugins) -->
+    <key>com.apple.security.cs.disable-library-validation</key>
+    <true/>
+
+    <!-- Network: Allow outbound connections -->
+    <key>com.apple.security.network.client</key>
+    <true/>
+
+    <!-- Network: Allow inbound connections (for MCP bridge) -->
+    <key>com.apple.security.network.server</key>
+    <true/>
+</dict>
+</plist>

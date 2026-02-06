@@ -85,19 +85,22 @@
 				{#if toolbarCenter}
 					{@render toolbarCenter()}
 				{:else if hasTabs && tabs}
-					<div class="flex items-center gap-0.5 rounded-lg bg-surface-3/70 p-0.5" role="tablist">
+					<div
+						class="flex items-center gap-0.5 rounded-lg bg-surface-2 p-1 shadow-inner"
+						role="tablist"
+					>
 						{#each tabs as tab (tab.id)}
 							{@const TabIcon = tab.icon}
 							<button
 								role="tab"
 								aria-selected={activeTab === tab.id}
-								class="relative flex items-center gap-1.5 rounded-md px-3.5 py-1.5 text-sm font-medium transition-all duration-150 focus-visible:ring-2 focus-visible:ring-ring/50 {activeTab ===
+								class="focus-ring relative flex items-center gap-1.5 rounded-md px-3.5 py-2 text-sm font-medium transition-all duration-150 {activeTab ===
 								tab.id
-									? 'bg-background text-foreground shadow-sm ring-1 ring-border/50 after:absolute after:bottom-0 after:left-1/2 after:h-0.5 after:w-4 after:-translate-x-1/2 after:rounded-full after:bg-accent-brand'
-									: 'text-muted-foreground opacity-70 hover:bg-surface-3/40 hover:text-foreground hover:opacity-100'}"
+									? 'bg-surface-0 text-foreground shadow-sm'
+									: 'text-muted-foreground hover:bg-interactive-hover hover:text-foreground'}"
 								onclick={() => ontabchange?.(tab.id)}
 							>
-								<TabIcon class="h-3.5 w-3.5" />
+								<TabIcon class="h-4 w-4" />
 								{tab.label}
 							</button>
 						{/each}

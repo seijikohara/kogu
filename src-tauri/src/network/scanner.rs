@@ -10,7 +10,6 @@ use ipnetwork::IpNetwork;
 use rustls::client::danger::{HandshakeSignatureValid, ServerCertVerified, ServerCertVerifier};
 use rustls::pki_types::{CertificateDer, ServerName, UnixTime};
 use rustls::{ClientConfig, DigitallySignedStruct, SignatureScheme};
-use tauri::{AppHandle, Emitter};
 use tokio::io::{AsyncBufReadExt, AsyncWriteExt, BufReader};
 use tokio::net::TcpStream;
 use tokio::sync::{broadcast, Semaphore};
@@ -23,7 +22,7 @@ use super::ports::{
 };
 use super::types::{
     HostResult, HostnameResolutionOptions, PortInfo, PortPreset, PortState, ScanMode, ScanProgress,
-    ScanRequest, ScanResults, TlsCertInfo,
+    ScanProgressSink, ScanRequest, ScanResults, TlsCertInfo,
 };
 
 // =============================================================================
@@ -128,7 +127,7 @@ impl ScanState {
 /// Run a network scan
 pub async fn run_scan(
     request: ScanRequest,
-    app: AppHandle,
+    progress_sink: &dyn ScanProgressSink,
     scan_state: Arc<ScanState>,
 ) -> Result<ScanResults, String> {
     let start_time = Instant::now();
@@ -143,13 +142,10 @@ pub async fn run_scan(
     let total_ports = ports.len() as u32;
 
     // Emit started event
-    let _ = app.emit(
-        "network-scan-progress",
-        ScanProgress::Started {
-            total_hosts,
-            total_ports,
-        },
-    );
+    let _ = progress_sink.emit(ScanProgress::Started {
+        total_hosts,
+        total_ports,
+    });
 
     // Scan configuration
     let timeout_duration = Duration::from_millis(u64::from(request.timeout_ms));
@@ -196,12 +192,9 @@ pub async fn run_scan(
                 scan_duration_ms: host_start.elapsed().as_millis() as u64,
             };
 
-            let _ = app.emit(
-                "network-scan-progress",
-                ScanProgress::HostDiscovered {
-                    host: host_result.clone(),
-                },
-            );
+            let _ = progress_sink.emit(ScanProgress::HostDiscovered {
+                host: host_result.clone(),
+            });
 
             results.push(host_result);
         }
@@ -211,17 +204,14 @@ pub async fn run_scan(
         #[allow(clippy::cast_precision_loss)]
         let percentage = (scanned as f32 / total_hosts as f32) * 100.0;
 
-        let _ = app.emit(
-            "network-scan-progress",
-            ScanProgress::Progress {
-                scanned_hosts: scanned,
-                total_hosts,
-                percentage,
-                current_ip: next_ip,
-                discovered_hosts: results.len() as u32,
-                discovered_ports: total_discovered_ports,
-            },
-        );
+        let _ = progress_sink.emit(ScanProgress::Progress {
+            scanned_hosts: scanned,
+            total_hosts,
+            percentage,
+            current_ip: next_ip,
+            discovered_hosts: results.len() as u32,
+            discovered_ports: total_discovered_ports,
+        });
     }
 
     let end_time_str = chrono_format_now();
@@ -240,12 +230,9 @@ pub async fn run_scan(
     };
 
     // Emit completed event
-    let _ = app.emit(
-        "network-scan-progress",
-        ScanProgress::Completed {
-            results: scan_results.clone(),
-        },
-    );
+    let _ = progress_sink.emit(ScanProgress::Completed {
+        results: scan_results.clone(),
+    });
 
     Ok(scan_results)
 }

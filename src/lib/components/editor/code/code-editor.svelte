@@ -760,7 +760,7 @@
 	<!-- Status Bar -->
 	{#if showStatusBar}
 		<div
-			class="flex h-5 shrink-0 items-center justify-between border-t bg-muted/20 px-2 font-mono text-2xs text-muted-foreground/80"
+			class="flex h-5 shrink-0 items-center justify-between border-t bg-muted/20 px-2 font-mono text-xs text-muted-foreground/80"
 		>
 			<div class="flex items-center divide-x divide-border/50">
 				<div class="flex items-center gap-1 pr-2" title="Cursor Position">

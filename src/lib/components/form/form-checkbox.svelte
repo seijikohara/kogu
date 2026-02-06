@@ -19,13 +19,18 @@
 </script>
 
 <label
-	class="flex items-center gap-2 rounded-md px-2 py-1 transition-colors {disabled
+	class="flex items-start gap-2.5 rounded-md px-2 py-2 transition-colors {disabled
 		? 'cursor-not-allowed opacity-50'
-		: 'cursor-pointer hover:bg-muted/50'}"
+		: 'cursor-pointer hover:bg-interactive-hover'}"
 >
-	<Checkbox {checked} {disabled} onCheckedChange={handleChange} class="h-3.5 w-3.5" />
-	<span class="text-sm">{label}</span>
+	<Checkbox
+		{checked}
+		{disabled}
+		onCheckedChange={handleChange}
+		class="mt-0.5 h-4 w-4 shrink-0 bg-background"
+	/>
+	<span class="min-w-0 text-sm font-medium leading-snug">{label}</span>
 	{#if hint}
-		<span class="text-xs text-muted-foreground">({hint})</span>
+		<span class="shrink-0 text-xs text-muted-foreground">({hint})</span>
 	{/if}
 </label>

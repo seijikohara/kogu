@@ -50,7 +50,7 @@ tauri-plugin-fs = "2.4.5"
 tauri-plugin-shell = "2"
 
 # Async Runtime (for cancellable operations and network)
-tokio = { version = "1", features = ["sync", "net", "time", "rt"] }
+tokio = { version = "1", features = ["sync", "net", "time", "rt", "macros"] }
 
 # Cryptographic Generators
 bcrypt = "0.17"
@@ -79,7 +79,17 @@ reqwest = { version = "0.12", default-features = false, features = ["rustls-tls"
 quick-xml = "0.37"
 
 # TLS Certificate Inspection
-rustls = "0.23"
+rustls = { version = "0.23", features = ["ring"] }
 tokio-rustls = "0.26"
 x509-parser = "0.16"
+
+# DNS PTR Reverse Lookup
+hickory-resolver = { version = "0.25", features = ["tokio", "system-config"] }
+
+# SNMP sysName Query
+snmp2 = "0.4"
+
+# FFI support for Swift bridge (macOS)
+[target.'cfg(target_os = "macos")'.dependencies]
+libc = "0.2"
 

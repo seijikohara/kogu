@@ -43,7 +43,9 @@
 			"icons/icon.ico"
 		],
 		"macOS": {
-			"signingIdentity": "-"
+			"signingIdentity": "-",
+			"entitlements": "resources/macos/Kogu.entitlements",
+			"minimumSystemVersion": "13.0"
 		}
 	}
 }
