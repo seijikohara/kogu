@@ -1515,6 +1515,7 @@ pub fn lookup_vendor(mac: &str) -> Option<&'static str> {
 }
 
 /// Format a MAC address from raw bytes
+#[cfg(unix)]
 pub fn format_mac(bytes: &[u8; 6]) -> String {
     format!(
         "{:02X}:{:02X}:{:02X}:{:02X}:{:02X}:{:02X}",
@@ -1545,6 +1546,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(unix)]
     fn test_format_mac() {
         let bytes = [0x00, 0x03, 0x93, 0xAA, 0xBB, 0xCC];
         assert_eq!(format_mac(&bytes), "00:03:93:AA:BB:CC");
