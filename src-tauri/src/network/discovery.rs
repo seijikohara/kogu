@@ -17,6 +17,7 @@ use ipnetwork::IpNetwork;
 use pnet::datalink::{self, Channel as PnetChannel, NetworkInterface};
 use pnet::packet::arp::{ArpHardwareTypes, ArpOperations, ArpPacket, MutableArpPacket};
 use pnet::packet::ethernet::{EtherTypes, EthernetPacket, MutableEthernetPacket};
+#[cfg(unix)]
 use pnet::packet::ip::IpNextHeaderProtocols;
 #[cfg(unix)]
 use pnet::packet::tcp::{MutableTcpPacket, TcpFlags, TcpPacket};
