@@ -12,16 +12,16 @@
 	let { title, open = true, children }: Props = $props();
 </script>
 
-<Collapsible.Root {open} class="group">
+<Collapsible.Root {open} class="group border-b border-border/30 last:border-b-0">
 	<Collapsible.Trigger
-		class="flex h-8 w-full items-center justify-between px-3.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground"
+		class="flex h-9 w-full items-center justify-between px-4 text-sm font-semibold uppercase tracking-wide text-foreground/70 transition-colors hover:bg-interactive-hover"
 	>
 		{title}
 		<ChevronDown
-			class="h-3.5 w-3.5 text-muted-foreground/50 transition-transform group-data-[state=closed]:-rotate-90"
+			class="h-4 w-4 text-muted-foreground/50 transition-transform group-data-[state=closed]:-rotate-90"
 		/>
 	</Collapsible.Trigger>
-	<Collapsible.Content class="space-y-2 px-3 pb-2">
+	<Collapsible.Content class="space-y-3 px-4 pb-4">
 		{@render children?.()}
 	</Collapsible.Content>
 </Collapsible.Root>

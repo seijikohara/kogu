@@ -71,15 +71,13 @@
 		<FormCheckbox label="Ignore case" bind:checked={compareIgnoreCase} />
 		<FormCheckbox label="Ignore namespaces" bind:checked={compareIgnoreNamespaces} />
 		<div class="space-y-1 pt-1">
-			<Label class="text-2xs uppercase tracking-wide text-muted-foreground">Ignore Attributes</Label
-			>
+			<Label class="text-xs uppercase tracking-wide text-muted-foreground">Ignore Attributes</Label>
 			<Input
 				bind:value={compareIgnoreAttributes}
 				placeholder="attr1, attr2, attr3"
 				class="h-7 text-xs"
 			/>
-			<span class="text-2xs text-muted-foreground"
-				>Comma-separated list of attributes to ignore</span
+			<span class="text-xs text-muted-foreground">Comma-separated list of attributes to ignore</span
 			>
 		</div>
 	{/snippet}

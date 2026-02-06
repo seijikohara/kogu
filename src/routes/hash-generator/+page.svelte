@@ -126,7 +126,7 @@
 				{#if textHashes.length > 0}
 					<div class="space-y-3">
 						{#each textHashes as result}
-							<div class="rounded-lg border bg-muted/30 p-3">
+							<div class="rounded-lg border bg-surface-3 p-3">
 								<div class="mb-2 flex items-center justify-between">
 									<div class="flex items-center gap-2">
 										<span class="font-mono text-sm font-medium">{result.algorithm}</span>

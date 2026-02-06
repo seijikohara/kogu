@@ -125,148 +125,102 @@
 		}
 	});
 
-	// Get CSS classes for AST node type
+	// Get CSS classes for AST node type (using semantic syntax-* tokens)
 	const getTypeStyles = (t: AstNodeType) => {
 		switch (t) {
 			// Value types
 			case 'string':
+			case 'paragraph':
+			case 'text':
 				return {
-					text: 'text-emerald-600 dark:text-emerald-400',
-					bg: 'bg-emerald-500/10',
-					icon: 'text-emerald-500',
+					text: 'text-syntax-string',
+					bg: 'bg-syntax-string/10',
+					icon: 'text-syntax-string',
 				};
 			case 'number':
 			case 'literal':
 				return {
-					text: 'text-info',
-					bg: 'bg-info/10',
-					icon: 'text-blue-500',
+					text: 'text-syntax-number',
+					bg: 'bg-syntax-number/10',
+					icon: 'text-syntax-number',
 				};
 			case 'boolean':
+			case 'table':
+			case 'table_row':
 				return {
-					text: 'text-violet-600 dark:text-violet-400',
-					bg: 'bg-violet-500/10',
-					icon: 'text-violet-500',
+					text: 'text-syntax-boolean',
+					bg: 'bg-syntax-boolean/10',
+					icon: 'text-syntax-boolean',
 				};
 			case 'null':
+			case 'horizontal_rule':
 				return {
-					text: 'text-gray-500 dark:text-gray-400',
-					bg: 'bg-gray-500/10',
-					icon: 'text-gray-400',
+					text: 'text-syntax-null',
+					bg: 'bg-syntax-null/10',
+					icon: 'text-syntax-null',
 				};
 			// Container types
 			case 'object':
 			case 'element':
+			case 'code_block':
 				return {
-					text: 'text-warning',
-					bg: 'bg-warning/10',
-					icon: 'text-amber-500',
+					text: 'text-syntax-object',
+					bg: 'bg-syntax-object/10',
+					icon: 'text-syntax-object',
 				};
 			case 'array':
+			case 'list':
+			case 'list_item':
 				return {
-					text: 'text-cyan-600 dark:text-cyan-400',
-					bg: 'bg-cyan-500/10',
-					icon: 'text-cyan-500',
+					text: 'text-syntax-array',
+					bg: 'bg-syntax-array/10',
+					icon: 'text-syntax-array',
 				};
 			case 'root':
+			case 'document':
 				return {
-					text: 'text-purple-600 dark:text-purple-400',
-					bg: 'bg-purple-500/10',
-					icon: 'text-purple-500',
+					text: 'text-syntax-root',
+					bg: 'bg-syntax-root/10',
+					icon: 'text-syntax-root',
 				};
 			// SQL types
 			case 'statement':
+			case 'heading':
 				return {
-					text: 'text-rose-600 dark:text-rose-400',
-					bg: 'bg-rose-500/10',
-					icon: 'text-rose-500',
+					text: 'text-syntax-statement',
+					bg: 'bg-syntax-statement/10',
+					icon: 'text-syntax-statement',
 				};
 			case 'clause':
 			case 'keyword':
+			case 'blockquote':
 				return {
-					text: 'text-indigo-600 dark:text-indigo-400',
-					bg: 'bg-indigo-500/10',
-					icon: 'text-indigo-500',
+					text: 'text-syntax-clause',
+					bg: 'bg-syntax-clause/10',
+					icon: 'text-syntax-clause',
 				};
 			case 'expression':
 			case 'operator':
 				return {
-					text: 'text-orange-600 dark:text-orange-400',
-					bg: 'bg-orange-500/10',
-					icon: 'text-orange-500',
+					text: 'text-syntax-expression',
+					bg: 'bg-syntax-expression/10',
+					icon: 'text-syntax-expression',
 				};
 			case 'identifier':
 			case 'function':
+			case 'task_item':
 				return {
-					text: 'text-teal-600 dark:text-teal-400',
-					bg: 'bg-teal-500/10',
-					icon: 'text-teal-500',
+					text: 'text-syntax-identifier',
+					bg: 'bg-syntax-identifier/10',
+					icon: 'text-syntax-identifier',
 				};
 			// Property and attribute
 			case 'property':
 			case 'attribute':
 				return {
-					text: 'text-sky-600 dark:text-sky-400',
-					bg: 'bg-sky-500/10',
-					icon: 'text-sky-500',
-				};
-			// Markdown types
-			case 'document':
-				return {
-					text: 'text-purple-600 dark:text-purple-400',
-					bg: 'bg-purple-500/10',
-					icon: 'text-purple-500',
-				};
-			case 'heading':
-				return {
-					text: 'text-rose-600 dark:text-rose-400',
-					bg: 'bg-rose-500/10',
-					icon: 'text-rose-500',
-				};
-			case 'paragraph':
-			case 'text':
-				return {
-					text: 'text-emerald-600 dark:text-emerald-400',
-					bg: 'bg-emerald-500/10',
-					icon: 'text-emerald-500',
-				};
-			case 'code_block':
-				return {
-					text: 'text-warning',
-					bg: 'bg-warning/10',
-					icon: 'text-amber-500',
-				};
-			case 'blockquote':
-				return {
-					text: 'text-indigo-600 dark:text-indigo-400',
-					bg: 'bg-indigo-500/10',
-					icon: 'text-indigo-500',
-				};
-			case 'list':
-			case 'list_item':
-				return {
-					text: 'text-cyan-600 dark:text-cyan-400',
-					bg: 'bg-cyan-500/10',
-					icon: 'text-cyan-500',
-				};
-			case 'task_item':
-				return {
-					text: 'text-teal-600 dark:text-teal-400',
-					bg: 'bg-teal-500/10',
-					icon: 'text-teal-500',
-				};
-			case 'table':
-			case 'table_row':
-				return {
-					text: 'text-violet-600 dark:text-violet-400',
-					bg: 'bg-violet-500/10',
-					icon: 'text-violet-500',
-				};
-			case 'horizontal_rule':
-				return {
-					text: 'text-gray-500 dark:text-gray-400',
-					bg: 'bg-gray-500/10',
-					icon: 'text-gray-400',
+					text: 'text-syntax-property',
+					bg: 'bg-syntax-property/10',
+					icon: 'text-syntax-property',
 				};
 			default:
 				return {
@@ -433,7 +387,7 @@
 
 			<!-- Type badge -->
 			<span
-				class="rounded px-1.5 py-0.5 text-2xs font-medium uppercase tracking-wide {styles.bg} {styles.text}"
+				class="rounded px-1.5 py-0.5 text-xs font-medium uppercase tracking-wide {styles.bg} {styles.text}"
 			>
 				{getBadgeText()}
 			</span>
@@ -448,7 +402,7 @@
 					onclick={handleCopyPath}
 					title="Copy path"
 				>
-					<span class="text-2xs font-mono">$</span>
+					<span class="text-xs font-mono">$</span>
 				</button>
 				<button
 					type="button"
@@ -457,7 +411,7 @@
 					title="Copy value"
 				>
 					{#if justCopied === node.path}
-						<Check class="h-3 w-3 text-green-500" />
+						<Check class="h-3 w-3 text-success" />
 					{:else}
 						<Copy class="h-3 w-3" />
 					{/if}
@@ -511,7 +465,7 @@
 				</span>
 			{:else}
 				<span
-					class="rounded px-1.5 py-0.5 text-2xs font-medium uppercase tracking-wide {styles.bg} {styles.text}"
+					class="rounded px-1.5 py-0.5 text-xs font-medium uppercase tracking-wide {styles.bg} {styles.text}"
 				>
 					{node.type}
 				</span>
@@ -527,7 +481,7 @@
 					onclick={handleCopyPath}
 					title="Copy path"
 				>
-					<span class="text-2xs font-mono">$</span>
+					<span class="text-xs font-mono">$</span>
 				</button>
 				<button
 					type="button"
@@ -536,7 +490,7 @@
 					title="Copy value"
 				>
 					{#if justCopied === node.path}
-						<Check class="h-3 w-3 text-green-500" />
+						<Check class="h-3 w-3 text-success" />
 					{:else}
 						<Copy class="h-3 w-3" />
 					{/if}

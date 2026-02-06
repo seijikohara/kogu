@@ -138,8 +138,7 @@
 	>
 		<FormSection title="JSONPath Query">
 			<div class="space-y-1">
-				<Label class="text-2xs uppercase tracking-wide text-muted-foreground">Path Expression</Label
-				>
+				<Label class="text-xs uppercase tracking-wide text-muted-foreground">Path Expression</Label>
 				<Input bind:value={queryPath} placeholder="$.path.to.value" class="h-7 font-mono text-xs" />
 			</div>
 		</FormSection>

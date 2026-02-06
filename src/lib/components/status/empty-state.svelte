@@ -14,16 +14,16 @@
 <div class="flex h-full animate-fade-in items-center justify-center text-muted-foreground">
 	<div class="text-center">
 		<div
-			class="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full border-2 border-dashed border-border/40"
+			class="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-surface-2 shadow-sm"
 		>
-			<Icon class="h-7 w-7 opacity-40" />
+			<Icon class="h-8 w-8 opacity-50" />
 		</div>
-		<p class="text-sm font-medium text-foreground/60">{title}</p>
+		<p class="text-base font-semibold text-foreground/80">{title}</p>
 		{#if description}
-			<p class="mt-1.5 text-xs text-muted-foreground/60">{description}</p>
+			<p class="mt-2 max-w-xs text-sm text-muted-foreground/80">{description}</p>
 		{/if}
 		{#if children}
-			<div class="mt-4">
+			<div class="mt-5">
 				{@render children()}
 			</div>
 		{/if}

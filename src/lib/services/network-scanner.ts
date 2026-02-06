@@ -3,7 +3,7 @@
  * These are TypeScript wrappers around Tauri backend commands.
  */
 
-import { invoke } from '@tauri-apps/api/core';
+import { type Channel, invoke } from '@tauri-apps/api/core';
 import { listen, type UnlistenFn } from '@tauri-apps/api/event';
 
 // =============================================================================
@@ -323,11 +323,23 @@ export interface WsDiscoveryInfo {
 	readonly scopes: readonly string[];
 }
 
+/** SNMP device information (sysName, sysDescr, etc.) */
+export interface SnmpDeviceInfo {
+	/** System name (sysName.0) */
+	readonly sysName?: string;
+	/** System description (sysDescr.0) */
+	readonly sysDescr?: string;
+	/** System location (sysLocation.0) */
+	readonly sysLocation?: string;
+	/** System contact (sysContact.0) */
+	readonly sysContact?: string;
+}
+
 /** Host metadata collected during discovery */
 export interface HostMetadata {
-	/** Hostname (from mDNS, DNS reverse lookup, NetBIOS, etc.) */
+	/** Hostname (from mDNS, DNS reverse lookup, NetBIOS, SNMP, TLS, etc.) */
 	readonly hostname?: string;
-	/** Source of the hostname resolution (dns, mdns, netbios) */
+	/** Source of the hostname resolution (dns, mdns, netbios, snmp, tls) */
 	readonly hostnameSource?: string;
 	/** NetBIOS name (from NetBIOS Node Status query) */
 	readonly netbiosName?: string;
@@ -341,6 +353,10 @@ export interface HostMetadata {
 	readonly ssdpDevice?: SsdpDeviceInfo;
 	/** WS-Discovery device information */
 	readonly wsDiscovery?: WsDiscoveryInfo;
+	/** SNMP device information (sysName, sysDescr, etc.) */
+	readonly snmpInfo?: SnmpDeviceInfo;
+	/** TLS certificate Subject Alternative Names (dNSName) */
+	readonly tlsNames: readonly string[];
 }
 
 export interface DiscoveryResult {
@@ -392,7 +408,7 @@ export const DISCOVERY_METHODS = [
 	{
 		value: 'tcp_syn' as const,
 		label: 'TCP SYN',
-		description: 'Stealth scan, requires raw sockets',
+		description: 'Half-open scan, requires raw sockets',
 		requiresPrivileges: true,
 	},
 	{
@@ -446,10 +462,12 @@ export const DEFAULT_SYN_PORTS = [22, 80, 443, 445, 3389] as const;
 // =============================================================================
 
 /**
- * Start a network scan.
+ * Start a network scan with a caller-provided scan ID for cancellation support.
  */
-export const startNetworkScan = async (request: ScanRequest): Promise<ScanResults> =>
-	invoke<ScanResults>('start_network_scan', { request });
+export const startNetworkScan = async (
+	request: ScanRequest,
+	scanId: string
+): Promise<ScanResults> => invoke<ScanResults>('start_network_scan', { request, scanId });
 
 /**
  * Cancel a running network scan.
@@ -471,14 +489,40 @@ export const discoverMdnsServices = async (
 ): Promise<MdnsDiscoveryResults> =>
 	invoke<MdnsDiscoveryResults>('discover_mdns_services', { request });
 
+// =============================================================================
+// Discovery Channel Event Types (for streaming results)
+// =============================================================================
+
+/** Channel event types streamed from backend during host discovery */
+export type DiscoveryEvent =
+	| { event: 'methodStarted'; data: { method: string } }
+	| { event: 'methodCompleted'; data: { result: DiscoveryResult } }
+	| { event: 'resolvingHostnames'; data: null }
+	| { event: 'completed'; data: { results: DiscoveryResult[] } }
+	| { event: 'cancelled'; data: null };
+
 /**
- * Discover hosts using specified methods (ICMP, ARP, TCP SYN, mDNS).
+ * Discover hosts using specified methods with streaming results via Channel API.
+ * Each method's result is streamed to the frontend as it completes.
  */
 export const discoverHosts = async (
 	targets: readonly string[],
-	options: DiscoveryOptions
+	options: DiscoveryOptions,
+	onEvent: Channel<DiscoveryEvent>,
+	discoveryId: string
 ): Promise<readonly DiscoveryResult[]> =>
-	invoke<DiscoveryResult[]>('discover_hosts', { targets: [...targets], options });
+	invoke<DiscoveryResult[]>('discover_hosts', {
+		targets: [...targets],
+		options,
+		onEvent,
+		discoveryId,
+	});
+
+/**
+ * Cancel a running host discovery.
+ */
+export const cancelDiscovery = async (discoveryId: string): Promise<boolean> =>
+	invoke<boolean>('cancel_discovery', { discoveryId });
 
 /**
  * Get available discovery methods and their privilege status.
@@ -505,6 +549,8 @@ export interface PrivilegeStatus {
 	readonly setupCompleted: boolean;
 	/** Whether privilege setup is available on this platform */
 	readonly setupAvailable: boolean;
+	/** Whether user approval is required in System Settings (macOS 13+) */
+	readonly requiresApproval: boolean;
 	/** Human-readable status message */
 	readonly message: string;
 }
@@ -518,8 +564,9 @@ export const checkNetScannerPrivileges = async (): Promise<PrivilegeStatus> =>
 
 /**
  * Set up persistent privileges for the net-scanner sidecar.
- * Triggers a platform-specific admin password dialog:
- * - macOS: osascript → admin dialog → chown root + chmod u+s
+ * Triggers a platform-specific privilege setup:
+ * - macOS 13+: SMAppService daemon registration (shows in Login Items)
+ * - macOS <13: Legacy osascript setuid
  * - Linux: pkexec → setcap cap_net_raw,cap_net_admin+ep
  */
 export const setupNetScannerPrivileges = async (): Promise<PrivilegeStatus> =>
@@ -566,17 +613,6 @@ export const listenToScanProgress = async (
 	callback: (progress: ScanProgress) => void
 ): Promise<UnlistenFn> =>
 	listen<ScanProgress>('network-scan-progress', (event) => {
-		callback(event.payload);
-	});
-
-/**
- * Listen to discovery progress events for parallel execution.
- * Each discovery method emits 'running' when started and 'completed'/'error' when done.
- */
-export const listenToDiscoveryProgress = async (
-	callback: (progress: DiscoveryProgress) => void
-): Promise<UnlistenFn> =>
-	listen<DiscoveryProgress>('discovery-progress', (event) => {
 		callback(event.payload);
 	});
 
@@ -631,7 +667,7 @@ export interface UnifiedHost {
 	ips: string[];
 	/** Resolved hostname */
 	hostname: string | null;
-	/** Source of hostname resolution (dns, mdns, netbios) */
+	/** Source of hostname resolution (dns, mdns, netbios, snmp, tls) */
 	hostnameSource: string | null;
 	/** NetBIOS name */
 	netbiosName: string | null;
@@ -645,6 +681,10 @@ export interface UnifiedHost {
 	ssdpDevice: SsdpDeviceInfo | null;
 	/** WS-Discovery device information */
 	wsDiscovery: WsDiscoveryInfo | null;
+	/** SNMP device information */
+	snmpInfo: SnmpDeviceInfo | null;
+	/** TLS certificate Subject Alternative Names */
+	tlsNames: string[];
 	/** Discovery methods that found this host */
 	discoveryMethods: string[];
 	/** Discovery details */
@@ -710,6 +750,15 @@ const mergeScalarMetadata = (host: UnifiedHost, metadata: HostMetadata): void =>
 	if (!host.macAddress && metadata.macAddress) host.macAddress = metadata.macAddress;
 	if (!host.vendor && metadata.vendor) host.vendor = metadata.vendor;
 	if (!host.wsDiscovery && metadata.wsDiscovery) host.wsDiscovery = metadata.wsDiscovery;
+	if (!host.snmpInfo && metadata.snmpInfo) host.snmpInfo = metadata.snmpInfo;
+	// Merge TLS names (union of all discovered names)
+	if (metadata.tlsNames && metadata.tlsNames.length > 0) {
+		for (const name of metadata.tlsNames) {
+			if (!host.tlsNames.includes(name)) {
+				host.tlsNames.push(name);
+			}
+		}
+	}
 };
 
 /** Merge SSDP device info (field-level merge, preferring existing non-null values) */
@@ -809,11 +858,84 @@ const createHost = (
 	mdnsServices: metadata?.mdnsServices ? [...metadata.mdnsServices] : [],
 	ssdpDevice: metadata?.ssdpDevice ?? null,
 	wsDiscovery: metadata?.wsDiscovery ?? null,
+	snmpInfo: metadata?.snmpInfo ?? null,
+	tlsNames: metadata?.tlsNames ? [...metadata.tlsNames] : [],
 	discoveryMethods: [],
 	discoveries: [],
 	ports: [],
 	scanDurationMs: null,
 });
+
+/** Merge port into host's port list, preferring open state */
+const mergePort = (host: UnifiedHost, port: PortInfo): void => {
+	const existingIdx = host.ports.findIndex((p) => p.port === port.port);
+	if (existingIdx === -1) {
+		host.ports.push(port);
+	} else {
+		const existingPort = host.ports[existingIdx];
+		if (existingPort && port.state === 'open' && existingPort.state !== 'open') {
+			host.ports[existingIdx] = port;
+		}
+	}
+};
+
+/** Add discovery info to host if not already present */
+const addDiscoveryToHost = (host: UnifiedHost, result: DiscoveryResult): void => {
+	if (!host.discoveryMethods.includes(result.method)) {
+		host.discoveryMethods.push(result.method);
+	}
+	const hasDiscovery = host.discoveries.some(
+		(d) => d.method === result.method && d.durationMs === result.durationMs
+	);
+	if (!hasDiscovery) {
+		host.discoveries.push({
+			method: result.method,
+			durationMs: result.durationMs,
+			error: result.error,
+		});
+	}
+};
+
+/** Get or create a unified host entry */
+const getOrCreateHost = (
+	ip: string,
+	hostname: string | null,
+	metadata: HostMetadata | undefined,
+	hostMap: Map<string, UnifiedHost>,
+	ipToKey: Map<string, string>
+): UnifiedHost => {
+	const existingKey = ipToKey.get(ip);
+	if (existingKey) {
+		const host = hostMap.get(existingKey);
+		if (host) {
+			const result =
+				hostname && !host.hostname
+					? handleHostnameUpdate(host, ip, hostname, metadata, hostMap, ipToKey)
+					: host;
+			applyMetadata(result, metadata);
+			return result;
+		}
+	}
+
+	if (hostname) {
+		const hostnameKey = getMergeKey(ip, hostname);
+		const hostByHostname = hostMap.get(hostnameKey);
+		if (hostByHostname) {
+			if (!hostByHostname.ips.includes(ip)) {
+				hostByHostname.ips.push(ip);
+				hostByHostname.ips = sortIps(hostByHostname.ips);
+				ipToKey.set(ip, hostnameKey);
+			}
+			return hostByHostname;
+		}
+	}
+
+	const key = getMergeKey(ip, hostname);
+	const host = createHost(key, ip, hostname, metadata);
+	hostMap.set(key, host);
+	ipToKey.set(ip, key);
+	return host;
+};
 
 /**
  * Merge discovery and scan results into a unified host list.
@@ -826,82 +948,34 @@ export const mergeHosts = (
 	const hostMap = new Map<string, UnifiedHost>();
 	const ipToKey = new Map<string, string>();
 
-	const getOrCreateHost = (
-		ip: string,
-		hostname: string | null,
-		metadata?: HostMetadata
-	): UnifiedHost => {
-		// Check if IP already indexed
-		const existingKey = ipToKey.get(ip);
-		if (existingKey) {
-			const host = hostMap.get(existingKey);
-			if (host) {
-				const result =
-					hostname && !host.hostname
-						? handleHostnameUpdate(host, ip, hostname, metadata, hostMap, ipToKey)
-						: host;
-				applyMetadata(result, metadata);
-				return result;
-			}
-		}
-
-		// Check if hostname matches an existing host
-		if (hostname) {
-			const hostnameKey = getMergeKey(ip, hostname);
-			const hostByHostname = hostMap.get(hostnameKey);
-			if (hostByHostname) {
-				if (!hostByHostname.ips.includes(ip)) {
-					hostByHostname.ips.push(ip);
-					hostByHostname.ips = sortIps(hostByHostname.ips);
-					ipToKey.set(ip, hostnameKey);
-				}
-				return hostByHostname;
-			}
-		}
-
-		// Create new host
-		const key = getMergeKey(ip, hostname);
-		const host = createHost(key, ip, hostname, metadata);
-		hostMap.set(key, host);
-		ipToKey.set(ip, key);
-		return host;
-	};
-
 	// 1. Add hosts from discovery results
 	for (const result of discoveryResults) {
 		for (const ip of result.hosts) {
-			const host = getOrCreateHost(ip, result.hostnames[ip] ?? null, result.hostMetadata?.[ip]);
-			if (!host.discoveryMethods.includes(result.method)) host.discoveryMethods.push(result.method);
-			const hasDiscovery = host.discoveries.some(
-				(d) => d.method === result.method && d.durationMs === result.durationMs
+			const host = getOrCreateHost(
+				ip,
+				result.hostnames[ip] ?? null,
+				result.hostMetadata?.[ip],
+				hostMap,
+				ipToKey
 			);
-			if (!hasDiscovery) {
-				host.discoveries.push({
-					method: result.method,
-					durationMs: result.durationMs,
-					error: result.error,
-				});
-			}
+			addDiscoveryToHost(host, result);
 		}
 	}
 
 	// 2. Add/merge hosts from port scan results
 	for (const scanHost of scanHosts) {
-		const host = getOrCreateHost(scanHost.ip, scanHost.hostname ?? null);
-		for (const port of scanHost.ports) {
-			const existingIdx = host.ports.findIndex((p) => p.port === port.port);
-			if (existingIdx === -1) {
-				host.ports.push(port);
-			} else {
-				const existingPort = host.ports[existingIdx];
-				if (existingPort && port.state === 'open' && existingPort.state !== 'open') {
-					host.ports[existingIdx] = port;
-				}
-			}
-		}
+		const host = getOrCreateHost(
+			scanHost.ip,
+			scanHost.hostname ?? null,
+			undefined,
+			hostMap,
+			ipToKey
+		);
+		scanHost.ports.forEach((port) => mergePort(host, port));
 		host.ports.sort((a, b) => a.port - b.port);
-		if (scanHost.scanDurationMs)
+		if (scanHost.scanDurationMs) {
 			host.scanDurationMs = (host.scanDurationMs ?? 0) + scanHost.scanDurationMs;
+		}
 	}
 
 	return [...hostMap.values()].sort(compareByIp);

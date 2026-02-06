@@ -89,8 +89,8 @@ const MDNS_PATTERNS: readonly {
 	readonly weight: number;
 }[] = [
 	{ patterns: ['_ipp.', '_printer.', '_pdl-datastream.'], category: 'printer', weight: 0.8 },
-	{ patterns: ['_airplay.'], category: 'media_player', weight: 0.7 },
-	{ patterns: ['_raop.'], category: 'speaker', weight: 0.7 },
+	{ patterns: ['_airplay.'], category: 'media_player', weight: 0.4 },
+	{ patterns: ['_raop.'], category: 'speaker', weight: 0.4 },
 	{ patterns: ['_googlecast.'], category: 'media_player', weight: 0.8 },
 	{ patterns: ['_spotify-connect.'], category: 'speaker', weight: 0.6 },
 	{ patterns: ['_homekit.', '_hap.'], category: 'iot', weight: 0.6 },
@@ -285,6 +285,39 @@ const collectVendorSignals = (vendor: string): Signal[] => {
 	return signals;
 };
 
+/** Hostname patterns → device signal mapping */
+const HOSTNAME_PATTERNS: readonly {
+	readonly patterns: readonly string[];
+	readonly category: DeviceCategory;
+	readonly weight: number;
+}[] = [
+	{ patterns: ['macbook'], category: 'laptop', weight: 0.7 },
+	{ patterns: ['imac'], category: 'desktop', weight: 0.7 },
+	{ patterns: ['mac-mini', 'macmini'], category: 'desktop', weight: 0.7 },
+	{ patterns: ['mac-pro', 'macpro', 'mac-studio'], category: 'desktop', weight: 0.7 },
+	{ patterns: ['ipad'], category: 'tablet', weight: 0.7 },
+	{ patterns: ['iphone'], category: 'phone', weight: 0.7 },
+	{ patterns: ['asustor'], category: 'nas', weight: 0.7 },
+	{ patterns: ['synology', 'diskstation'], category: 'nas', weight: 0.7 },
+	{ patterns: ['qnap'], category: 'nas', weight: 0.7 },
+	{ patterns: ['raspberrypi', 'raspberry-pi'], category: 'iot', weight: 0.6 },
+];
+
+/** Collect signals from hostname and NetBIOS name patterns */
+const collectHostnameSignals = (hostname: string | null, netbiosName: string | null): Signal[] => {
+	const names = [hostname, netbiosName].filter(Boolean) as string[];
+	return names.flatMap((name) => {
+		const lower = name.toLowerCase();
+		return HOSTNAME_PATTERNS.filter((rule) => rule.patterns.some((p) => lower.includes(p))).map(
+			(rule) => ({
+				category: rule.category,
+				weight: rule.weight,
+				evidence: `Hostname: ${name}`,
+			})
+		);
+	});
+};
+
 /** Collect signals from open port patterns */
 const collectPortSignals = (ports: readonly PortInfo[]): Signal[] => {
 	const openPorts = new Set(ports.filter((p) => p.state === 'open').map((p) => p.port));
@@ -358,6 +391,10 @@ export const classifyDevice = (host: UnifiedHost): DeviceClassification => {
 	const signals: Signal[] = [];
 
 	// Collect signals from all sources
+	if (host.hostname || host.netbiosName) {
+		signals.push(...collectHostnameSignals(host.hostname, host.netbiosName));
+	}
+
 	if (host.mdnsServices.length > 0) {
 		signals.push(...collectMdnsSignals(host.mdnsServices));
 	}

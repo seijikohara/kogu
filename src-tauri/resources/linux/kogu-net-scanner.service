@@ -1,0 +1,40 @@
+[Unit]
+Description=Kogu Network Scanner Service
+Documentation=https://github.com/seijikohara/kogu
+Requires=kogu-net-scanner.socket
+After=kogu-net-scanner.socket network-online.target
+PartOf=kogu-net-scanner.socket
+
+[Service]
+Type=simple
+
+# Grant network capabilities without running as root
+AmbientCapabilities=CAP_NET_RAW CAP_NET_ADMIN
+
+# Restrict maximum capabilities (defense in depth)
+CapabilityBoundingSet=CAP_NET_RAW CAP_NET_ADMIN
+
+# Security hardening
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=read-only
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=kogu-net-scanner
+
+# Restart policy
+Restart=on-failure
+RestartSec=5s
+
+# Timeouts
+TimeoutStartSec=10s
+TimeoutStopSec=5s
+
+# The actual binary path will be set during installation
+# ExecStart=/usr/lib/kogu/net-scanner
+
+[Install]
+WantedBy=default.target

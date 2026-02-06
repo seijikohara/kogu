@@ -6,13 +6,16 @@
 		ChevronRight,
 		Clock,
 		Download,
+		ExternalLink,
 		Loader2,
 		Network,
 		Play,
 		Radar,
 		RefreshCw,
 		Server,
+		Settings,
 		Shield,
+		ShieldCheck,
 		Square,
 		X,
 	} from '@lucide/svelte';
@@ -27,9 +30,13 @@
 		FormSlider,
 	} from '$lib/components/form';
 	import { ToolShell } from '$lib/components/shell';
-	import { StatItem } from '$lib/components/status';
+	import { EmptyState, ErrorDisplay, StatItem } from '$lib/components/status';
+	import * as Accordion from '$lib/components/ui/accordion/index.js';
 	import * as Resizable from '$lib/components/ui/resizable';
+	import { Channel } from '@tauri-apps/api/core';
 	import {
+		cancelDiscovery,
+		cancelNetworkScan,
 		DATABASE_PORTS,
 		DEFAULT_CONCURRENCY,
 		DEFAULT_SYN_PORTS,
@@ -44,7 +51,6 @@
 		getMergeKey,
 		isValidPortRange,
 		isValidTarget,
-		listenToDiscoveryProgress,
 		listenToScanProgress,
 		MAX_CONCURRENCY,
 		MAX_TIMEOUT_MS,
@@ -59,6 +65,7 @@
 		WELL_KNOWN_SERVICES,
 		checkNetScannerPrivileges,
 		setupNetScannerPrivileges,
+		type DiscoveryEvent,
 		type DiscoveryInfo,
 		type DiscoveryMethod,
 		type DiscoveryOptions,
@@ -97,9 +104,9 @@
 	// Derived: any resolution enabled
 	const resolveHostname = $derived(resolveDns || resolveMdns || resolveNetbios);
 
-	// Discovery options (all methods enabled by default)
+	// Discovery options (only non-privileged methods enabled by default)
 	let discoveryMethods = $state<Set<DiscoveryMethod>>(
-		new Set(['icmp_ping', 'tcp_connect', 'mdns', 'ssdp', 'arp_cache'])
+		new Set(DISCOVERY_METHODS.filter((m) => !m.requiresPrivileges).map((m) => m.value))
 	);
 	let availableMethods = $state<Map<string, boolean>>(new Map());
 	let discoveryResults = $state<DiscoveryResult[]>([]);
@@ -107,7 +114,7 @@
 
 	// Per-method progress tracking
 	let methodProgress = $state<Map<string, DiscoveryProgress>>(new Map());
-	let unlistenDiscoveryProgressFn = $state<(() => void) | null>(null);
+	let currentDiscoveryId = $state<string | null>(null);
 
 	// Privilege state
 	let privilegeStatus = $state<PrivilegeStatus | null>(null);
@@ -119,6 +126,7 @@
 
 	// Scan state
 	let isScanning = $state(false);
+	let currentScanId = $state<string | null>(null);
 	let progress = $state<ScanProgress | null>(null);
 	let results = $state<ScanResults | null>(null);
 	let discoveredHosts = $state<HostResult[]>([]);
@@ -254,12 +262,19 @@
 	const handleScan = async () => {
 		if (!canScan || !isPortRangeValid) return;
 
+		// Cancel any running scan before starting a new one
+		if (currentScanId) {
+			await cancelNetworkScan(currentScanId);
+		}
+
+		const scanId = crypto.randomUUID();
+		currentScanId = scanId;
+
 		isScanning = true;
 		startTimer();
 		error = null;
 		results = null;
 		// Don't clear discoveredHosts to allow merging with discovery results
-		// discoveredHosts = [];
 		progress = null;
 
 		// Setup progress listener
@@ -269,49 +284,65 @@
 			error = 'Failed to setup event listener';
 			stopTimer();
 			isScanning = false;
+			currentScanId = null;
 			return;
 		}
 
 		try {
-			await startNetworkScan({
-				target: target.trim(),
-				mode: scanMode,
-				portPreset,
-				portRange: needsPortRange ? portRange.trim() : undefined,
-				concurrency,
-				timeoutMs,
-				resolveHostname,
-				resolution: resolveHostname
-					? {
-							dns: resolveDns,
-							mdns: resolveMdns,
-							netbios: resolveNetbios,
-							timeoutMs: resolveTimeoutMs,
-						}
-					: undefined,
-			});
+			await startNetworkScan(
+				{
+					target: target.trim(),
+					mode: scanMode,
+					portPreset,
+					portRange: needsPortRange ? portRange.trim() : undefined,
+					concurrency,
+					timeoutMs,
+					resolveHostname,
+					resolution: resolveHostname
+						? {
+								dns: resolveDns,
+								mdns: resolveMdns,
+								netbios: resolveNetbios,
+								timeoutMs: resolveTimeoutMs,
+							}
+						: undefined,
+				},
+				scanId
+			);
 		} catch (e) {
-			if (isScanning) {
+			if (currentScanId === scanId && isScanning) {
 				error = e instanceof Error ? e.message : String(e);
-				toast.error('Scan failed', { description: error });
+				// Don't show error toast for cancellation
+				if (!error.includes('cancelled')) {
+					toast.error('Scan failed', { description: error });
+				}
 			}
 		} finally {
-			if (unlistenFn) {
-				unlistenFn();
-				unlistenFn = null;
+			// Only clean up if this is still the current scan
+			if (currentScanId === scanId) {
+				if (unlistenFn) {
+					unlistenFn();
+					unlistenFn = null;
+				}
+				stopTimer();
+				isScanning = false;
+				currentScanId = null;
 			}
-			stopTimer();
-			isScanning = false;
 		}
 	};
 
-	const handleCancel = () => {
+	const handleCancel = async () => {
+		// Notify backend to stop scanning
+		if (currentScanId) {
+			await cancelNetworkScan(currentScanId);
+		}
 		if (unlistenFn) {
 			unlistenFn();
 			unlistenFn = null;
 		}
 		stopTimer();
 		isScanning = false;
+		currentScanId = null;
 		toast.info('Scan cancelled');
 	};
 
@@ -322,6 +353,7 @@
 		progress = null;
 		error = null;
 		selectedHostId = null;
+		currentScanId = null;
 		recentlyDiscoveredIds = new Set();
 		portRangeTouched = false;
 		hasAutoSelected = false; // Reset auto-selection flag
@@ -378,7 +410,9 @@
 				}
 			}
 		} catch (e) {
-			toast.error('Failed to load network interfaces');
+			toast.error('Failed to load network interfaces', {
+				description: e instanceof Error ? e.message : String(e),
+			});
 		} finally {
 			isLoadingInterfaces = false;
 		}
@@ -420,6 +454,11 @@
 				});
 				// Reload discovery methods to reflect new availability
 				await handleLoadDiscoveryMethods();
+				// Enable and check privileged methods now that they're available
+				const privilegedMethods = DISCOVERY_METHODS.filter((m) => m.requiresPrivileges).map(
+					(m) => m.value
+				);
+				discoveryMethods = new Set([...discoveryMethods, ...privilegedMethods]);
 			}
 		} catch (e) {
 			const msg = e instanceof Error ? e.message : String(e);
@@ -441,24 +480,87 @@
 		discoveryMethods = newSet;
 	};
 
+	/** Replace discovery results for methods that have been resolved with hostname data */
+	const replaceWithResolvedResults = (
+		current: DiscoveryResult[],
+		resolved: DiscoveryResult[]
+	): DiscoveryResult[] => {
+		const resolvedMethods = new Set(resolved.map((r) => r.method));
+		return [...current.filter((r) => !resolvedMethods.has(r.method)), ...resolved];
+	};
+
+	/** Auto-select first discovered host if none selected yet */
+	const autoSelectFirstHost = (hosts: readonly string[]) => {
+		if (hasAutoSelected || selectedHostId !== null || hosts.length === 0) return;
+		const firstIp = [...hosts].sort()[0];
+		if (firstIp) {
+			selectedHostId = getMergeKey(firstIp, null);
+			hasAutoSelected = true;
+		}
+	};
+
 	const handleDiscovery = async () => {
 		if (!isValidTarget(target) || discoveryMethods.size === 0) return;
 
+		// Cancel any running discovery before starting a new one
+		if (currentDiscoveryId) {
+			await cancelDiscovery(currentDiscoveryId);
+		}
+
+		// Clear previous results to avoid mixing old and new data
+		discoveryResults = [];
+		hasAutoSelected = false;
+		selectedHostId = null;
+
 		isDiscovering = true;
 		startTimer();
-		// Clear per-method progress
 		methodProgress = new Map();
-		// Don't clear discoveryResults to allow merging with scan results
-		// discoveryResults = [];
 
-		// Setup discovery progress listener
-		try {
-			unlistenDiscoveryProgressFn = await listenToDiscoveryProgress((progress) => {
-				methodProgress = new Map(methodProgress).set(progress.method, progress);
-			});
-		} catch (e) {
-			// Continue without progress tracking if listener fails
-		}
+		const discoveryId = crypto.randomUUID();
+		currentDiscoveryId = discoveryId;
+
+		// Set up Channel for streaming results
+		const channel = new Channel<DiscoveryEvent>();
+		channel.onmessage = (message: DiscoveryEvent) => {
+			// Ignore events from a stale discovery (cancelled and replaced)
+			if (currentDiscoveryId !== discoveryId) return;
+
+			switch (message.event) {
+				case 'methodStarted':
+					methodProgress = new Map(methodProgress).set(message.data.method, {
+						method: message.data.method,
+						status: 'running',
+						hostsFound: 0,
+						durationMs: null,
+						error: null,
+					});
+					break;
+				case 'methodCompleted': {
+					const { result } = message.data;
+					// Update method progress
+					methodProgress = new Map(methodProgress).set(result.method, {
+						method: result.method,
+						status: result.error ? 'error' : 'completed',
+						hostsFound: result.hosts.length,
+						durationMs: result.durationMs,
+						error: result.error ?? null,
+					});
+					// Merge result immediately — unifiedHosts re-derives → UI updates
+					discoveryResults = [...discoveryResults, result];
+					autoSelectFirstHost(result.hosts);
+					break;
+				}
+				case 'resolvingHostnames':
+					// Could show "Resolving hostnames..." in UI if desired
+					break;
+				case 'completed':
+					// Replace with hostname-resolved final results
+					discoveryResults = replaceWithResolvedResults(discoveryResults, message.data.results);
+					break;
+				case 'cancelled':
+					break;
+			}
+		};
 
 		try {
 			const options: DiscoveryOptions = {
@@ -469,22 +571,12 @@
 				resolveNetbios,
 			};
 
-			const newResults = await discoverHosts([target.trim()], options);
-			// Merge with existing results
-			discoveryResults = [...discoveryResults, ...newResults];
+			await discoverHosts([target.trim()], options, channel, discoveryId);
 
-			// Auto-select first discovered host only once (don't override user selection)
-			const allHosts = [...new Set(newResults.flatMap((r) => r.hosts))];
-			if (allHosts.length > 0) {
-				if (!hasAutoSelected && selectedHostId === null) {
-					const firstIp = allHosts.sort()[0];
-					if (firstIp) {
-						selectedHostId = getMergeKey(firstIp, null);
-						hasAutoSelected = true;
-					}
-				}
+			// Use merged unifiedHosts count (accurate, deduplicated)
+			if (unifiedHosts.length > 0) {
 				toast.success('Discovery completed', {
-					description: `Found ${allHosts.length} hosts`,
+					description: `Found ${unifiedHosts.length} hosts`,
 				});
 			} else {
 				toast.info('Discovery completed', {
@@ -493,15 +585,41 @@
 			}
 		} catch (e) {
 			const msg = e instanceof Error ? e.message : String(e);
-			toast.error('Discovery failed', { description: msg });
-		} finally {
-			if (unlistenDiscoveryProgressFn) {
-				unlistenDiscoveryProgressFn();
-				unlistenDiscoveryProgressFn = null;
+			if (!msg.includes('cancelled')) {
+				toast.error('Discovery failed', { description: msg });
 			}
-			stopTimer();
-			isDiscovering = false;
+		} finally {
+			// Only clean up if this is still the current discovery
+			// (prevents stale finally from overwriting a new discovery's state)
+			if (currentDiscoveryId === discoveryId) {
+				stopTimer();
+				isDiscovering = false;
+				currentDiscoveryId = null;
+			}
 		}
+	};
+
+	const handleCancelDiscovery = async () => {
+		if (currentDiscoveryId) {
+			await cancelDiscovery(currentDiscoveryId);
+		}
+		toast.info('Discovery cancelled');
+	};
+
+	// Filter out uninformative hostnames (e.g. mDNS resolving random IPs as "localhost.local")
+	const IGNORED_HOSTNAMES = new Set(['localhost', 'localhost.local', 'localhost.localdomain']);
+	const isUsefulHostname = (name: string | null | undefined): name is string =>
+		!!name && !IGNORED_HOSTNAMES.has(name.toLowerCase());
+
+	const getDisplayHostname = (
+		host: UnifiedHost
+	): { name: string; source: string | null } | null => {
+		if (isUsefulHostname(host.hostname))
+			return { name: host.hostname, source: host.hostnameSource };
+		if (isUsefulHostname(host.netbiosName)) return { name: host.netbiosName, source: 'netbios' };
+		if (host.ssdpDevice?.friendlyName && isUsefulHostname(host.ssdpDevice.friendlyName))
+			return { name: host.ssdpDevice.friendlyName, source: 'ssdp' };
+		return null;
 	};
 
 	const selectHost = (hostId: string) => {
@@ -526,6 +644,8 @@
 			<StatItem label="Duration" value={formatDuration(results.scanDurationMs)} />
 		{:else if isScanning && progress?.type === 'progress'}
 			<StatItem label="Progress" value="{progress.percentage.toFixed(0)}%" />
+		{:else if unifiedHosts.length > 0}
+			<StatItem label="Hosts" value={unifiedHosts.length} />
 		{/if}
 	{/snippet}
 
@@ -539,31 +659,26 @@
 					placeholder="192.168.1.1 or 192.168.1.0/24"
 				/>
 				{#if target && !isValidTarget(target)}
-					<p class="text-2xs text-destructive">Invalid target format</p>
+					<p class="text-xs text-destructive">Invalid target format</p>
 				{/if}
-				<button
-					type="button"
-					class="flex w-full items-center justify-center gap-1.5 rounded-md border border-input bg-background px-3 py-1.5 text-xs font-medium transition-colors hover:bg-accent hover:text-accent-foreground disabled:pointer-events-none disabled:opacity-50"
+				<ActionButton
+					label="Detect Local Network"
+					icon={RefreshCw}
+					loading={isLoadingInterfaces}
+					loadingLabel="Detecting..."
+					disabled={isScanning}
+					variant="outline"
 					onclick={handleLoadInterfaces}
-					disabled={isLoadingInterfaces || isScanning}
-				>
-					{#if isLoadingInterfaces}
-						<Loader2 class="h-3 w-3 animate-spin" />
-						<span>Detecting...</span>
-					{:else}
-						<RefreshCw class="h-3 w-3" />
-						<span>Detect Local Network</span>
-					{/if}
-				</button>
+				/>
 			</div>
 			{#if networkInfo && networkInfo.interfaces.length > 0}
 				<div class="mt-2 space-y-1">
-					<p class="text-2xs font-medium text-muted-foreground">Available interfaces:</p>
+					<p class="text-xs font-medium text-muted-foreground">Available interfaces:</p>
 					<div class="max-h-24 space-y-1 overflow-y-auto">
 						{#each networkInfo.interfaces.filter((i) => !i.isLoopback && i.suggestedCidr) as iface (iface.ip)}
 							<button
 								type="button"
-								class="flex w-full items-center justify-between rounded border border-input bg-background px-2 py-1 text-left text-2xs transition-colors hover:bg-accent"
+								class="flex w-full items-center justify-between rounded border border-input bg-background px-2 py-1 text-left text-xs transition-colors hover:bg-interactive-hover"
 								onclick={() => handleSelectInterface(iface)}
 							>
 								<span class="font-medium">{iface.name}</span>
@@ -577,107 +692,80 @@
 
 		<!-- 2. Host Discovery -->
 		<FormSection title="Host Discovery">
-			<p class="mb-2 text-2xs text-muted-foreground">Find active hosts before port scanning:</p>
-			<div class="space-y-1">
+			<p class="mb-2 text-xs text-muted-foreground leading-snug">
+				Find active hosts before port scanning.
+			</p>
+			<div class="space-y-1.5">
 				{#each DISCOVERY_METHODS as method (method.value)}
-					{@const isAvailable = availableMethods.get(method.value) ?? !method.requiresPrivileges}
+					{@const privilegesGranted = privilegeStatus?.setupCompleted ?? false}
+					{@const isAvailable = method.requiresPrivileges ? privilegesGranted : true}
 					{@const isSelected = discoveryMethods.has(method.value)}
 					{@const isDisabled = !isAvailable || isDiscovering || isScanning}
-					<label
-						class="flex w-full cursor-pointer items-center justify-between rounded border px-2 py-1.5 text-left text-xs transition-colors
-							{isSelected
-							? 'border-primary bg-primary/10 text-foreground'
-							: 'border-input bg-background text-muted-foreground hover:bg-accent'}
-							{isDisabled && 'pointer-events-none opacity-50'}"
-					>
-						<div class="flex items-center gap-2">
-							<input
-								type="checkbox"
-								class="sr-only"
-								checked={isSelected}
-								disabled={isDisabled}
-								onchange={() => toggleDiscoveryMethod(method.value)}
-							/>
-							<div
-								class="flex h-3 w-3 items-center justify-center rounded border {isSelected
-									? 'border-primary bg-primary'
-									: 'border-input'}"
-								aria-hidden="true"
-							>
-								{#if isSelected}
-									<svg class="h-full w-full text-primary-foreground" viewBox="0 0 12 12">
-										<path
-											fill="currentColor"
-											d="M10.28 2.28L4.5 8.06 1.72 5.28a.75.75 0 00-1.06 1.06l3.5 3.5a.75.75 0 001.06 0l6.5-6.5a.75.75 0 00-1.06-1.06z"
-										/>
-									</svg>
-								{/if}
-							</div>
-							<span class="font-medium">{method.label}</span>
-						</div>
-						<span class="text-2xs text-muted-foreground">
-							{#if !isAvailable}
-								(no privileges)
-							{:else if method.requiresPrivileges}
-								(available)
-							{/if}
-						</span>
-					</label>
+					<FormCheckbox
+						label={method.label}
+						checked={isSelected}
+						disabled={isDisabled}
+						onchange={() => toggleDiscoveryMethod(method.value)}
+					/>
 				{/each}
 			</div>
 
 			<!-- Name Resolution (collapsible) -->
-			<details class="mt-3 rounded border border-border bg-muted/30">
-				<summary
-					class="flex cursor-pointer items-center gap-1 px-2 py-1.5 text-2xs font-medium text-muted-foreground hover:text-foreground"
-				>
-					<ChevronRight class="h-3 w-3 transition-transform [[open]>&]:rotate-90" />
-					Name Resolution
-					{#if resolveHostname}
-						<span class="ml-auto text-2xs">
-							({[resolveDns && 'DNS', resolveMdns && 'mDNS', resolveNetbios && 'NetBIOS']
-								.filter(Boolean)
-								.join(', ')})
-						</span>
-					{/if}
-				</summary>
-				<div class="border-t border-border p-2 space-y-1.5">
-					<FormCheckbox label="DNS Reverse Lookup (PTR)" bind:checked={resolveDns} />
-					<FormCheckbox label="mDNS / Bonjour (.local)" bind:checked={resolveMdns} />
-					<FormCheckbox label="NetBIOS (Windows)" bind:checked={resolveNetbios} />
-					{#if resolveHostname}
-						<div class="mt-2 border-t border-border pt-2">
-							<FormSlider
-								label="Timeout"
-								bind:value={resolveTimeoutMs}
-								min={500}
-								max={5000}
-								step={500}
-								hint={`${resolveTimeoutMs}ms`}
-							/>
+			<Accordion.Root type="multiple" value={['name-resolution']} class="mt-3">
+				<Accordion.Item value="name-resolution" class="rounded border border-border bg-surface-3">
+					<Accordion.Trigger
+						class="px-2 py-1.5 text-xs font-medium hover:no-underline [&>svg]:h-3.5 [&>svg]:w-3.5"
+					>
+						<span>Name Resolution</span>
+					</Accordion.Trigger>
+					<Accordion.Content class="border-t border-border/30 px-2 pb-2">
+						<div class="space-y-1.5 pt-2">
+							<FormCheckbox label="DNS PTR" bind:checked={resolveDns} />
+							<FormCheckbox label="mDNS (.local)" bind:checked={resolveMdns} />
+							<FormCheckbox label="NetBIOS" bind:checked={resolveNetbios} />
+							{#if resolveHostname}
+								<div class="mt-2 border-t border-border pt-2">
+									<FormSlider
+										label="Timeout"
+										bind:value={resolveTimeoutMs}
+										min={500}
+										max={5000}
+										step={500}
+										hint={`${resolveTimeoutMs}ms`}
+									/>
+								</div>
+							{/if}
 						</div>
-					{/if}
-				</div>
-			</details>
+					</Accordion.Content>
+				</Accordion.Item>
+			</Accordion.Root>
 
 			{#if discoveryMethods.size > 0}
 				<div class="mt-3">
-					<ActionButton
-						label="Find Hosts"
-						icon={Radar}
-						loading={isDiscovering}
-						loadingLabel="Discovering..."
-						disabled={!isValidTarget(target) || isScanning}
-						onclick={handleDiscovery}
-					/>
+					{#if isDiscovering}
+						<ActionButton
+							label="Cancel Discovery"
+							icon={Square}
+							variant="destructive"
+							onclick={handleCancelDiscovery}
+						/>
+					{:else}
+						<ActionButton
+							label="Find Hosts"
+							icon={Radar}
+							disabled={!isValidTarget(target) || isScanning}
+							variant="outline"
+							onclick={handleDiscovery}
+						/>
+					{/if}
 				</div>
 			{/if}
 			{#if discoveryResults.length > 0}
-				<div class="mt-2 rounded border border-border bg-muted/30 p-2">
-					<p class="text-2xs font-medium text-muted-foreground">Results:</p>
+				<div class="mt-2 rounded border border-border bg-surface-3 p-2">
+					<p class="text-xs font-medium text-muted-foreground">Results:</p>
 					<div class="mt-1 max-h-20 space-y-0.5 overflow-y-auto">
 						{#each discoveryResults as result (result.method)}
-							<div class="text-2xs">
+							<div class="text-xs">
 								<span class="font-medium">{result.method}:</span>
 								{#if result.error}
 									<span class="text-destructive">{result.error}</span>
@@ -694,21 +782,24 @@
 		<!-- 3. Port Scan -->
 		<FormSection title="Port Scan">
 			<!-- Mode -->
-			<p class="mb-1.5 text-2xs font-medium text-muted-foreground">Scan Mode</p>
 			<FormMode
+				label="Scan Mode"
 				value={scanMode}
-				options={SCAN_MODES.map((m) => ({ value: m.value, label: m.label }))}
+				layout="stacked"
+				descriptionDisplay="selected"
+				options={SCAN_MODES.map((m) => ({
+					value: m.value,
+					label: m.label,
+					description: m.description,
+				}))}
 				onchange={(v) => (scanMode = v as ScanMode)}
 			/>
-			<p class="mt-1 text-2xs text-muted-foreground">
-				{SCAN_MODES.find((m) => m.value === scanMode)?.description}
-			</p>
 
 			<!-- Quick Scan Port Details -->
 			{#if scanMode === 'quick'}
-				<details class="mt-2 rounded border border-border bg-muted/30">
+				<details class="mt-2 rounded border border-border bg-surface-3">
 					<summary
-						class="flex cursor-pointer items-center gap-1 px-2 py-1.5 text-2xs font-medium text-muted-foreground hover:text-foreground"
+						class="flex cursor-pointer items-center gap-1 px-2 py-1.5 text-xs font-medium text-muted-foreground hover:text-foreground"
 					>
 						<ChevronRight class="h-3 w-3 transition-transform [[open]>&]:rotate-90" />
 						Target Ports ({QUICK_SCAN_PORTS.length})
@@ -720,8 +811,8 @@
 									class="flex items-center justify-between bg-background px-2 py-1"
 									title={WELL_KNOWN_SERVICES[port] ?? `Port ${port}`}
 								>
-									<span class="font-mono text-2xs font-medium">{port}</span>
-									<span class="truncate text-2xs text-muted-foreground">
+									<span class="font-mono text-xs font-medium">{port}</span>
+									<span class="truncate text-xs text-muted-foreground">
 										{WELL_KNOWN_SERVICES[port] ?? ''}
 									</span>
 								</div>
@@ -734,20 +825,26 @@
 			<!-- Port Selection (custom時のみ) -->
 			{#if scanMode === 'custom'}
 				<div class="mt-3 border-t border-border pt-3">
-					<p class="mb-1.5 text-2xs font-medium text-muted-foreground">Port Selection</p>
 					<FormMode
+						label="Port Selection"
 						value={portPreset}
-						options={PORT_PRESETS.map((p) => ({ value: p.value, label: p.label }))}
+						layout="stacked"
+						descriptionDisplay="selected"
+						options={PORT_PRESETS.map((p) => ({
+							value: p.value,
+							label: p.label,
+							description: p.description,
+						}))}
 						onchange={(v) => (portPreset = v as PortPreset)}
 					/>
 
 					<!-- Port Details for each preset -->
 					{#if portPreset === 'well_known'}
-						<p class="mt-1.5 text-2xs text-muted-foreground">Standard ports 1-1024 (1,024 ports)</p>
+						<p class="mt-1.5 text-xs text-muted-foreground">Standard ports 1-1024 (1,024 ports)</p>
 					{:else if portPreset === 'web'}
-						<details class="mt-2 rounded border border-border bg-muted/30">
+						<details class="mt-2 rounded border border-border bg-surface-3">
 							<summary
-								class="flex cursor-pointer items-center gap-1 px-2 py-1.5 text-2xs font-medium text-muted-foreground hover:text-foreground"
+								class="flex cursor-pointer items-center gap-1 px-2 py-1.5 text-xs font-medium text-muted-foreground hover:text-foreground"
 							>
 								<ChevronRight class="h-3 w-3 transition-transform [[open]>&]:rotate-90" />
 								Web Ports ({WEB_PORTS.length})
@@ -759,8 +856,8 @@
 											class="flex items-center justify-between bg-background px-2 py-1"
 											title={WELL_KNOWN_SERVICES[port] ?? `Port ${port}`}
 										>
-											<span class="font-mono text-2xs font-medium">{port}</span>
-											<span class="truncate text-2xs text-muted-foreground">
+											<span class="font-mono text-xs font-medium">{port}</span>
+											<span class="truncate text-xs text-muted-foreground">
 												{WELL_KNOWN_SERVICES[port] ?? ''}
 											</span>
 										</div>
@@ -769,9 +866,9 @@
 							</div>
 						</details>
 					{:else if portPreset === 'database'}
-						<details class="mt-2 rounded border border-border bg-muted/30">
+						<details class="mt-2 rounded border border-border bg-surface-3">
 							<summary
-								class="flex cursor-pointer items-center gap-1 px-2 py-1.5 text-2xs font-medium text-muted-foreground hover:text-foreground"
+								class="flex cursor-pointer items-center gap-1 px-2 py-1.5 text-xs font-medium text-muted-foreground hover:text-foreground"
 							>
 								<ChevronRight class="h-3 w-3 transition-transform [[open]>&]:rotate-90" />
 								Database Ports ({DATABASE_PORTS.length})
@@ -783,8 +880,8 @@
 											class="flex items-center justify-between bg-background px-2 py-1"
 											title={WELL_KNOWN_SERVICES[port] ?? `Port ${port}`}
 										>
-											<span class="font-mono text-2xs font-medium">{port}</span>
-											<span class="truncate text-2xs text-muted-foreground">
+											<span class="font-mono text-xs font-medium">{port}</span>
+											<span class="truncate text-xs text-muted-foreground">
 												{WELL_KNOWN_SERVICES[port] ?? ''}
 											</span>
 										</div>
@@ -801,9 +898,9 @@
 								onblur={() => (portRangeTouched = true)}
 							/>
 							{#if portRangeTouched && portRange && !isValidPortRange(portRange)}
-								<p class="mt-1 text-2xs text-destructive">Invalid port range format</p>
+								<p class="mt-1 text-xs text-destructive">Invalid port range format</p>
 							{:else}
-								<p class="mt-1 text-2xs text-muted-foreground">
+								<p class="mt-1 text-xs text-muted-foreground">
 									Examples: 80,443,8080 or 1-1024 or 22,80-100,443
 								</p>
 							{/if}
@@ -813,10 +910,12 @@
 			{/if}
 
 			<!-- Scan Settings -->
-			<div class="mt-3 border-t border-border pt-3">
-				<p class="mb-2 text-2xs font-medium text-muted-foreground">Scan Settings</p>
+			<div class="mt-3 border-t border-border/30 pt-3">
+				<p class="mb-2 text-xs font-semibold uppercase tracking-wide text-foreground/70">
+					Scan Settings
+				</p>
 				<FormSlider
-					label="Concurrent Connections"
+					label="Concurrency"
 					bind:value={concurrency}
 					min={MIN_CONCURRENCY}
 					max={MAX_CONCURRENCY}
@@ -824,7 +923,7 @@
 					hint={`${concurrency}`}
 				/>
 				<FormSlider
-					label="Connection Timeout"
+					label="Timeout"
 					bind:value={timeoutMs}
 					min={MIN_TIMEOUT_MS}
 					max={MAX_TIMEOUT_MS}
@@ -879,36 +978,79 @@
 
 	<!-- Results Panel -->
 	<div class="relative flex h-full flex-col overflow-hidden">
-		<!-- Privilege Setup Banner -->
-		{#if privilegeStatus && !privilegeStatus.setupCompleted && privilegeStatus.setupAvailable}
-			<div class="flex shrink-0 items-center gap-3 border-b bg-warning/10 px-4 py-2">
-				<Shield class="h-4 w-4 text-warning" />
-				<span class="flex-1 text-xs text-amber-700 dark:text-amber-300">
-					Advanced scanning (TCP SYN) requires privilege setup
-				</span>
-				<button
-					class="rounded-md bg-amber-600 px-3 py-1 text-xs font-medium text-white transition-colors hover:bg-amber-700 disabled:opacity-50"
-					disabled={isSettingUpPrivileges}
-					onclick={handleSetupPrivileges}
-				>
-					{#if isSettingUpPrivileges}
-						<Loader2 class="inline-block h-3 w-3 animate-spin" />
-					{:else}
-						Setup Privileges
-					{/if}
-				</button>
-			</div>
+		<!-- Privilege Status Banners -->
+		{#if privilegeStatus}
+			{#if privilegeStatus.requiresApproval}
+				<!-- macOS: Waiting for user approval in System Settings -->
+				<div class="flex shrink-0 items-center gap-3 border-b bg-info/10 px-4 py-2">
+					<Settings class="h-4 w-4 text-info" />
+					<span class="flex-1 text-xs text-info">
+						Approve Kogu in System Settings → General → Login Items & Extensions
+					</span>
+					<a
+						href="https://github.com/seijikohara/kogu/blob/main/docs/network-scanner/macos-setup.md"
+						target="_blank"
+						rel="noopener noreferrer"
+						class="flex items-center gap-1 text-xs text-info underline-offset-2 hover:underline"
+					>
+						Learn More
+						<ExternalLink class="h-3 w-3" />
+					</a>
+					<ActionButton
+						label="Check Status"
+						loading={isSettingUpPrivileges}
+						loadingLabel="Checking..."
+						size="sm"
+						class="w-auto bg-info text-info-foreground hover:bg-info/90"
+						onclick={handleCheckPrivileges}
+					/>
+				</div>
+			{:else if !privilegeStatus.setupCompleted && privilegeStatus.setupAvailable}
+				<!-- Setup required -->
+				<div class="flex shrink-0 items-center gap-3 border-b bg-warning/10 px-4 py-2">
+					<Shield class="h-4 w-4 text-warning" />
+					<span class="flex-1 text-xs text-warning">
+						ICMP Ping, ARP Scan, and TCP SYN require privilege setup
+					</span>
+					<a
+						href="https://github.com/seijikohara/kogu/blob/main/docs/network-scanner/README.md"
+						target="_blank"
+						rel="noopener noreferrer"
+						class="flex items-center gap-1 text-xs text-warning underline-offset-2 hover:underline"
+					>
+						Learn More
+						<ExternalLink class="h-3 w-3" />
+					</a>
+					<ActionButton
+						label="Setup Privileges"
+						loading={isSettingUpPrivileges}
+						loadingLabel="Setting up..."
+						size="sm"
+						class="w-auto bg-warning text-warning-foreground hover:bg-warning/90"
+						onclick={handleSetupPrivileges}
+					/>
+				</div>
+			{/if}
 		{/if}
 
 		<!-- Discovery Progress Panel -->
 		{#if isDiscovering}
-			<div class="shrink-0 border-b bg-muted/20 px-4 py-3">
-				<div class="mb-2 flex items-center gap-2">
-					<Loader2 class="h-4 w-4 animate-spin text-primary" />
-					<span class="text-sm font-medium">Finding Hosts...</span>
-					<span class="text-xs text-muted-foreground">
-						Running {discoveryMethods.size} method{discoveryMethods.size > 1 ? 's' : ''} in parallel
-					</span>
+			<div class="shrink-0 border-b bg-surface-2 px-4 py-3">
+				<div class="mb-2 flex items-center justify-between">
+					<div class="flex items-center gap-2">
+						<Loader2 class="h-4 w-4 animate-spin text-primary" />
+						<span class="text-sm font-medium">Finding Hosts...</span>
+						<span class="text-xs text-muted-foreground">
+							Running {discoveryMethods.size} method{discoveryMethods.size > 1 ? 's' : ''} in parallel
+						</span>
+					</div>
+					<ActionButton
+						label="Cancel"
+						variant="ghost"
+						size="sm"
+						class="w-auto text-muted-foreground hover:text-destructive"
+						onclick={handleCancelDiscovery}
+					/>
 				</div>
 				<!-- Per-method progress -->
 				<div
@@ -926,7 +1068,7 @@
 									{DISCOVERY_METHODS.find((m) => m.value === method)?.label ?? method}
 								</span>
 								{#if progress?.status === 'completed'}
-									<Check class="h-3 w-3 shrink-0 text-green-500" />
+									<Check class="h-3 w-3 shrink-0 text-success" />
 								{:else if progress?.status === 'error'}
 									<X class="h-3 w-3 shrink-0 text-destructive" />
 								{:else if progress?.status === 'running'}
@@ -939,7 +1081,7 @@
 								<div
 									class="h-full transition-all duration-300"
 									class:bg-primary={progress?.status === 'running'}
-									class:bg-green-500={progress?.status === 'completed'}
+									class:bg-success={progress?.status === 'completed'}
 									class:bg-destructive={progress?.status === 'error'}
 									class:animate-pulse={progress?.status === 'running'}
 									style="width: {progress?.status === 'completed' || progress?.status === 'error'
@@ -949,7 +1091,7 @@
 											: 0}%"
 								></div>
 							</div>
-							<div class="flex items-center justify-between text-2xs text-muted-foreground">
+							<div class="flex items-center justify-between text-xs text-muted-foreground">
 								{#if progress?.hostsFound !== undefined && progress.hostsFound > 0}
 									<span class="text-success">{progress.hostsFound} hosts</span>
 								{:else}
@@ -964,7 +1106,7 @@
 				</div>
 			</div>
 		{:else if isScanning}
-			<div class="shrink-0 border-b bg-muted/20 px-4 py-3">
+			<div class="shrink-0 border-b bg-surface-2 px-4 py-3">
 				<!-- Main progress info -->
 				<div class="mb-2 flex items-center justify-between">
 					<div class="flex items-center gap-2">
@@ -974,13 +1116,13 @@
 					</div>
 					<div class="flex items-center gap-3">
 						<span class="text-sm font-medium text-primary">{progressPercentage.toFixed(0)}%</span>
-						<button
-							type="button"
-							class="rounded px-2 py-0.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
+						<ActionButton
+							label="Cancel"
+							variant="ghost"
+							size="sm"
+							class="w-auto text-muted-foreground hover:text-destructive"
 							onclick={handleCancel}
-						>
-							Cancel
-						</button>
+						/>
 					</div>
 				</div>
 
@@ -993,7 +1135,7 @@
 				</div>
 
 				<!-- Detailed stats -->
-				<div class="flex items-center justify-between text-2xs">
+				<div class="flex items-center justify-between text-xs">
 					<div class="flex items-center gap-4">
 						{#if progressCurrentIp}
 							<span class="flex items-center gap-1 text-muted-foreground">
@@ -1031,12 +1173,14 @@
 					<Resizable.Pane defaultSize={35} minSize={20} maxSize={50}>
 						<div class="flex h-full flex-col border-r">
 							<!-- Host List Header -->
-							<div class="flex h-9 shrink-0 items-center justify-between border-b bg-muted/30 px-3">
+							<div
+								class="flex h-9 shrink-0 items-center justify-between border-b bg-surface-3 px-3"
+							>
 								<span class="text-xs font-medium text-muted-foreground">
 									Hosts ({unifiedHosts.length})
 								</span>
 								{#if totalOpenPorts > 0}
-									<span class="text-2xs text-success">
+									<span class="text-xs text-success">
 										{totalOpenPorts} open ports
 									</span>
 								{/if}
@@ -1044,12 +1188,12 @@
 							<!-- Host List -->
 							<div class="flex-1 overflow-auto">
 								{#each unifiedHosts as host (host.id)}
+									{@const displayHostname = getDisplayHostname(host)}
 									<UnifiedHostListItem
 										ips={host.ips}
-										hostname={host.hostname ??
-											host.netbiosName ??
-											host.ssdpDevice?.friendlyName ??
-											null}
+										hostname={displayHostname?.name ?? null}
+										hostnameSource={displayHostname?.source ?? null}
+										macAddress={host.macAddress}
 										vendor={host.vendor}
 										openPortCount={host.ports.filter((p) => p.state === 'open').length}
 										discoveryMethodCount={host.discoveryMethods.length}
@@ -1057,25 +1201,25 @@
 										selected={selectedHostId === host.id}
 										isNew={recentlyDiscoveredIds.has(host.id)}
 										deviceCategory={hostClassifications.get(host.id)?.category}
+										hasPortScan={host.ports.length > 0}
 										onclick={() => selectHost(host.id)}
 									/>
 								{/each}
 							</div>
 							<!-- Scan All Button (only if we have hosts without port scans) -->
 							{#if hostsWithoutScans.length > 0}
-								<div class="shrink-0 border-t bg-muted/30 p-2">
-									<button
-										type="button"
-										class="flex w-full items-center justify-center gap-2 rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50"
+								<div class="shrink-0 border-t bg-surface-3 p-2">
+									<ActionButton
+										label="Scan {hostsWithoutScans.length} Unscanned Hosts"
+										icon={Play}
+										size="sm"
+										variant="outline"
+										disabled={isScanning}
 										onclick={() => {
 											target = hostsWithoutScans.flatMap((h) => h.ips).join(',');
 											handleScan();
 										}}
-										disabled={isScanning}
-									>
-										<Play class="h-3 w-3" />
-										<span>Scan {hostsWithoutScans.length} Unscanned Hosts</span>
-									</button>
+									/>
 								</div>
 							{/if}
 						</div>
@@ -1096,6 +1240,8 @@
 								mdnsServices={selectedHost.mdnsServices}
 								ssdpDevice={selectedHost.ssdpDevice}
 								wsDiscovery={selectedHost.wsDiscovery}
+								snmpInfo={selectedHost.snmpInfo}
+								tlsNames={selectedHost.tlsNames}
 								classification={hostClassifications.get(selectedHost.id) ?? null}
 								discoveryMethods={selectedHost.discoveryMethods}
 								discoveries={selectedHost.discoveries}
@@ -1105,36 +1251,24 @@
 								scanDisabled={isScanning}
 							/>
 						{:else}
-							<div class="flex h-full items-center justify-center text-muted-foreground">
-								<div class="text-center">
-									<Server class="mx-auto mb-2 h-8 w-8 opacity-50" />
-									<p class="text-sm">Select a host to view details</p>
-								</div>
-							</div>
+							<EmptyState icon={Server} title="Select a host to view details" />
 						{/if}
 					</Resizable.Pane>
 				</Resizable.PaneGroup>
 			{:else if error}
-				<div class="flex h-full items-center justify-center">
-					<div class="rounded-lg border border-destructive/50 bg-destructive/10 p-6 text-center">
-						<AlertCircle class="mx-auto mb-2 h-8 w-8 text-destructive" />
-						<p class="text-sm text-destructive">{error}</p>
-					</div>
-				</div>
+				<ErrorDisplay variant="centered" message={error} />
 			{:else}
-				<div class="flex h-full items-center justify-center text-muted-foreground">
-					<div class="text-center">
-						<Radar class="mx-auto mb-2 h-12 w-12 opacity-50" />
-						<p class="text-sm">Enter a target and start scanning</p>
-						<p class="mt-1 text-xs">IP address, hostname, or CIDR notation</p>
-					</div>
-				</div>
+				<EmptyState
+					icon={Radar}
+					title="Enter a target and start scanning"
+					description="IP address, hostname, or CIDR notation"
+				/>
 			{/if}
 		</div>
 
 		<!-- Summary Footer -->
 		{#if results}
-			<div class="shrink-0 border-t bg-muted/30 px-4 py-2">
+			<div class="shrink-0 border-t bg-surface-3 px-4 py-2">
 				<div class="flex items-center justify-between text-xs text-muted-foreground">
 					<div class="flex items-center gap-4">
 						<span class="flex items-center gap-1">
@@ -1142,7 +1276,7 @@
 							{results.totalHostsScanned} hosts scanned
 						</span>
 						<span class="flex items-center gap-1">
-							<CheckCircle2 class="h-3 w-3 text-green-500" />
+							<CheckCircle2 class="h-3 w-3 text-success" />
 							{results.hostsWithOpenPorts} with open ports
 						</span>
 						<span class="flex items-center gap-1">

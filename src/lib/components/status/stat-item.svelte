@@ -19,10 +19,10 @@
 	} as const;
 </script>
 
-<span class="stat-item flex items-center gap-1 text-muted-foreground">
+<span class="stat-item flex items-center gap-1.5 text-muted-foreground/80">
 	{#if Icon}
-		<Icon class="h-3 w-3" />
+		<Icon class="h-3.5 w-3.5" />
 	{/if}
-	{label}:
-	<strong class={cn('font-medium tabular-nums', variantStyles[variant])}>{value}</strong>
+	<span class="text-xs">{label}:</span>
+	<strong class={cn('font-semibold tabular-nums', variantStyles[variant])}>{value}</strong>
 </span>

@@ -143,18 +143,18 @@
 			<FormInfo showIcon={false}>
 				<div class="space-y-1.5">
 					<div class="flex items-center gap-2">
-						<span class="h-2 w-2 rounded-full bg-red-500"></span>
+						<span class="h-2 w-2 rounded-full bg-destructive"></span>
 						<span class="text-destructive">Header:</span>
 						<span>Algorithm & type</span>
 					</div>
 					<div class="flex items-center gap-2">
-						<span class="h-2 w-2 rounded-full bg-purple-500"></span>
-						<span class="text-purple-600 dark:text-purple-400">Payload:</span>
+						<span class="h-2 w-2 rounded-full bg-primary"></span>
+						<span class="text-primary">Payload:</span>
 						<span>Claims & data</span>
 					</div>
 					<div class="flex items-center gap-2">
-						<span class="h-2 w-2 rounded-full bg-cyan-500"></span>
-						<span class="text-cyan-600 dark:text-cyan-400">Signature:</span>
+						<span class="h-2 w-2 rounded-full bg-info"></span>
+						<span class="text-info">Signature:</span>
 						<span>Verification hash</span>
 					</div>
 				</div>
@@ -199,7 +199,7 @@
 					{/if}
 
 					<!-- Header section -->
-					<div class="rounded-lg border bg-muted/30">
+					<div class="rounded-lg border bg-surface-3">
 						<div class="flex items-center justify-between border-b px-4 py-2">
 							<h3 class="text-sm font-medium text-destructive">Header</h3>
 							<CopyButton
@@ -218,9 +218,9 @@
 					</div>
 
 					<!-- Payload section -->
-					<div class="rounded-lg border bg-muted/30">
+					<div class="rounded-lg border bg-surface-3">
 						<div class="flex items-center justify-between border-b px-4 py-2">
-							<h3 class="text-sm font-medium text-purple-600 dark:text-purple-400">Payload</h3>
+							<h3 class="text-sm font-medium text-primary">Payload</h3>
 							<CopyButton
 								text={formatJson(decoded.payload)}
 								toastLabel="Payload"
@@ -238,7 +238,7 @@
 
 					<!-- Standard Claims -->
 					{#if Object.keys(decoded.payload).some( (k) => JWT_STANDARD_CLAIMS.some((c) => c.claim === k) )}
-						<div class="rounded-lg border bg-muted/30">
+						<div class="rounded-lg border bg-surface-3">
 							<div class="border-b px-4 py-2">
 								<h3 class="text-sm font-medium">Standard Claims</h3>
 							</div>
@@ -262,9 +262,9 @@
 					{/if}
 
 					<!-- Signature section -->
-					<div class="rounded-lg border bg-muted/30">
+					<div class="rounded-lg border bg-surface-3">
 						<div class="flex items-center justify-between border-b px-4 py-2">
-							<h3 class="text-sm font-medium text-cyan-600 dark:text-cyan-400">Signature</h3>
+							<h3 class="text-sm font-medium text-info">Signature</h3>
 							<CopyButton
 								text={decoded.signature}
 								toastLabel="Signature"

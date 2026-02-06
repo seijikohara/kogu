@@ -18,11 +18,13 @@
 		Tv,
 		Wifi,
 	} from '@lucide/svelte';
-	import type { DeviceCategory } from '$lib/services/device-classifier.js';
+	import { DEVICE_CATEGORIES, type DeviceCategory } from '$lib/services/device-classifier.js';
 
 	interface Props {
 		readonly ips: readonly string[];
 		readonly hostname: string | null;
+		readonly hostnameSource?: string | null;
+		readonly macAddress?: string | null;
 		readonly vendor: string | null;
 		readonly openPortCount: number;
 		readonly discoveryMethodCount: number;
@@ -30,12 +32,15 @@
 		readonly selected: boolean;
 		readonly isNew?: boolean;
 		readonly deviceCategory?: DeviceCategory;
+		readonly hasPortScan?: boolean;
 		readonly onclick: () => void;
 	}
 
 	let {
 		ips,
 		hostname,
+		hostnameSource = null,
+		macAddress = null,
 		vendor,
 		openPortCount,
 		discoveryMethodCount,
@@ -43,6 +48,7 @@
 		selected,
 		isNew = false,
 		deviceCategory = 'unknown',
+		hasPortScan = false,
 		onclick,
 	}: Props = $props();
 
@@ -64,41 +70,77 @@
 		unknown: CircleDot,
 	};
 
-	const DeviceIcon = $derived(DEVICE_ICONS[deviceCategory] ?? CircleDot);
+	// Compact labels for list display (long names abbreviated)
+	const SHORT_LABELS: Partial<Record<DeviceCategory, string>> = {
+		access_point: 'AP',
+		media_player: 'Media',
+	};
 
-	const isIPv6 = (ip: string): boolean => ip.includes(':');
+	const DeviceIcon = $derived(DEVICE_ICONS[deviceCategory] ?? CircleDot);
+	const categoryLabel = $derived(
+		deviceCategory !== 'unknown'
+			? (SHORT_LABELS[deviceCategory] ?? DEVICE_CATEGORIES[deviceCategory]?.label ?? '')
+			: ''
+	);
+
 	const primaryIp = $derived(ips[0] ?? '');
-	const hasMultipleIps = $derived(ips.length > 1);
+	const isIPv6 = (ip: string): boolean => ip.includes(':');
+	const additionalIpv4s = $derived(ips.slice(1).filter((ip) => !isIPv6(ip)));
+	const ipv6Count = $derived(ips.filter(isIPv6).length);
+	const ipv6Addresses = $derived(ips.filter(isIPv6));
+
+	// Supplementary line: always show vendor and/or MAC when available
+	const macDisplay = $derived(macAddress ? macAddress.toUpperCase() : null);
+	const supplementaryText = $derived(
+		vendor && macDisplay ? `${vendor} · ${macDisplay}` : (vendor ?? macDisplay)
+	);
+	const supplementaryIsMono = $derived(!vendor && !!macDisplay);
 </script>
 
 <button
 	type="button"
-	class="flex w-full items-start gap-2 border-b border-border px-3 py-2.5 text-left transition-colors last:border-b-0
-		{selected ? 'bg-primary/10' : 'hover:bg-muted/50'}
+	class="flex w-full items-start gap-2 border-b border-border border-l-2 px-3 py-2.5 text-left transition-colors last:border-b-0
+		{selected ? 'border-l-primary bg-primary/10' : 'border-l-transparent hover:bg-interactive-hover'}
 		{isNew ? 'animate-highlight-new' : ''}"
 	{onclick}
 >
-	<DeviceIcon
-		class="mt-0.5 h-4 w-4 shrink-0 {openPortCount > 0 ? 'text-green-500' : 'text-muted-foreground'}"
-	/>
+	<!-- Device icon + category label (fixed width for alignment) -->
+	<div class="mt-0.5 flex w-12 shrink-0 flex-col items-center gap-0.5">
+		<DeviceIcon class="h-4 w-4 {openPortCount > 0 ? 'text-success' : 'text-muted-foreground'}" />
+		<span
+			class="max-w-full truncate text-2xs leading-none font-medium text-muted-foreground {categoryLabel
+				? ''
+				: 'invisible'}"
+		>
+			{categoryLabel || 'Device'}
+		</span>
+	</div>
 	<div class="min-w-0 flex-1">
-		<!-- Primary IP -->
+		<!-- Primary IP + status dot + badges -->
 		<div class="flex items-center gap-2">
 			<span class="font-mono text-sm font-medium">{primaryIp}</span>
+			{#if hasPortScan}
+				<span
+					class="h-1.5 w-1.5 shrink-0 rounded-full {openPortCount > 0
+						? 'bg-success'
+						: 'bg-muted-foreground/50'}"
+					title={openPortCount > 0 ? `${openPortCount} open ports` : 'No open ports'}
+				></span>
+			{/if}
 			<!-- Badges -->
 			<div class="flex items-center gap-1">
 				{#if openPortCount > 0}
 					<span
-						class="flex items-center gap-0.5 rounded bg-success/10 px-1.5 py-0.5 text-2xs font-medium text-success"
+						class="flex items-center gap-0.5 rounded bg-success/10 px-1.5 py-0.5 text-xs font-medium text-success"
 						title="{openPortCount} open ports"
 					>
 						<CheckCircle2 class="h-2.5 w-2.5" />
 						{openPortCount}
 					</span>
 				{/if}
-				{#if discoveryMethodCount > 0}
+				{#if discoveryMethodCount > 1}
 					<span
-						class="flex items-center gap-0.5 rounded bg-primary/10 px-1.5 py-0.5 text-2xs font-medium text-primary"
+						class="flex items-center gap-0.5 rounded bg-primary/10 px-1.5 py-0.5 text-xs font-medium text-primary"
 						title="{discoveryMethodCount} discovery methods"
 					>
 						<Radar class="h-2.5 w-2.5" />
@@ -107,7 +149,7 @@
 				{/if}
 				{#if mdnsServiceCount > 0}
 					<span
-						class="flex items-center gap-0.5 rounded bg-purple-500/10 px-1.5 py-0.5 text-2xs font-medium text-purple-600 dark:text-purple-400"
+						class="flex items-center gap-0.5 rounded bg-info/10 px-1.5 py-0.5 text-xs font-medium text-info"
 						title="{mdnsServiceCount} mDNS services"
 					>
 						<Radio class="h-2.5 w-2.5" />
@@ -117,31 +159,51 @@
 			</div>
 		</div>
 
-		<!-- Hostname -->
+		<!-- Hostname + source badge -->
 		{#if hostname}
-			<p class="truncate text-xs text-muted-foreground" title={hostname}>
-				{hostname}
-			</p>
-		{/if}
-
-		<!-- Vendor -->
-		{#if vendor}
-			<p class="truncate text-2xs text-muted-foreground/70" title={vendor}>
-				{vendor}
-			</p>
-		{/if}
-
-		<!-- Additional IPs (IPv4/IPv6) -->
-		{#if hasMultipleIps}
-			<div class="mt-0.5 flex flex-wrap gap-1">
-				{#each ips.slice(1) as ip (ip)}
+			<div class="flex items-center gap-1.5">
+				<p class="truncate text-xs text-muted-foreground" title={hostname}>
+					{hostname}
+				</p>
+				{#if hostnameSource}
 					<span
-						class="rounded bg-muted px-1 py-0.5 font-mono text-2xs text-muted-foreground"
+						class="shrink-0 rounded bg-muted px-1 py-0.5 text-xs uppercase text-muted-foreground"
+					>
+						{hostnameSource}
+					</span>
+				{/if}
+			</div>
+		{/if}
+
+		<!-- Supplementary info: vendor and/or MAC address -->
+		{#if supplementaryText}
+			<p
+				class="truncate text-xs text-muted-foreground/70 {supplementaryIsMono ? 'font-mono' : ''}"
+				title={supplementaryText}
+			>
+				{supplementaryText}
+			</p>
+		{/if}
+
+		<!-- Additional IPv4 addresses + IPv6 count indicator -->
+		{#if additionalIpv4s.length > 0 || ipv6Count > 0}
+			<div class="mt-0.5 flex flex-wrap gap-1">
+				{#each additionalIpv4s as ip (ip)}
+					<span
+						class="rounded bg-muted px-1 py-0.5 font-mono text-xs text-muted-foreground"
 						title={ip}
 					>
-						{isIPv6(ip) ? 'IPv6' : ip}
+						{ip}
 					</span>
 				{/each}
+				{#if ipv6Count > 0}
+					<span
+						class="rounded bg-muted px-1 py-0.5 text-xs text-muted-foreground"
+						title={ipv6Addresses.join('\n')}
+					>
+						IPv6{ipv6Count > 1 ? ` ×${ipv6Count}` : ''}
+					</span>
+				{/if}
 			</div>
 		{/if}
 	</div>

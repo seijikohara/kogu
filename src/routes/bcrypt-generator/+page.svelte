@@ -343,7 +343,7 @@
 				{#if hashResult}
 					<div class="space-y-4">
 						<!-- Hash Result -->
-						<div class="rounded-lg border bg-muted/30 p-4">
+						<div class="rounded-lg border bg-surface-3 p-4">
 							<div class="mb-2 flex items-center justify-between">
 								<span class="text-sm font-medium">BCrypt Hash</span>
 								<CopyButton
@@ -360,7 +360,7 @@
 						</div>
 
 						<!-- Hash Details -->
-						<div class="rounded-lg border bg-muted/30 p-4">
+						<div class="rounded-lg border bg-surface-3 p-4">
 							<span class="mb-3 block text-sm font-medium">Hash Details</span>
 							<div class="space-y-2 text-sm">
 								<div class="flex justify-between">

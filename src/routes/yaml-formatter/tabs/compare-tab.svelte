@@ -80,9 +80,9 @@
 		<FormCheckbox label="Ignore case" bind:checked={compareIgnoreCase} />
 		<FormCheckbox label="Ignore empty values" bind:checked={compareIgnoreEmpty} />
 		<div class="space-y-1 pt-1">
-			<Label class="text-2xs uppercase tracking-wide text-muted-foreground">Ignore Keys</Label>
+			<Label class="text-xs uppercase tracking-wide text-muted-foreground">Ignore Keys</Label>
 			<Input bind:value={compareIgnoreKeys} placeholder="key1, key2, key3" class="h-7 text-xs" />
-			<span class="text-2xs text-muted-foreground">Comma-separated list of keys to ignore</span>
+			<span class="text-xs text-muted-foreground">Comma-separated list of keys to ignore</span>
 		</div>
 	{/snippet}
 </CompareTab>

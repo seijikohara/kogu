@@ -19,6 +19,8 @@ const createHost = (overrides: Partial<UnifiedHost> = {}): UnifiedHost => ({
 	mdnsServices: [],
 	ssdpDevice: null,
 	wsDiscovery: null,
+	snmpInfo: null,
+	tlsNames: [],
 	discoveryMethods: [],
 	discoveries: [],
 	ports: [],

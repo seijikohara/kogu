@@ -223,7 +223,7 @@
 				<strong>{stats.removedLines}</strong>
 			</span>
 			{#if stats.modifiedLines > 0}
-				<span class="flex items-center gap-1 text-yellow-600 dark:text-yellow-400">
+				<span class="flex items-center gap-1 text-warning">
 					<GitCompare class="h-3 w-3" />
 					<strong>{stats.modifiedLines}</strong>
 				</span>
@@ -240,9 +240,7 @@
 				</span>
 			{/if}
 			{#if isIdentical}
-				<span
-					class="rounded bg-green-500/20 px-1.5 py-0.5 text-xs font-medium text-green-700 dark:text-green-300"
-				>
+				<span class="rounded bg-success/20 px-1.5 py-0.5 text-xs font-medium text-success">
 					Identical
 				</span>
 			{/if}
@@ -283,25 +281,25 @@
 			<FormInfo showIcon={false}>
 				<div class="space-y-1.5 text-xs">
 					<div class="flex items-center gap-2">
-						<span class="inline-block h-3 w-3 rounded-sm bg-red-500/30"></span>
+						<span class="inline-block h-3 w-3 rounded-sm bg-destructive/30"></span>
 						<span>Removed lines</span>
 					</div>
 					<div class="flex items-center gap-2">
-						<span class="inline-block h-3 w-3 rounded-sm bg-green-500/30"></span>
+						<span class="inline-block h-3 w-3 rounded-sm bg-success/30"></span>
 						<span>Added lines</span>
 					</div>
 					<div class="flex items-center gap-2">
-						<span class="inline-block h-3 w-3 rounded-sm bg-yellow-500/20"></span>
+						<span class="inline-block h-3 w-3 rounded-sm bg-warning/20"></span>
 						<span>Modified lines</span>
 					</div>
 					{#if showInlineDiff}
 						<div class="mt-2 border-t pt-2">
 							<div class="flex items-center gap-2">
-								<span class="inline-block rounded-sm bg-red-500/40 px-1 text-2xs">abc</span>
+								<span class="inline-block rounded-sm bg-destructive/40 px-1 text-xs">abc</span>
 								<span>Deleted chars</span>
 							</div>
 							<div class="flex items-center gap-2">
-								<span class="inline-block rounded-sm bg-green-500/40 px-1 text-2xs">xyz</span>
+								<span class="inline-block rounded-sm bg-success/40 px-1 text-xs">xyz</span>
 								<span>Added chars</span>
 							</div>
 						</div>
@@ -357,7 +355,7 @@
 
 			<!-- Split Diff Output (GitHub-style) -->
 			<div class="flex flex-1 flex-col overflow-hidden">
-				<div class="flex h-9 shrink-0 items-center justify-between border-b bg-muted/30 px-3">
+				<div class="flex h-9 shrink-0 items-center justify-between border-b bg-surface-3 px-3">
 					<span class="text-xs font-medium text-muted-foreground">Side-by-Side Diff</span>
 					{#if stats && stats.hunkCount > 0}
 						<span class="text-xs text-muted-foreground">
@@ -405,7 +403,7 @@
 												{:else}
 													<span
 														class={line.type === 'delete' || line.type === 'modified'
-															? 'text-red-700 dark:text-red-300'
+															? 'text-destructive'
 															: ''}
 													>
 														{line.leftContent}
@@ -440,7 +438,7 @@
 												{:else}
 													<span
 														class={line.type === 'insert' || line.type === 'modified'
-															? 'text-green-700 dark:text-green-300'
+															? 'text-success'
 															: ''}
 													>
 														{line.rightContent}
@@ -466,7 +464,7 @@
 						<div class="flex flex-1 items-center justify-center text-muted-foreground">
 							<div class="text-center">
 								<div
-									class="mx-auto mb-3 flex h-16 w-16 items-center justify-center rounded-full bg-green-500/20"
+									class="mx-auto mb-3 flex h-16 w-16 items-center justify-center rounded-full bg-success/20"
 								>
 									<Equal class="h-8 w-8 text-success" />
 								</div>
@@ -514,7 +512,7 @@
 
 			<!-- Unified Diff Output -->
 			<div class="flex flex-1 flex-col overflow-hidden">
-				<div class="flex h-9 shrink-0 items-center justify-between border-b bg-muted/30 px-3">
+				<div class="flex h-9 shrink-0 items-center justify-between border-b bg-surface-3 px-3">
 					<span class="text-xs font-medium text-muted-foreground">Unified Diff</span>
 					{#if stats && stats.hunkCount > 0}
 						<span class="text-xs text-muted-foreground">
@@ -557,7 +555,7 @@
 										</span>
 										<!-- Content with inline highlighting -->
 										<span
-											class={`flex-1 whitespace-pre px-2 ${lineType === 'insert' ? 'text-green-700 dark:text-green-300' : lineType === 'delete' ? 'text-red-700 dark:text-red-300' : ''}`}
+											class={`flex-1 whitespace-pre px-2 ${lineType === 'insert' ? 'text-success' : lineType === 'delete' ? 'text-destructive' : ''}`}
 										>
 											{#if showInlineDiff && line.segments && line.segments.length > 0 && lineType !== 'equal'}
 												{#each line.segments as seg}
@@ -584,7 +582,7 @@
 						<div class="flex h-full items-center justify-center text-muted-foreground">
 							<div class="text-center">
 								<div
-									class="mx-auto mb-3 flex h-16 w-16 items-center justify-center rounded-full bg-green-500/20"
+									class="mx-auto mb-3 flex h-16 w-16 items-center justify-center rounded-full bg-success/20"
 								>
 									<Equal class="h-8 w-8 text-success" />
 								</div>

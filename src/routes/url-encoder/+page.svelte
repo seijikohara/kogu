@@ -440,7 +440,7 @@
 				{#if parsedUrl}
 					<div class="flex-1 space-y-4 overflow-auto">
 						<!-- URL Components -->
-						<div class="rounded-lg border bg-muted/30 p-4">
+						<div class="rounded-lg border bg-surface-3 p-4">
 							<h3 class="mb-3 text-sm font-medium">URL Components</h3>
 							<div class="grid gap-2 text-xs">
 								{#each Object.entries(parsedUrl.components).filter(([_, v]) => v) as [key, value]}
@@ -455,7 +455,7 @@
 
 						<!-- Query Parameters -->
 						{#if parsedUrl.params.length > 0}
-							<div class="rounded-lg border bg-muted/30 p-4">
+							<div class="rounded-lg border bg-surface-3 p-4">
 								<h3 class="mb-3 text-sm font-medium">
 									Query Parameters ({parsedUrl.params.length})
 								</h3>
@@ -539,7 +539,7 @@
 					</div>
 				</div>
 
-				<div class="rounded-lg border bg-muted/30 p-4">
+				<div class="rounded-lg border bg-surface-3 p-4">
 					<div class="mb-2 flex items-center justify-between">
 						<span class="text-xs font-medium text-muted-foreground">Generated URL</span>
 						<div class="flex gap-1">
@@ -555,7 +555,7 @@
 			</div>
 		{:else if tab === 'reference'}
 			<div class="flex-1 overflow-auto p-4">
-				<div class="rounded-lg border bg-muted/30 p-4">
+				<div class="rounded-lg border bg-surface-3 p-4">
 					<h3 class="mb-4 text-sm font-medium">Common URL Encoded Characters</h3>
 					<div class="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4">
 						{#each URL_ENCODING_EXAMPLES as example}

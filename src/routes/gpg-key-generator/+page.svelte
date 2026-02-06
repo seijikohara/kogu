@@ -151,7 +151,7 @@
 				/>
 				<FormInput label="Email *" type="email" bind:value={email} placeholder="john@example.com" />
 				{#if email && !isValidEmail(email)}
-					<p class="text-2xs text-destructive">Please enter a valid email address</p>
+					<p class="text-xs text-destructive">Please enter a valid email address</p>
 				{/if}
 				<FormInput label="Comment (optional)" bind:value={comment} placeholder="Work key" />
 			</div>
@@ -159,8 +159,8 @@
 
 		{#if name || email}
 			<FormSection title="User ID Preview">
-				<div class="rounded-md border bg-muted/30 p-2">
-					<div class="mb-1 flex items-center gap-1.5 text-2xs text-muted-foreground">
+				<div class="rounded-md border bg-surface-3 p-2">
+					<div class="mb-1 flex items-center gap-1.5 text-xs text-muted-foreground">
 						<User class="h-3 w-3" />
 						Preview
 					</div>
@@ -198,7 +198,7 @@
 				]}
 			/>
 			{#if cliAvailability?.gpg_version}
-				<p class="mt-1 text-2xs text-muted-foreground">{cliAvailability.gpg_version}</p>
+				<p class="mt-1 text-xs text-muted-foreground">{cliAvailability.gpg_version}</p>
 			{/if}
 		</FormSection>
 
@@ -265,7 +265,7 @@
 
 		<FormSection title="User ID Format">
 			<FormInfo showIcon={false}>
-				<code class="block rounded bg-muted p-1.5 font-mono text-2xs">
+				<code class="block rounded bg-muted p-1.5 font-mono text-xs">
 					Name (Comment) &lt;email@example.com&gt;
 				</code>
 				<p class="mt-1.5">The User ID identifies the key owner. Comment is optional.</p>
@@ -289,7 +289,7 @@
 				<div class="space-y-4">
 					<!-- User ID & Fingerprint -->
 					{#if showKeyInfo}
-						<div class="rounded-lg border bg-muted/30 p-4">
+						<div class="rounded-lg border bg-surface-3 p-4">
 							<div class="mb-3 flex items-center gap-2">
 								<User class="h-4 w-4" />
 								<span class="text-sm font-medium">Key Information</span>
@@ -316,7 +316,7 @@
 					{/if}
 
 					<!-- Public Key -->
-					<div class="rounded-lg border bg-muted/30 p-4">
+					<div class="rounded-lg border bg-surface-3 p-4">
 						<div class="mb-2 flex items-center justify-between">
 							<div class="flex items-center gap-2">
 								<Unlock class="h-4 w-4 text-success" />
@@ -338,7 +338,7 @@
 					</div>
 
 					<!-- Private Key -->
-					<div class="rounded-lg border border-warning/30 bg-amber-500/5 p-4">
+					<div class="rounded-lg border border-warning/30 bg-warning/5 p-4">
 						<div class="mb-2 flex items-center justify-between">
 							<div class="flex items-center gap-2">
 								<Lock class="h-4 w-4 text-warning" />
@@ -362,7 +362,7 @@
 
 					<!-- GPG Commands -->
 					{#if showGpgCommands}
-						<div class="rounded-lg border bg-muted/30 p-4">
+						<div class="rounded-lg border bg-surface-3 p-4">
 							<div class="mb-3 flex items-center gap-2">
 								<Terminal class="h-4 w-4" />
 								<span class="text-sm font-medium">Equivalent GPG Commands</span>

@@ -9,7 +9,8 @@
 		loading?: boolean;
 		loadingLabel?: string;
 		disabled?: boolean;
-		variant?: 'default' | 'outline' | 'destructive';
+		variant?: 'default' | 'outline' | 'destructive' | 'ghost' | 'secondary';
+		size?: 'default' | 'sm';
 		class?: string;
 		onclick: () => void;
 	}
@@ -21,20 +22,31 @@
 		loadingLabel,
 		disabled = false,
 		variant = 'default',
+		size = 'default',
 		class: className,
 		onclick,
 	}: Props = $props();
 
 	const displayLabel = $derived(loading ? (loadingLabel ?? `${label}...`) : label);
+
+	// Icon size based on button size
+	const iconClass = $derived(size === 'sm' ? 'mr-1.5 h-3.5 w-3.5' : 'mr-2 h-4 w-4');
+	const spinnerClass = $derived(size === 'sm' ? 'mr-1.5 h-3.5 w-3.5' : 'mr-2 h-4 w-4');
+
+	// Button height class based on size
+	const sizeClass = $derived(size === 'sm' ? 'h-8 text-xs' : 'h-9');
 </script>
 
-<Button {variant} class={cn('w-full', className)} {disabled} onclick={() => onclick()}>
+<Button {variant} class={cn('w-full', sizeClass, className)} {disabled} onclick={() => onclick()}>
 	{#if loading}
 		<div
-			class="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent"
+			class={cn(
+				spinnerClass,
+				'animate-spin rounded-full border-2 border-current border-t-transparent'
+			)}
 		></div>
 	{:else if Icon}
-		<Icon class="mr-2 h-4 w-4" />
+		<Icon class={iconClass} />
 	{/if}
 	{displayLabel}
 </Button>

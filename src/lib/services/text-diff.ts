@@ -849,10 +849,10 @@ export type DiffSide = 'left' | 'right';
 export const getDiffSegmentClass = (type: DiffType, side: DiffSide): string => {
 	if (type === 'equal') return '';
 	if (side === 'left' && type === 'delete') {
-		return 'bg-red-500/40 text-red-900 dark:text-red-100 rounded-sm';
+		return 'bg-destructive/40 text-destructive-foreground rounded-sm';
 	}
 	if (side === 'right' && type === 'insert') {
-		return 'bg-green-500/40 text-green-900 dark:text-green-100 rounded-sm';
+		return 'bg-success/40 text-success-foreground rounded-sm';
 	}
 	return '';
 };
@@ -863,9 +863,9 @@ export const getDiffSegmentClass = (type: DiffType, side: DiffSide): string => {
 export const getDiffLeftLineBgClass = (type: DiffLineType): string => {
 	switch (type) {
 		case 'delete':
-			return 'bg-red-500/15';
+			return 'bg-destructive/15';
 		case 'modified':
-			return 'bg-yellow-500/10';
+			return 'bg-warning/10';
 		case 'insert':
 			return 'bg-muted/30';
 		default:
@@ -879,9 +879,9 @@ export const getDiffLeftLineBgClass = (type: DiffLineType): string => {
 export const getDiffRightLineBgClass = (type: DiffLineType): string => {
 	switch (type) {
 		case 'insert':
-			return 'bg-green-500/15';
+			return 'bg-success/15';
 		case 'modified':
-			return 'bg-yellow-500/10';
+			return 'bg-warning/10';
 		case 'delete':
 			return 'bg-muted/30';
 		default:
@@ -895,9 +895,9 @@ export const getDiffRightLineBgClass = (type: DiffLineType): string => {
 export const getDiffUnifiedLineClass = (type: DiffType): string => {
 	switch (type) {
 		case 'insert':
-			return 'bg-green-500/15';
+			return 'bg-success/15';
 		case 'delete':
-			return 'bg-red-500/15';
+			return 'bg-destructive/15';
 		default:
 			return '';
 	}
@@ -926,10 +926,10 @@ export const getDiffUnifiedSegmentClass = (
 ): string => {
 	if (segType === 'equal') return '';
 	if (lineType === 'delete' && segType === 'delete') {
-		return 'bg-red-500/50 rounded-sm px-0.5';
+		return 'bg-destructive/50 rounded-sm px-0.5';
 	}
 	if (lineType === 'insert' && segType === 'insert') {
-		return 'bg-green-500/50 rounded-sm px-0.5';
+		return 'bg-success/50 rounded-sm px-0.5';
 	}
 	return '';
 };

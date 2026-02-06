@@ -38,6 +38,43 @@ chmod +x Kogu_*.AppImage
 ./Kogu_*.AppImage
 ```
 
+## Network Scanner Privileges
+
+The Network Scanner tool requires elevated privileges for certain discovery methods (ICMP Ping, ARP Scan, TCP SYN). Other methods (TCP Connect, mDNS, SSDP, etc.) work without privileges.
+
+### Quick Setup
+
+1. Open the Network Scanner tool
+2. Click **Setup Privileges** in the warning banner
+3. Follow the platform-specific prompts below
+
+### macOS
+
+After clicking Setup Privileges:
+
+1. Go to **System Settings → General → Login Items & Extensions**
+2. Enable **Kogu** in the list
+3. Return to the app and try scanning again
+
+### Linux
+
+A password prompt (pkexec) will appear to set network capabilities:
+
+```bash
+# This runs automatically via the Setup button:
+sudo setcap cap_net_raw,cap_net_admin+ep /path/to/net-scanner
+```
+
+If pkexec is not available, run the command manually.
+
+### Windows
+
+Currently not supported for privileged scanning. Use TCP Connect and other unprivileged methods.
+
+### Troubleshooting
+
+See [docs/network-scanner/troubleshooting.md](docs/network-scanner/troubleshooting.md) for common issues and solutions.
+
 ## Development
 
 ### Prerequisites

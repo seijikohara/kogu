@@ -32,26 +32,23 @@
 						<category.icon class="h-4 w-4 {category.iconClass}" />
 						<h3 class="text-sm font-bold text-muted-foreground">{category.label}</h3>
 					</div>
-					<div class="grid gap-3 sm:grid-cols-2">
+					<div class="grid gap-4 sm:grid-cols-2">
 						{#each tools as tool}
-							<a
-								href={tool.url}
-								class="group block rounded-xl focus-visible:outline-2 focus-visible:outline-ring"
-							>
+							<a href={tool.url} class="focus-ring group block rounded-xl">
 								<Card.Root
-									class="h-full border-border/60 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md"
+									class="h-full border-border/50 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md hover:border-border"
 								>
-									<Card.Content class="flex h-full items-center gap-3 p-4">
-										<div class="shrink-0 rounded-lg bg-muted/50 p-2">
-											<tool.icon class="h-6 w-6 {tool.color ?? ''}" />
+									<Card.Content class="flex h-full items-center gap-4 p-5">
+										<div class="shrink-0 rounded-lg bg-accent-soft p-2.5">
+											<tool.icon class="h-7 w-7 {tool.color ?? ''}" />
 										</div>
 										<div class="min-w-0 flex-1">
 											<div
-												class="font-medium transition-transform duration-150 group-hover:translate-x-0.5"
+												class="font-semibold transition-transform duration-150 group-hover:translate-x-0.5"
 											>
 												{tool.title}
 											</div>
-											<p class="line-clamp-2 text-xs text-muted-foreground">
+											<p class="line-clamp-2 text-xs text-muted-foreground/80">
 												{tool.description}
 											</p>
 										</div>
@@ -66,8 +63,8 @@
 	</main>
 
 	<!-- Footer -->
-	<footer class="border-t border-border/60 px-4 py-1.5">
-		<p class="text-2xs text-muted-foreground/40">
+	<footer class="border-t border-border/50 px-4 py-1.5">
+		<p class="text-xs text-muted-foreground/50">
 			Built with Tauri 2 + Svelte 5 + shadcn-svelte + Tailwind CSS v4
 		</p>
 	</footer>

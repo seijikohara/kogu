@@ -1,0 +1,19 @@
+[Unit]
+Description=Kogu Network Scanner Socket
+Documentation=https://github.com/seijikohara/kogu
+
+[Socket]
+# Listen on abstract Unix socket (no filesystem path needed)
+ListenStream=@kogu-scanner-v1
+
+# Allow connections from same user
+SocketMode=0600
+
+# Queue up to 5 connections
+Backlog=5
+
+# Single connection at a time (sidecar pattern)
+Accept=no
+
+[Install]
+WantedBy=sockets.target

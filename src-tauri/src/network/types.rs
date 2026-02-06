@@ -148,7 +148,7 @@ pub enum PortState {
 }
 
 /// Hostname resolution options
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct HostnameResolutionOptions {
     /// Enable DNS reverse lookup (PTR records)
@@ -185,7 +185,7 @@ impl Default for HostnameResolutionOptions {
 }
 
 /// Network scan request from frontend
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ScanRequest {
     /// Target IP, hostname, or CIDR notation
@@ -271,6 +271,24 @@ pub struct ScanResults {
     /// Scan end time (ISO 8601)
     pub end_time: String,
 }
+
+// =============================================================================
+// Scan Progress Sink Trait
+// =============================================================================
+
+/// Generic progress sink for port scanning (Tauri-independent)
+///
+/// Implementations:
+/// - Main process: forwards events via `AppHandle.emit()`
+/// - Sidecar: writes JSON Lines to stdout
+pub trait ScanProgressSink: Send + Sync {
+    /// Emit a scan progress event
+    fn emit(&self, progress: ScanProgress) -> Result<(), String>;
+}
+
+// =============================================================================
+// Scan Progress Types
+// =============================================================================
 
 /// Progress events emitted during scan
 #[derive(Debug, Clone, Serialize)]

@@ -16,9 +16,11 @@
 </script>
 
 {#if show}
-	<aside class="flex flex-1 w-64 flex-col border-r border-border/60 bg-surface-2">
-		<ScrollArea.Root class="flex-1">
-			<div class="space-y-1.5 py-2">
+	<aside
+		class="flex h-full w-[var(--rail-w)] flex-col overflow-hidden border-r border-border/50 bg-sidebar"
+	>
+		<ScrollArea.Root class="min-h-0 flex-1">
+			<div class="py-3">
 				{@render children?.()}
 			</div>
 		</ScrollArea.Root>
@@ -41,7 +43,7 @@
 		{/if}
 	</aside>
 {:else}
-	<aside class="flex flex-1 w-11 shrink-0 flex-col border-r border-border/60 bg-surface-2">
+	<aside class="flex flex-1 w-11 shrink-0 flex-col border-r border-border/50 bg-sidebar">
 		<Button
 			variant="ghost"
 			size="icon"

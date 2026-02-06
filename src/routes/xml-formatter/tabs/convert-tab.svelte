@@ -248,15 +248,15 @@
 			<FormSection title="Special Values">
 				<div class="grid grid-cols-3 gap-2">
 					<div class="space-y-1">
-						<Label class="text-2xs uppercase tracking-wide text-muted-foreground">Null</Label>
+						<Label class="text-xs uppercase tracking-wide text-muted-foreground">Null</Label>
 						<Input bind:value={yamlNullStr} placeholder="null" class="h-7 text-xs font-mono" />
 					</div>
 					<div class="space-y-1">
-						<Label class="text-2xs uppercase tracking-wide text-muted-foreground">True</Label>
+						<Label class="text-xs uppercase tracking-wide text-muted-foreground">True</Label>
 						<Input bind:value={yamlTrueStr} placeholder="true" class="h-7 text-xs font-mono" />
 					</div>
 					<div class="space-y-1">
-						<Label class="text-2xs uppercase tracking-wide text-muted-foreground">False</Label>
+						<Label class="text-xs uppercase tracking-wide text-muted-foreground">False</Label>
 						<Input bind:value={yamlFalseStr} placeholder="false" class="h-7 text-xs font-mono" />
 					</div>
 				</div>
