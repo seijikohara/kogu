@@ -13,6 +13,7 @@ use std::time::Duration;
 
 use futures::stream::FuturesUnordered;
 use futures::StreamExt;
+#[cfg(unix)]
 use ipnetwork::IpNetwork;
 #[cfg(unix)]
 use pnet::datalink::{self, Channel as PnetChannel, NetworkInterface};
