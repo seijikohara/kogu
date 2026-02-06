@@ -392,7 +392,18 @@ async fn execute_discovery_method(
 ) -> DiscoveryResult {
     match method {
         DiscoveryMethod::IcmpPing => icmp_ping_discovery(targets, options).await,
+        #[cfg(unix)]
         DiscoveryMethod::ArpScan => arp_scan_discovery(targets, options).await,
+        #[cfg(not(unix))]
+        DiscoveryMethod::ArpScan => DiscoveryResult {
+            method: "arp_scan".to_string(),
+            hosts: vec![],
+            hostnames: std::collections::HashMap::new(),
+            host_metadata: std::collections::HashMap::new(),
+            unreachable: targets.iter().map(ToString::to_string).collect(),
+            duration_ms: 0,
+            error: Some("ARP scan is not available on this platform".to_string()),
+        },
         DiscoveryMethod::TcpConnect => tcp_connect_discovery(targets, options).await,
         DiscoveryMethod::TcpSyn => tcp_syn_discovery(targets, options).await,
         DiscoveryMethod::Mdns => mdns_discovery(options).await,
@@ -872,6 +883,7 @@ async fn icmp_ping_discovery(targets: &[IpAddr], options: &DiscoveryOptions) -> 
 // =============================================================================
 
 /// Discover hosts using ARP scan (local network only)
+#[cfg(unix)]
 async fn arp_scan_discovery(targets: &[IpAddr], options: &DiscoveryOptions) -> DiscoveryResult {
     let start = std::time::Instant::now();
 
@@ -1110,6 +1122,7 @@ async fn perform_arp_scan(
 }
 
 /// Send a single ARP request for the given target IP
+#[cfg(unix)]
 fn send_arp_request(
     tx: &mut Box<dyn datalink::DataLinkSender>,
     source_mac: MacAddr,
@@ -1685,6 +1698,7 @@ pub async fn check_privileges(method: DiscoveryMethod) -> bool {
             // Try to create a ping client (requires tokio runtime)
             Client::new(&Config::default()).is_ok()
         }
+        #[cfg(unix)]
         DiscoveryMethod::ArpScan => {
             // Try to create a datalink channel on any interface
             let interfaces = datalink::interfaces();
@@ -1695,6 +1709,11 @@ pub async fn check_privileges(method: DiscoveryMethod) -> bool {
                     }
                 }
             }
+            false
+        }
+        #[cfg(not(unix))]
+        DiscoveryMethod::ArpScan => {
+            // ARP scan is not available on Windows (requires WinPcap/Npcap)
             false
         }
         #[cfg(unix)]
