@@ -163,11 +163,13 @@ pub async fn discover_mdns_services(
             // Non-blocking receive with small timeout
             if let Ok(event) = receiver.recv_timeout(Duration::from_millis(50)) {
                 match &event {
+                    #[allow(unused_variables)]
                     ServiceEvent::ServiceFound(svc_type, instance) => {
                         // Service found, waiting for resolution
                         #[cfg(debug_assertions)]
                         eprintln!("[mDNS] ServiceFound: {} (type: {})", instance, svc_type);
                     }
+                    #[allow(unused_variables)]
                     ServiceEvent::ServiceResolved(info) => {
                         #[cfg(debug_assertions)]
                         eprintln!(
