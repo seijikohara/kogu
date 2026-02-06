@@ -1691,11 +1691,17 @@ pub async fn check_privileges(method: DiscoveryMethod) -> bool {
             }
             false
         }
+        #[cfg(unix)]
         DiscoveryMethod::TcpSyn => {
             // TCP SYN requires raw socket - check by trying to create one
             let protocol =
                 TransportChannelType::Layer4(TransportProtocol::Ipv4(IpNextHeaderProtocols::Tcp));
             transport::transport_channel(4096, protocol).is_ok()
+        }
+        #[cfg(windows)]
+        DiscoveryMethod::TcpSyn => {
+            // TCP SYN is not supported on Windows
+            false
         }
         DiscoveryMethod::TcpConnect
         | DiscoveryMethod::Mdns

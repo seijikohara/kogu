@@ -33,7 +33,9 @@ use kogu_lib::network::{
     get_available_methods, get_local_interfaces, scanner, DiscoveryEvent, DiscoveryEventSink,
     ScanProgress, ScanProgressSink,
 };
+#[cfg(unix)]
 use pnet::packet::ip::IpNextHeaderProtocols;
+#[cfg(unix)]
 use pnet::transport::{self, TransportChannelType, TransportProtocol};
 
 // =============================================================================
@@ -93,6 +95,7 @@ fn write_error(message: impl Into<String>) {
 // =============================================================================
 
 /// Check raw socket privileges (synchronous — no tokio needed)
+#[cfg(unix)]
 fn handle_check() {
     let protocol =
         TransportChannelType::Layer4(TransportProtocol::Ipv4(IpNextHeaderProtocols::Tcp));
@@ -100,6 +103,13 @@ fn handle_check() {
     write_response(&Response::CheckResult {
         success: has_privileges,
     });
+}
+
+/// Check raw socket privileges stub for Windows (always returns false)
+#[cfg(windows)]
+fn handle_check() {
+    // Raw socket privileges for TCP SYN scan are not available on Windows via pnet
+    write_response(&Response::CheckResult { success: false });
 }
 
 /// Parse target strings to IP addresses, expanding CIDR ranges
