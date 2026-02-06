@@ -245,10 +245,11 @@ pub async fn setup(app: &AppHandle) -> Result<PrivilegeStatus, String> {
     #[cfg(not(any(target_os = "macos", target_os = "linux")))]
     {
         let _ = app;
-        return Err("Privilege setup is not available on this platform".to_string());
+        Err("Privilege setup is not available on this platform".to_string())
     }
 
     // Verify setup succeeded
+    #[cfg(any(target_os = "macos", target_os = "linux"))]
     Ok(check_status(app).await)
 }
 
