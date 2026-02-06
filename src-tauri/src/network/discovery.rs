@@ -403,6 +403,7 @@ async fn execute_discovery_method(
             unreachable: targets.iter().map(ToString::to_string).collect(),
             duration_ms: 0,
             error: Some("ARP scan is not available on this platform".to_string()),
+            requires_privileges: false,
         },
         DiscoveryMethod::TcpConnect => tcp_connect_discovery(targets, options).await,
         DiscoveryMethod::TcpSyn => tcp_syn_discovery(targets, options).await,
@@ -982,6 +983,7 @@ async fn arp_scan_discovery(targets: &[IpAddr], options: &DiscoveryOptions) -> D
 }
 
 /// Find a network interface that can reach the target IPs
+#[cfg(unix)]
 fn find_interface_for_targets(targets: &[Ipv4Addr]) -> Option<NetworkInterface> {
     let interfaces = datalink::interfaces();
 
@@ -1006,13 +1008,16 @@ fn find_interface_for_targets(targets: &[Ipv4Addr]) -> Option<NetworkInterface> 
 }
 
 /// Number of ARP request retries for better discovery accuracy
+#[cfg(unix)]
 const ARP_RETRY_COUNT: u32 = 3;
 
 /// Delay between ARP retry rounds in milliseconds
+#[cfg(unix)]
 const ARP_RETRY_DELAY_MS: u64 = 100;
 
 /// Perform ARP scan on the given interface with retry support
 /// Returns a map of IP address to MAC address (as 6-byte array)
+#[cfg(unix)]
 async fn perform_arp_scan(
     interface: &NetworkInterface,
     targets: &[Ipv4Addr],
