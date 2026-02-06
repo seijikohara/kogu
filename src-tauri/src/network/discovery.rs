@@ -1443,6 +1443,8 @@ async fn tcp_syn_discovery(targets: &[IpAddr], options: &DiscoveryOptions) -> Di
 }
 
 /// Perform TCP SYN scan synchronously (runs in blocking task)
+/// Note: Only available on Unix systems (pnet's next_with_timeout is not supported on Windows)
+#[cfg(unix)]
 #[allow(clippy::significant_drop_tightening)]
 fn tcp_syn_scan_blocking(
     targets: &[Ipv4Addr],
@@ -1509,7 +1511,21 @@ fn tcp_syn_scan_blocking(
     Ok((hosts, unreachable))
 }
 
+/// TCP SYN scan stub for Windows (not supported due to pnet limitations)
+#[cfg(windows)]
+fn tcp_syn_scan_blocking(
+    targets: &[Ipv4Addr],
+    _ports: &[u16],
+    _timeout: Duration,
+) -> Result<(Vec<String>, Vec<String>), String> {
+    // TCP SYN scan requires raw socket access which pnet doesn't fully support on Windows
+    // Return all targets as unreachable with an error message
+    let unreachable: Vec<String> = targets.iter().map(ToString::to_string).collect();
+    Err("TCP SYN scan is not supported on Windows. Use TCP Connect scan instead.".to_string())
+}
+
 /// Send a TCP SYN packet to the specified target
+#[cfg(unix)]
 fn send_syn_packet(
     tx: &mut TransportSender,
     target: Ipv4Addr,
@@ -1544,6 +1560,7 @@ fn send_syn_packet(
 }
 
 /// Receive TCP responses (SYN-ACK or RST) and mark hosts as alive
+#[cfg(unix)]
 fn receive_syn_responses(
     rx: &mut TransportReceiver,
     targets: &HashSet<Ipv4Addr>,
