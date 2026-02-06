@@ -14,19 +14,24 @@ use std::time::Duration;
 use futures::stream::FuturesUnordered;
 use futures::StreamExt;
 use ipnetwork::IpNetwork;
+#[cfg(unix)]
 use pnet::datalink::{self, Channel as PnetChannel, NetworkInterface};
+#[cfg(unix)]
 use pnet::packet::arp::{ArpHardwareTypes, ArpOperations, ArpPacket, MutableArpPacket};
+#[cfg(unix)]
 use pnet::packet::ethernet::{EtherTypes, EthernetPacket, MutableEthernetPacket};
 #[cfg(unix)]
 use pnet::packet::ip::IpNextHeaderProtocols;
 #[cfg(unix)]
 use pnet::packet::tcp::{MutableTcpPacket, TcpFlags, TcpPacket};
+#[cfg(unix)]
 use pnet::packet::Packet;
 #[cfg(unix)]
 use pnet::transport::{
     self, tcp_packet_iter, TransportChannelType, TransportProtocol, TransportReceiver,
     TransportSender,
 };
+#[cfg(unix)]
 use pnet::util::MacAddr;
 use serde::{Deserialize, Serialize};
 use surge_ping::{Client, Config, PingIdentifier, PingSequence};

@@ -69,6 +69,9 @@ mdns-sd = "0.11"
 
 # Host Discovery
 surge-ping = "0.8"
+
+# pnet is only available on Unix (Windows requires WinPcap/Npcap SDK)
+[target.'cfg(unix)'.dependencies]
 pnet = "0.35"
 pnet_datalink = "0.35"
 
