@@ -70,11 +70,6 @@ mdns-sd = "0.11"
 # Host Discovery
 surge-ping = "0.8"
 
-# pnet is only available on Unix (Windows requires WinPcap/Npcap SDK)
-[target.'cfg(unix)'.dependencies]
-pnet = "0.35"
-pnet_datalink = "0.35"
-
 # UPnP Device Description Fetch
 reqwest = { version = "0.12", default-features = false, features = ["rustls-tls"] }
 
@@ -91,6 +86,11 @@ hickory-resolver = { version = "0.25", features = ["tokio", "system-config"] }
 
 # SNMP sysName Query
 snmp2 = "0.4"
+
+# pnet is only available on Unix (Windows requires WinPcap/Npcap SDK)
+[target.'cfg(unix)'.dependencies]
+pnet = "0.35"
+pnet_datalink = "0.35"
 
 # FFI support for Swift bridge (macOS)
 [target.'cfg(target_os = "macos")'.dependencies]
