@@ -48,8 +48,11 @@
 
 mod ast;
 mod generators;
+#[cfg(target_os = "macos")]
+mod menu;
 /// Network scanning module (pub for sidecar binary access)
 pub mod network;
+mod settings;
 
 use tauri::Manager;
 use tauri_plugin_decorum::WebviewWindowExt;
@@ -418,7 +421,8 @@ pub fn run() {
             .plugin(tauri_plugin_dialog::init())
             .plugin(tauri_plugin_fs::init())
             .plugin(tauri_plugin_decorum::init())
-            .plugin(tauri_plugin_shell::init());
+            .plugin(tauri_plugin_shell::init())
+            .plugin(tauri_plugin_window_state::Builder::default().build());
 
         // MCP bridge plugin for AI-assisted debugging (development only)
         #[cfg(debug_assertions)]
@@ -441,6 +445,22 @@ pub fn run() {
             // macOS: position traffic lights centered in 32px (h-8) title bar
             #[cfg(target_os = "macos")]
             main_window.set_traffic_lights_inset(12.0, 10.0)?;
+
+            // Initialize settings from config directory
+            let config_dir = app
+                .path()
+                .app_config_dir()
+                .map_err(|e| format!("Failed to resolve app config directory: {e}"))?;
+            let settings_state = settings::SettingsState::load(&config_dir);
+            app.manage(settings_state);
+
+            // macOS: set up native app menu with "Reset All Settings..."
+            #[cfg(target_os = "macos")]
+            {
+                let native_menu = menu::build(app)?;
+                app.set_menu(native_menu)?;
+                menu::setup_event_handler(app);
+            }
 
             Ok(())
         })
@@ -465,6 +485,11 @@ pub fn run() {
             check_discovery_privilege,
             check_net_scanner_privileges,
             setup_net_scanner_privileges,
+            settings::get_settings,
+            settings::update_settings,
+            settings::reset_settings,
+            settings::get_system_fonts,
+            settings::get_settings_file_path,
         ])
         .run(tauri::generate_context!())
         .unwrap_or_else(|e| {

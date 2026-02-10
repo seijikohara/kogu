@@ -2,6 +2,9 @@
 	import '../app.css';
 	import { ModeWatcher } from 'mode-watcher';
 	import { onMount } from 'svelte';
+	import { toast } from 'svelte-sonner';
+	import { listen } from '@tauri-apps/api/event';
+	import { confirm } from '@tauri-apps/plugin-dialog';
 	import {
 		AppSidebar,
 		CommandPalette,
@@ -11,6 +14,12 @@
 	import * as Sidebar from '$lib/components/ui/sidebar/index.js';
 	import { Sonner } from '$lib/components/ui/sonner/index.js';
 	import { goBack, goForward } from '$lib/services/navigation-history.svelte.js';
+	import {
+		applyAllSettings,
+		getSettings,
+		resetSettings,
+		DEFAULT_SETTINGS,
+	} from '$lib/services/settings.js';
 	import { isEditableTarget, isModKey } from '$lib/utils/keyboard.js';
 
 	let { children } = $props();
@@ -45,12 +54,47 @@
 		}
 	};
 
-	// Listen for custom event from command palette to open shortcuts help
+	// Shared reset flow: confirm → reset → apply → toast
+	const handleResetAllSettings = async () => {
+		const confirmed = await confirm(
+			'This will reset all settings including fonts and window position.',
+			{
+				title: 'Reset All Settings',
+				kind: 'warning',
+				okLabel: 'Reset',
+				cancelLabel: 'Cancel',
+			}
+		);
+		if (!confirmed) return;
+
+		await resetSettings();
+		applyAllSettings(DEFAULT_SETTINGS);
+		toast.success('All settings have been reset');
+	};
+
 	onMount(() => {
+		// Load and apply settings at startup
+		getSettings()
+			.then((settings) => applyAllSettings(settings))
+			.catch(() => {
+				// Silently use defaults if settings fail to load
+			});
+
 		const handleOpenShortcutsHelp = () => {
 			shortcutsHelpOpen = true;
 		};
 		window.addEventListener('open-shortcuts-help', handleOpenShortcutsHelp);
+
+		// Listen for "Reset All Settings" from command palette
+		const handleResetFromPalette = () => {
+			handleResetAllSettings();
+		};
+		window.addEventListener('reset-all-settings', handleResetFromPalette);
+
+		// Listen for "Reset All Settings" from macOS native menu
+		const unlistenMenuReset = listen('menu-reset-settings', () => {
+			handleResetAllSettings();
+		});
 
 		// Use capture phase to intercept context menu events before they reach any element
 		const handleContextMenu = (e: MouseEvent) => {
@@ -67,6 +111,8 @@
 
 		return () => {
 			window.removeEventListener('open-shortcuts-help', handleOpenShortcutsHelp);
+			window.removeEventListener('reset-all-settings', handleResetFromPalette);
+			unlistenMenuReset.then((unlisten) => unlisten());
 			document.removeEventListener('contextmenu', handleContextMenu, { capture: true });
 		};
 	});
