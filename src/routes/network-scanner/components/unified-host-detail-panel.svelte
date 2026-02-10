@@ -13,6 +13,7 @@
 		Hash,
 		Info,
 		Laptop,
+		Loader2,
 		Lock,
 		Mail,
 		Monitor,
@@ -25,6 +26,7 @@
 		Server,
 		Shield,
 		Smartphone,
+		Square,
 		Speaker,
 		Tablet,
 		Terminal,
@@ -42,11 +44,17 @@
 	import type {
 		MdnsServiceInfo,
 		PortInfo,
+		ScanProgress,
 		SnmpDeviceInfo,
 		SsdpDeviceInfo,
 		WsDiscoveryInfo,
 	} from '$lib/services/network-scanner.js';
-	import { formatDuration, WELL_KNOWN_SERVICES } from '$lib/services/network-scanner.js';
+	import {
+		formatDuration,
+		SCAN_MODES,
+		WELL_KNOWN_SERVICES,
+		type ScanMode,
+	} from '$lib/services/network-scanner.js';
 
 	interface DiscoveryInfo {
 		method: string;
@@ -71,8 +79,10 @@
 		readonly discoveries: readonly DiscoveryInfo[];
 		readonly ports: readonly PortInfo[];
 		readonly scanDurationMs: number | null;
-		readonly onscan?: (ip: string) => void;
+		readonly onscan?: (ip: string, scanMode: ScanMode) => void;
+		readonly oncancel?: () => void;
 		readonly scanDisabled?: boolean;
+		readonly scanProgress?: ScanProgress | null;
 	}
 
 	let {
@@ -93,7 +103,9 @@
 		ports,
 		scanDurationMs,
 		onscan,
+		oncancel,
 		scanDisabled = false,
+		scanProgress = null,
 	}: Props = $props();
 
 	const DEVICE_ICONS: Record<DeviceCategory, typeof Server> = {
@@ -139,6 +151,7 @@
 	// Tab state
 	type Tab = 'overview' | 'ports' | 'discovery' | 'services';
 	let activeTab = $state<Tab>('overview');
+	let localScanMode = $state<ScanMode>('quick');
 
 	const isIPv6 = (ip: string): boolean => ip.includes(':');
 	const primaryIp = $derived(ips[0] ?? '');
@@ -148,6 +161,26 @@
 	const openPorts = $derived([...ports].filter((p) => p.state === 'open'));
 	const closedPorts = $derived([...ports].filter((p) => p.state === 'closed'));
 	const filteredPorts = $derived([...ports].filter((p) => p.state === 'filtered'));
+
+	// Scan progress derived values
+	const scanPercentage = $derived(scanProgress?.type === 'progress' ? scanProgress.percentage : 0);
+	const scanStatusText = $derived.by(() => {
+		if (!scanProgress) return '';
+		if (scanProgress.type === 'started')
+			return `Scanning ${scanProgress.total_hosts} hosts, ${scanProgress.total_ports} ports each`;
+		if (scanProgress.type === 'progress')
+			return `${scanProgress.scanned_hosts} / ${scanProgress.total_hosts} hosts`;
+		return '';
+	});
+	const scanCurrentIp = $derived(
+		scanProgress?.type === 'progress' ? scanProgress.current_ip : null
+	);
+	const scanDiscoveredHosts = $derived(
+		scanProgress?.type === 'progress' ? scanProgress.discovered_hosts : 0
+	);
+	const scanDiscoveredPorts = $derived(
+		scanProgress?.type === 'progress' ? scanProgress.discovered_ports : 0
+	);
 
 	// Quick action derived values
 	const hasWebPort = $derived(
@@ -175,12 +208,6 @@
 	const tabs = $derived([
 		{ id: 'overview' as const, label: 'Overview', icon: Info, count: null },
 		{
-			id: 'ports' as const,
-			label: 'Ports',
-			icon: Network,
-			count: openPorts.length > 0 ? openPorts.length : null,
-		},
-		{
 			id: 'discovery' as const,
 			label: 'Discovery',
 			icon: Radar,
@@ -192,6 +219,12 @@
 			icon: Radio,
 			count: mdnsServices.length > 0 ? mdnsServices.length : null,
 		},
+		{
+			id: 'ports' as const,
+			label: 'Ports',
+			icon: Network,
+			count: openPorts.length > 0 ? openPorts.length : null,
+		},
 	]);
 
 	const copyToClipboard = async (text: string, label: string) => {
@@ -199,11 +232,21 @@
 		toast.success(`${label} copied`);
 	};
 
-	const formatMethodName = (method: string) =>
-		method
-			.split('_')
-			.map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-			.join(' ');
+	const METHOD_LABELS: Record<string, string> = {
+		icmp_ping: 'ICMP Ping',
+		arp_scan: 'ARP Scan',
+		tcp_syn: 'TCP SYN',
+		tcp_connect: 'TCP Connect',
+		mdns: 'mDNS/Bonjour',
+		ssdp: 'SSDP/UPnP',
+		udp_scan: 'UDP Scan',
+		icmpv6_ping: 'ICMPv6 Ping',
+		ws_discovery: 'WS-Discovery',
+		arp_cache: 'ARP Cache',
+		local: 'Local',
+	};
+
+	const formatMethodName = (method: string): string => METHOD_LABELS[method] ?? method;
 
 	const getMethodDescription = (method: string): string => {
 		switch (method) {
@@ -410,7 +453,7 @@
 				<TabIcon class="h-3.5 w-3.5" />
 				{tab.label}
 				{#if tab.count !== null}
-					<span class="rounded-full bg-muted px-1.5 py-0.5 text-xs">{tab.count}</span>
+					<span class="rounded-full bg-muted px-1.5 py-0.5 text-xs font-medium">{tab.count}</span>
 				{/if}
 			</button>
 		{/each}
@@ -600,12 +643,12 @@
 						</div>
 					{/if}
 
-					<!-- UPnP/SSDP Device Info -->
+					<!-- SSDP/UPnP Device Info -->
 					{#if hasSsdpInfo}
 						<div class="mb-4">
 							<h3 class="mb-2 flex items-center gap-2 text-sm font-medium">
 								<Wifi class="h-4 w-4 text-muted-foreground" />
-								UPnP Device
+								SSDP/UPnP Device
 							</h3>
 							<div class="rounded-lg border bg-card p-3">
 								{#if ssdpDevice?.friendlyName}
@@ -745,27 +788,90 @@
 
 					<!-- Ports Tab -->
 				{:else if activeTab === 'ports'}
+					<!-- Scan controls / progress -->
+					{#if scanDisabled && scanProgress}
+						<!-- Scan in progress -->
+						<div class="mb-4 rounded-lg border bg-card p-3">
+							<div class="mb-2 flex items-center justify-between">
+								<div class="flex items-center gap-2">
+									<Loader2 class="h-4 w-4 animate-spin text-primary" />
+									<span class="text-sm font-medium">Scanning Ports...</span>
+								</div>
+								<div class="flex items-center gap-2">
+									<span class="text-sm font-medium text-primary">{scanPercentage.toFixed(0)}%</span>
+									{#if oncancel}
+										<button
+											type="button"
+											class="inline-flex h-7 items-center gap-1 rounded-md px-2 text-xs text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
+											onclick={oncancel}
+										>
+											<Square class="h-3 w-3" />
+											Cancel
+										</button>
+									{/if}
+								</div>
+							</div>
+							<!-- Progress bar -->
+							<div class="mb-2 h-1.5 w-full overflow-hidden rounded-full bg-muted">
+								<div
+									class="h-full bg-primary transition-all duration-300"
+									style="width: {scanPercentage}%"
+								></div>
+							</div>
+							<!-- Status details -->
+							<div class="flex items-center justify-between text-xs text-muted-foreground">
+								<span>{scanStatusText}</span>
+								<div class="flex items-center gap-3">
+									{#if scanCurrentIp}
+										<span class="font-mono">{scanCurrentIp}</span>
+									{/if}
+									{#if scanDiscoveredHosts > 0}
+										<span class="text-success">{scanDiscoveredHosts} hosts</span>
+									{/if}
+									{#if scanDiscoveredPorts > 0}
+										<span class="text-success">{scanDiscoveredPorts} ports</span>
+									{/if}
+								</div>
+							</div>
+						</div>
+					{:else if onscan}
+						<!-- Scan controls -->
+						<div class="mb-4 rounded-lg border bg-card p-3">
+							<div class="flex items-center gap-2">
+								<select
+									class="h-8 flex-1 rounded-md border border-input bg-background px-2 text-xs"
+									bind:value={localScanMode}
+								>
+									{#each SCAN_MODES as mode (mode.value)}
+										<option value={mode.value}>{mode.label}</option>
+									{/each}
+								</select>
+								<button
+									type="button"
+									class="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-md bg-primary px-3 text-xs font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50"
+									onclick={() => onscan(primaryIp, localScanMode)}
+									disabled={scanDisabled}
+								>
+									<Play class="h-3.5 w-3.5" />
+									{ports.length > 0 ? 'Re-scan' : 'Scan'}
+								</button>
+							</div>
+							<p class="mt-1.5 text-xs text-muted-foreground">
+								{SCAN_MODES.find((m) => m.value === localScanMode)?.description ?? ''}
+							</p>
+						</div>
+					{/if}
+
 					{#if ports.length === 0}
-						<div class="flex h-full items-center justify-center">
-							<div class="max-w-xs text-center">
+						<div class="flex items-center justify-center py-8">
+							<div class="text-center">
 								<div class="mx-auto mb-3 inline-flex rounded-2xl bg-muted p-3">
 									<Network class="h-8 w-8 text-muted-foreground" />
 								</div>
 								<h3 class="mb-1 text-sm font-semibold">No Port Scan Data</h3>
-								<p class="mb-4 text-xs leading-relaxed text-muted-foreground">
-									Run a port scan to detect open services and potential vulnerabilities.
+								<p class="text-xs leading-relaxed text-muted-foreground">
+									Select a scan mode and run a port scan to detect open services.
 								</p>
-								{#if onscan}
-									<button
-										type="button"
-										class="inline-flex items-center justify-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50"
-										onclick={() => onscan(primaryIp)}
-										disabled={scanDisabled}
-									>
-										<Play class="h-4 w-4" />
-										<span>Scan Ports</span>
-									</button>
-								{/if}
 							</div>
 						</div>
 					{:else}
@@ -868,7 +974,7 @@
 																	TLS Certificate
 																	{#if port.tlsCert.isSelfSigned}
 																		<span
-																			class="rounded bg-warning/10 px-1 py-0.5 text-xs font-medium text-warning"
+																			class="rounded bg-warning/10 px-1.5 py-0.5 text-xs font-medium text-warning"
 																		>
 																			Self-signed
 																		</span>

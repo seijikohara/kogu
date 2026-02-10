@@ -11,13 +11,15 @@
 </script>
 
 {#if valid === true}
-	<span class="flex items-center gap-1 rounded-full bg-success/10 px-2 py-0.5 text-xs text-success">
+	<span
+		class="flex items-center gap-1 rounded-full bg-success/10 px-1.5 py-0.5 text-xs font-medium text-success"
+	>
 		<CircleCheck class="h-3.5 w-3.5" />
 		{validLabel}
 	</span>
 {:else if valid === false}
 	<span
-		class="flex items-center gap-1 rounded-full bg-destructive/10 px-2 py-0.5 text-xs text-destructive"
+		class="flex items-center gap-1 rounded-full bg-destructive/10 px-1.5 py-0.5 text-xs font-medium text-destructive"
 	>
 		<CircleX class="h-3.5 w-3.5" />
 		{invalidLabel}

@@ -626,8 +626,39 @@
 		selectedHostId = hostId;
 	};
 
-	const handleScanDiscoveredHost = (ip: string) => {
+	const handleHostListKeydown = (e: KeyboardEvent) => {
+		if (!['ArrowUp', 'ArrowDown', 'Home', 'End'].includes(e.key)) return;
+		if (unifiedHosts.length === 0) return;
+		e.preventDefault();
+		const currentIdx = unifiedHosts.findIndex((h) => h.id === selectedHostId);
+
+		let nextIdx: number;
+		switch (e.key) {
+			case 'ArrowDown':
+				nextIdx = currentIdx < 0 ? 0 : Math.min(currentIdx + 1, unifiedHosts.length - 1);
+				break;
+			case 'ArrowUp':
+				nextIdx = currentIdx < 0 ? 0 : Math.max(currentIdx - 1, 0);
+				break;
+			case 'Home':
+				nextIdx = 0;
+				break;
+			case 'End':
+				nextIdx = unifiedHosts.length - 1;
+				break;
+			default:
+				return;
+		}
+		const next = unifiedHosts[nextIdx];
+		if (next) {
+			selectHost(next.id);
+			document.querySelector(`[data-host-id="${next.id}"]`)?.scrollIntoView({ block: 'nearest' });
+		}
+	};
+
+	const handleScanDiscoveredHost = (ip: string, mode: ScanMode) => {
 		target = ip;
+		scanMode = mode;
 		handleScan();
 	};
 </script>
@@ -766,7 +797,10 @@
 					<div class="mt-1 max-h-20 space-y-0.5 overflow-y-auto">
 						{#each discoveryResults as result (result.method)}
 							<div class="text-xs">
-								<span class="font-medium">{result.method}:</span>
+								<span class="font-medium"
+									>{DISCOVERY_METHODS.find((m) => m.value === result.method)?.label ??
+										result.method}:</span
+								>
 								{#if result.error}
 									<span class="text-destructive">{result.error}</span>
 								{:else}
@@ -948,6 +982,7 @@
 						loading={isScanning}
 						loadingLabel="Scanning..."
 						disabled={!canScan || !isPortRangeValid}
+						shortcut
 						onclick={handleScan}
 					/>
 				{/if}
@@ -1186,10 +1221,17 @@
 								{/if}
 							</div>
 							<!-- Host List -->
-							<div class="flex-1 overflow-auto">
+							<!-- svelte-ignore a11y_no_noninteractive_tabindex -->
+							<div
+								class="flex-1 overflow-auto"
+								role="listbox"
+								tabindex="0"
+								onkeydown={handleHostListKeydown}
+							>
 								{#each unifiedHosts as host (host.id)}
 									{@const displayHostname = getDisplayHostname(host)}
 									<UnifiedHostListItem
+										hostId={host.id}
 										ips={host.ips}
 										hostname={displayHostname?.name ?? null}
 										hostnameSource={displayHostname?.source ?? null}
@@ -1247,8 +1289,10 @@
 								discoveries={selectedHost.discoveries}
 								ports={selectedHost.ports}
 								scanDurationMs={selectedHost.scanDurationMs}
-								onscan={(ip) => handleScanDiscoveredHost(ip)}
+								onscan={handleScanDiscoveredHost}
+								oncancel={handleCancel}
 								scanDisabled={isScanning}
+								scanProgress={isScanning ? progress : null}
 							/>
 						{:else}
 							<EmptyState icon={Server} title="Select a host to view details" />

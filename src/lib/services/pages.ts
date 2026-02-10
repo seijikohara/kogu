@@ -9,6 +9,7 @@ import {
 	CaseSensitive,
 	CodeXml,
 	Database,
+	EthernetPort,
 	FileCheck,
 	FileCode,
 	FileDiff,
@@ -217,6 +218,15 @@ export const PAGES: readonly PageDefinition[] = [
 		description: 'Convert text between camelCase, snake_case, and more',
 		color: 'text-teal-500',
 		category: 'text',
+	},
+	{
+		id: 'network-interfaces',
+		title: 'Network Interfaces',
+		url: '/network-interfaces',
+		icon: EthernetPort,
+		description: 'View detailed network interface information',
+		color: 'text-rose-500',
+		category: 'network',
 	},
 	{
 		id: 'network-scanner',

@@ -221,6 +221,15 @@ fn cancel_network_scan(scan_id: String, state: tauri::State<'_, NetworkScannerSt
     state.cancel(&scan_id)
 }
 
+/// Get comprehensive network interface information (direct, no sidecar needed)
+#[tauri::command]
+fn get_detailed_network_interfaces() -> Vec<serde_json::Value> {
+    network::interfaces::get_detailed_interfaces()
+        .into_iter()
+        .filter_map(|iface| serde_json::to_value(iface).ok())
+        .collect()
+}
+
 /// Get local network interfaces via sidecar
 #[tauri::command]
 async fn get_local_network_interfaces(app: tauri::AppHandle) -> Result<serde_json::Value, String> {
@@ -447,6 +456,7 @@ pub fn run() {
             check_cli_availability,
             start_network_scan,
             cancel_network_scan,
+            get_detailed_network_interfaces,
             get_local_network_interfaces,
             discover_mdns_services,
             discover_hosts,

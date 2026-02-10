@@ -248,6 +248,7 @@
 						loading={isGenerating}
 						loadingLabel="Generating..."
 						disabled={!canGenerate}
+						shortcut
 						onclick={handleGenerate}
 					/>
 					{#if hashResult || password}
@@ -278,6 +279,7 @@
 						loading={isVerifying}
 						loadingLabel="Verifying..."
 						disabled={!canVerify}
+						shortcut
 						onclick={handleVerify}
 					/>
 					{#if verifyResult || verifyPassword || verifyHash}

@@ -338,6 +338,71 @@
 	};
 
 	const isSelected = $derived(selectedPath === node.path);
+
+	/** Get all visible treeitem focusable elements in the tree. */
+	const getVisibleTreeItems = (el: HTMLElement): HTMLElement[] => {
+		const root =
+			el.closest('[role="tree"]') ?? el.closest('.group\\/tree')?.parentElement ?? document.body;
+		return Array.from(root.querySelectorAll<HTMLElement>('[role="treeitem"] > [role="button"]'));
+	};
+
+	const handleTreeKeydown = (e: KeyboardEvent) => {
+		const target = e.currentTarget as HTMLElement;
+		switch (e.key) {
+			case 'ArrowRight':
+				if (hasChildren && !expanded) {
+					e.preventDefault();
+					e.stopPropagation();
+					expanded = true;
+				}
+				break;
+			case 'ArrowLeft':
+				if (hasChildren && expanded) {
+					e.preventDefault();
+					e.stopPropagation();
+					expanded = false;
+				}
+				break;
+			case 'ArrowDown': {
+				e.preventDefault();
+				e.stopPropagation();
+				const items = getVisibleTreeItems(target);
+				const idx = items.indexOf(target);
+				const nextItem = items[idx + 1];
+				if (nextItem) nextItem.focus();
+				break;
+			}
+			case 'ArrowUp': {
+				e.preventDefault();
+				e.stopPropagation();
+				const items = getVisibleTreeItems(target);
+				const idx = items.indexOf(target);
+				const prevItem = items[idx - 1];
+				if (prevItem) prevItem.focus();
+				break;
+			}
+			case 'Home': {
+				e.preventDefault();
+				e.stopPropagation();
+				const items = getVisibleTreeItems(target);
+				const first = items[0];
+				if (first) first.focus();
+				break;
+			}
+			case 'End': {
+				e.preventDefault();
+				e.stopPropagation();
+				const items = getVisibleTreeItems(target);
+				const last = items[items.length - 1];
+				if (last) last.focus();
+				break;
+			}
+			case 'Enter':
+				e.stopPropagation();
+				handleClick();
+				break;
+		}
+	};
 </script>
 
 <div
@@ -354,9 +419,9 @@
 				? 'bg-primary/10 ring-1 ring-primary/30'
 				: ''}"
 			onclick={handleClick}
-			onkeydown={(e) => e.key === 'Enter' && handleClick()}
+			onkeydown={handleTreeKeydown}
 			role="button"
-			tabindex="0"
+			tabindex={isSelected ? 0 : -1}
 		>
 			<!-- Expand/collapse button -->
 			<button
@@ -441,9 +506,9 @@
 				? 'bg-primary/10 ring-1 ring-primary/30'
 				: ''}"
 			onclick={handleClick}
-			onkeydown={(e) => e.key === 'Enter' && handleClick()}
+			onkeydown={handleTreeKeydown}
 			role="button"
-			tabindex="0"
+			tabindex={isSelected ? 0 : -1}
 		>
 			<span class="h-5 w-5 shrink-0"></span>
 			<span class="flex h-5 w-5 shrink-0 items-center justify-center rounded {styles.bg}">

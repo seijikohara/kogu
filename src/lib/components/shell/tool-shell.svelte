@@ -4,6 +4,7 @@
 	import OptionsRail from './options-rail.svelte';
 	import StatusBar from './status-bar.svelte';
 	import TabPanels from '$lib/components/layout/tab-panels.svelte';
+	import { isModKey } from '$lib/utils/keyboard.js';
 
 	interface TabDefinition {
 		readonly id: string;
@@ -69,7 +70,30 @@
 		if (!rail) return 'none';
 		return showRail ? 'open' : 'closed';
 	});
+
+	const handleShellKeydown = (e: KeyboardEvent) => {
+		if (!isModKey(e)) return;
+
+		// Cmd+, → toggle options rail
+		if (e.key === ',' && rail) {
+			e.preventDefault();
+			showRail = !showRail;
+			return;
+		}
+
+		// Cmd+1-9 → switch tabs
+		if (e.key >= '1' && e.key <= '9' && tabs && tabs.length > 0) {
+			const idx = Number.parseInt(e.key, 10) - 1;
+			const tab = tabs[idx];
+			if (tab) {
+				e.preventDefault();
+				ontabchange?.(tab.id);
+			}
+		}
+	};
 </script>
+
+<svelte:window onkeydown={handleShellKeydown} />
 
 <div class="tool-shell" data-layout={layout} data-rail={railState}>
 	<!-- Toolbar -->

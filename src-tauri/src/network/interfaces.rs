@@ -5,7 +5,153 @@ use std::time::{Duration, Instant};
 
 use mdns_sd::{ServiceDaemon, ServiceEvent};
 
-use super::types::{LocalNetworkInfo, MdnsDiscoveryResults, MdnsService, NetworkInterface};
+use super::types::{
+    DetailedNetworkInterface, GatewayInfo, InterfaceCapabilityFlags, InterfaceKindFlags,
+    InterfaceStateFlags, Ipv4AddressInfo, Ipv6AddressInfo, LocalNetworkInfo, MdnsDiscoveryResults,
+    MdnsService, NetworkInterface,
+};
+
+// =============================================================================
+// Detailed Interface Enumeration (via netdev)
+// =============================================================================
+
+/// Map netdev InterfaceType to a human-readable string
+fn interface_type_name(if_type: &netdev::prelude::InterfaceType) -> &'static str {
+    use netdev::prelude::InterfaceType;
+    match if_type {
+        InterfaceType::Ethernet => "Ethernet",
+        InterfaceType::Loopback => "Loopback",
+        InterfaceType::Wireless80211 => "Wi-Fi",
+        InterfaceType::Tunnel => "Tunnel",
+        InterfaceType::Ppp => "PPP",
+        InterfaceType::Bridge => "Bridge",
+        InterfaceType::GigabitEthernet => "Gigabit Ethernet",
+        InterfaceType::FastEthernetT => "Fast Ethernet",
+        InterfaceType::FastEthernetFx => "Fast Ethernet FX",
+        InterfaceType::TokenRing => "Token Ring",
+        InterfaceType::Fddi => "FDDI",
+        InterfaceType::Atm => "ATM",
+        InterfaceType::Slip => "SLIP",
+        InterfaceType::BasicIsdn | InterfaceType::PrimaryIsdn | InterfaceType::Isdn => "ISDN",
+        InterfaceType::GenericModem => "Modem",
+        InterfaceType::Can => "CAN Bus",
+        InterfaceType::Wman => "WiMAX",
+        InterfaceType::Wwanpp | InterfaceType::Wwanpp2 => "WWAN",
+        InterfaceType::PeerToPeerWireless => "P2P Wireless",
+        InterfaceType::HighPerformanceSerialBus => "IEEE 1394",
+        _ => "Unknown",
+    }
+}
+
+/// Map netdev OperState to a string
+fn oper_state_name(state: netdev::prelude::OperState) -> &'static str {
+    use netdev::prelude::OperState;
+    match state {
+        OperState::Up => "Up",
+        OperState::Down => "Down",
+        OperState::Testing => "Testing",
+        OperState::Dormant => "Dormant",
+        OperState::NotPresent => "Not Present",
+        OperState::LowerLayerDown => "Lower Layer Down",
+        OperState::Unknown => "Unknown",
+    }
+}
+
+/// Get comprehensive information for all network interfaces
+pub fn get_detailed_interfaces() -> Vec<DetailedNetworkInterface> {
+    let interfaces = netdev::get_interfaces();
+
+    interfaces
+        .into_iter()
+        .map(|iface| {
+            // Borrow-based reads before any field moves
+            let ipv4_addresses: Vec<Ipv4AddressInfo> = iface
+                .ipv4
+                .iter()
+                .map(|net| Ipv4AddressInfo {
+                    address: net.addr().to_string(),
+                    prefix_len: net.prefix_len(),
+                    network: net.network().to_string(),
+                })
+                .collect();
+
+            let ipv6_addresses: Vec<Ipv6AddressInfo> = iface
+                .ipv6
+                .iter()
+                .zip(
+                    iface
+                        .ipv6_scope_ids
+                        .iter()
+                        .copied()
+                        .chain(std::iter::repeat(0)),
+                )
+                .map(|(net, scope_id)| Ipv6AddressInfo {
+                    address: net.addr().to_string(),
+                    prefix_len: net.prefix_len(),
+                    scope_id,
+                })
+                .collect();
+
+            let gateway = iface.gateway.as_ref().map(|gw| GatewayInfo {
+                mac_address: Some(gw.mac_addr.to_string()),
+                ipv4_addresses: gw.ipv4.iter().map(|ip| ip.to_string()).collect(),
+                ipv6_addresses: gw.ipv6.iter().map(|ip| ip.to_string()).collect(),
+            });
+
+            let dns_servers: Vec<String> =
+                iface.dns_servers.iter().map(|ip| ip.to_string()).collect();
+            let interface_type = interface_type_name(&iface.if_type).to_string();
+            let mac_address = iface.mac_addr.map(|m| m.to_string());
+            let oper_state = oper_state_name(iface.oper_state).to_string();
+            let rx_bytes = iface.stats.as_ref().map(|s| s.rx_bytes);
+            let tx_bytes = iface.stats.as_ref().map(|s| s.tx_bytes);
+            let is_up = iface.is_up();
+            let is_running = iface.is_running();
+            let is_loopback = iface.is_loopback();
+            let is_broadcast = iface.is_broadcast();
+            let is_multicast = iface.is_multicast();
+            let is_point_to_point = iface.is_point_to_point();
+            let is_physical = iface.is_physical();
+
+            DetailedNetworkInterface {
+                index: iface.index,
+                name: iface.name,
+                friendly_name: iface.friendly_name,
+                description: iface.description,
+                interface_type,
+                mac_address,
+                ipv4_addresses,
+                ipv6_addresses,
+                mtu: iface.mtu,
+                state_flags: InterfaceStateFlags {
+                    is_up,
+                    is_running,
+                    is_default: iface.default,
+                },
+                kind_flags: InterfaceKindFlags {
+                    is_loopback,
+                    is_physical,
+                    is_point_to_point,
+                },
+                capability_flags: InterfaceCapabilityFlags {
+                    is_broadcast,
+                    is_multicast,
+                },
+                oper_state,
+                transmit_speed_bps: iface.transmit_speed,
+                receive_speed_bps: iface.receive_speed,
+                rx_bytes,
+                tx_bytes,
+                gateway,
+                dns_servers,
+            }
+        })
+        .collect()
+}
+
+// =============================================================================
+// Basic Interface Enumeration (via if-addrs)
+// =============================================================================
 
 /// Get all local network interfaces
 pub fn get_local_interfaces() -> LocalNetworkInfo {
