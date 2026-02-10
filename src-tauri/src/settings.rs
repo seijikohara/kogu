@@ -49,6 +49,9 @@ pub struct FontSettings {
     /// Code font size in pixels (10-24)
     #[serde(default = "default_code_size")]
     pub code_size: u32,
+    /// Whether Google Fonts loading is enabled (privacy-sensitive)
+    #[serde(default)]
+    pub google_fonts_enabled: bool,
 }
 
 impl Default for FontSettings {
@@ -58,6 +61,7 @@ impl Default for FontSettings {
             code_family: String::new(),
             ui_size: default_ui_size(),
             code_size: default_code_size(),
+            google_fonts_enabled: false,
         }
     }
 }
@@ -135,6 +139,9 @@ fn save_to_file(path: &std::path::Path, settings: &AppSettings) -> Result<(), St
 /// Global cache for system font families (fonts don't change at runtime)
 static SYSTEM_FONTS: OnceLock<Vec<String>> = OnceLock::new();
 
+/// Global cache for monospace system font families
+static MONOSPACE_FONTS: OnceLock<Vec<String>> = OnceLock::new();
+
 /// Enumerate all system font families, sorted alphabetically.
 /// Results are cached after the first call.
 fn enumerate_system_fonts() -> &'static [String] {
@@ -144,6 +151,28 @@ fn enumerate_system_fonts() -> &'static [String] {
         families.sort_unstable_by_key(|a| a.to_lowercase());
         families.dedup();
         families
+    })
+}
+
+/// Enumerate monospace system font families using font-kit's `is_monospace()`.
+/// Results are cached after the first call.
+fn enumerate_monospace_fonts() -> &'static [String] {
+    MONOSPACE_FONTS.get_or_init(|| {
+        let source = font_kit::source::SystemSource::new();
+        let all = source.all_families().unwrap_or_default();
+        let mut mono: Vec<String> = all
+            .into_iter()
+            .filter(|family| {
+                source
+                    .select_family_by_name(family)
+                    .ok()
+                    .and_then(|handle| handle.fonts().first()?.load().ok())
+                    .is_some_and(|font| font.is_monospace())
+            })
+            .collect();
+        mono.sort_unstable_by_key(|a| a.to_lowercase());
+        mono.dedup();
+        mono
     })
 }
 
@@ -215,6 +244,12 @@ pub fn get_system_fonts() -> Vec<String> {
     enumerate_system_fonts().to_vec()
 }
 
+/// Get monospace system font families only (sorted, cached)
+#[tauri::command]
+pub fn get_monospace_system_fonts() -> Vec<String> {
+    enumerate_monospace_fonts().to_vec()
+}
+
 /// Get the settings file path (for display in the settings page)
 #[tauri::command]
 pub fn get_settings_file_path(state: tauri::State<'_, SettingsState>) -> String {
@@ -237,6 +272,7 @@ mod tests {
         assert!(settings.font.code_family.is_empty());
         assert_eq!(settings.font.ui_size, 13);
         assert_eq!(settings.font.code_size, 13);
+        assert!(!settings.font.google_fonts_enabled);
     }
 
     #[test]
@@ -247,6 +283,7 @@ mod tests {
                 code_family: "JetBrains Mono".to_string(),
                 ui_size: 14,
                 code_size: 12,
+                google_fonts_enabled: true,
             },
         };
 
@@ -257,6 +294,7 @@ mod tests {
         assert_eq!(deserialized.font.code_family, "JetBrains Mono");
         assert_eq!(deserialized.font.ui_size, 14);
         assert_eq!(deserialized.font.code_size, 12);
+        assert!(deserialized.font.google_fonts_enabled);
     }
 
     #[test]
@@ -311,6 +349,7 @@ key = "value"
                 code_family: "Consolas".to_string(),
                 ui_size: 15,
                 code_size: 11,
+                google_fonts_enabled: false,
             },
         };
 
@@ -347,6 +386,17 @@ key = "value"
     }
 
     #[test]
+    fn test_google_fonts_enabled_defaults_false() {
+        let toml_str = r#"
+[font]
+ui_family = "Inter"
+ui_size = 14
+"#;
+        let settings: AppSettings = toml::from_str(toml_str).unwrap();
+        assert!(!settings.font.google_fonts_enabled);
+    }
+
+    #[test]
     fn test_system_fonts_enumeration() {
         let fonts = enumerate_system_fonts();
         // System should have at least some fonts
@@ -356,6 +406,26 @@ key = "value"
             assert!(
                 window[0].to_lowercase() <= window[1].to_lowercase(),
                 "Fonts not sorted: {} > {}",
+                window[0],
+                window[1]
+            );
+        }
+    }
+
+    #[test]
+    fn test_monospace_fonts_enumeration() {
+        let mono_fonts = enumerate_monospace_fonts();
+        let all_fonts = enumerate_system_fonts();
+
+        // Should have some monospace fonts
+        assert!(!mono_fonts.is_empty());
+        // Monospace fonts should be a subset of all fonts
+        assert!(mono_fonts.len() <= all_fonts.len());
+        // Should be sorted (case-insensitive)
+        for window in mono_fonts.windows(2) {
+            assert!(
+                window[0].to_lowercase() <= window[1].to_lowercase(),
+                "Monospace fonts not sorted: {} > {}",
                 window[0],
                 window[1]
             );

@@ -13,6 +13,7 @@
  */
 
 import { invoke } from '@tauri-apps/api/core';
+import { isGoogleFont, loadGoogleFont, unloadAllGoogleFonts } from './google-fonts.js';
 
 // =============================================================================
 // Types (mirrors Rust settings.rs)
@@ -27,6 +28,8 @@ export interface FontSettings {
 	readonly ui_size: number;
 	/** Code font size in pixels (10-24) */
 	readonly code_size: number;
+	/** Whether Google Fonts loading is enabled (privacy-sensitive) */
+	readonly google_fonts_enabled: boolean;
 }
 
 export interface AppSettings {
@@ -39,6 +42,7 @@ export const DEFAULT_FONT_SETTINGS: FontSettings = {
 	code_family: '',
 	ui_size: 13,
 	code_size: 13,
+	google_fonts_enabled: false,
 } as const;
 
 export const DEFAULT_SETTINGS: AppSettings = {
@@ -62,6 +66,10 @@ export const resetSettings = (): Promise<AppSettings> => invoke<AppSettings>('re
 /** Get all available system font families (sorted, cached) */
 export const getSystemFonts = (): Promise<string[]> => invoke<string[]>('get_system_fonts');
 
+/** Get monospace system font families only (sorted, cached) */
+export const getMonospaceSystemFonts = (): Promise<string[]> =>
+	invoke<string[]>('get_monospace_system_fonts');
+
 /** Get the settings file path (for display in settings page) */
 export const getSettingsFilePath = (): Promise<string> => invoke<string>('get_settings_file_path');
 
@@ -77,6 +85,14 @@ const MONOSPACE_FALLBACK =
 /** Apply font settings to the document via CSS custom properties */
 export const applyFontSettings = (font: FontSettings): void => {
 	const root = document.documentElement.style;
+
+	// Google Fonts: load or unload
+	if (font.google_fonts_enabled) {
+		if (font.ui_family && isGoogleFont(font.ui_family)) loadGoogleFont(font.ui_family);
+		if (font.code_family && isGoogleFont(font.code_family)) loadGoogleFont(font.code_family);
+	} else {
+		unloadAllGoogleFonts();
+	}
 
 	// UI font family
 	if (font.ui_family) {

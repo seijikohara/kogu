@@ -2,11 +2,13 @@
 	import { onMount } from 'svelte';
 	import { toast } from 'svelte-sonner';
 	import { confirm } from '@tauri-apps/plugin-dialog';
-	import { Settings, Check, ChevronsUpDown, RotateCcw } from '@lucide/svelte';
+	import { Settings, Check, ChevronsUpDown, RotateCcw, Globe, AlertTriangle } from '@lucide/svelte';
+	import * as Alert from '$lib/components/ui/alert/index.js';
 	import * as Card from '$lib/components/ui/card/index.js';
 	import * as Popover from '$lib/components/ui/popover/index.js';
 	import * as Command from '$lib/components/ui/command/index.js';
 	import { Button } from '$lib/components/ui/button/index.js';
+	import { Checkbox } from '$lib/components/ui/checkbox/index.js';
 	import { Label } from '$lib/components/ui/label/index.js';
 	import {
 		type AppSettings,
@@ -14,16 +16,23 @@
 		DEFAULT_SETTINGS,
 		getSettings,
 		getSystemFonts,
+		getMonospaceSystemFonts,
 		getSettingsFilePath,
 		updateSettings,
 		resetSettings,
 		applyAllSettings,
 	} from '$lib/services/settings.js';
+	import { getGoogleFontsByCategory, loadGoogleFont } from '$lib/services/google-fonts.js';
 
 	// State
 	let fontSettings = $state<FontSettings>({ ...DEFAULT_SETTINGS.font });
 	let systemFonts = $state<string[]>([]);
+	let monospaceFonts = $state<string[]>([]);
 	let settingsFilePath = $state('');
+
+	// Derived: Google Fonts by category
+	const googleUiFonts = getGoogleFontsByCategory('sans-serif');
+	const googleCodeFonts = getGoogleFontsByCategory('monospace');
 
 	// Combobox open states
 	let uiFontOpen = $state(false);
@@ -71,6 +80,12 @@
 			})
 			.catch(() => {});
 
+		getMonospaceSystemFonts()
+			.then((fonts) => {
+				monospaceFonts = fonts;
+			})
+			.catch(() => {});
+
 		getSettingsFilePath()
 			.then((path) => {
 				settingsFilePath = path;
@@ -95,6 +110,17 @@
 		fontSettings = { ...defaults.font };
 		applyAllSettings(defaults);
 		toast.success('All settings have been reset');
+	};
+
+	// Handle Google Font selection: preload it for preview
+	const selectGoogleFont = (
+		field: 'ui_family' | 'code_family',
+		fontName: string,
+		closePopover: () => void
+	) => {
+		loadGoogleFont(fontName);
+		fontSettings = { ...fontSettings, [field]: fontName };
+		closePopover();
 	};
 </script>
 
@@ -142,7 +168,7 @@
 									<Command.Input placeholder="Search fonts..." />
 									<Command.List class="max-h-48">
 										<Command.Empty>No fonts found.</Command.Empty>
-										<Command.Group>
+										<Command.Group heading="System Fonts">
 											<Command.Item
 												value="System Default"
 												onSelect={() => {
@@ -170,6 +196,25 @@
 												</Command.Item>
 											{/each}
 										</Command.Group>
+										{#if fontSettings.google_fonts_enabled}
+											<Command.Group heading="Google Fonts">
+												{#each googleUiFonts as gf (gf.name)}
+													<Command.Item
+														value={`Google: ${gf.name}`}
+														onSelect={() =>
+															selectGoogleFont('ui_family', gf.name, () => {
+																uiFontOpen = false;
+															})}
+													>
+														<Globe class="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+														<span style:font-family={`"${gf.name}"`}>{gf.name}</span>
+														{#if fontSettings.ui_family === gf.name}
+															<Check class="ml-auto h-4 w-4" />
+														{/if}
+													</Command.Item>
+												{/each}
+											</Command.Group>
+										{/if}
 									</Command.List>
 								</Command.Root>
 							</Popover.Content>
@@ -222,7 +267,7 @@
 									<Command.Input placeholder="Search fonts..." />
 									<Command.List class="max-h-48">
 										<Command.Empty>No fonts found.</Command.Empty>
-										<Command.Group>
+										<Command.Group heading="System Monospace Fonts">
 											<Command.Item
 												value="System Default"
 												onSelect={() => {
@@ -235,7 +280,7 @@
 													<Check class="ml-auto h-4 w-4" />
 												{/if}
 											</Command.Item>
-											{#each systemFonts as font (font)}
+											{#each monospaceFonts as font (font)}
 												<Command.Item
 													value={font}
 													onSelect={() => {
@@ -250,6 +295,25 @@
 												</Command.Item>
 											{/each}
 										</Command.Group>
+										{#if fontSettings.google_fonts_enabled}
+											<Command.Group heading="Google Fonts">
+												{#each googleCodeFonts as gf (gf.name)}
+													<Command.Item
+														value={`Google: ${gf.name}`}
+														onSelect={() =>
+															selectGoogleFont('code_family', gf.name, () => {
+																codeFontOpen = false;
+															})}
+													>
+														<Globe class="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+														<span style:font-family={`"${gf.name}"`}>{gf.name}</span>
+														{#if fontSettings.code_family === gf.name}
+															<Check class="ml-auto h-4 w-4" />
+														{/if}
+													</Command.Item>
+												{/each}
+											</Command.Group>
+										{/if}
 									</Command.List>
 								</Command.Root>
 							</Popover.Content>
@@ -276,6 +340,31 @@
 							}}
 							class="h-1.5 w-full cursor-pointer appearance-none rounded-full bg-border accent-primary"
 						/>
+					</div>
+
+					<!-- Google Fonts Toggle -->
+					<div class="space-y-3">
+						<div class="flex items-center gap-2">
+							<Checkbox
+								checked={fontSettings.google_fonts_enabled}
+								onCheckedChange={(v) => {
+									fontSettings = { ...fontSettings, google_fonts_enabled: v === true };
+								}}
+							/>
+							<Label class="text-sm font-medium">Enable Google Fonts</Label>
+						</div>
+
+						{#if fontSettings.google_fonts_enabled}
+							<Alert.Root variant="destructive">
+								<AlertTriangle class="size-4" />
+								<Alert.Title>Privacy Notice</Alert.Title>
+								<Alert.Description>
+									Google Fonts are loaded from Google's servers. Your IP address will be sent to
+									Google when fonts are loaded. Only enable this if you understand and accept these
+									privacy implications.
+								</Alert.Description>
+							</Alert.Root>
+						{/if}
 					</div>
 
 					<!-- Preview -->

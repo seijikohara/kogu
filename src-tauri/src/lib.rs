@@ -489,6 +489,7 @@ pub fn run() {
             settings::update_settings,
             settings::reset_settings,
             settings::get_system_fonts,
+            settings::get_monospace_system_fonts,
             settings::get_settings_file_path,
         ])
         .run(tauri::generate_context!())
