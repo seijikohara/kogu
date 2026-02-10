@@ -38,6 +38,24 @@
 		<Command.Separator />
 		<Command.Group heading="Actions">
 			<Command.Item
+				value="Settings"
+				onSelect={() => {
+					open = false;
+					goto('/settings');
+				}}
+			>
+				<span>Settings</span>
+			</Command.Item>
+			<Command.Item
+				value="Reset All Settings"
+				onSelect={() => {
+					open = false;
+					window.dispatchEvent(new CustomEvent('reset-all-settings'));
+				}}
+			>
+				<span>Reset All Settings</span>
+			</Command.Item>
+			<Command.Item
 				value="Keyboard shortcuts"
 				onSelect={() => {
 					open = false;
