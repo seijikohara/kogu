@@ -61,7 +61,7 @@ rand = "0.8"
 # Network Scanning
 futures = "0.3"
 ipnetwork = "0.20"
-socket2 = "0.5"
+socket2 = "0.6"
 dns-lookup = "3"
 uuid = { version = "1", features = ["v4"] }
 if-addrs = "0.15"
