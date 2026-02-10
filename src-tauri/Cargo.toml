@@ -66,6 +66,7 @@ dns-lookup = "2"
 uuid = { version = "1", features = ["v4"] }
 if-addrs = "0.13"
 mdns-sd = "0.11"
+netdev = { version = "0.40", features = ["gateway"] }
 
 # Host Discovery
 surge-ping = "0.8"

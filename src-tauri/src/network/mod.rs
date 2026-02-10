@@ -56,7 +56,7 @@
 
 mod arp_cache;
 pub mod discovery;
-mod interfaces;
+pub mod interfaces;
 mod llmnr;
 mod netbios;
 mod oui;

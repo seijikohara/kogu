@@ -37,6 +37,127 @@ pub struct LocalNetworkInfo {
 }
 
 // =============================================================================
+// Detailed Network Interface Types (via netdev)
+// =============================================================================
+
+/// Interface operational state flags
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct InterfaceStateFlags {
+    /// Whether the interface has the UP flag set
+    pub is_up: bool,
+    /// Whether the interface has the RUNNING flag set
+    pub is_running: bool,
+    /// Whether this is the system default interface
+    pub is_default: bool,
+}
+
+/// Interface kind flags
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct InterfaceKindFlags {
+    /// Whether this is a loopback interface
+    pub is_loopback: bool,
+    /// Whether this is a physical (non-virtual) interface
+    pub is_physical: bool,
+    /// Whether the interface is point-to-point
+    pub is_point_to_point: bool,
+}
+
+/// Interface capability flags
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct InterfaceCapabilityFlags {
+    /// Whether the interface supports broadcast
+    pub is_broadcast: bool,
+    /// Whether the interface supports multicast
+    pub is_multicast: bool,
+}
+
+/// Comprehensive network interface information
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct DetailedNetworkInterface {
+    /// OS-assigned interface index
+    pub index: u32,
+    /// Interface name (e.g., "en0", "eth0")
+    pub name: String,
+    /// Windows-style friendly name
+    pub friendly_name: Option<String>,
+    /// Interface description
+    pub description: Option<String>,
+    /// Interface type (e.g., "Ethernet", "Wi-Fi", "Loopback")
+    pub interface_type: String,
+    /// MAC address in colon-separated hex (e.g., "AA:BB:CC:DD:EE:FF")
+    pub mac_address: Option<String>,
+    /// All IPv4 addresses assigned to this interface
+    pub ipv4_addresses: Vec<Ipv4AddressInfo>,
+    /// All IPv6 addresses assigned to this interface
+    pub ipv6_addresses: Vec<Ipv6AddressInfo>,
+    /// Maximum transmission unit
+    pub mtu: Option<u32>,
+    /// Interface operational state flags
+    #[serde(flatten)]
+    pub state_flags: InterfaceStateFlags,
+    /// Interface kind flags
+    #[serde(flatten)]
+    pub kind_flags: InterfaceKindFlags,
+    /// Interface capability flags
+    #[serde(flatten)]
+    pub capability_flags: InterfaceCapabilityFlags,
+    /// Operational state (e.g., "Up", "Down", "Unknown")
+    pub oper_state: String,
+    /// Transmit speed in bits per second
+    pub transmit_speed_bps: Option<u64>,
+    /// Receive speed in bits per second
+    pub receive_speed_bps: Option<u64>,
+    /// Total received bytes
+    pub rx_bytes: Option<u64>,
+    /// Total transmitted bytes
+    pub tx_bytes: Option<u64>,
+    /// Default gateway information
+    pub gateway: Option<GatewayInfo>,
+    /// DNS server addresses
+    pub dns_servers: Vec<String>,
+}
+
+/// IPv4 address with network information
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct Ipv4AddressInfo {
+    /// IPv4 address (e.g., "192.168.1.5")
+    pub address: String,
+    /// Subnet prefix length (e.g., 24)
+    pub prefix_len: u8,
+    /// Network in CIDR notation (e.g., "192.168.1.0/24")
+    pub network: String,
+}
+
+/// IPv6 address with scope information
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct Ipv6AddressInfo {
+    /// IPv6 address (e.g., "fe80::1")
+    pub address: String,
+    /// Subnet prefix length (e.g., 64)
+    pub prefix_len: u8,
+    /// Scope ID for link-local addresses
+    pub scope_id: u32,
+}
+
+/// Default gateway information
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct GatewayInfo {
+    /// Gateway MAC address
+    pub mac_address: Option<String>,
+    /// Gateway IPv4 addresses
+    pub ipv4_addresses: Vec<String>,
+    /// Gateway IPv6 addresses
+    pub ipv6_addresses: Vec<String>,
+}
+
+// =============================================================================
 // mDNS/Bonjour Types
 // =============================================================================
 

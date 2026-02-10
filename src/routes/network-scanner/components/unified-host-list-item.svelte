@@ -18,9 +18,10 @@
 		Tv,
 		Wifi,
 	} from '@lucide/svelte';
-	import { DEVICE_CATEGORIES, type DeviceCategory } from '$lib/services/device-classifier.js';
+	import type { DeviceCategory } from '$lib/services/device-classifier.js';
 
 	interface Props {
+		readonly hostId: string;
 		readonly ips: readonly string[];
 		readonly hostname: string | null;
 		readonly hostnameSource?: string | null;
@@ -37,6 +38,7 @@
 	}
 
 	let {
+		hostId,
 		ips,
 		hostname,
 		hostnameSource = null,
@@ -70,18 +72,7 @@
 		unknown: CircleDot,
 	};
 
-	// Compact labels for list display (long names abbreviated)
-	const SHORT_LABELS: Partial<Record<DeviceCategory, string>> = {
-		access_point: 'AP',
-		media_player: 'Media',
-	};
-
 	const DeviceIcon = $derived(DEVICE_ICONS[deviceCategory] ?? CircleDot);
-	const categoryLabel = $derived(
-		deviceCategory !== 'unknown'
-			? (SHORT_LABELS[deviceCategory] ?? DEVICE_CATEGORIES[deviceCategory]?.label ?? '')
-			: ''
-	);
 
 	const primaryIp = $derived(ips[0] ?? '');
 	const isIPv6 = (ip: string): boolean => ip.includes(':');
@@ -99,26 +90,28 @@
 
 <button
 	type="button"
+	data-host-id={hostId}
 	class="flex w-full items-start gap-2 border-b border-border border-l-2 px-3 py-2.5 text-left transition-colors last:border-b-0
 		{selected ? 'border-l-primary bg-primary/10' : 'border-l-transparent hover:bg-interactive-hover'}
 		{isNew ? 'animate-highlight-new' : ''}"
 	{onclick}
 >
-	<!-- Device icon + category label (fixed width for alignment) -->
-	<div class="mt-0.5 flex w-12 shrink-0 flex-col items-center gap-0.5">
+	<!-- Device icon -->
+	<div class="mt-0.5 flex w-8 shrink-0 items-center justify-center">
 		<DeviceIcon class="h-4 w-4 {openPortCount > 0 ? 'text-success' : 'text-muted-foreground'}" />
-		<span
-			class="max-w-full truncate text-2xs leading-none font-medium text-muted-foreground {categoryLabel
-				? ''
-				: 'invisible'}"
-		>
-			{categoryLabel || 'Device'}
-		</span>
 	</div>
 	<div class="min-w-0 flex-1">
-		<!-- Primary IP + status dot + badges -->
+		<!-- Primary IP + IPv6 badge + status dot + badges -->
 		<div class="flex items-center gap-2">
 			<span class="font-mono text-sm font-medium">{primaryIp}</span>
+			{#if ipv6Count > 0}
+				<span
+					class="rounded bg-muted px-1.5 py-0.5 text-xs text-muted-foreground"
+					title={ipv6Addresses.join('\n')}
+				>
+					IPv6{ipv6Count > 1 ? ` ×${ipv6Count}` : ''}
+				</span>
+			{/if}
 			{#if hasPortScan}
 				<span
 					class="h-1.5 w-1.5 shrink-0 rounded-full {openPortCount > 0
@@ -167,7 +160,7 @@
 				</p>
 				{#if hostnameSource}
 					<span
-						class="shrink-0 rounded bg-muted px-1 py-0.5 text-xs uppercase text-muted-foreground"
+						class="shrink-0 rounded bg-muted px-1.5 py-0.5 text-xs font-medium uppercase text-muted-foreground"
 					>
 						{hostnameSource}
 					</span>
@@ -185,25 +178,17 @@
 			</p>
 		{/if}
 
-		<!-- Additional IPv4 addresses + IPv6 count indicator -->
-		{#if additionalIpv4s.length > 0 || ipv6Count > 0}
+		<!-- Additional IPv4 addresses -->
+		{#if additionalIpv4s.length > 0}
 			<div class="mt-0.5 flex flex-wrap gap-1">
 				{#each additionalIpv4s as ip (ip)}
 					<span
-						class="rounded bg-muted px-1 py-0.5 font-mono text-xs text-muted-foreground"
+						class="rounded bg-muted px-1.5 py-0.5 font-mono text-xs text-muted-foreground"
 						title={ip}
 					>
 						{ip}
 					</span>
 				{/each}
-				{#if ipv6Count > 0}
-					<span
-						class="rounded bg-muted px-1 py-0.5 text-xs text-muted-foreground"
-						title={ipv6Addresses.join('\n')}
-					>
-						IPv6{ipv6Count > 1 ? ` ×${ipv6Count}` : ''}
-					</span>
-				{/if}
 			</div>
 		{/if}
 	</div>

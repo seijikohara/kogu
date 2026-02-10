@@ -207,6 +207,7 @@
 					loading={isGenerating}
 					loadingLabel="Generating..."
 					disabled={!canGenerate}
+					shortcut
 					onclick={handleGenerate}
 				/>
 				{#if keyResult}

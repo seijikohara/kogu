@@ -2,6 +2,7 @@
 	import type { Component } from 'svelte';
 	import { Button } from '$lib/components/ui/button/index.js';
 	import { cn } from '$lib/utils.js';
+	import { formatShortcut, isModKey } from '$lib/utils/keyboard.js';
 
 	interface Props {
 		label: string;
@@ -12,6 +13,7 @@
 		variant?: 'default' | 'outline' | 'destructive' | 'ghost' | 'secondary';
 		size?: 'default' | 'sm';
 		class?: string;
+		shortcut?: boolean;
 		onclick: () => void;
 	}
 
@@ -24,6 +26,7 @@
 		variant = 'default',
 		size = 'default',
 		class: className,
+		shortcut = false,
 		onclick,
 	}: Props = $props();
 
@@ -35,6 +38,22 @@
 
 	// Button height class based on size
 	const sizeClass = $derived(size === 'sm' ? 'h-8 text-xs' : 'h-9');
+
+	// Shortcut badge text
+	const shortcutLabel = $derived(formatShortcut('⏎', true));
+
+	// Register Cmd+Enter shortcut
+	$effect(() => {
+		if (!shortcut) return;
+		const handler = (e: KeyboardEvent) => {
+			if (isModKey(e) && e.key === 'Enter' && !disabled && !loading) {
+				e.preventDefault();
+				onclick();
+			}
+		};
+		window.addEventListener('keydown', handler);
+		return () => window.removeEventListener('keydown', handler);
+	});
 </script>
 
 <Button {variant} class={cn('w-full', sizeClass, className)} {disabled} onclick={() => onclick()}>
@@ -49,4 +68,9 @@
 		<Icon class={iconClass} />
 	{/if}
 	{displayLabel}
+	{#if shortcut && !loading}
+		<kbd class="ml-1.5 rounded border border-current/20 px-1 py-0.5 font-mono text-2xs opacity-60">
+			{shortcutLabel}
+		</kbd>
+	{/if}
 </Button>

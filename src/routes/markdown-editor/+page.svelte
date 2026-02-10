@@ -28,7 +28,11 @@
 	} from '@lucide/svelte';
 	import { readText, writeText } from '@tauri-apps/plugin-clipboard-manager';
 	import { toast } from 'svelte-sonner';
-	import { CodeEditor, type FormatCommand, TiptapEditor } from '$lib/components/editor';
+	import { Vizel } from '@vizel/svelte';
+	import { getVizelMarkdown, setVizelMarkdown, type Editor as VizelEditor } from '@vizel/core';
+	import '@vizel/core/styles.css';
+	import 'katex/dist/katex.min.css';
+	import { CodeEditor } from '$lib/components/editor';
 	import { FormInfo, FormMode, FormSection } from '$lib/components/form';
 	import { SplitPane } from '$lib/components/layout';
 	import { ToolShell } from '$lib/components/shell';
@@ -48,10 +52,38 @@
 		type TocItem,
 		tocToMarkdown,
 	} from '$lib/services/markdown.js';
+	import {
+		getMarkdownLineFromCursor,
+		getProseMirrorPosFromLine,
+		type TiptapEditor,
+	} from '$lib/services/markdown-cursor-sync.js';
 	import MarkdownContextMenuItems from './markdown-context-menu-items.svelte';
 
 	type RightPanelMode = 'editor' | 'preview';
-	type ActiveEditor = 'monaco' | 'tiptap' | null;
+	type ActiveEditor = 'monaco' | 'vizel' | null;
+
+	// Vizel format command types (subset of Tiptap commands)
+	type VizelFormatCommand =
+		| 'bold'
+		| 'italic'
+		| 'strikethrough'
+		| 'code'
+		| 'heading1'
+		| 'heading2'
+		| 'heading3'
+		| 'heading4'
+		| 'heading5'
+		| 'heading6'
+		| 'bullet'
+		| 'numbered'
+		| 'task'
+		| 'quote'
+		| 'codeblock'
+		| 'hr'
+		| 'link'
+		| 'image'
+		| 'table'
+		| 'clearFormat';
 
 	// Toolbar group definitions
 	interface ToolbarButton {
@@ -106,16 +138,13 @@
 
 	// Component references
 	let monacoRef = $state<CodeEditor | null>(null);
-	let tiptapRef = $state<TiptapEditor | null>(null);
+	let vizelEditor = $state<TiptapEditor | null>(null);
 
-	// Track which editor made the last change to prevent sync loops
-	let lastChangeSource: 'monaco' | 'tiptap' | null = null;
-	let isProcessingChange = false;
-
-	// Track cursor sync source to prevent infinite loops
-	let cursorSyncSource: 'monaco' | 'tiptap' | null = null;
+	// Track last synced value to prevent infinite sync loops
+	let lastSyncedToVizel = '';
+	let cursorSyncSource: 'monaco' | 'vizel' | null = null;
 	let lastMonacoCursorLine = 0;
-	let lastTiptapCursorLine = 0;
+	let lastVizelCursorLine = 0;
 
 	// Computed values
 	let htmlOutput = $state('');
@@ -138,6 +167,87 @@
 		if (!input.trim()) return null;
 		return true;
 	});
+
+	// Helper to execute editor commands with proper type handling
+	// Vizel includes all Tiptap extensions, so these commands exist at runtime
+	const execCmd = (editor: TiptapEditor, cmd: string, args?: unknown): boolean => {
+		const commands = editor.commands as unknown as Record<string, (args?: unknown) => boolean>;
+		const fn = commands[cmd];
+		return fn ? fn(args) : false;
+	};
+
+	// Execute format command on Vizel editor
+	const executeVizelFormat = (editor: TiptapEditor, action: VizelFormatCommand, url?: string) => {
+		editor.chain().focus();
+
+		switch (action) {
+			case 'bold':
+				execCmd(editor, 'toggleBold');
+				break;
+			case 'italic':
+				execCmd(editor, 'toggleItalic');
+				break;
+			case 'strikethrough':
+				execCmd(editor, 'toggleStrike');
+				break;
+			case 'code':
+				execCmd(editor, 'toggleCode');
+				break;
+			case 'heading1':
+				execCmd(editor, 'toggleHeading', { level: 1 });
+				break;
+			case 'heading2':
+				execCmd(editor, 'toggleHeading', { level: 2 });
+				break;
+			case 'heading3':
+				execCmd(editor, 'toggleHeading', { level: 3 });
+				break;
+			case 'heading4':
+				execCmd(editor, 'toggleHeading', { level: 4 });
+				break;
+			case 'heading5':
+				execCmd(editor, 'toggleHeading', { level: 5 });
+				break;
+			case 'heading6':
+				execCmd(editor, 'toggleHeading', { level: 6 });
+				break;
+			case 'bullet':
+				execCmd(editor, 'toggleBulletList');
+				break;
+			case 'numbered':
+				execCmd(editor, 'toggleOrderedList');
+				break;
+			case 'task':
+				execCmd(editor, 'toggleTaskList');
+				break;
+			case 'quote':
+				execCmd(editor, 'toggleBlockquote');
+				break;
+			case 'codeblock':
+				execCmd(editor, 'toggleCodeBlock');
+				break;
+			case 'hr':
+				execCmd(editor, 'setHorizontalRule');
+				break;
+			case 'link':
+				if (url) {
+					execCmd(editor, 'setLink', { href: url });
+				}
+				break;
+			case 'image':
+				if (url) {
+					execCmd(editor, 'setImage', { src: url });
+				}
+				break;
+			case 'table':
+				execCmd(editor, 'insertTable', { rows: 3, cols: 3, withHeaderRow: true });
+				break;
+			case 'clearFormat':
+				execCmd(editor, 'unsetAllMarks');
+				execCmd(editor, 'clearNodes');
+				break;
+		}
+	};
 
 	// Handle format button click
 	const handleFormat = (action: FormatAction['type'], providedUrl?: string) => {
@@ -168,30 +278,22 @@
 				monacoRef?.setSelectionRange(result.selectionStart, result.selectionEnd);
 				monacoRef?.focusEditor();
 			});
-		} else if (targetEditor === 'tiptap' && tiptapRef) {
-			// Format Tiptap editor
-			tiptapRef.executeFormat(action as FormatCommand, actionUrl);
+		} else if (targetEditor === 'vizel' && vizelEditor) {
+			// Format Vizel editor
+			executeVizelFormat(vizelEditor, action as VizelFormatCommand, actionUrl);
 		}
 	};
 
+	// Sync input → Vizel whenever input changes from a non-Vizel source
+	$effect(() => {
+		if (!vizelEditor || input === lastSyncedToVizel) return;
+		lastSyncedToVizel = input;
+		setVizelMarkdown(vizelEditor as unknown as VizelEditor, input);
+	});
+
 	// Handlers for Monaco Editor (left side)
 	const handleMonacoChange = (value: string) => {
-		// Prevent re-entrant updates
-		if (isProcessingChange) return;
-		if (lastChangeSource === 'tiptap') {
-			lastChangeSource = null;
-			return;
-		}
-
-		isProcessingChange = true;
-		lastChangeSource = 'monaco';
 		input = value;
-
-		// Reset after a short delay
-		requestAnimationFrame(() => {
-			isProcessingChange = false;
-			lastChangeSource = null;
-		});
 	};
 
 	const handleMonacoFocus = () => {
@@ -202,32 +304,44 @@
 		// Keep activeEditor until another editor is focused
 	};
 
-	// Handlers for Tiptap Editor (right side)
-	const handleTiptapChange = (markdown: string) => {
-		// Prevent re-entrant updates
-		if (isProcessingChange) return;
-		if (lastChangeSource === 'monaco') {
-			lastChangeSource = null;
+	// Handle Vizel content update → sync to Monaco
+	const handleVizelUpdate = (editor: TiptapEditor) => {
+		vizelEditor = editor;
+		const md = getVizelMarkdown(editor as unknown as VizelEditor);
+		lastSyncedToVizel = md;
+		input = md;
+	};
+
+	// Handlers for Vizel Editor (right side)
+	const handleVizelFocus = () => {
+		activeEditor = 'vizel';
+	};
+
+	// Handle Vizel selection update for cursor sync
+	const handleVizelSelectionUpdate = (editor: TiptapEditor) => {
+		// Only sync when Vizel is the active editor
+		if (activeEditor !== 'vizel') return;
+
+		// Get current line from Vizel cursor position
+		const line = getMarkdownLineFromCursor(editor, input);
+
+		// Skip if line hasn't changed
+		if (line === lastVizelCursorLine) return;
+		lastVizelCursorLine = line;
+
+		// Skip if this cursor change was triggered by Monaco sync
+		if (cursorSyncSource === 'monaco') {
+			cursorSyncSource = null;
 			return;
 		}
 
-		isProcessingChange = true;
-		lastChangeSource = 'tiptap';
-		input = markdown;
+		cursorSyncSource = 'vizel';
+		monacoRef?.gotoLine(line);
 
 		// Reset after a short delay
 		requestAnimationFrame(() => {
-			isProcessingChange = false;
-			lastChangeSource = null;
+			cursorSyncSource = null;
 		});
-	};
-
-	const handleTiptapFocus = () => {
-		activeEditor = 'tiptap';
-	};
-
-	const handleTiptapBlur = () => {
-		// Keep activeEditor until another editor is focused
 	};
 
 	// Cursor synchronization handlers
@@ -236,8 +350,8 @@
 		if (line === lastMonacoCursorLine) return;
 		lastMonacoCursorLine = line;
 
-		// Skip if this cursor change was triggered by Tiptap sync
-		if (cursorSyncSource === 'tiptap') {
+		// Skip if this cursor change was triggered by Vizel sync
+		if (cursorSyncSource === 'vizel') {
 			cursorSyncSource = null;
 			return;
 		}
@@ -246,30 +360,12 @@
 		if (activeEditor !== 'monaco') return;
 
 		cursorSyncSource = 'monaco';
-		tiptapRef?.setCursorLine(line);
 
-		// Reset after a short delay
-		requestAnimationFrame(() => {
-			cursorSyncSource = null;
-		});
-	};
-
-	const handleTiptapCursorChange = (line: number) => {
-		// Skip if line hasn't changed (e.g., during selection)
-		if (line === lastTiptapCursorLine) return;
-		lastTiptapCursorLine = line;
-
-		// Skip if this cursor change was triggered by Monaco sync
-		if (cursorSyncSource === 'monaco') {
-			cursorSyncSource = null;
-			return;
+		// Sync cursor to Vizel
+		if (vizelEditor) {
+			const pos = getProseMirrorPosFromLine(vizelEditor, input, line);
+			vizelEditor.commands['setTextSelection']?.(pos);
 		}
-
-		// Only sync when Tiptap is the active editor
-		if (activeEditor !== 'tiptap') return;
-
-		cursorSyncSource = 'tiptap';
-		monacoRef?.gotoLine(line);
 
 		// Reset after a short delay
 		requestAnimationFrame(() => {
@@ -444,7 +540,7 @@ ${tocToMarkdown(toc)}
 			<FormInfo>
 				<ul class="list-inside list-disc space-y-0.5">
 					<li>Monaco editor with syntax highlighting</li>
-					<li>Tiptap visual editor</li>
+					<li>Vizel visual editor with slash commands</li>
 					<li>Real-time bidirectional sync</li>
 					<li>Formatting toolbar & context menu</li>
 					<li>Table of Contents generation</li>
@@ -553,7 +649,9 @@ ${tocToMarkdown(toc)}
 				>
 					{#snippet actions()}
 						{#if activeEditor === 'monaco'}
-							<span class="ml-2 rounded bg-primary/20 px-1.5 py-0.5 text-xs text-primary">
+							<span
+								class="ml-2 rounded bg-primary/20 px-1.5 py-0.5 text-xs font-medium text-primary"
+							>
 								Active
 							</span>
 						{/if}
@@ -564,22 +662,29 @@ ${tocToMarkdown(toc)}
 				{#if rightPanelMode === 'editor'}
 					<ContextMenu.Root>
 						<ContextMenu.Trigger class="relative h-full">
-							{#if activeEditor === 'tiptap'}
+							{#if activeEditor === 'vizel'}
 								<span
-									class="absolute right-3 top-2 z-10 rounded bg-primary/20 px-1.5 py-0.5 text-xs text-primary"
+									class="absolute right-3 top-2 z-10 rounded bg-primary/20 px-1.5 py-0.5 text-xs font-medium text-primary"
 								>
 									Active
 								</span>
 							{/if}
-							<TiptapEditor
-								bind:this={tiptapRef}
-								content={input}
-								placeholder="Start writing..."
-								onchange={handleTiptapChange}
-								oncursorchange={handleTiptapCursorChange}
-								onfocus={handleTiptapFocus}
-								onblur={handleTiptapBlur}
-							/>
+							<div class="vizel-container h-full overflow-auto">
+								<Vizel
+									placeholder="Start writing..."
+									editable={true}
+									autofocus={false}
+									showBubbleMenu={true}
+									enableEmbed={true}
+									onCreate={({ editor }) => {
+										vizelEditor = editor as unknown as TiptapEditor;
+									}}
+									onUpdate={({ editor }) => handleVizelUpdate(editor as unknown as TiptapEditor)}
+									onFocus={() => handleVizelFocus()}
+									onSelectionUpdate={({ editor }) =>
+										handleVizelSelectionUpdate(editor as unknown as TiptapEditor)}
+								/>
+							</div>
 						</ContextMenu.Trigger>
 						<ContextMenu.Content class="w-56">
 							<MarkdownContextMenuItems onformat={handleFormat} />
@@ -611,6 +716,21 @@ ${tocToMarkdown(toc)}
 </ToolShell>
 
 <style>
+	/* Vizel container styles */
+	.vizel-container {
+		--vizel-bg: hsl(var(--background));
+		--vizel-text: hsl(var(--foreground));
+		--vizel-placeholder: hsl(var(--muted-foreground));
+		--vizel-border: hsl(var(--border));
+		--vizel-primary: hsl(var(--primary));
+	}
+
+	.vizel-container :global(.vizel-editor) {
+		min-height: 100%;
+		padding: 1rem;
+	}
+
+	/* Markdown preview styles */
 	.markdown-preview :global(h1) {
 		font-size: 1.75rem;
 		font-weight: 700;
