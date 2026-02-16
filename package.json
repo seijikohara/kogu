@@ -70,7 +70,7 @@
 		"markdown-it-texmath": "^1.0.0",
 		"mermaid": "^11.12.2",
 		"monaco-editor": "^0.52.2",
-		"monaco-yaml": "^5.4.0",
+		"monaco-yaml": "^5.4.1",
 		"node-sql-parser": "^5.4.0",
 		"sql-formatter": "^15.7.0",
 		"tailwindcss": "^4.1.18",
