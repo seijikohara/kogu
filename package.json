@@ -58,7 +58,7 @@
 		"@vizel/svelte": "^1.1.2",
 		"@xml-tools/ast": "^5.0.5",
 		"@xml-tools/parser": "^1.0.11",
-		"ajv": "^8.17.1",
+		"ajv": "^8.18.0",
 		"ajv-formats": "^3.0.1",
 		"crypto-js": "^4.2.0",
 		"fuse.js": "^7.1.0",
