@@ -80,7 +80,7 @@
 	"devDependencies": {
 		"@biomejs/biome": "^2.3.14",
 		"@internationalized/date": "^3.11.0",
-		"@lucide/svelte": "^0.563.1",
+		"@lucide/svelte": "^0.575.0",
 		"@sveltejs/adapter-static": "^3.0.10",
 		"@sveltejs/kit": "^2.52.0",
 		"@sveltejs/vite-plugin-svelte": "^6.2.4",
