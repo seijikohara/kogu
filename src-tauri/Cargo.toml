@@ -75,7 +75,7 @@ surge-ping = "0.8"
 reqwest = { version = "0.12", default-features = false, features = ["rustls-tls"] }
 
 # XML Parsing (for SSDP/WS-Discovery device descriptions)
-quick-xml = "0.37"
+quick-xml = "0.38"
 
 # TLS Certificate Inspection
 rustls = { version = "0.23", features = ["ring"] }
