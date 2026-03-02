@@ -16,7 +16,7 @@
         "@tauri-apps/plugin-os": "^2.3.2",
         "@viz-js/viz": "^3.24.0",
         "@vizel/core": "^1.1.2",
-        "@vizel/svelte": "^1.1.2",
+        "@vizel/svelte": "^1.2.0",
         "@xml-tools/ast": "^5.0.5",
         "@xml-tools/parser": "^1.0.11",
         "ajv": "^8.17.1",
@@ -564,7 +564,7 @@
 
     "@vizel/core": ["@vizel/core@1.1.2", "", { "peerDependencies": { "@hpcc-js/wasm-graphviz": "^1.0.0", "@tiptap/core": "^3.18.0", "@tiptap/extension-blockquote": "^3.18.0", "@tiptap/extension-bold": "^3.18.0", "@tiptap/extension-bubble-menu": "^3.18.0", "@tiptap/extension-bullet-list": "^3.18.0", "@tiptap/extension-character-count": "^3.18.0", "@tiptap/extension-code": "^3.18.0", "@tiptap/extension-code-block": "^3.18.0", "@tiptap/extension-code-block-lowlight": "^3.18.0", "@tiptap/extension-collaboration": "^3.18.0", "@tiptap/extension-collaboration-cursor": "^3.0.0", "@tiptap/extension-color": "^3.18.0", "@tiptap/extension-details": "^3.18.0", "@tiptap/extension-document": "^3.18.0", "@tiptap/extension-drag-handle": "^3.18.0", "@tiptap/extension-dropcursor": "^3.18.0", "@tiptap/extension-file-handler": "^3.18.0", "@tiptap/extension-gapcursor": "^3.18.0", "@tiptap/extension-hard-break": "^3.18.0", "@tiptap/extension-heading": "^3.18.0", "@tiptap/extension-highlight": "^3.18.0", "@tiptap/extension-history": "^3.18.0", "@tiptap/extension-horizontal-rule": "^3.18.0", "@tiptap/extension-image": "^3.18.0", "@tiptap/extension-italic": "^3.18.0", "@tiptap/extension-link": "^3.18.0", "@tiptap/extension-list-item": "^3.18.0", "@tiptap/extension-list-keymap": "^3.18.0", "@tiptap/extension-ordered-list": "^3.18.0", "@tiptap/extension-paragraph": "^3.18.0", "@tiptap/extension-placeholder": "^3.18.0", "@tiptap/extension-strike": "^3.18.0", "@tiptap/extension-table": "^3.18.0", "@tiptap/extension-task-item": "^3.18.0", "@tiptap/extension-task-list": "^3.18.0", "@tiptap/extension-text": "^3.18.0", "@tiptap/extension-text-style": "^3.18.0", "@tiptap/extension-underline": "^3.18.0", "@tiptap/markdown": "^3.18.0", "@tiptap/pm": "^3.18.0", "@tiptap/suggestion": "^3.18.0", "fuse.js": "^7.1.0", "katex": "^0.16.0", "lowlight": "^3.0.0", "mermaid": "^11.0.0", "y-websocket": "^2.0.0", "yjs": "^13.6.0" }, "optionalPeers": ["@hpcc-js/wasm-graphviz", "@tiptap/extension-collaboration", "@tiptap/extension-collaboration-cursor", "fuse.js", "katex", "lowlight", "mermaid", "y-websocket", "yjs"] }, "sha512-mYKjSpEhwEjaumPQ/708/UbL7BqhTxooN1xNi+RbByQ8eFAMiv5Avzer2zyMx8mGGtjMw6RFEStN0tLi1dfXGw=="],
 
-    "@vizel/svelte": ["@vizel/svelte@1.1.2", "", { "dependencies": { "@iconify/svelte": "^5.2.1" }, "peerDependencies": { "@vizel/core": "^1.1.0", "svelte": "^5" } }, "sha512-12GofsOpd8UqD5ZOuCCRtsrx3+qmSuO+TiqkNJZoY7/3+Qg7iSTDl+wx8rc0d06UW4s3RNLiNW/IMqrQOJbtVg=="],
+    "@vizel/svelte": ["@vizel/svelte@1.2.0", "", { "dependencies": { "@iconify/svelte": "^5.2.1" }, "peerDependencies": { "@vizel/core": "^1.1.0", "svelte": "^5" } }, "sha512-xfMOw06h91uaqD3xdJWvEliilRtT7Ivzz71dH0ktkSlt9WmMdy+NdZPtEMwsRgu8Z6dye3dWSttD6+77V0LvfQ=="],
 
     "@xml-tools/ast": ["@xml-tools/ast@5.0.5", "", { "dependencies": { "@xml-tools/common": "^0.1.6", "@xml-tools/parser": "^1.0.11", "lodash": "4.17.21" } }, "sha512-avvzTOvGplCx9JSKdsTe3vK+ACvsHy2HxVfkcfIqPzu+kF5CT4rw5aUVzs0tJF4cnDyMRVkSyVxR07X0Px8gPA=="],
 
