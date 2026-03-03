@@ -27,6 +27,7 @@ import {
 	Play,
 	Radar,
 	Search,
+	Settings,
 	Shield,
 	ShieldCheck,
 	Sparkles,
@@ -237,6 +238,13 @@ export const PAGES: readonly PageDefinition[] = [
 		color: 'text-rose-500',
 		category: 'network',
 	},
+	{
+		id: 'settings',
+		title: 'Settings',
+		url: '/settings',
+		icon: Settings,
+		description: 'Configure application preferences',
+	},
 ];
 
 /**
@@ -255,7 +263,7 @@ export const getPageByUrl = (url: string): PageDefinition | undefined =>
  * Get all tool pages (excluding dashboard).
  */
 export const getToolPages = (): readonly PageDefinition[] =>
-	PAGES.filter((page) => page.id !== 'dashboard');
+	PAGES.filter((page) => page.id !== 'dashboard' && page.id !== 'settings');
 
 /**
  * Get pages by category.

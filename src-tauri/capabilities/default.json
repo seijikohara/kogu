@@ -38,6 +38,9 @@
 				{ "name": "getcap", "cmd": "getcap", "args": true }
 			]
 		},
-		"shell:allow-kill"
+		"shell:allow-kill",
+		"window-state:allow-restore-state",
+		"window-state:allow-save-window-state",
+		"dialog:allow-confirm"
 	]
 }
