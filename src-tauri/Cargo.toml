@@ -55,7 +55,7 @@ tokio = { version = "1", features = ["sync", "net", "time", "rt", "macros"] }
 # Cryptographic Generators
 bcrypt = "0.18"
 ssh-key = { version = "0.6", features = ["ed25519", "p256", "p384", "rsa", "encryption", "rand_core"] }
-pgp = "0.18"
+pgp = "0.19"
 rand = "0.8"
 
 # Network Scanning
