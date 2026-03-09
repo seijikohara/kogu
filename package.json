@@ -55,7 +55,7 @@
 		"@tauri-apps/plugin-os": "^2.3.2",
 		"@viz-js/viz": "^3.24.0",
 		"@vizel/core": "^1.2.0",
-		"@vizel/svelte": "^1.1.2",
+		"@vizel/svelte": "^1.2.0",
 		"@xml-tools/ast": "^5.0.5",
 		"@xml-tools/parser": "^1.0.11",
 		"ajv": "^8.17.1",
