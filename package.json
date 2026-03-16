@@ -44,7 +44,7 @@
 	},
 	"license": "MIT",
 	"dependencies": {
-		"@hpcc-js/wasm-graphviz": "^1.21.0",
+		"@hpcc-js/wasm-graphviz": "^1.21.1",
 		"@tailwindcss/typography": "^0.5.19",
 		"@tailwindcss/vite": "^4.2.1",
 		"@tauri-apps/api": "^2.10.1",

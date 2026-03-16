@@ -5,7 +5,7 @@
     "": {
       "name": "kogu",
       "dependencies": {
-        "@hpcc-js/wasm-graphviz": "^1.21.0",
+        "@hpcc-js/wasm-graphviz": "^1.21.1",
         "@tailwindcss/typography": "^0.5.19",
         "@tailwindcss/vite": "^4.2.1",
         "@tauri-apps/api": "^2.10.1",
@@ -196,7 +196,7 @@
 
     "@floating-ui/utils": ["@floating-ui/utils@0.2.10", "", {}, "sha512-aGTxbpbg8/b5JfU1HXSrbH3wXZuLPJcNEcZQFMxLs3oSzgtVu6nFPkbbGGUvBcUjKV2YyB9Wxxabo+HEH9tcRQ=="],
 
-    "@hpcc-js/wasm-graphviz": ["@hpcc-js/wasm-graphviz@1.21.0", "", {}, "sha512-BQ06v/foSTxtwUyIdJYRz+S++/fHQuPVsFmX+pI3G66cANi1mQvsgToaN5deZ6ALEDUHsfHVMYlowNiimoET5g=="],
+    "@hpcc-js/wasm-graphviz": ["@hpcc-js/wasm-graphviz@1.21.1", "", {}, "sha512-PHwgQEbfSPblh/cV422FRNU1mD3ISErOmGP8knX+TNWeUCfrbSV4dvPJnN36D+Cg6Dm4vjtnhlt3J8cUkbAS3Q=="],
 
     "@iconify/svelte": ["@iconify/svelte@5.2.1", "", { "dependencies": { "@iconify/types": "^2.0.0" }, "peerDependencies": { "svelte": ">5.0.0" } }, "sha512-zHmsIPmnIhGd5gc95bNN5FL+GifwMZv7M2rlZEpa7IXYGFJm/XGHdWf6PWQa6OBoC+R69WyiPO9NAj5wjfjbow=="],
 
