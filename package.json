@@ -53,7 +53,7 @@
 		"@tauri-apps/plugin-fs": "^2.4.5",
 		"@tauri-apps/plugin-opener": "^2.5.3",
 		"@tauri-apps/plugin-os": "^2.3.2",
-		"@viz-js/viz": "^3.24.0",
+		"@viz-js/viz": "^3.25.0",
 		"@vizel/core": "^1.2.0",
 		"@vizel/svelte": "^1.2.0",
 		"@xml-tools/ast": "^5.0.5",
