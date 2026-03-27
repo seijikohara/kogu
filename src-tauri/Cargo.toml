@@ -48,6 +48,11 @@ tauri-plugin-mcp-bridge = "0.8.1"
 tauri-plugin-dialog = "2.6.0"
 tauri-plugin-fs = "2.4.5"
 tauri-plugin-shell = "2"
+tauri-plugin-window-state = "2"
+
+# Settings
+toml = "0.8"
+font-kit = "0.14"
 
 # Async Runtime (for cancellable operations and network)
 tokio = { version = "1", features = ["sync", "net", "time", "rt", "macros"] }
