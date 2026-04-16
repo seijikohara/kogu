@@ -126,6 +126,11 @@ fn build_swift_helper() {
         if sdk_swift_lib.exists() {
             println!("cargo:rustc-link-search=native={}", sdk_swift_lib.display());
         }
+
+        // Use the OS-provided Swift runtime via dyld cache (macOS 10.14.4+).
+        // /usr/lib/swift/libswiftCore.dylib is embedded in the dyld shared cache
+        // and does not exist as a physical file, but dyld resolves it automatically.
+        println!("cargo:rustc-link-arg=-Wl,-rpath,/usr/lib/swift");
     }
 }
 

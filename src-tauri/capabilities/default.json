@@ -22,6 +22,7 @@
 		"fs:allow-read-text-file",
 		"fs:allow-write-text-file",
 		"decorum:allow-show-snap-overlay",
+		"mcp-bridge:default",
 		{
 			"identifier": "shell:allow-spawn",
 			"allow": [

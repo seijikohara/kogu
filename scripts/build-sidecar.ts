@@ -1,9 +1,9 @@
 #!/usr/bin/env bun
 
 /**
- * Build and copy sidecar binary for Tauri
+ * Build and copy sidecar binaries for Tauri
  *
- * This script builds the worker binary and copies it to the
+ * This script builds the worker and net-scanner binaries and copies them to the
  * src-tauri/binaries directory with the correct target triple suffix.
  *
  * The build process creates a placeholder file first to satisfy Tauri's
@@ -15,7 +15,7 @@ import { join } from 'node:path';
 import { $ } from 'bun';
 
 // Constants
-const SIDECAR_NAME = 'worker';
+const SIDECAR_NAMES = ['worker', 'net-scanner'] as const;
 const BINARIES_DIR = join('src-tauri', 'binaries');
 
 // Pure functions
@@ -34,10 +34,8 @@ const getTargetTriple = async (): Promise<string> => {
 	return match[1];
 };
 
-const runCargoBuild = async (release: boolean): Promise<void> => {
-	const args = release
-		? ['build', '--bin', SIDECAR_NAME, '--release']
-		: ['build', '--bin', SIDECAR_NAME];
+const runCargoBuild = async (name: string, release: boolean): Promise<void> => {
+	const args = release ? ['build', '--bin', name, '--release'] : ['build', '--bin', name];
 	await $`cargo ${args}`.cwd('src-tauri');
 };
 
@@ -72,48 +70,53 @@ const cleanupPlaceholder = (path: string): void => {
 };
 
 // Main workflow
-const buildSidecar = async (release: boolean): Promise<void> => {
+const buildSidecars = async (release: boolean): Promise<void> => {
 	const profile = getProfile(release);
-	console.log(`Building sidecar in ${profile} mode...`);
+	console.log(`Building sidecars in ${profile} mode...`);
 
 	const targetTriple = await getTargetTriple();
 	console.log(`Target triple: ${targetTriple}`);
 
-	const destName = `${SIDECAR_NAME}-${targetTriple}`;
-	const sourcePath = join('src-tauri', 'target', profile, SIDECAR_NAME);
-	const destPath = join(BINARIES_DIR, destName);
-
 	ensureDirectory(BINARIES_DIR);
 
-	// Create placeholder if destination doesn't exist
-	const needsPlaceholder = !existsSync(destPath);
-	if (needsPlaceholder) {
-		console.log(`  Creating placeholder for ${destName}...`);
-		createPlaceholder(destPath);
+	// Create all placeholders first so Tauri's build script validation passes
+	// for every externalBin before any cargo build is invoked.
+	const placeholdersCreated: string[] = [];
+	for (const name of SIDECAR_NAMES) {
+		const destPath = join(BINARIES_DIR, `${name}-${targetTriple}`);
+		if (!existsSync(destPath)) {
+			console.log(`  Creating placeholder for ${name}-${targetTriple}...`);
+			createPlaceholder(destPath);
+			placeholdersCreated.push(destPath);
+		}
 	}
 
 	try {
-		// Build sidecar binary
-		console.log(`  Building ${SIDECAR_NAME}...`);
-		await runCargoBuild(release);
+		for (const name of SIDECAR_NAMES) {
+			const destName = `${name}-${targetTriple}`;
+			const sourcePath = join('src-tauri', 'target', profile, name);
+			const destPath = join(BINARIES_DIR, destName);
 
-		// Copy binary with target triple suffix
-		console.log(`  Copying ${SIDECAR_NAME} -> ${destName}`);
-		copyBinary(sourcePath, destPath);
+			console.log(`  Building ${name}...`);
+			await runCargoBuild(name, release);
 
-		console.log('Sidecar build complete!');
+			console.log(`  Copying ${name} -> ${destName}`);
+			copyBinary(sourcePath, destPath);
+		}
 	} catch (error) {
-		if (needsPlaceholder) {
-			cleanupPlaceholder(destPath);
+		for (const p of placeholdersCreated) {
+			cleanupPlaceholder(p);
 		}
 		throw error;
 	}
+
+	console.log('Sidecar build complete!');
 };
 
 // Entry point
 const release = parseArgs(process.argv);
 
-buildSidecar(release).catch((error) => {
+buildSidecars(release).catch((error) => {
 	console.error('Error building sidecar:', error);
 	process.exit(1);
 });
