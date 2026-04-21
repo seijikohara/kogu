@@ -1,7 +1,8 @@
 #!/usr/bin/env bun
 
 import { execSync } from 'node:child_process';
-import { readFileSync, writeFileSync } from 'node:fs';
+import { readFileSync, unlinkSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 import { resolve } from 'node:path';
 import * as readline from 'node:readline';
 
@@ -195,8 +196,17 @@ A tag \`v${newVersion}\` will be automatically created, triggering the release w
 
 // GitHub operations
 const createPullRequest = (version: string, body: string): string => {
-	const escapedBody = body.replace(/"/g, '\\"').replace(/\n/g, '\\n');
-	return exec(`gh pr create --title "chore: release v${version}" --body "${escapedBody}"`);
+	// Write the body to a temp file so newlines, quotes, and backticks pass
+	// through to GitHub unchanged. Inlining the body into a shell command
+	// caused literal "\n" text, command-substituted backticks, and broken
+	// markdown in the published PR description.
+	const tempFile = resolve(tmpdir(), `release-pr-${version}.md`);
+	writeFileSync(tempFile, body);
+	try {
+		return exec(`gh pr create --title "chore: release v${version}" --body-file "${tempFile}"`);
+	} finally {
+		unlinkSync(tempFile);
+	}
 };
 
 // Validation
