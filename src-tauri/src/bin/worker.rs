@@ -423,7 +423,7 @@ fn build_ssh_keygen_command(algorithm: SshKeyAlgorithm, comment: &str) -> String
 
 fn handle_gpg_keygen(req: GpgRequest) -> String {
     use pgp::composed::{ArmorOptions, KeyType, SecretKeyParamsBuilder, SignedPublicKey};
-    use pgp::types::{KeyDetails, Password};
+    use pgp::types::KeyDetails;
 
     // Validate
     if req.name.trim().is_empty() {
@@ -445,7 +445,7 @@ fn handle_gpg_keygen(req: GpgRequest) -> String {
         _ => format!("{} <{}>", req.name, req.email),
     };
 
-    let mut rng = rand::rngs::OsRng;
+    let rng = rand::rngs::OsRng;
 
     let key_type = match req.algorithm {
         GpgKeyAlgorithm::Rsa2048 => KeyType::Rsa(2048),
@@ -460,6 +460,7 @@ fn handle_gpg_keygen(req: GpgRequest) -> String {
         .can_certify(true)
         .can_sign(true)
         .primary_user_id(user_id.clone())
+        .passphrase(req.passphrase.clone())
         .build()
     {
         Ok(p) => p,
@@ -471,24 +472,12 @@ fn handle_gpg_keygen(req: GpgRequest) -> String {
         }
     };
 
-    let secret_key = match params.generate(rng) {
+    let signed_key = match params.generate(rng) {
         Ok(k) => k,
         Err(e) => {
             return to_json(&ErrorResponse {
                 success: false,
                 error: format!("Failed to generate key: {e}"),
-            })
-        }
-    };
-
-    let password = Password::from(req.passphrase.clone().unwrap_or_default());
-
-    let signed_key = match secret_key.sign(&mut rng, &password) {
-        Ok(k) => k,
-        Err(e) => {
-            return to_json(&ErrorResponse {
-                success: false,
-                error: format!("Failed to sign key: {e}"),
             })
         }
     };

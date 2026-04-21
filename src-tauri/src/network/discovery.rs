@@ -745,19 +745,23 @@ async fn resolve_hostnames_for_results(
 
 /// Resolve hostname via DNS PTR (reverse lookup) for a single IP
 async fn resolve_dns_ptr(ip: IpAddr) -> Option<String> {
+    use hickory_resolver::proto::rr::RData;
     use hickory_resolver::Resolver;
 
     // Create resolver with system configuration
-    let resolver = Resolver::builder_tokio().ok()?.build();
+    let resolver = Resolver::builder_tokio().ok()?.build().ok()?;
 
     // Perform reverse lookup
     let response = resolver.reverse_lookup(ip).await.ok()?;
 
     // Get the first PTR record and clean up the hostname
-    response.iter().next().map(|name| {
-        let hostname = name.to_string();
-        // Remove trailing dot if present
-        hostname.strip_suffix('.').unwrap_or(&hostname).to_string()
+    response.answers().iter().find_map(|record| {
+        if let RData::PTR(ptr) = &record.data {
+            let hostname = ptr.to_string();
+            Some(hostname.strip_suffix('.').unwrap_or(&hostname).to_string())
+        } else {
+            None
+        }
     })
 }
 
@@ -2208,7 +2212,7 @@ fn parse_upnp_device_xml(xml: &str, location: &str) -> Option<super::types::Ssdp
             }
             Ok(Event::Text(ref e)) => {
                 if device_depth == 1 {
-                    let text = e.unescape().unwrap_or_default().trim().to_string();
+                    let text = e.xml_content().unwrap_or_default().trim().to_string();
                     if !text.is_empty() {
                         assign_field(&current_tag, text);
                     }

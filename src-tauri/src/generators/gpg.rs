@@ -216,7 +216,7 @@ fn generate_with_cli(options: GpgKeyOptions) -> Result<GpgKeyResult, GeneratorEr
 #[cfg(test)]
 fn generate_with_library(options: GpgKeyOptions) -> Result<GpgKeyResult, GeneratorError> {
     use pgp::composed::{ArmorOptions, KeyType, SecretKeyParamsBuilder, SignedPublicKey};
-    use pgp::types::{KeyDetails, Password};
+    use pgp::types::KeyDetails;
 
     // Destructure to consume ownership
     let GpgKeyOptions {
@@ -231,7 +231,7 @@ fn generate_with_library(options: GpgKeyOptions) -> Result<GpgKeyResult, Generat
     // Build user_id string
     let user_id = build_user_id(&name, &email, comment.as_deref());
 
-    let mut rng = rand::rngs::OsRng;
+    let rng = rand::rngs::OsRng;
 
     let key_type = match algorithm {
         GpgKeyAlgorithm::Rsa2048 => KeyType::Rsa(2048),
@@ -246,20 +246,13 @@ fn generate_with_library(options: GpgKeyOptions) -> Result<GpgKeyResult, Generat
         .can_certify(true)
         .can_sign(true)
         .primary_user_id(user_id.clone())
+        .passphrase(passphrase.clone())
         .build()
         .map_err(|e| GeneratorError::Gpg(format!("Failed to build key params: {e}")))?;
 
-    let secret_key = params
+    let signed_key = params
         .generate(rng)
         .map_err(|e| GeneratorError::Gpg(format!("Failed to generate key: {e}")))?;
-
-    // Get passphrase as Password type
-    let password = Password::from(passphrase.clone().unwrap_or_default());
-
-    // Sign the key to create SignedSecretKey
-    let signed_key = secret_key
-        .sign(&mut rng, &password)
-        .map_err(|e| GeneratorError::Gpg(format!("Failed to sign key: {e}")))?;
 
     // Get fingerprint from signed key (KeyDetails trait)
     let fingerprint = format!("{:X}", signed_key.fingerprint());
