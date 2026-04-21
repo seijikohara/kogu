@@ -81,12 +81,13 @@ fn statement_to_ast(stmt: &Statement, path: &str) -> AstNode {
     match stmt {
         Statement::Query(query) => query_to_ast(query, path),
         Statement::Insert(insert) => insert_to_ast(insert, path),
-        Statement::Update {
-            table,
-            assignments,
-            selection,
-            ..
-        } => update_to_ast(table, assignments, selection.as_ref(), path, range),
+        Statement::Update(update) => update_to_ast(
+            &update.table,
+            &update.assignments,
+            update.selection.as_ref(),
+            path,
+            range,
+        ),
         Statement::Delete(delete) => delete_to_ast(delete, path),
         Statement::CreateTable(create) => create_table_to_ast(create, path),
         Statement::Drop {
@@ -103,7 +104,7 @@ fn statement_type_label(stmt: &Statement) -> String {
     match stmt {
         Statement::Query(_) => "SELECT".to_string(),
         Statement::Insert(_) => "INSERT".to_string(),
-        Statement::Update { .. } => "UPDATE".to_string(),
+        Statement::Update(_) => "UPDATE".to_string(),
         Statement::Delete(_) => "DELETE".to_string(),
         Statement::CreateTable(_) => "CREATE TABLE".to_string(),
         Statement::CreateView { .. } => "CREATE VIEW".to_string(),
@@ -122,7 +123,7 @@ fn statement_type_label(stmt: &Statement) -> String {
         Statement::StartTransaction { .. } => "START TRANSACTION".to_string(),
         Statement::Commit { .. } => "COMMIT".to_string(),
         Statement::Rollback { .. } => "ROLLBACK".to_string(),
-        Statement::SetVariable { .. } => "SET".to_string(),
+        Statement::Set(_) => "SET".to_string(),
         Statement::ShowVariable { .. } => "SHOW".to_string(),
         Statement::ShowTables { .. } => "SHOW TABLES".to_string(),
         Statement::ShowColumns { .. } => "SHOW COLUMNS".to_string(),
@@ -140,12 +141,12 @@ fn statement_type_label(stmt: &Statement) -> String {
 
 fn insert_to_ast(insert: &sqlparser::ast::Insert, path: &str) -> AstNode {
     let range = span_to_range(insert.span());
-    let table_range = span_to_range(insert.table_name.span());
+    let table_range = span_to_range(insert.table.span());
 
     let mut children = vec![AstNode::new(
         AstNodeType::Identifier,
         format!("{path}.table"),
-        insert.table_name.to_string(),
+        insert.table.to_string(),
         table_range,
     )];
 
@@ -393,6 +394,7 @@ const fn object_type_label(object_type: sqlparser::ast::ObjectType) -> &'static 
     match object_type {
         ObjectType::Table => "TABLE",
         ObjectType::View => "VIEW",
+        ObjectType::MaterializedView => "MATERIALIZED VIEW",
         ObjectType::Index => "INDEX",
         ObjectType::Schema => "SCHEMA",
         ObjectType::Database => "DATABASE",
@@ -400,6 +402,8 @@ const fn object_type_label(object_type: sqlparser::ast::ObjectType) -> &'static 
         ObjectType::Stage => "STAGE",
         ObjectType::Type => "TYPE",
         ObjectType::Role => "ROLE",
+        ObjectType::User => "USER",
+        ObjectType::Stream => "STREAM",
     }
 }
 
@@ -413,26 +417,7 @@ fn query_to_ast(query: &Query, path: &str) -> AstNode {
 
     children.extend(query_body_to_ast(&query.body, path));
     children.extend(order_by_to_ast(query.order_by.as_ref(), path));
-
-    if let Some(limit) = &query.limit {
-        let limit_range = span_to_range(limit.span());
-        children.push(AstNode::new(
-            AstNodeType::Clause,
-            format!("{path}.limit"),
-            format!("LIMIT {limit}"),
-            limit_range,
-        ));
-    }
-
-    if let Some(offset) = &query.offset {
-        let offset_range = span_to_range(offset.span());
-        children.push(AstNode::new(
-            AstNodeType::Clause,
-            format!("{path}.offset"),
-            format!("OFFSET {}", offset.value),
-            offset_range,
-        ));
-    }
+    children.extend(limit_clause_to_ast(query.limit_clause.as_ref(), path));
 
     AstNode::new(
         AstNodeType::Statement,
@@ -513,31 +498,42 @@ const fn set_operator_label(op: sqlparser::ast::SetOperator) -> &'static str {
         SetOperator::Union => "UNION",
         SetOperator::Intersect => "INTERSECT",
         SetOperator::Except => "EXCEPT",
+        SetOperator::Minus => "MINUS",
     }
 }
 
 fn order_by_to_ast(order_by: Option<&sqlparser::ast::OrderBy>, path: &str) -> Option<AstNode> {
     let order_by = order_by?;
-    if order_by.exprs.is_empty() {
-        return None;
-    }
-
     let order_range = span_to_range(order_by.span());
 
-    let children: Vec<_> = order_by
-        .exprs
-        .iter()
-        .enumerate()
-        .map(|(i, ord)| {
-            let ord_range = span_to_range(ord.span());
-            AstNode::new(
-                AstNodeType::Expression,
-                format!("{path}.orderBy[{i}]"),
-                ord.expr.to_string(),
-                ord_range,
-            )
-        })
-        .collect();
+    let children: Vec<_> = match &order_by.kind {
+        sqlparser::ast::OrderByKind::Expressions(exprs) => {
+            if exprs.is_empty() {
+                return None;
+            }
+            exprs
+                .iter()
+                .enumerate()
+                .map(|(i, ord)| {
+                    let ord_range = span_to_range(ord.span());
+                    AstNode::new(
+                        AstNodeType::Expression,
+                        format!("{path}.orderBy[{i}]"),
+                        ord.expr.to_string(),
+                        ord_range,
+                    )
+                })
+                .collect()
+        }
+        sqlparser::ast::OrderByKind::All(_) => {
+            return Some(AstNode::new(
+                AstNodeType::Clause,
+                format!("{path}.orderBy"),
+                "ORDER BY ALL".to_string(),
+                order_range,
+            ));
+        }
+    };
 
     Some(
         AstNode::new(
@@ -548,6 +544,61 @@ fn order_by_to_ast(order_by: Option<&sqlparser::ast::OrderBy>, path: &str) -> Op
         )
         .with_children(children),
     )
+}
+
+fn limit_clause_to_ast(
+    limit_clause: Option<&sqlparser::ast::LimitClause>,
+    path: &str,
+) -> Vec<AstNode> {
+    use sqlparser::ast::LimitClause;
+
+    match limit_clause {
+        None => vec![],
+        Some(LimitClause::LimitOffset {
+            limit,
+            offset,
+            limit_by: _,
+        }) => {
+            let mut nodes = Vec::new();
+            if let Some(limit_expr) = limit {
+                let limit_range = span_to_range(limit_expr.span());
+                nodes.push(AstNode::new(
+                    AstNodeType::Clause,
+                    format!("{path}.limit"),
+                    format!("LIMIT {limit_expr}"),
+                    limit_range,
+                ));
+            }
+            if let Some(offset) = offset {
+                let offset_range = span_to_range(offset.span());
+                nodes.push(AstNode::new(
+                    AstNodeType::Clause,
+                    format!("{path}.offset"),
+                    format!("OFFSET {}", offset.value),
+                    offset_range,
+                ));
+            }
+            nodes
+        }
+        Some(LimitClause::OffsetCommaLimit { offset, limit }) => {
+            let offset_range = span_to_range(offset.span());
+            let limit_range = span_to_range(limit.span());
+            vec![
+                AstNode::new(
+                    AstNodeType::Clause,
+                    format!("{path}.offset"),
+                    format!("OFFSET {offset}"),
+                    offset_range,
+                ),
+                AstNode::new(
+                    AstNodeType::Clause,
+                    format!("{path}.limit"),
+                    format!("LIMIT {limit}"),
+                    limit_range,
+                ),
+            ]
+        }
+    }
 }
 
 fn select_to_ast(select: &Select, path: &str) -> AstNode {
@@ -737,11 +788,14 @@ fn table_to_ast(table: &TableWithJoins, path: &str) -> AstNode {
 const fn join_operator_label(op: &sqlparser::ast::JoinOperator) -> &'static str {
     use sqlparser::ast::JoinOperator;
     match op {
+        JoinOperator::Join(_) => "JOIN",
         JoinOperator::Inner(_) => "INNER JOIN",
-        JoinOperator::LeftOuter(_) => "LEFT JOIN",
-        JoinOperator::RightOuter(_) => "RIGHT JOIN",
+        JoinOperator::Left(_) => "LEFT JOIN",
+        JoinOperator::LeftOuter(_) => "LEFT OUTER JOIN",
+        JoinOperator::Right(_) => "RIGHT JOIN",
+        JoinOperator::RightOuter(_) => "RIGHT OUTER JOIN",
         JoinOperator::FullOuter(_) => "FULL OUTER JOIN",
-        JoinOperator::CrossJoin => "CROSS JOIN",
+        JoinOperator::CrossJoin(_) => "CROSS JOIN",
         JoinOperator::Semi(_) => "SEMI JOIN",
         JoinOperator::LeftSemi(_) => "LEFT SEMI JOIN",
         JoinOperator::RightSemi(_) => "RIGHT SEMI JOIN",
@@ -751,6 +805,7 @@ const fn join_operator_label(op: &sqlparser::ast::JoinOperator) -> &'static str 
         JoinOperator::CrossApply => "CROSS APPLY",
         JoinOperator::OuterApply => "OUTER APPLY",
         JoinOperator::AsOf { .. } => "AS OF JOIN",
+        JoinOperator::StraightJoin(_) => "STRAIGHT_JOIN",
     }
 }
 
@@ -824,12 +879,11 @@ fn expr_to_ast(expr: &Expr, path: &str, label_prefix: &str) -> AstNode {
         Expr::Case {
             operand,
             conditions,
-            results,
             else_result,
+            ..
         } => case_to_ast(
             operand.as_deref(),
             conditions,
-            results,
             else_result.as_deref(),
             path,
             label_prefix,
@@ -1048,8 +1102,7 @@ fn subquery_expr_to_ast(query: &Query, path: &str, label_prefix: &str, range: As
 
 fn case_to_ast(
     operand: Option<&Expr>,
-    conditions: &[Expr],
-    results: &[Expr],
+    conditions: &[sqlparser::ast::CaseWhen],
     else_result: Option<&Expr>,
     path: &str,
     label_prefix: &str,
@@ -1059,14 +1112,14 @@ fn case_to_ast(
     if let Some(op) = operand {
         children.push(expr_to_ast(op, &format!("{path}.operand"), "Operand"));
     }
-    for (i, (cond, result)) in conditions.iter().zip(results.iter()).enumerate() {
+    for (i, case_when) in conditions.iter().enumerate() {
         children.push(expr_to_ast(
-            cond,
+            &case_when.condition,
             &format!("{path}.when[{i}]"),
             &format!("WHEN {}", i + 1),
         ));
         children.push(expr_to_ast(
-            result,
+            &case_when.result,
             &format!("{path}.then[{i}]"),
             &format!("THEN {}", i + 1),
         ));

@@ -43,8 +43,8 @@ thiserror = "2"
 roxmltree = "0.21"
 serde_yaml = "0.9"
 yaml-rust2 = "0.11"
-sqlparser = "0.53"
-tauri-plugin-mcp-bridge = "0.8.3"
+sqlparser = "0.61"
+tauri-plugin-mcp-bridge = "0.11.0"
 tauri-plugin-dialog = "2.7.0"
 tauri-plugin-fs = "2.5.0"
 tauri-plugin-shell = "2"
@@ -53,9 +53,9 @@ tauri-plugin-shell = "2"
 tokio = { version = "1", features = ["sync", "net", "time", "rt", "macros"] }
 
 # Cryptographic Generators
-bcrypt = "0.18"
+bcrypt = "0.19"
 ssh-key = { version = "0.6", features = ["ed25519", "p256", "p384", "rsa", "encryption", "rand_core"] }
-pgp = "0.18"
+pgp = "0.19"
 rand = "0.8"
 
 # Network Scanning
@@ -65,17 +65,17 @@ socket2 = "0.6"
 dns-lookup = "3"
 uuid = { version = "1", features = ["v4"] }
 if-addrs = "0.15"
-mdns-sd = "0.11"
-netdev = { version = "0.40", features = ["gateway"] }
+mdns-sd = "0.19"
+netdev = { version = "0.42", features = ["gateway"] }
 
 # Host Discovery
 surge-ping = "0.8"
 
 # UPnP Device Description Fetch
-reqwest = { version = "0.12", default-features = false, features = ["rustls-tls"] }
+reqwest = { version = "0.13", default-features = false, features = ["rustls"] }
 
 # XML Parsing (for SSDP/WS-Discovery device descriptions)
-quick-xml = "0.37"
+quick-xml = "0.39"
 
 # TLS Certificate Inspection
 rustls = { version = "0.23", features = ["ring"] }
@@ -83,7 +83,7 @@ tokio-rustls = "0.26"
 x509-parser = "0.18"
 
 # DNS PTR Reverse Lookup
-hickory-resolver = { version = "0.25", features = ["tokio", "system-config"] }
+hickory-resolver = { version = "0.26", features = ["tokio", "system-config"] }
 
 # SNMP sysName Query
 snmp2 = "0.4"

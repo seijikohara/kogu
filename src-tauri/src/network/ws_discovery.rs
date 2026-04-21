@@ -135,7 +135,7 @@ fn parse_probe_match(xml: &str) -> Option<WsDiscoveryInfo> {
             }
             Ok(Event::Text(ref e)) => {
                 if in_probe_match {
-                    let text = e.unescape().unwrap_or_default().trim().to_string();
+                    let text = e.xml_content().unwrap_or_default().trim().to_string();
                     if !text.is_empty() {
                         match current_tag.as_str() {
                             "Types" => {
