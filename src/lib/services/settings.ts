@@ -82,6 +82,38 @@ const SYSTEM_UI_FALLBACK =
 const MONOSPACE_FALLBACK =
 	"ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace";
 
+/**
+ * Tailwind v4 typography scale tokens consumed by the `text-*` utilities.
+ *
+ * Base values (in px) mirror the defaults declared in `app.css @theme inline`:
+ * - `--text-sm` = 0.8125rem (13 px) is the body text baseline
+ * - `--text-xs` = 0.75rem (12 px)
+ * - `--text-2xs` = 0.6875rem (11 px)
+ *
+ * These utilities (`text-sm`, `text-xs`, `text-2xs`) are used throughout the UI,
+ * so we scale them proportionally when the user changes the UI font size.
+ */
+const TYPOGRAPHY_SCALE = [
+	{
+		size: '--text-sm',
+		sizeBase: 13,
+		lineHeight: '--text-sm--line-height',
+		lineHeightBase: 20,
+	},
+	{
+		size: '--text-xs',
+		sizeBase: 12,
+		lineHeight: '--text-xs--line-height',
+		lineHeightBase: 18,
+	},
+	{
+		size: '--text-2xs',
+		sizeBase: 11,
+		lineHeight: '--text-2xs--line-height',
+		lineHeightBase: 16,
+	},
+] as const;
+
 /** Apply font settings to the document via CSS custom properties */
 export const applyFontSettings = (font: FontSettings): void => {
 	const root = document.documentElement.style;
@@ -94,27 +126,45 @@ export const applyFontSettings = (font: FontSettings): void => {
 		unloadAllGoogleFonts();
 	}
 
-	// UI font family
+	// UI font family: applies to body (--font-ui) and Tailwind `font-sans` utility (--font-sans)
 	if (font.ui_family) {
-		root.setProperty('--font-ui', `"${font.ui_family}", ${SYSTEM_UI_FALLBACK}`);
+		const value = `"${font.ui_family}", ${SYSTEM_UI_FALLBACK}`;
+		root.setProperty('--font-ui', value);
+		root.setProperty('--font-sans', value);
 	} else {
 		root.removeProperty('--font-ui');
+		root.removeProperty('--font-sans');
 	}
 
-	// Code font family
+	// Code font family: applies to code/pre/.cm-editor (--font-code) and
+	// Tailwind `font-mono` utility (--font-mono)
 	if (font.code_family) {
-		root.setProperty('--font-code', `"${font.code_family}", ${MONOSPACE_FALLBACK}`);
+		const value = `"${font.code_family}", ${MONOSPACE_FALLBACK}`;
+		root.setProperty('--font-code', value);
+		root.setProperty('--font-mono', value);
 	} else {
 		root.removeProperty('--font-code');
+		root.removeProperty('--font-mono');
 	}
 
-	// Font sizes
+	// UI font size: scale Tailwind typography tokens so `text-sm/xs/2xs` utilities
+	// reflect the user's UI size across the entire app, not just the body baseline.
 	if (font.ui_size && font.ui_size !== DEFAULT_FONT_SETTINGS.ui_size) {
+		const scale = font.ui_size / DEFAULT_FONT_SETTINGS.ui_size;
 		root.setProperty('--font-size-ui', `${font.ui_size}px`);
+		TYPOGRAPHY_SCALE.forEach(({ size, sizeBase, lineHeight, lineHeightBase }) => {
+			root.setProperty(size, `${sizeBase * scale}px`);
+			root.setProperty(lineHeight, `${lineHeightBase * scale}px`);
+		});
 	} else {
 		root.removeProperty('--font-size-ui');
+		TYPOGRAPHY_SCALE.forEach(({ size, lineHeight }) => {
+			root.removeProperty(size);
+			root.removeProperty(lineHeight);
+		});
 	}
 
+	// Code font size: applied to code/pre/.cm-editor only (see app.css)
 	if (font.code_size && font.code_size !== DEFAULT_FONT_SETTINGS.code_size) {
 		root.setProperty('--font-size-code', `${font.code_size}px`);
 	} else {
