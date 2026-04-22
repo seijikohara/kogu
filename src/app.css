@@ -218,13 +218,6 @@
 	--color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
 	--color-sidebar-border: var(--sidebar-border);
 	--color-sidebar-ring: var(--sidebar-ring);
-	/* Typography scale (1.125 modular scale) */
-	--font-size-2xs: 0.6875rem;
-	--font-size-2xs--line-height: 1rem;
-	--font-size-xs: 0.75rem;
-	--font-size-xs--line-height: 1.125rem;
-	--font-size-sm: 0.8125rem;
-	--font-size-sm--line-height: 1.25rem;
 	/* Line heights */
 	--line-height-tight: 1.25;
 	--line-height-snug: 1.375;
@@ -264,13 +257,31 @@
 	--animate-scale-in: scale-in 150ms var(--ease-standard);
 }
 
+/*
+ * Typography scale (1.125 modular scale).
+ *
+ * Defined without `inline` so Tailwind emits `font-size: var(--text-xs)` etc.
+ * in the generated utilities instead of the literal values. This allows the
+ * settings service to override text sizes at runtime by setting these custom
+ * properties on :root.
+ */
+@theme {
+	--text-2xs: 0.6875rem;
+	--text-2xs--line-height: 1rem;
+	--text-xs: 0.75rem;
+	--text-xs--line-height: 1.125rem;
+	--text-sm: 0.8125rem;
+	--text-sm--line-height: 1.25rem;
+}
+
 @layer base {
 	* {
 		@apply border-border outline-ring/50;
 	}
 	body {
 		@apply bg-background text-foreground;
-		font-family:
+		font-family: var(
+			--font-ui,
 			system-ui,
 			-apple-system,
 			BlinkMacSystemFont,
@@ -283,7 +294,25 @@
 			'Droid Sans',
 			'Helvetica Neue',
 			Arial,
-			sans-serif;
+			sans-serif
+		);
+		font-size: var(--font-size-ui, 0.8125rem);
+	}
+	code,
+	pre,
+	.cm-editor .cm-content,
+	.cm-editor .cm-gutters {
+		font-family: var(
+			--font-code,
+			ui-monospace,
+			SFMono-Regular,
+			'SF Mono',
+			Menlo,
+			Consolas,
+			'Liberation Mono',
+			monospace
+		);
+		font-size: var(--font-size-code, 0.8125rem);
 	}
 }
 

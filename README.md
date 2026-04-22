@@ -75,6 +75,20 @@ Currently not supported for privileged scanning. Use TCP Connect and other unpri
 
 See [docs/network-scanner/troubleshooting.md](docs/network-scanner/troubleshooting.md) for common issues and solutions.
 
+## Settings
+
+Kogu stores user preferences (fonts, window state) as TOML in the platform-specific application config directory. The exact path is shown at the bottom of the **Settings** page.
+
+| Platform | Settings file location                                                   |
+| -------- | ------------------------------------------------------------------------ |
+| macOS    | `~/Library/Application Support/io.github.seijikohara.kogu/settings.toml` |
+| Windows  | `%APPDATA%\io.github.seijikohara.kogu\settings.toml`                     |
+| Linux    | `~/.config/io.github.seijikohara.kogu/settings.toml`                     |
+
+Window position and size are stored in the same directory as `.window-state.json`.
+
+If `settings.toml` becomes corrupt, Kogu backs it up as `settings.bak` and starts with defaults. To reset all preferences manually, use **Settings → Reset All Settings**, or on macOS the **Kogu → Reset All Settings...** menu.
+
 ## Development
 
 ### Prerequisites

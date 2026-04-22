@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { ChevronLeft, ChevronRight, Monitor, Moon, Sun } from '@lucide/svelte';
+	import { ChevronLeft, ChevronRight, Monitor, Moon, Settings, Sun } from '@lucide/svelte';
 	import { mode, toggleMode } from 'mode-watcher';
 	import { page } from '$app/state';
 	import * as Collapsible from '$lib/components/ui/collapsible/index.js';
@@ -86,9 +86,19 @@
 		{/each}
 	</Sidebar.Content>
 
-	<!-- Footer with Theme Toggle and Collapse Button -->
+	<!-- Footer with Settings, Theme Toggle and Collapse Button -->
 	<Sidebar.Footer class="border-t border-sidebar-border py-1.5">
 		<Sidebar.Menu>
+			<Sidebar.MenuItem>
+				<Sidebar.MenuButton isActive={page.url.pathname === '/settings'} tooltipContent="Settings">
+					{#snippet child({ props })}
+						<a href="/settings" {...props}>
+							<Settings class="size-4" />
+							<span>Settings</span>
+						</a>
+					{/snippet}
+				</Sidebar.MenuButton>
+			</Sidebar.MenuItem>
 			<Sidebar.MenuItem>
 				<Sidebar.MenuButton onclick={toggleMode} tooltipContent="Toggle theme">
 					{#if mode.current === 'dark'}
