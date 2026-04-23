@@ -51,7 +51,7 @@ tauri-plugin-shell = "2"
 tauri-plugin-window-state = "2"
 
 # Settings
-toml = "0.8"
+toml = "0.9"
 font-kit = "0.14"
 
 # Async Runtime (for cancellable operations and network)
