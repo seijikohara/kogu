@@ -19,8 +19,8 @@ changelog:
     labels:
       - ignore-for-release
     authors:
-      - dependabot
-      - dependabot[bot]
+      - renovate
+      - renovate[bot]
   categories:
     - title: '🚀 Features'
       labels:

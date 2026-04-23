@@ -1,0 +1,37 @@
+{
+	// Renovate configuration.
+	// Schema reference: https://docs.renovatebot.com/renovate-schema.json
+	$schema: 'https://docs.renovatebot.com/renovate-schema.json',
+
+	extends: ['config:recommended', ':semanticCommits'],
+
+	timezone: 'Asia/Tokyo',
+	schedule: ['before 9am on monday'],
+
+	// Apply the "dependencies" label so release notes categorize updates correctly.
+	labels: ['dependencies'],
+
+	// Surface vulnerability updates for manual review via the auto-merge workflow.
+	vulnerabilityAlerts: {
+		labels: ['security'],
+	},
+
+	// Use Conventional Commits types without scope so release notes categorize updates correctly.
+	packageRules: [
+		{
+			matchManagers: ['github-actions'],
+			semanticCommitType: 'ci',
+			semanticCommitScope: null,
+		},
+		{
+			matchManagers: ['npm', 'bun'],
+			semanticCommitType: 'deps',
+			semanticCommitScope: null,
+		},
+		{
+			matchManagers: ['cargo'],
+			semanticCommitType: 'deps',
+			semanticCommitScope: null,
+		},
+	],
+}
