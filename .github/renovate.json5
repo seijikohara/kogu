@@ -11,9 +11,16 @@
 	// Apply the "dependencies" label so release notes categorize updates correctly.
 	labels: ['dependencies'],
 
-	// Surface vulnerability updates for manual review via the auto-merge workflow.
+	// Auto-merge updates using GitHub's native auto-merge with rebase strategy.
+	automerge: true,
+	automergeType: 'pr',
+	automergeStrategy: 'rebase',
+
+	// Surface vulnerability updates with a label and keep them out of auto-merge
+	// so a human can assess impact before it lands.
 	vulnerabilityAlerts: {
 		labels: ['security'],
+		automerge: false,
 	},
 
 	// Use Conventional Commits types without scope so release notes categorize updates correctly.
