@@ -91,7 +91,7 @@ x509-parser = "0.18"
 hickory-resolver = { version = "0.26", features = ["tokio", "system-config"] }
 
 # SNMP sysName Query
-snmp2 = "0.4"
+snmp2 = "0.5"
 
 # pnet is only available on Unix (Windows requires WinPcap/Npcap SDK)
 [target.'cfg(unix)'.dependencies]
