@@ -1,5 +1,6 @@
 <script lang="ts">
 	import type { Snippet } from 'svelte';
+	import * as Tabs from '$lib/components/ui/tabs/index.js';
 	import ToolBar from './tool-bar.svelte';
 	import OptionsRail from './options-rail.svelte';
 	import StatusBar from './status-bar.svelte';
@@ -62,10 +63,9 @@
 		children,
 	}: Props = $props();
 
-	const hasTabs = $derived(tabs && tabs.length > 0);
+	const hasTabs = $derived(!!tabs && tabs.length > 0);
 	const tabIds = $derived(tabs?.map((t) => t.id) ?? []);
 
-	// Determine rail state for CSS grid
 	const railState = $derived.by(() => {
 		if (!rail) return 'none';
 		return showRail ? 'open' : 'closed';
@@ -91,91 +91,101 @@
 			}
 		}
 	};
+
+	const handleValueChange = (value: string) => {
+		ontabchange?.(value);
+	};
 </script>
 
 <svelte:window onkeydown={handleShellKeydown} />
 
-<div class="tool-shell" data-layout={layout} data-rail={railState}>
-	<!-- Toolbar -->
-	<div class="tool-toolbar">
-		<ToolBar {title}>
-			{#snippet leading()}
-				{#if toolbarLeading}
-					{@render toolbarLeading()}
-				{/if}
-			{/snippet}
-
-			{#snippet center()}
-				{#if toolbarCenter}
-					{@render toolbarCenter()}
-				{:else if hasTabs && tabs}
-					<div
-						class="flex items-center gap-0.5 rounded-lg bg-surface-2 p-1 shadow-inner"
-						role="tablist"
-					>
-						{#each tabs as tab (tab.id)}
-							{@const TabIcon = tab.icon}
-							<button
-								role="tab"
-								aria-selected={activeTab === tab.id}
-								class="focus-ring relative flex items-center gap-1.5 rounded-md px-3.5 py-2 text-sm font-medium transition-all duration-150 {activeTab ===
-								tab.id
-									? 'bg-surface-0 text-foreground shadow-sm'
-									: 'text-muted-foreground hover:bg-interactive-hover hover:text-foreground'}"
-								onclick={() => ontabchange?.(tab.id)}
-							>
-								<TabIcon class="h-4 w-4" />
-								{tab.label}
-							</button>
-						{/each}
-					</div>
-				{/if}
-			{/snippet}
-
-			{#snippet trailing()}
-				{#if toolbarTrailing}
-					{@render toolbarTrailing()}
-				{/if}
-			{/snippet}
-		</ToolBar>
-	</div>
-
-	<!-- Options Rail -->
-	{#if rail}
-		<div class="tool-rail">
-			<OptionsRail
-				bind:show={showRail}
-				title={railTitle}
-				onclose={() => (showRail = false)}
-				onopen={() => (showRail = true)}
-			>
-				{@render rail()}
-			</OptionsRail>
-		</div>
-	{/if}
-
-	<!-- Main Content -->
-	<div class="tool-content animate-fade-in">
-		{#if preserveTabState && tabContent && tabs && activeTab}
-			<TabPanels tabs={tabIds} {activeTab}>
-				{#snippet children(tab)}
-					{@render tabContent(tab)}
+{#snippet shell()}
+	<div class="tool-shell" data-layout={layout} data-rail={railState}>
+		<!-- Toolbar -->
+		<div class="tool-toolbar">
+			<ToolBar {title}>
+				{#snippet leading()}
+					{#if toolbarLeading}
+						{@render toolbarLeading()}
+					{/if}
 				{/snippet}
-			</TabPanels>
-		{:else if children}
-			{@render children()}
-		{/if}
-	</div>
 
-	<!-- Status Bar -->
-	<div class="tool-status">
-		<StatusBar {valid} {error}>
-			{#if statusContent}
-				{@render statusContent()}
+				{#snippet center()}
+					{#if toolbarCenter}
+						{@render toolbarCenter()}
+					{:else if hasTabs && tabs}
+						<Tabs.List
+							class="bg-surface-2 inline-flex h-auto items-center gap-0.5 rounded-lg p-1 shadow-inner"
+						>
+							{#each tabs as tab (tab.id)}
+								{@const TabIcon = tab.icon}
+								<Tabs.Trigger
+									value={tab.id}
+									class="data-[state=active]:bg-surface-0 data-[state=active]:text-foreground data-[state=active]:shadow-sm text-muted-foreground hover:bg-interactive-hover hover:text-foreground inline-flex flex-none items-center gap-1.5 rounded-md border-0 px-3.5 py-2 text-sm font-medium transition-all duration-150"
+								>
+									<TabIcon class="h-4 w-4" />
+									{tab.label}
+								</Tabs.Trigger>
+							{/each}
+						</Tabs.List>
+					{/if}
+				{/snippet}
+
+				{#snippet trailing()}
+					{#if toolbarTrailing}
+						{@render toolbarTrailing()}
+					{/if}
+				{/snippet}
+			</ToolBar>
+		</div>
+
+		<!-- Options Rail -->
+		{#if rail}
+			<div class="tool-rail">
+				<OptionsRail
+					bind:show={showRail}
+					title={railTitle}
+					onclose={() => (showRail = false)}
+					onopen={() => (showRail = true)}
+				>
+					{@render rail()}
+				</OptionsRail>
+			</div>
+		{/if}
+
+		<!-- Main Content -->
+		<div class="tool-content animate-fade-in">
+			{#if preserveTabState && tabContent && tabs && activeTab}
+				<TabPanels tabs={tabIds} {activeTab}>
+					{#snippet children(tab)}
+						{@render tabContent(tab)}
+					{/snippet}
+				</TabPanels>
+			{:else if hasTabs && tabContent && activeTab}
+				{@render tabContent(activeTab)}
+			{:else if children}
+				{@render children()}
 			{/if}
-		</StatusBar>
+		</div>
+
+		<!-- Status Bar -->
+		<div class="tool-status">
+			<StatusBar {valid} {error}>
+				{#if statusContent}
+					{@render statusContent()}
+				{/if}
+			</StatusBar>
+		</div>
 	</div>
-</div>
+{/snippet}
+
+{#if hasTabs && tabs && activeTab}
+	<Tabs.Root value={activeTab} onValueChange={handleValueChange} class="contents">
+		{@render shell()}
+	</Tabs.Root>
+{:else}
+	{@render shell()}
+{/if}
 
 <style>
 	.tool-shell {
