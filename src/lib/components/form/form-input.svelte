@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { Eye, EyeOff } from '@lucide/svelte';
+	import { Button } from '$lib/components/ui/button/index.js';
 	import { Input } from '$lib/components/ui/input/index.js';
 	import { Label } from '$lib/components/ui/label/index.js';
 
@@ -48,9 +49,11 @@
 			class="h-9 text-sm bg-background {showToggle && type === 'password' ? 'pr-9' : ''}"
 		/>
 		{#if showToggle && type === 'password'}
-			<button
-				type="button"
-				class="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+			<Button
+				variant="ghost"
+				size="icon-sm"
+				class="absolute right-1 top-1/2 h-7 w-7 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+				aria-label={showValue ? 'Hide password' : 'Show password'}
 				onclick={() => (showValue = !showValue)}
 			>
 				{#if showValue}
@@ -58,7 +61,7 @@
 				{:else}
 					<Eye class="h-3.5 w-3.5" />
 				{/if}
-			</button>
+			</Button>
 		{/if}
 	</div>
 	{#if hint}
