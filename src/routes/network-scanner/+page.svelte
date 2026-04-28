@@ -32,6 +32,7 @@
 	import { ToolShell } from '$lib/components/shell';
 	import { EmptyState, ErrorDisplay, StatItem } from '$lib/components/status';
 	import * as Accordion from '$lib/components/ui/accordion/index.js';
+	import { ListItemButton } from '$lib/components/ui/list-item-button';
 	import * as Resizable from '$lib/components/ui/resizable';
 	import { Channel } from '@tauri-apps/api/core';
 	import {
@@ -707,14 +708,17 @@
 					<p class="text-xs font-medium text-muted-foreground">Available interfaces:</p>
 					<div class="max-h-24 space-y-1 overflow-y-auto">
 						{#each networkInfo.interfaces.filter((i) => !i.isLoopback && i.suggestedCidr) as iface (iface.ip)}
-							<button
-								type="button"
-								class="flex w-full items-center justify-between rounded border border-input bg-background px-2 py-1 text-left text-xs transition-colors hover:bg-interactive-hover"
+							<ListItemButton
+								variant="default"
+								size="sm"
+								class="border-input bg-background rounded border px-2 py-1"
 								onclick={() => handleSelectInterface(iface)}
 							>
 								<span class="font-medium">{iface.name}</span>
-								<span class="text-muted-foreground">{iface.suggestedCidr}</span>
-							</button>
+								{#snippet trailing()}
+									<span class="text-muted-foreground">{iface.suggestedCidr}</span>
+								{/snippet}
+							</ListItemButton>
 						{/each}
 					</div>
 				</div>
