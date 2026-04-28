@@ -24,6 +24,8 @@
 		Type,
 	} from '@lucide/svelte';
 	import { toast } from 'svelte-sonner';
+	import { Button } from '$lib/components/ui/button/index.js';
+	import { ListItemButton } from '$lib/components/ui/list-item-button/index.js';
 	import type { AstNode, AstNodeType } from '$lib/services/ast/index.js';
 	import TreeView from './tree-view.svelte';
 
@@ -343,7 +345,9 @@
 	const getVisibleTreeItems = (el: HTMLElement): HTMLElement[] => {
 		const root =
 			el.closest('[role="tree"]') ?? el.closest('.group\\/tree')?.parentElement ?? document.body;
-		return Array.from(root.querySelectorAll<HTMLElement>('[role="treeitem"] > [role="button"]'));
+		return Array.from(
+			root.querySelectorAll<HTMLElement>('[role="treeitem"] [data-slot="list-item-button"]')
+		);
 	};
 
 	const handleTreeKeydown = (e: KeyboardEvent) => {
@@ -414,19 +418,14 @@
 >
 	{#if hasChildren}
 		<!-- Expandable node -->
-		<div
-			class="flex items-center gap-1 rounded-md px-1 py-0.5 transition-colors hover:bg-muted/60 {isSelected
-				? 'bg-primary/10 ring-1 ring-primary/30'
-				: ''}"
-			onclick={handleClick}
-			onkeydown={handleTreeKeydown}
-			role="button"
-			tabindex={isSelected ? 0 : -1}
-		>
-			<!-- Expand/collapse button -->
-			<button
-				type="button"
-				class="flex h-5 w-5 shrink-0 items-center justify-center rounded transition-all hover:bg-muted-foreground/20"
+		<div class="relative">
+			<!-- Expand/collapse button (absolute-positioned to avoid nesting buttons) -->
+			<Button
+				variant="ghost"
+				size="icon-sm"
+				class="hover:bg-muted-foreground/20 absolute left-1 top-1/2 z-10 h-5 w-5 -translate-y-1/2 rounded transition-all"
+				aria-label={expanded ? 'Collapse' : 'Expand'}
+				tabindex={-1}
 				onclick={(e) => {
 					e.stopPropagation();
 					expanded = !expanded;
@@ -437,50 +436,65 @@
 						? 'rotate-90'
 						: ''}"
 				/>
-			</button>
+			</Button>
 
-			<!-- Type icon -->
-			<span class="flex h-5 w-5 shrink-0 items-center justify-center rounded {styles.bg}">
-				<TypeIcon class="h-3 w-3 {styles.icon}" />
-			</span>
-
-			<!-- Label -->
-			{#if node.label && node.type !== 'root'}
-				<span class="font-medium text-foreground">{node.label}</span>
-				<span class="text-muted-foreground">:</span>
-			{/if}
-
-			<!-- Type badge -->
-			<span
-				class="rounded px-1.5 py-0.5 text-xs font-medium uppercase tracking-wide {styles.bg} {styles.text}"
+			<ListItemButton
+				variant="tree-node"
+				size="sm"
+				selected={isSelected}
+				role="button"
+				tabindex={isSelected ? 0 : -1}
+				class="pl-7"
+				onclick={handleClick}
+				onkeydown={handleTreeKeydown}
 			>
-				{getBadgeText()}
-			</span>
+				{#snippet leading()}
+					<span class="flex h-5 w-5 shrink-0 items-center justify-center rounded {styles.bg}">
+						<TypeIcon class="h-3 w-3 {styles.icon}" />
+					</span>
+				{/snippet}
 
-			<!-- Copy buttons (show on hover) -->
+				{#if node.label && node.type !== 'root'}
+					<span class="font-medium text-foreground">{node.label}</span>
+					<span class="text-muted-foreground">:</span>
+				{/if}
+				<span
+					class="rounded px-1.5 py-0.5 text-xs font-medium uppercase tracking-wide {styles.bg} {styles.text}"
+				>
+					{getBadgeText()}
+				</span>
+			</ListItemButton>
+
+			<!-- Copy buttons (absolute-positioned, hover-revealed) -->
 			<div
-				class="ml-auto flex items-center gap-0.5 opacity-0 transition-opacity group-hover/tree:opacity-100"
+				class="absolute right-1 top-1/2 flex -translate-y-1/2 items-center gap-0.5 opacity-0 transition-opacity group-hover/tree:opacity-100"
 			>
-				<button
-					type="button"
-					class="flex h-5 w-5 items-center justify-center rounded text-muted-foreground hover:bg-muted hover:text-foreground"
-					onclick={handleCopyPath}
+				<Button
+					variant="ghost"
+					size="icon-sm"
+					class="hover:bg-muted hover:text-foreground h-5 w-5 text-muted-foreground"
+					aria-label="Copy path"
 					title="Copy path"
+					tabindex={-1}
+					onclick={handleCopyPath}
 				>
 					<span class="text-xs font-mono">$</span>
-				</button>
-				<button
-					type="button"
-					class="flex h-5 w-5 items-center justify-center rounded text-muted-foreground hover:bg-muted hover:text-foreground"
-					onclick={handleCopyValue}
+				</Button>
+				<Button
+					variant="ghost"
+					size="icon-sm"
+					class="hover:bg-muted hover:text-foreground h-5 w-5 text-muted-foreground"
+					aria-label="Copy value"
 					title="Copy value"
+					tabindex={-1}
+					onclick={handleCopyValue}
 				>
 					{#if justCopied === node.path}
 						<Check class="h-3 w-3 text-success" />
 					{:else}
 						<Copy class="h-3 w-3" />
 					{/if}
-				</button>
+				</Button>
 			</div>
 		</div>
 
@@ -501,65 +515,73 @@
 		{/if}
 	{:else}
 		<!-- Leaf node -->
-		<div
-			class="group/leaf flex items-center gap-1 rounded-md px-1 py-0.5 transition-colors hover:bg-muted/60 {isSelected
-				? 'bg-primary/10 ring-1 ring-primary/30'
-				: ''}"
-			onclick={handleClick}
-			onkeydown={handleTreeKeydown}
-			role="button"
-			tabindex={isSelected ? 0 : -1}
-		>
-			<span class="h-5 w-5 shrink-0"></span>
-			<span class="flex h-5 w-5 shrink-0 items-center justify-center rounded {styles.bg}">
-				<TypeIcon class="h-3 w-3 {styles.icon}" />
-			</span>
-
-			<!-- Label -->
-			{#if node.label}
-				<span class="font-medium text-foreground">{node.label}</span>
-				{#if displayValue}
-					<span class="text-muted-foreground">:</span>
-				{/if}
-			{/if}
-
-			<!-- Value -->
-			{#if displayValue}
-				<span class="truncate {styles.text}" title={displayValue}>
-					{displayValue}
-				</span>
-			{:else}
-				<span
-					class="rounded px-1.5 py-0.5 text-xs font-medium uppercase tracking-wide {styles.bg} {styles.text}"
-				>
-					{node.type}
-				</span>
-			{/if}
-
-			<!-- Copy buttons -->
-			<div
-				class="ml-auto flex shrink-0 items-center gap-0.5 opacity-0 transition-opacity group-hover/leaf:opacity-100"
+		<div class="group/leaf relative">
+			<ListItemButton
+				variant="tree-node"
+				size="sm"
+				selected={isSelected}
+				role="button"
+				tabindex={isSelected ? 0 : -1}
+				onclick={handleClick}
+				onkeydown={handleTreeKeydown}
 			>
-				<button
-					type="button"
-					class="flex h-5 w-5 items-center justify-center rounded text-muted-foreground hover:bg-muted hover:text-foreground"
-					onclick={handleCopyPath}
+				{#snippet leading()}
+					<span class="h-5 w-5 shrink-0"></span>
+					<span class="flex h-5 w-5 shrink-0 items-center justify-center rounded {styles.bg}">
+						<TypeIcon class="h-3 w-3 {styles.icon}" />
+					</span>
+				{/snippet}
+
+				{#if node.label}
+					<span class="font-medium text-foreground">{node.label}</span>
+					{#if displayValue}
+						<span class="text-muted-foreground">:</span>
+					{/if}
+				{/if}
+
+				{#if displayValue}
+					<span class="truncate {styles.text}" title={displayValue}>
+						{displayValue}
+					</span>
+				{:else}
+					<span
+						class="rounded px-1.5 py-0.5 text-xs font-medium uppercase tracking-wide {styles.bg} {styles.text}"
+					>
+						{node.type}
+					</span>
+				{/if}
+			</ListItemButton>
+
+			<!-- Copy buttons (absolute-positioned, hover-revealed) -->
+			<div
+				class="absolute right-1 top-1/2 flex -translate-y-1/2 items-center gap-0.5 opacity-0 transition-opacity group-hover/leaf:opacity-100"
+			>
+				<Button
+					variant="ghost"
+					size="icon-sm"
+					class="hover:bg-muted hover:text-foreground h-5 w-5 text-muted-foreground"
+					aria-label="Copy path"
 					title="Copy path"
+					tabindex={-1}
+					onclick={handleCopyPath}
 				>
 					<span class="text-xs font-mono">$</span>
-				</button>
-				<button
-					type="button"
-					class="flex h-5 w-5 items-center justify-center rounded text-muted-foreground hover:bg-muted hover:text-foreground"
-					onclick={handleCopyValue}
+				</Button>
+				<Button
+					variant="ghost"
+					size="icon-sm"
+					class="hover:bg-muted hover:text-foreground h-5 w-5 text-muted-foreground"
+					aria-label="Copy value"
 					title="Copy value"
+					tabindex={-1}
+					onclick={handleCopyValue}
 				>
 					{#if justCopied === node.path}
 						<Check class="h-3 w-3 text-success" />
 					{:else}
 						<Copy class="h-3 w-3" />
 					{/if}
-				</button>
+				</Button>
 			</div>
 		</div>
 	{/if}
