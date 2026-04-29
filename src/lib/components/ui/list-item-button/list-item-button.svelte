@@ -12,6 +12,7 @@
 					'border-l-2 border-l-transparent px-3 py-2 hover:bg-interactive-hover data-[selected=true]:border-l-primary data-[selected=true]:bg-primary/10',
 				option:
 					'border-b border-border border-l-2 border-l-transparent px-3 py-2.5 last:border-b-0 hover:bg-interactive-hover data-[selected=true]:border-l-primary data-[selected=true]:bg-primary/10',
+				card: 'border-input bg-background rounded border px-2 py-1 hover:bg-interactive-hover data-[selected=true]:border-primary data-[selected=true]:bg-primary/10',
 				'tree-node':
 					'gap-1 rounded-md px-1 py-0.5 hover:bg-muted/60 data-[selected=true]:bg-primary/10 data-[selected=true]:ring-1 data-[selected=true]:ring-primary/30',
 				toc: 'rounded-sm px-1 hover:text-primary hover:underline',
