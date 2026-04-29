@@ -35,6 +35,8 @@
 		XCircle,
 	} from '@lucide/svelte';
 	import { toast } from 'svelte-sonner';
+	import { Button } from '$lib/components/ui/button';
+	import * as Select from '$lib/components/ui/select';
 	import * as Tooltip from '$lib/components/ui/tooltip';
 	import {
 		DEVICE_CATEGORIES,
@@ -349,37 +351,43 @@
 									{displaySource.toUpperCase()}
 								</span>
 							{/if}
-							<button
-								type="button"
-								class="rounded p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-								onclick={() => copyToClipboard(displayName ?? '', 'Hostname')}
+							<Button
+								variant="ghost"
+								size="icon-sm"
+								class="hover:bg-muted hover:text-foreground h-7 w-7 text-muted-foreground"
+								aria-label="Copy hostname"
 								title="Copy hostname"
+								onclick={() => copyToClipboard(displayName ?? '', 'Hostname')}
 							>
 								<Copy class="h-3.5 w-3.5" />
-							</button>
+							</Button>
 						</div>
 						<div class="flex items-center gap-2">
 							<span class="font-mono text-sm text-muted-foreground">{primaryIp}</span>
-							<button
-								type="button"
-								class="rounded p-0.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-								onclick={() => copyToClipboard(primaryIp, 'IP address')}
+							<Button
+								variant="ghost"
+								size="icon-sm"
+								class="hover:bg-muted hover:text-foreground h-5 w-5 text-muted-foreground"
+								aria-label="Copy IP"
 								title="Copy IP"
+								onclick={() => copyToClipboard(primaryIp, 'IP address')}
 							>
 								<Copy class="h-3 w-3" />
-							</button>
+							</Button>
 						</div>
 					{:else}
 						<div class="flex items-center gap-2">
 							<h2 class="font-mono text-lg font-semibold">{primaryIp}</h2>
-							<button
-								type="button"
-								class="rounded p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-								onclick={() => copyToClipboard(primaryIp, 'IP address')}
+							<Button
+								variant="ghost"
+								size="icon-sm"
+								class="hover:bg-muted hover:text-foreground h-7 w-7 text-muted-foreground"
+								aria-label="Copy IP"
 								title="Copy IP"
+								onclick={() => copyToClipboard(primaryIp, 'IP address')}
 							>
 								<Copy class="h-3.5 w-3.5" />
-							</button>
+							</Button>
 						</div>
 						<p class="text-xs text-muted-foreground">Hostname not resolved</p>
 					{/if}
@@ -401,14 +409,18 @@
 				{#if hasWebPort}
 					<Tooltip.Root>
 						<Tooltip.Trigger>
-							<button
-								type="button"
-								class="rounded p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-								onclick={openInBrowser}
-								aria-label="Open in browser"
-							>
-								<Globe class="h-3.5 w-3.5" />
-							</button>
+							{#snippet child({ props })}
+								<Button
+									{...props}
+									variant="ghost"
+									size="icon-sm"
+									class="hover:bg-muted hover:text-foreground h-7 w-7 text-muted-foreground"
+									aria-label="Open in browser"
+									onclick={openInBrowser}
+								>
+									<Globe class="h-3.5 w-3.5" />
+								</Button>
+							{/snippet}
 						</Tooltip.Trigger>
 						<Tooltip.Content>Open in browser</Tooltip.Content>
 					</Tooltip.Root>
@@ -416,14 +428,18 @@
 				{#if hasSshPort}
 					<Tooltip.Root>
 						<Tooltip.Trigger>
-							<button
-								type="button"
-								class="rounded p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-								onclick={copySshCommand}
-								aria-label="Copy SSH command"
-							>
-								<Terminal class="h-3.5 w-3.5" />
-							</button>
+							{#snippet child({ props })}
+								<Button
+									{...props}
+									variant="ghost"
+									size="icon-sm"
+									class="hover:bg-muted hover:text-foreground h-7 w-7 text-muted-foreground"
+									aria-label="Copy SSH command"
+									onclick={copySshCommand}
+								>
+									<Terminal class="h-3.5 w-3.5" />
+								</Button>
+							{/snippet}
 						</Tooltip.Trigger>
 						<Tooltip.Content>Copy SSH command</Tooltip.Content>
 					</Tooltip.Root>
@@ -442,12 +458,14 @@
 	<div class="shrink-0 flex border-b bg-surface-2">
 		{#each tabs as tab (tab.id)}
 			{@const TabIcon = tab.icon}
-			<button
-				type="button"
-				class="flex items-center gap-1.5 px-4 py-2 text-xs font-medium transition-colors
-					{activeTab === tab.id
-					? 'border-b-2 border-primary text-foreground'
-					: 'text-muted-foreground hover:text-foreground'}"
+			<Button
+				variant="ghost"
+				size="sm"
+				class={`h-auto rounded-none border-b-2 px-4 py-2 text-xs font-medium ${
+					activeTab === tab.id
+						? 'border-primary text-foreground'
+						: 'border-transparent text-muted-foreground hover:text-foreground'
+				}`}
 				onclick={() => (activeTab = tab.id)}
 			>
 				<TabIcon class="h-3.5 w-3.5" />
@@ -455,7 +473,7 @@
 				{#if tab.count !== null}
 					<span class="rounded-full bg-muted px-1.5 py-0.5 text-xs font-medium">{tab.count}</span>
 				{/if}
-			</button>
+			</Button>
 		{/each}
 	</div>
 
@@ -510,15 +528,16 @@
 										<div class="mb-1.5 text-xs font-medium text-muted-foreground">IPv4</div>
 										<div class="flex flex-wrap gap-2">
 											{#each ipv4Addresses as ip (ip)}
-												<button
-													type="button"
-													class="flex items-center gap-1.5 rounded bg-muted px-2 py-1 font-mono text-xs transition-colors hover:bg-muted/80"
-													onclick={() => copyToClipboard(ip, 'IP address')}
+												<Button
+													variant="ghost"
+													size="sm"
+													class="bg-muted hover:bg-muted/80 h-auto gap-1.5 rounded px-2 py-1 font-mono text-xs"
 													title="Copy {ip}"
+													onclick={() => copyToClipboard(ip, 'IP address')}
 												>
 													{ip}
 													<Copy class="h-3 w-3 text-muted-foreground" />
-												</button>
+												</Button>
 											{/each}
 										</div>
 									</div>
@@ -528,15 +547,16 @@
 										<div class="mb-1.5 text-xs font-medium text-muted-foreground">IPv6</div>
 										<div class="space-y-1">
 											{#each ipv6Addresses as ip (ip)}
-												<button
-													type="button"
-													class="flex w-full items-center justify-between gap-2 rounded bg-muted px-2 py-1 font-mono text-xs transition-colors hover:bg-muted/80"
-													onclick={() => copyToClipboard(ip, 'IP address')}
+												<Button
+													variant="ghost"
+													size="sm"
+													class="bg-muted hover:bg-muted/80 h-auto w-full justify-between gap-2 rounded px-2 py-1 font-mono text-xs"
 													title="Copy {ip}"
+													onclick={() => copyToClipboard(ip, 'IP address')}
 												>
 													<span class="truncate">{ip}</span>
 													<Copy class="h-3 w-3 shrink-0 text-muted-foreground" />
-												</button>
+												</Button>
 											{/each}
 										</div>
 									</div>
@@ -602,14 +622,16 @@
 										<div class="text-xs text-muted-foreground">NetBIOS Name</div>
 										<div class="mt-0.5 flex items-center gap-1.5 font-mono text-sm font-medium">
 											{netbiosName}
-											<button
-												type="button"
-												class="rounded p-0.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-												onclick={() => copyToClipboard(netbiosName ?? '', 'NetBIOS name')}
+											<Button
+												variant="ghost"
+												size="icon-sm"
+												class="hover:bg-muted hover:text-foreground h-5 w-5 text-muted-foreground"
+												aria-label="Copy NetBIOS name"
 												title="Copy NetBIOS name"
+												onclick={() => copyToClipboard(netbiosName ?? '', 'NetBIOS name')}
 											>
 												<Copy class="h-3 w-3" />
-											</button>
+											</Button>
 										</div>
 									</div>
 								{/if}
@@ -618,14 +640,16 @@
 										<div class="text-xs text-muted-foreground">MAC Address</div>
 										<div class="mt-0.5 flex items-center gap-1.5 font-mono text-sm font-medium">
 											{macAddress}
-											<button
-												type="button"
-												class="rounded p-0.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-												onclick={() => copyToClipboard(macAddress ?? '', 'MAC address')}
+											<Button
+												variant="ghost"
+												size="icon-sm"
+												class="hover:bg-muted hover:text-foreground h-5 w-5 text-muted-foreground"
+												aria-label="Copy MAC address"
 												title="Copy MAC address"
+												onclick={() => copyToClipboard(macAddress ?? '', 'MAC address')}
 											>
 												<Copy class="h-3 w-3" />
-											</button>
+											</Button>
 										</div>
 									</div>
 								{/if}
@@ -800,14 +824,15 @@
 								<div class="flex items-center gap-2">
 									<span class="text-sm font-medium text-primary">{scanPercentage.toFixed(0)}%</span>
 									{#if oncancel}
-										<button
-											type="button"
-											class="inline-flex h-7 items-center gap-1 rounded-md px-2 text-xs text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
+										<Button
+											variant="ghost"
+											size="sm"
+											class="hover:bg-destructive/10 hover:text-destructive h-7 gap-1 px-2 text-xs text-muted-foreground"
 											onclick={oncancel}
 										>
 											<Square class="h-3 w-3" />
 											Cancel
-										</button>
+										</Button>
 									{/if}
 								</div>
 							</div>
@@ -838,23 +863,26 @@
 						<!-- Scan controls -->
 						<div class="mb-4 rounded-lg border bg-card p-3">
 							<div class="flex items-center gap-2">
-								<select
-									class="h-8 flex-1 rounded-md border border-input bg-background px-2 text-xs"
-									bind:value={localScanMode}
-								>
-									{#each SCAN_MODES as mode (mode.value)}
-										<option value={mode.value}>{mode.label}</option>
-									{/each}
-								</select>
-								<button
-									type="button"
-									class="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-md bg-primary px-3 text-xs font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50"
-									onclick={() => onscan(primaryIp, localScanMode)}
+								<Select.Root type="single" bind:value={localScanMode}>
+									<Select.Trigger class="h-8 flex-1 text-xs">
+										{SCAN_MODES.find((m) => m.value === localScanMode)?.label ?? localScanMode}
+									</Select.Trigger>
+									<Select.Content>
+										{#each SCAN_MODES as mode (mode.value)}
+											<Select.Item value={mode.value}>{mode.label}</Select.Item>
+										{/each}
+									</Select.Content>
+								</Select.Root>
+								<Button
+									variant="default"
+									size="sm"
+									class="h-8 shrink-0 gap-1.5 px-3 text-xs"
 									disabled={scanDisabled}
+									onclick={() => onscan(primaryIp, localScanMode)}
 								>
 									<Play class="h-3.5 w-3.5" />
 									{ports.length > 0 ? 'Re-scan' : 'Scan'}
-								</button>
+								</Button>
 							</div>
 							<p class="mt-1.5 text-xs text-muted-foreground">
 								{SCAN_MODES.find((m) => m.value === localScanMode)?.description ?? ''}
@@ -1018,14 +1046,16 @@
 														{/if}
 													</div>
 												</div>
-												<button
-													type="button"
-													class="rounded p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-													onclick={() => copyToClipboard(String(port.port), 'Port number')}
+												<Button
+													variant="ghost"
+													size="icon-sm"
+													class="hover:bg-muted hover:text-foreground h-6 w-6 text-muted-foreground"
+													aria-label="Copy port"
 													title="Copy port"
+													onclick={() => copyToClipboard(String(port.port), 'Port number')}
 												>
 													<Copy class="h-3 w-3" />
-												</button>
+												</Button>
 											</div>
 										</div>
 									{/each}
@@ -1191,18 +1221,20 @@
 												</details>
 											{/if}
 										</div>
-										<button
-											type="button"
-											class="shrink-0 rounded p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+										<Button
+											variant="ghost"
+											size="icon-sm"
+											class="hover:bg-muted hover:text-foreground h-6 w-6 shrink-0 text-muted-foreground"
+											aria-label="Copy service info"
+											title="Copy service info"
 											onclick={() =>
 												copyToClipboard(
 													`${service.instanceName} (${service.serviceType}:${service.port})`,
 													'Service info'
 												)}
-											title="Copy service info"
 										>
 											<Copy class="h-3 w-3" />
-										</button>
+										</Button>
 									</div>
 								</div>
 							{/each}
