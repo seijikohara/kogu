@@ -1,8 +1,7 @@
 <script lang="ts">
 	import type { Snippet } from 'svelte';
-	import { FormCheckbox, FormSection, FormSelect } from '$lib/components/form';
+	import { FormCheckbox, FormMode, FormSection, FormSelect } from '$lib/components/form';
 	import { ConvertTab } from '$lib/components/template';
-	import { Button } from '$lib/components/ui/button/index.js';
 	import { Input } from '$lib/components/ui/input/index.js';
 	import { Label } from '$lib/components/ui/label/index.js';
 	import {
@@ -202,24 +201,14 @@
 >
 	{#snippet options()}
 		<FormSection title="Output Format">
-			<div class="flex gap-1">
-				<Button
-					variant={convertFormat === 'yaml' ? 'secondary' : 'ghost'}
-					size="sm"
-					class="h-7 flex-1 text-xs"
-					onclick={() => (convertFormat = 'yaml')}
-				>
-					YAML
-				</Button>
-				<Button
-					variant={convertFormat === 'xml' ? 'secondary' : 'ghost'}
-					size="sm"
-					class="h-7 flex-1 text-xs"
-					onclick={() => (convertFormat = 'xml')}
-				>
-					XML
-				</Button>
-			</div>
+			<FormMode
+				value={convertFormat}
+				options={[
+					{ value: 'yaml', label: 'YAML' },
+					{ value: 'xml', label: 'XML' },
+				]}
+				onchange={(v) => (convertFormat = v as 'yaml' | 'xml')}
+			/>
 		</FormSection>
 
 		{#if convertFormat === 'yaml'}
