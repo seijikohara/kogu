@@ -223,7 +223,6 @@
 	ontabchange={handleTabChange}
 	{valid}
 	error={tabSync.activeTab === 'encode' ? error : undefined}
-	preserveTabState
 >
 	{#snippet statusContent()}
 		{#if tabSync.activeTab === 'encode'}
