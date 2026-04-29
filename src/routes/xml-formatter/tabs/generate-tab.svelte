@@ -1,9 +1,8 @@
 <script lang="ts">
 	import { CodeEditor } from '$lib/components/editor';
-	import { FormCheckbox, FormSection, FormSelect } from '$lib/components/form';
+	import { FormCheckbox, FormMode, FormSection, FormSelect } from '$lib/components/form';
 	import SplitPane from '$lib/components/layout/split-pane.svelte';
 	import { OptionsPanel } from '$lib/components/panel';
-	import { Button } from '$lib/components/ui/button/index.js';
 	import { Input } from '$lib/components/ui/input/index.js';
 	import { Label } from '$lib/components/ui/label/index.js';
 	import {
@@ -316,18 +315,11 @@
 		onopen={() => (showOptions = true)}
 	>
 		<FormSection title="Target Language">
-			<div class="grid grid-cols-2 gap-1">
-				{#each LANGUAGE_OPTIONS as lang}
-					<Button
-						variant={generateLanguage === lang.value ? 'secondary' : 'ghost'}
-						size="sm"
-						class="h-7 justify-start text-xs"
-						onclick={() => (generateLanguage = lang.value)}
-					>
-						{lang.label}
-					</Button>
-				{/each}
-			</div>
+			<FormMode
+				value={generateLanguage}
+				options={LANGUAGE_OPTIONS.map((lang) => ({ value: lang.value, label: lang.label }))}
+				onchange={(v) => (generateLanguage = v as TargetLanguage)}
+			/>
 		</FormSection>
 
 		{#if generateLanguage === 'typescript'}

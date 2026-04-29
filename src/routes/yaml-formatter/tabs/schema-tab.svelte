@@ -5,7 +5,7 @@
 	import { toast } from 'svelte-sonner';
 	import * as yaml from 'yaml';
 	import { CodeEditor } from '$lib/components/editor';
-	import { FormCheckbox, FormSection } from '$lib/components/form';
+	import { FormCheckbox, FormMode, FormSection } from '$lib/components/form';
 	import SplitPane from '$lib/components/layout/split-pane.svelte';
 	import { OptionsPanel } from '$lib/components/panel';
 	import { Button } from '$lib/components/ui/button/index.js';
@@ -172,7 +172,7 @@
 		<FormSection title="Actions">
 			<div class="flex flex-col gap-1.5">
 				<Button
-					variant="secondary"
+					variant="default"
 					size="sm"
 					class="w-full gap-1.5 text-xs"
 					onclick={handleValidateSchema}
@@ -206,24 +206,14 @@
 		</FormSection>
 
 		<FormSection title="Schema Format">
-			<div class="flex gap-1">
-				<Button
-					variant={outputSchemaFormat === 'yaml' ? 'secondary' : 'ghost'}
-					size="sm"
-					class="h-7 flex-1 text-xs"
-					onclick={() => (outputSchemaFormat = 'yaml')}
-				>
-					YAML
-				</Button>
-				<Button
-					variant={outputSchemaFormat === 'json' ? 'secondary' : 'ghost'}
-					size="sm"
-					class="h-7 flex-1 text-xs"
-					onclick={() => (outputSchemaFormat = 'json')}
-				>
-					JSON
-				</Button>
-			</div>
+			<FormMode
+				value={outputSchemaFormat}
+				options={[
+					{ value: 'yaml', label: 'YAML' },
+					{ value: 'json', label: 'JSON' },
+				]}
+				onchange={(v) => (outputSchemaFormat = v as 'yaml' | 'json')}
+			/>
 		</FormSection>
 
 		<FormSection title="Validation">

@@ -160,7 +160,7 @@
 		<FormSection title="Actions">
 			<div class="flex flex-col gap-1.5">
 				<Button
-					variant="secondary"
+					variant="default"
 					size="sm"
 					class="w-full gap-1.5 text-xs"
 					onclick={handleValidateSchema}
