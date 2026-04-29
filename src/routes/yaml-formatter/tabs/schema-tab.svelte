@@ -207,12 +207,11 @@
 
 		<FormSection title="Schema Format">
 			<FormMode
-				value={outputSchemaFormat}
+				bind:value={outputSchemaFormat}
 				options={[
 					{ value: 'yaml', label: 'YAML' },
 					{ value: 'json', label: 'JSON' },
 				]}
-				onchange={(v) => (outputSchemaFormat = v as 'yaml' | 'json')}
 			/>
 		</FormSection>
 
