@@ -415,10 +415,10 @@
 									variant="ghost"
 									size="icon-sm"
 									class="hover:bg-muted hover:text-foreground h-7 w-7 text-muted-foreground"
-									aria-label="Open in browser"
 									onclick={openInBrowser}
 								>
 									<Globe class="h-3.5 w-3.5" />
+									<span class="sr-only">Open in browser</span>
 								</Button>
 							{/snippet}
 						</Tooltip.Trigger>
@@ -434,10 +434,10 @@
 									variant="ghost"
 									size="icon-sm"
 									class="hover:bg-muted hover:text-foreground h-7 w-7 text-muted-foreground"
-									aria-label="Copy SSH command"
 									onclick={copySshCommand}
 								>
 									<Terminal class="h-3.5 w-3.5" />
+									<span class="sr-only">Copy SSH command</span>
 								</Button>
 							{/snippet}
 						</Tooltip.Trigger>
