@@ -202,12 +202,11 @@
 	{#snippet options()}
 		<FormSection title="Output Format">
 			<FormMode
-				value={convertFormat}
+				bind:value={convertFormat}
 				options={[
 					{ value: 'yaml', label: 'YAML' },
 					{ value: 'xml', label: 'XML' },
 				]}
-				onchange={(v) => (convertFormat = v as 'yaml' | 'xml')}
 			/>
 		</FormSection>
 

@@ -314,9 +314,8 @@
 	>
 		<FormSection title="Target Language">
 			<FormMode
-				value={generateLanguage}
+				bind:value={generateLanguage}
 				options={LANGUAGE_OPTIONS.map((lang) => ({ value: lang.value, label: lang.label }))}
-				onchange={(v) => (generateLanguage = v as TargetLanguage)}
 			/>
 		</FormSection>
 
