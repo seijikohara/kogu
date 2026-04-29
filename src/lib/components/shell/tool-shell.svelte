@@ -63,6 +63,8 @@
 		children,
 	}: Props = $props();
 
+	let shellRef = $state<HTMLElement | null>(null);
+
 	const hasTabs = $derived(!!tabs && tabs.length > 0);
 
 	const railState = $derived.by(() => {
@@ -72,6 +74,9 @@
 
 	const handleShellKeydown = (e: KeyboardEvent) => {
 		if (!isModKey(e)) return;
+		// Skip while the user is composing in an IME so Cmd+1..9 cannot hijack
+		// candidate selection.
+		if (e.isComposing) return;
 
 		// Cmd+, → toggle options rail
 		if (e.key === ',' && rail) {
@@ -94,12 +99,19 @@
 	const handleValueChange = (value: string) => {
 		ontabchange?.(value);
 	};
+
+	// Scope the keyboard listener to the shell container so it only fires when
+	// focus is inside the tool, not on unrelated parts of the page.
+	$effect(() => {
+		const el = shellRef;
+		if (!el) return;
+		el.addEventListener('keydown', handleShellKeydown);
+		return () => el.removeEventListener('keydown', handleShellKeydown);
+	});
 </script>
 
-<svelte:window onkeydown={handleShellKeydown} />
-
 {#snippet shell()}
-	<div class="tool-shell" data-layout={layout} data-rail={railState}>
+	<div class="tool-shell" bind:this={shellRef} data-layout={layout} data-rail={railState}>
 		<!-- Toolbar -->
 		<div class="tool-toolbar">
 			<ToolBar {title}>
