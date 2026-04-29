@@ -708,12 +708,7 @@
 					<p class="text-xs font-medium text-muted-foreground">Available interfaces:</p>
 					<div class="max-h-24 space-y-1 overflow-y-auto">
 						{#each networkInfo.interfaces.filter((i) => !i.isLoopback && i.suggestedCidr) as iface (iface.ip)}
-							<ListItemButton
-								variant="default"
-								size="sm"
-								class="border-input bg-background rounded border px-2 py-1"
-								onclick={() => handleSelectInterface(iface)}
-							>
+							<ListItemButton variant="card" size="sm" onclick={() => handleSelectInterface(iface)}>
 								<span class="font-medium">{iface.name}</span>
 								{#snippet trailing()}
 									<span class="text-muted-foreground">{iface.suggestedCidr}</span>
