@@ -4,7 +4,6 @@
 	import ToolBar from './tool-bar.svelte';
 	import OptionsRail from './options-rail.svelte';
 	import StatusBar from './status-bar.svelte';
-	import TabPanels from '$lib/components/layout/tab-panels.svelte';
 	import { isModKey } from '$lib/utils/keyboard.js';
 
 	interface TabDefinition {
@@ -22,11 +21,13 @@
 		readonly toolbarCenter?: Snippet;
 		readonly toolbarTrailing?: Snippet;
 
-		// Tabs (integrated toolbar tabs)
+		// Tabs (integrated toolbar tabs). All tab panels remain mounted thanks to
+		// the bits-ui Tabs.Content default behavior (inactive panels are hidden via
+		// the `hidden` attribute, not unmounted), so component state is preserved
+		// across tab switches without an explicit opt-in.
 		readonly tabs?: readonly TabDefinition[];
 		readonly activeTab?: string;
 		readonly ontabchange?: (tab: string) => void;
-		readonly preserveTabState?: boolean;
 		readonly tabContent?: Snippet<[string]>;
 
 		// Options rail
@@ -52,7 +53,6 @@
 		tabs,
 		activeTab,
 		ontabchange,
-		preserveTabState = false,
 		tabContent,
 		showRail = $bindable(true),
 		railTitle = 'Options',
@@ -64,7 +64,6 @@
 	}: Props = $props();
 
 	const hasTabs = $derived(!!tabs && tabs.length > 0);
-	const tabIds = $derived(tabs?.map((t) => t.id) ?? []);
 
 	const railState = $derived.by(() => {
 		if (!rail) return 'none';
@@ -155,14 +154,15 @@
 
 		<!-- Main Content -->
 		<div class="tool-content animate-fade-in">
-			{#if preserveTabState && tabContent && tabs && activeTab}
-				<TabPanels tabs={tabIds} {activeTab}>
-					{#snippet children(tab)}
-						{@render tabContent(tab)}
-					{/snippet}
-				</TabPanels>
-			{:else if hasTabs && tabContent && activeTab}
-				{@render tabContent(activeTab)}
+			{#if hasTabs && tabContent && tabs && activeTab}
+				{#each tabs as tab (tab.id)}
+					<Tabs.Content
+						value={tab.id}
+						class="flex h-full min-h-0 flex-1 flex-col data-[state=inactive]:hidden"
+					>
+						{@render tabContent(tab.id)}
+					</Tabs.Content>
+				{/each}
 			{:else if children}
 				{@render children()}
 			{/if}
