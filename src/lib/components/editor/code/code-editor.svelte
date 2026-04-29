@@ -660,7 +660,7 @@
 	<!-- Editor Content -->
 	<div class="flex-1 overflow-hidden">
 		{#if viewMode === 'tree' && canShowTree}
-			<div class="h-full overflow-auto p-3">
+			<div class="h-full overflow-auto p-3" role="tree" aria-label="AST tree">
 				{#if currentAst}
 					<TreeView
 						node={currentAst}
@@ -711,7 +711,11 @@
 				</Resizable.Pane>
 				<Resizable.Handle withHandle />
 				<Resizable.Pane defaultSize={50} minSize={20}>
-					<div class="h-full overflow-auto border-l bg-muted/10 p-3">
+					<div
+						class="h-full overflow-auto border-l bg-muted/10 p-3"
+						role="tree"
+						aria-label="AST tree"
+					>
 						{#if currentAst}
 							<TreeView
 								node={currentAst}
