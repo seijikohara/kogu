@@ -36,6 +36,7 @@
 	} from '@lucide/svelte';
 	import { toast } from 'svelte-sonner';
 	import { SectionLabel } from '$lib/components/layout';
+	import { EmbeddedEmptyState } from '$lib/components/status';
 	import { Button } from '$lib/components/ui/button';
 	import * as Select from '$lib/components/ui/select';
 	import * as Tabs from '$lib/components/ui/tabs';
@@ -870,17 +871,11 @@
 				{/if}
 
 				{#if ports.length === 0}
-					<div class="flex items-center justify-center py-8">
-						<div class="text-center">
-							<div class="mx-auto mb-3 inline-flex rounded-2xl bg-muted p-3">
-								<Network class="h-8 w-8 text-muted-foreground" />
-							</div>
-							<h3 class="mb-1 text-sm font-semibold">No Port Scan Data</h3>
-							<p class="text-xs leading-relaxed text-muted-foreground">
-								Select a scan mode and run a port scan to detect open services.
-							</p>
-						</div>
-					</div>
+					<EmbeddedEmptyState
+						icon={Network}
+						title="No Port Scan Data"
+						description="Select a scan mode and run a port scan to detect open services."
+					/>
 				{:else}
 					<!-- Port Summary Bar -->
 					<div class="mb-4 rounded-lg border bg-card p-3">
@@ -1097,17 +1092,12 @@
 
 			<Tabs.Content value="discovery" class="animate-fade-in mt-0 outline-none">
 				{#if discoveries.length === 0}
-					<div class="flex h-full items-center justify-center">
-						<div class="max-w-xs text-center">
-							<div class="mx-auto mb-3 inline-flex rounded-2xl bg-muted p-3">
-								<Radar class="h-8 w-8 text-muted-foreground" />
-							</div>
-							<h3 class="mb-1 text-sm font-semibold">No Discovery Data</h3>
-							<p class="text-xs leading-relaxed text-muted-foreground">
-								Run host discovery to detect this device using various network protocols.
-							</p>
-						</div>
-					</div>
+					<EmbeddedEmptyState
+						icon={Radar}
+						title="No Discovery Data"
+						description="Run host discovery to detect this device using various network protocols."
+						fillHeight
+					/>
 				{:else}
 					<div class="space-y-2">
 						{#each discoveries as discovery (discovery.method)}
@@ -1150,17 +1140,12 @@
 
 			<Tabs.Content value="services" class="animate-fade-in mt-0 outline-none">
 				{#if !mdnsServices || mdnsServices.length === 0}
-					<div class="flex h-full items-center justify-center">
-						<div class="max-w-xs text-center">
-							<div class="mx-auto mb-3 inline-flex rounded-2xl bg-muted p-3">
-								<Radio class="h-8 w-8 text-muted-foreground" />
-							</div>
-							<h3 class="mb-1 text-sm font-semibold">No mDNS Services</h3>
-							<p class="text-xs leading-relaxed text-muted-foreground">
-								This host is not advertising any services via mDNS/Bonjour.
-							</p>
-						</div>
-					</div>
+					<EmbeddedEmptyState
+						icon={Radio}
+						title="No mDNS Services"
+						description="This host is not advertising any services via mDNS/Bonjour."
+						fillHeight
+					/>
 				{:else}
 					<div class="space-y-2">
 						{#each mdnsServices as service (`${service.instanceName}-${service.serviceType}`)}
