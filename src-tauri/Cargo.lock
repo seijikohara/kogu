@@ -6462,11 +6462,23 @@ dependencies = [
 
 [[package]]
 name = "snmp2"
-version = "0.4.14"
+version = "0.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "49dc4ff9dc6c2b03d818a4c2abb8ffcef9e16357113ddc7ce1631c03195fde64"
+checksum = "bcb653539e336d2b98222b3f09d4f365f5442eb6b4bc8905e5c7f6ab296b94b8"
 dependencies = [
+ "aes",
  "asn1-rs 0.6.2",
+ "cbc",
+ "cfb-mode",
+ "cipher",
+ "des",
+ "digest",
+ "hmac",
+ "md-5",
+ "rand 0.9.4",
+ "sha1",
+ "sha2",
+ "tokio",
 ]
 
 [[package]]
