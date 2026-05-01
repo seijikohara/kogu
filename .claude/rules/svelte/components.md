@@ -295,6 +295,106 @@ Import from `$lib/components/ui/`:
 </Card.Root>
 ```
 
+### Customizing Primitives
+
+Project-owned files under `src/lib/components/ui/` are copies of the official shadcn-svelte registry. Treat divergence from the registry as a deliberate decision:
+
+- **Do** keep the registry baseline (class names, prop shape, internal data attributes) unless a concrete project requirement forces a change. Run `bunx shadcn-svelte@latest add <component>` periodically and reconcile diffs intentionally.
+- **Do** justify each divergence with a comment in the file (or in a project rule under `.claude/rules/`).
+- **Don't** invent utility classes that do not exist in Tailwind (e.g., there is no `ring-3`; use `ring-[3px]` or `ring-4`). When in doubt verify with `https://shadcn-svelte.com/registry/<name>.json`.
+- **Don't** assume Tailwind variants exist project-wide. The shadcn-svelte registry sometimes ships classes that depend on a `@custom-variant` declaration (see `tailwind.md` for details). Prefer the arbitrary attribute selector form when copying registry source.
+
+### Variant Composition Boundary
+
+When a call site needs more than two `cn()` overrides on a primitive, treat it as a signal that a missing variant should be added to the primitive itself, not absorbed by the consumer:
+
+```svelte
+<!-- Anti-pattern: heavy override pile -->
+<Button
+	variant="default"
+	class={cn(
+		'h-auto rounded border bg-background',
+		'hover:bg-interactive-hover',
+		isSelected && 'ring-2 ring-ring',
+		'border-l-2 border-l-transparent'
+	)}>…</Button
+>
+
+<!-- Preferred: extend the primitive's CVA with a `card` variant. -->
+<Button variant="card" class={isSelected ? 'ring-2 ring-ring' : ''}>…</Button>
+```
+
+The exception is **per-instance dynamic styling** (e.g., a color computed from item type). Variants encode static visual modes, so dynamic colors belong as call-site `cn()` arguments.
+
+### shadcn vs Project Primitives
+
+Use existing shadcn-svelte registry components first. Introduce a project-specific primitive in `src/lib/components/ui/` only when:
+
+1. The use case repeats in three or more places.
+2. The official registry has no equivalent.
+3. Multiple call sites would otherwise rely on identical `cn()` overrides.
+
+Project primitives must mirror the registry conventions: `tv()` from `tailwind-variants`, `cn` and `WithElementRef` from `$lib/utils.js`, `data-slot="<name>"` for theming, and types exported from the `<script lang="ts" module>` block.
+
+### Toggle vs Radio Semantics
+
+A `ToggleGroup type="single"` allows zero, one, or many selected (depending on the type). When a feature requires **exactly one** option always selected, the semantic is a radiogroup, not a toggle group:
+
+- Use `ToggleGroup` when re-clicking the active item should deselect it.
+- Use a radiogroup pattern (or guard the `onValueChange` callback against the empty value) when one option must remain selected.
+
+When wrapping `ToggleGroup.Root` with a project component that enforces the radiogroup invariant, document it explicitly and prefer a typed value guard over silent fallback:
+
+```svelte
+<script lang="ts" generics="T extends string">
+	let {
+		value = $bindable(),
+		options,
+		onchange,
+	}: { value?: T; options: { value: T; label: string }[]; onchange?: (v: T) => void } = $props();
+	const isAllowedValue = (v: string): v is T => options.some((o) => o.value === v);
+</script>
+
+<ToggleGroup.Root
+	type="single"
+	{value}
+	onValueChange={(v) => {
+		if (isAllowedValue(v)) {
+			value = v;
+			onchange?.(v);
+		}
+	}}
+>
+	…
+</ToggleGroup.Root>
+```
+
+Generic `T extends string` propagates the literal type to consumers so `onchange` callbacks do not need `as 'foo' | 'bar'` casts.
+
+### bits-ui `child` Snippet Pattern
+
+When a bits-ui primitive must render a custom element (the equivalent of React's `asChild`), use the `child` snippet. Spread the bits-ui props **first**, then layer your own:
+
+```svelte
+<Tooltip.Trigger>
+	{#snippet child({ props })}
+		<Button {...props} variant="ghost" size="icon-sm" onclick={handleClick}>
+			<Icon />
+			<span class="sr-only">Action label</span>
+		</Button>
+	{/snippet}
+</Tooltip.Trigger>
+<Tooltip.Content>Action label</Tooltip.Content>
+```
+
+The bits-ui `props` carry `aria-describedby`, focus management, and event wiring; spreading them first lets your overrides win without dropping the bits-ui contract.
+
+### Tabs.Root Always Needs Tabs.Content
+
+When using shadcn-svelte `Tabs.Root` + `Tabs.List` + `Tabs.Trigger`, you must also render `Tabs.Content` for each tab. The trigger's `aria-controls` points at a content panel id; without `Tabs.Content` the relationship is dangling and screen readers cannot navigate from tab to panel.
+
+bits-ui keeps inactive `Tabs.Content` mounted by default (it sets `hidden=true` rather than unmounting), so wrapping each tab body in `<Tabs.Content value={tab.id}>` automatically preserves component state across switches without an explicit `forceMount`.
+
 ## Accessibility
 
 Always include proper ARIA attributes:
@@ -309,18 +409,59 @@ Always include proper ARIA attributes:
 <label for={uid}>Email</label>
 <input id={uid} type="email" />
 
-<!-- Button with icon (needs aria-label) -->
-<button type="button" aria-label="Close dialog" aria-expanded={isOpen} onclick={handleClick}>
+<!-- Button with icon (sr-only label preferred over aria-label when paired with a Tooltip) -->
+<button type="button" aria-expanded={isOpen} onclick={handleClick}>
 	<XIcon />
+	<span class="sr-only">Close dialog</span>
 </button>
-
-<!-- Custom interactive elements need explicit roles -->
-<div role="treeitem" aria-selected={isSelected} aria-expanded={isExpandable ? expanded : undefined}>
-	<!-- tree item content -->
-</div>
 ```
 
 > **Note**: Native HTML elements like `<button>` have implicit roles. Don't add `role="button"` to `<button>` elements.
+
+### ARIA Selection on the Focusable Element
+
+`aria-selected`, `aria-expanded`, and `aria-checked` belong on the element that receives keyboard focus. Wrapping a focusable button in an outer `<div role="treeitem" aria-selected="…">` splits the ARIA state away from the element a screen reader actually announces, so AT users hear "button" without the selection state and have to climb to the parent for context.
+
+```svelte
+<!-- Preferred: ARIA state on the focusable element. -->
+<button
+	role="treeitem"
+	aria-selected={isSelected}
+	aria-expanded={hasChildren ? expanded : undefined}
+	tabindex={isSelected ? 0 : -1}
+>
+	…
+</button>
+
+<!-- Avoid: ARIA state on a non-focusable wrapper. -->
+<div role="treeitem" aria-selected={isSelected}>
+	<button tabindex={isSelected ? 0 : -1}>…</button>
+</div>
+```
+
+`aria-selected` is supported only on roles `option`, `tab`, `gridcell`, `row`, `rowheader`, `columnheader`, and `treeitem`. Setting it on a `<button>` with implicit role `button` (or with `role="button"` explicitly) is invalid ARIA — either the button has the right role for selection, or selection state is dropped.
+
+### WAI-ARIA Tree Pattern
+
+Build trees per the W3C tree pattern (`https://www.w3.org/WAI/ARIA/apg/patterns/treeview/`):
+
+```svelte
+<div role="tree" aria-label="Files">
+	<button role="treeitem" aria-selected={…} aria-expanded={true} tabindex={…}>Folder</button>
+	<div role="group">
+		<button role="treeitem" aria-selected={…} tabindex={…}>file-1.txt</button>
+		<button role="treeitem" aria-selected={…} tabindex={…}>file-2.txt</button>
+	</div>
+</div>
+```
+
+- The outermost container of a tree gets `role="tree"`.
+- Each row is a focusable `treeitem`.
+- The children of an expanded branch are wrapped in `role="group"`.
+
+### Tooltip + Icon Buttons
+
+When a Tooltip wraps an icon-only button, the trigger still needs its own accessible name. Provide the name via an `<span class="sr-only">` inside the button rather than via `aria-label` that duplicates the visible Tooltip.Content text — the `aria-describedby` from Tooltip.Trigger already announces the tooltip text, so a redundant `aria-label` causes a double-read on most screen readers.
 
 ## User Feedback
 
