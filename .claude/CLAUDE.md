@@ -59,15 +59,20 @@ src-tauri/            # Tauri (Rust) backend
 
 ## Detailed Rules
 
-See `.claude/rules/` for comprehensive guidelines:
+See `.claude/rules/` for comprehensive guidelines. All rules use `paths:` frontmatter so they only load when Claude reads matching files (per the [Claude Code memory spec](https://docs.claude.com/en/docs/claude-code/memory#path-specific-rules)):
 
 - `typescript.md` - TypeScript conventions (mandatory rules)
 - `rust.md` - Rust conventions (mandatory rules)
 - `svelte/components.md` - Svelte 5 component patterns
+- `svelte/layouts.md` - Page layout patterns and shell components
 - `css/tailwind.md` - Tailwind CSS guidelines
-- `general/git.md` - Git conventions
-- `general/pr.md` - PR guidelines
+- `general/git.md` - Git conventions (universal)
+- `general/pr.md` - PR guidelines (universal)
 - `tauri/commands.md` - Tauri command patterns
 - `testing/typescript.md` - TypeScript/Svelte testing
 - `testing/rust.md` - Rust testing
 - `testing/e2e.md` - E2E testing
+
+Procedural workflows are packaged as on-demand skills in `.claude/skills/`:
+
+- `release/` - Release process (`/release`, see `.claude/skills/release/SKILL.md`)
