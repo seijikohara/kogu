@@ -23,6 +23,7 @@
 	import { ActionButton } from '$lib/components/action';
 	import {
 		FormCheckbox,
+		FormCheckboxGroup,
 		FormInfo,
 		FormInput,
 		FormMode,
@@ -725,7 +726,7 @@
 			<p class="mb-2 text-xs text-muted-foreground leading-snug">
 				Find active hosts before port scanning.
 			</p>
-			<div class="space-y-1.5">
+			<FormCheckboxGroup>
 				{#each DISCOVERY_METHODS as method (method.value)}
 					{@const privilegesGranted = privilegeStatus?.setupCompleted ?? false}
 					{@const isAvailable = method.requiresPrivileges ? privilegesGranted : true}
@@ -738,7 +739,7 @@
 						onchange={() => toggleDiscoveryMethod(method.value)}
 					/>
 				{/each}
-			</div>
+			</FormCheckboxGroup>
 
 			<!-- Name Resolution (collapsible) -->
 			<Accordion.Root type="multiple" value={['name-resolution']} class="mt-3">
@@ -749,7 +750,7 @@
 						<span>Name Resolution</span>
 					</Accordion.Trigger>
 					<Accordion.Content class="border-t border-border/30 px-2 pb-2">
-						<div class="space-y-1.5 pt-2">
+						<FormCheckboxGroup class="pt-2">
 							<FormCheckbox label="DNS PTR" bind:checked={resolveDns} />
 							<FormCheckbox label="mDNS (.local)" bind:checked={resolveMdns} />
 							<FormCheckbox label="NetBIOS" bind:checked={resolveNetbios} />
@@ -765,7 +766,7 @@
 									/>
 								</div>
 							{/if}
-						</div>
+						</FormCheckboxGroup>
 					</Accordion.Content>
 				</Accordion.Item>
 			</Accordion.Root>
