@@ -1,10 +1,8 @@
 <script lang="ts">
 	import { CodeEditor } from '$lib/components/editor';
-	import { FormSection } from '$lib/components/form';
+	import { FormInput, FormSection } from '$lib/components/form';
 	import SplitPane from '$lib/components/layout/split-pane.svelte';
 	import { OptionsPanel } from '$lib/components/panel';
-	import { Input } from '$lib/components/ui/input/index.js';
-	import { Label } from '$lib/components/ui/label/index.js';
 	import { executeXPath, formatXml } from '$lib/services/formatters';
 	import { copyToClipboard, downloadTextFile, pasteFromClipboard } from '../utils.js';
 
@@ -103,10 +101,13 @@
 		onopen={() => (showOptions = true)}
 	>
 		<FormSection title="XPath Expression">
-			<div class="space-y-1">
-				<Label class="text-xs uppercase tracking-wide text-muted-foreground">Path Expression</Label>
-				<Input bind:value={xpathExpression} placeholder="//element" class="h-7 font-mono text-xs" />
-			</div>
+			<FormInput
+				label="Path Expression"
+				bind:value={xpathExpression}
+				placeholder="//element"
+				size="compact"
+				class="font-mono"
+			/>
 			{#if resultCount > 0}
 				<div class="rounded-md bg-primary/10 p-2 text-xs text-primary">
 					Found <strong>{resultCount}</strong> match{resultCount > 1 ? 'es' : ''}

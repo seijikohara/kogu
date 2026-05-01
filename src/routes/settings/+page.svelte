@@ -8,9 +8,8 @@
 	import * as Popover from '$lib/components/ui/popover/index.js';
 	import * as Command from '$lib/components/ui/command/index.js';
 	import { Button } from '$lib/components/ui/button/index.js';
-	import { Checkbox } from '$lib/components/ui/checkbox/index.js';
 	import { Label } from '$lib/components/ui/label/index.js';
-	import { FormSlider } from '$lib/components/form/index.js';
+	import { FormCheckbox, FormSlider } from '$lib/components/form/index.js';
 	import {
 		type AppSettings,
 		type FontSettings,
@@ -323,15 +322,11 @@
 
 					<!-- Google Fonts Toggle -->
 					<div class="space-y-3">
-						<div class="flex items-center gap-2">
-							<Checkbox
-								checked={fontSettings.google_fonts_enabled}
-								onCheckedChange={(v) => {
-									fontSettings = { ...fontSettings, google_fonts_enabled: v === true };
-								}}
-							/>
-							<Label class="text-sm font-medium">Enable Google Fonts</Label>
-						</div>
+						<FormCheckbox
+							label="Enable Google Fonts"
+							checked={fontSettings.google_fonts_enabled}
+							onchange={(v) => (fontSettings = { ...fontSettings, google_fonts_enabled: v })}
+						/>
 
 						{#if fontSettings.google_fonts_enabled}
 							<Alert.Root variant="destructive">

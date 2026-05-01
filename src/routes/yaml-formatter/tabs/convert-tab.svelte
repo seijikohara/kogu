@@ -1,9 +1,7 @@
 <script lang="ts">
 	import * as yaml from 'yaml';
-	import { FormCheckbox, FormMode, FormSection, FormSelect } from '$lib/components/form';
+	import { FormCheckbox, FormInput, FormMode, FormSection, FormSelect } from '$lib/components/form';
 	import { ConvertTab } from '$lib/components/template';
-	import { Input } from '$lib/components/ui/input/index.js';
-	import { Label } from '$lib/components/ui/label/index.js';
 	import {
 		type YamlToJsonOptions,
 		type YamlToXmlOptions,
@@ -172,22 +170,26 @@
 		{#if convertFormat === 'xml'}
 			<FormSection title="Structure">
 				<div class="grid grid-cols-2 gap-2">
-					<div class="space-y-1">
-						<Label class="text-xs uppercase tracking-wide text-muted-foreground">Root Element</Label
-						>
-						<Input bind:value={xmlRootName} placeholder="root" class="h-7 text-xs" />
-					</div>
-					<div class="space-y-1">
-						<Label class="text-xs uppercase tracking-wide text-muted-foreground">Array Item</Label>
-						<Input bind:value={xmlArrayItemName} placeholder="item" class="h-7 text-xs" />
-					</div>
+					<FormInput
+						label="Root Element"
+						bind:value={xmlRootName}
+						placeholder="root"
+						size="compact"
+					/>
+					<FormInput
+						label="Array Item"
+						bind:value={xmlArrayItemName}
+						placeholder="item"
+						size="compact"
+					/>
 				</div>
-				<div class="space-y-1">
-					<Label class="text-xs uppercase tracking-wide text-muted-foreground"
-						>Attribute Prefix</Label
-					>
-					<Input bind:value={xmlAttributePrefix} placeholder="@" class="h-7 text-xs font-mono" />
-				</div>
+				<FormInput
+					label="Attribute Prefix"
+					bind:value={xmlAttributePrefix}
+					placeholder="@"
+					size="compact"
+					class="font-mono"
+				/>
 			</FormSection>
 
 			<FormSection title="Formatting">
@@ -228,22 +230,20 @@
 				<FormCheckbox label="Include XML declaration" bind:checked={xmlDeclaration} />
 				{#if xmlDeclaration}
 					<div class="grid grid-cols-2 gap-2 pt-1">
-						<div class="space-y-1">
-							<Label class="text-xs uppercase tracking-wide text-muted-foreground">Version</Label>
-							<Input
-								bind:value={xmlDeclarationVersion}
-								placeholder="1.0"
-								class="h-7 text-xs font-mono"
-							/>
-						</div>
-						<div class="space-y-1">
-							<Label class="text-xs uppercase tracking-wide text-muted-foreground">Encoding</Label>
-							<Input
-								bind:value={xmlDeclarationEncoding}
-								placeholder="UTF-8"
-								class="h-7 text-xs font-mono"
-							/>
-						</div>
+						<FormInput
+							label="Version"
+							bind:value={xmlDeclarationVersion}
+							placeholder="1.0"
+							size="compact"
+							class="font-mono"
+						/>
+						<FormInput
+							label="Encoding"
+							bind:value={xmlDeclarationEncoding}
+							placeholder="UTF-8"
+							size="compact"
+							class="font-mono"
+						/>
 					</div>
 				{/if}
 			</FormSection>
@@ -259,16 +259,15 @@
 			<FormSection title="Content">
 				<FormCheckbox label="Wrap text in CDATA" bind:checked={xmlCdata} />
 				{#if xmlCdata}
-					<div class="space-y-1 pt-1">
-						<Label class="text-xs uppercase tracking-wide text-muted-foreground"
-							>CDATA Threshold (chars)</Label
-						>
-						<Input
+					<div class="pt-1">
+						<FormInput
+							label="CDATA Threshold (chars)"
 							bind:value={xmlCdataThresholdStr}
 							placeholder="0"
-							class="h-7 text-xs font-mono"
+							size="compact"
+							class="font-mono"
+							hint="0 = always use CDATA"
 						/>
-						<span class="text-xs text-muted-foreground">0 = always use CDATA</span>
 					</div>
 				{/if}
 				<FormCheckbox label="Escape special characters" bind:checked={xmlEscapeText} />
@@ -280,15 +279,12 @@
 			</FormSection>
 
 			<FormSection title="Comments">
-				<div class="space-y-1">
-					<Label class="text-xs uppercase tracking-wide text-muted-foreground">Header Comment</Label
-					>
-					<Input
-						bind:value={xmlHeaderComment}
-						placeholder="Optional comment..."
-						class="h-7 text-xs"
-					/>
-				</div>
+				<FormInput
+					label="Header Comment"
+					bind:value={xmlHeaderComment}
+					placeholder="Optional comment..."
+					size="compact"
+				/>
 			</FormSection>
 		{/if}
 	{/snippet}
