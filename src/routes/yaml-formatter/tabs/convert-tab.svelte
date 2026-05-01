@@ -1,6 +1,13 @@
 <script lang="ts">
 	import * as yaml from 'yaml';
-	import { FormCheckbox, FormInput, FormMode, FormSection, FormSelect } from '$lib/components/form';
+	import {
+		FormCheckbox,
+		FormCheckboxGroup,
+		FormInput,
+		FormMode,
+		FormSection,
+		FormSelect,
+	} from '$lib/components/form';
 	import { ConvertTab } from '$lib/components/template';
 	import {
 		type YamlToJsonOptions,
@@ -221,9 +228,9 @@
 						{ value: '\r\n', label: 'CRLF (Windows)' },
 					]}
 				/>
-				<div class="space-y-1.5 pt-1">
+				<FormCheckboxGroup class="pt-1">
 					<FormCheckbox label="Collapse content on single line" bind:checked={xmlCollapseContent} />
-				</div>
+				</FormCheckboxGroup>
 			</FormSection>
 
 			<FormSection title="Declaration">

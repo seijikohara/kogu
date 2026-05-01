@@ -3,7 +3,13 @@
 	import { readText } from '@tauri-apps/plugin-clipboard-manager';
 	import { CopyButton } from '$lib/components/action';
 	import { CodeEditor } from '$lib/components/editor';
-	import { FormCheckbox, FormInfo, FormSection, FormSelect } from '$lib/components/form';
+	import {
+		FormCheckbox,
+		FormCheckboxGroup,
+		FormInfo,
+		FormSection,
+		FormSelect,
+	} from '$lib/components/form';
 	import { SectionHeader } from '$lib/components/layout';
 	import { ToolShell } from '$lib/components/shell';
 	import { EmptyState, StatItem } from '$lib/components/status';
@@ -117,12 +123,12 @@
 					{ value: 'desc', label: 'Z → A' },
 				]}
 			/>
-			<div class="space-y-1.5 pt-1">
+			<FormCheckboxGroup class="pt-1">
 				<FormCheckbox label="Remove duplicate lines" bind:checked={removeDuplicates} />
 				<FormCheckbox label="Trim whitespace" bind:checked={trimLines} />
 				<FormCheckbox label="Remove empty lines" bind:checked={removeEmptyLines} />
 				<FormCheckbox label="Reverse line order" bind:checked={reverseLines} />
-			</div>
+			</FormCheckboxGroup>
 		</FormSection>
 
 		<FormSection title="About">

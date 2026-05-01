@@ -1,5 +1,12 @@
 <script lang="ts">
-	import { FormCheckbox, FormInput, FormMode, FormSection, FormSelect } from '$lib/components/form';
+	import {
+		FormCheckbox,
+		FormCheckboxGroup,
+		FormInput,
+		FormMode,
+		FormSection,
+		FormSelect,
+	} from '$lib/components/form';
 	import { ConvertTab } from '$lib/components/template';
 	import {
 		type XmlToJsonOptions,
@@ -191,10 +198,10 @@
 						{ value: 'any', label: 'Auto' },
 					]}
 				/>
-				<div class="space-y-1.5 pt-1">
+				<FormCheckboxGroup class="pt-1">
 					<FormCheckbox label="Indent sequences" bind:checked={yamlIndentSeq} />
 					<FormCheckbox label="Flow collection padding" bind:checked={yamlFlowCollectionPadding} />
-				</div>
+				</FormCheckboxGroup>
 			</FormSection>
 
 			<FormSection title="Strings">
@@ -209,11 +216,11 @@
 						{ value: 'BLOCK_FOLDED', label: 'Block Folded (>)' },
 					]}
 				/>
-				<div class="space-y-1.5 pt-1">
+				<FormCheckboxGroup class="pt-1">
 					<FormCheckbox label="Force quotes on all strings" bind:checked={yamlForceQuotes} />
 					<FormCheckbox label="Prefer single quotes" bind:checked={yamlSingleQuote} />
 					<FormCheckbox label="Double-quoted as JSON style" bind:checked={yamlDoubleQuotedAsJSON} />
-				</div>
+				</FormCheckboxGroup>
 			</FormSection>
 
 			<FormSection title="Keys">
@@ -226,9 +233,9 @@
 						{ value: 'QUOTE_DOUBLE', label: 'Double Quote (")' },
 					]}
 				/>
-				<div class="space-y-1.5 pt-1">
+				<FormCheckboxGroup class="pt-1">
 					<FormCheckbox label="Sort keys alphabetically" bind:checked={yamlSortKeys} />
-				</div>
+				</FormCheckboxGroup>
 			</FormSection>
 
 			<FormSection title="Special Values">

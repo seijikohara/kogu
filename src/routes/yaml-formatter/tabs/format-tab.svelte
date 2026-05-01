@@ -2,7 +2,14 @@
 	import * as yaml from 'yaml';
 	import type { ContextMenuItem } from '$lib/components/editor';
 	import { CodeEditor } from '$lib/components/editor';
-	import { FormCheckbox, FormInput, FormMode, FormSection, FormSelect } from '$lib/components/form';
+	import {
+		FormCheckbox,
+		FormCheckboxGroup,
+		FormInput,
+		FormMode,
+		FormSection,
+		FormSelect,
+	} from '$lib/components/form';
 	import { SplitPane } from '$lib/components/layout';
 	import { OptionsPanel } from '$lib/components/panel';
 	import { SAMPLE_YAML, sortKeysDeep, validateYaml } from '$lib/services/formatters';
@@ -225,10 +232,10 @@
 					{ value: 'any', label: 'Auto' },
 				]}
 			/>
-			<div class="space-y-1.5 pt-1">
+			<FormCheckboxGroup class="pt-1">
 				<FormCheckbox label="Indent sequences" bind:checked={indentSeq} />
 				<FormCheckbox label="Flow collection padding" bind:checked={flowCollectionPadding} />
-			</div>
+			</FormCheckboxGroup>
 		</FormSection>
 
 		<FormSection title="Strings">
@@ -243,11 +250,11 @@
 					{ value: 'BLOCK_FOLDED', label: 'Block Folded (>)' },
 				]}
 			/>
-			<div class="space-y-1.5 pt-1">
+			<FormCheckboxGroup class="pt-1">
 				<FormCheckbox label="Force quotes on all strings" bind:checked={forceQuotes} />
 				<FormCheckbox label="Prefer single quotes" bind:checked={singleQuote} />
 				<FormCheckbox label="Double-quoted as JSON style" bind:checked={doubleQuotedAsJSON} />
-			</div>
+			</FormCheckboxGroup>
 		</FormSection>
 
 		<FormSection title="Keys">
@@ -260,9 +267,9 @@
 					{ value: 'QUOTE_DOUBLE', label: 'Double Quote (")' },
 				]}
 			/>
-			<div class="space-y-1.5 pt-1">
+			<FormCheckboxGroup class="pt-1">
 				<FormCheckbox label="Sort keys alphabetically" bind:checked={sortKeys} />
-			</div>
+			</FormCheckboxGroup>
 		</FormSection>
 
 		<FormSection title="Special Values">
