@@ -1,11 +1,9 @@
 <script lang="ts">
 	import * as yaml from 'yaml';
 	import { CodeEditor } from '$lib/components/editor';
-	import { FormCheckbox, FormSection, FormSelect } from '$lib/components/form';
+	import { FormCheckbox, FormInput, FormSection, FormSelect } from '$lib/components/form';
 	import SplitPane from '$lib/components/layout/split-pane.svelte';
 	import { OptionsPanel } from '$lib/components/panel';
-	import { Input } from '$lib/components/ui/input/index.js';
-	import { Label } from '$lib/components/ui/label/index.js';
 	import { executeJsonPath } from '$lib/services/formatters';
 	import { copyToClipboard, downloadTextFile, pasteFromClipboard } from '../utils.js';
 
@@ -137,10 +135,13 @@
 		onopen={() => (showOptions = true)}
 	>
 		<FormSection title="JSONPath Query">
-			<div class="space-y-1">
-				<Label class="text-xs uppercase tracking-wide text-muted-foreground">Path Expression</Label>
-				<Input bind:value={queryPath} placeholder="$.path.to.value" class="h-7 font-mono text-xs" />
-			</div>
+			<FormInput
+				label="Path Expression"
+				bind:value={queryPath}
+				placeholder="$.path.to.value"
+				size="compact"
+				class="font-mono"
+			/>
 		</FormSection>
 
 		<FormSection title="Output">

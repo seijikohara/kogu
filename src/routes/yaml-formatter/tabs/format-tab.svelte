@@ -2,11 +2,9 @@
 	import * as yaml from 'yaml';
 	import type { ContextMenuItem } from '$lib/components/editor';
 	import { CodeEditor } from '$lib/components/editor';
-	import { FormCheckbox, FormMode, FormSection, FormSelect } from '$lib/components/form';
+	import { FormCheckbox, FormInput, FormMode, FormSection, FormSelect } from '$lib/components/form';
 	import { SplitPane } from '$lib/components/layout';
 	import { OptionsPanel } from '$lib/components/panel';
-	import { Input } from '$lib/components/ui/input/index.js';
-	import { Label } from '$lib/components/ui/label/index.js';
 	import { SAMPLE_YAML, sortKeysDeep, validateYaml } from '$lib/services/formatters';
 
 	interface Props {
@@ -269,18 +267,27 @@
 
 		<FormSection title="Special Values">
 			<div class="grid grid-cols-3 gap-2">
-				<div class="space-y-1">
-					<Label class="text-xs uppercase tracking-wide text-muted-foreground">Null</Label>
-					<Input bind:value={nullStr} placeholder="null" class="h-7 font-mono text-xs" />
-				</div>
-				<div class="space-y-1">
-					<Label class="text-xs uppercase tracking-wide text-muted-foreground">True</Label>
-					<Input bind:value={trueStr} placeholder="true" class="h-7 font-mono text-xs" />
-				</div>
-				<div class="space-y-1">
-					<Label class="text-xs uppercase tracking-wide text-muted-foreground">False</Label>
-					<Input bind:value={falseStr} placeholder="false" class="h-7 font-mono text-xs" />
-				</div>
+				<FormInput
+					label="Null"
+					bind:value={nullStr}
+					placeholder="null"
+					size="compact"
+					class="font-mono"
+				/>
+				<FormInput
+					label="True"
+					bind:value={trueStr}
+					placeholder="true"
+					size="compact"
+					class="font-mono"
+				/>
+				<FormInput
+					label="False"
+					bind:value={falseStr}
+					placeholder="false"
+					size="compact"
+					class="font-mono"
+				/>
 			</div>
 		</FormSection>
 

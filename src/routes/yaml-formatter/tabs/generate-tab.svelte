@@ -1,11 +1,9 @@
 <script lang="ts">
 	import * as yaml from 'yaml';
 	import { CodeEditor } from '$lib/components/editor';
-	import { FormCheckbox, FormMode, FormSection, FormSelect } from '$lib/components/form';
+	import { FormCheckbox, FormInput, FormMode, FormSection, FormSelect } from '$lib/components/form';
 	import SplitPane from '$lib/components/layout/split-pane.svelte';
 	import { OptionsPanel } from '$lib/components/panel';
-	import { Input } from '$lib/components/ui/input/index.js';
-	import { Label } from '$lib/components/ui/label/index.js';
 	import {
 		type CSharpOptions,
 		type GoOptions,
@@ -321,11 +319,12 @@
 
 		{#if generateLanguage === 'typescript'}
 			<FormSection title="TypeScript Options">
-				<div class="space-y-1">
-					<Label class="text-xs uppercase tracking-wide text-muted-foreground">Root Type Name</Label
-					>
-					<Input bind:value={tsRootName} placeholder="Root" class="h-7 text-xs" />
-				</div>
+				<FormInput
+					label="Root Type Name"
+					bind:value={tsRootName}
+					placeholder="Root"
+					size="compact"
+				/>
 				<div class="space-y-1.5 pt-1">
 					<FormCheckbox label="Use interface (vs type)" bind:checked={tsUseInterface} />
 					<FormCheckbox label="Export types" bind:checked={tsUseExport} />
@@ -336,11 +335,12 @@
 			</FormSection>
 		{:else if generateLanguage === 'javascript'}
 			<FormSection title="JavaScript Options">
-				<div class="space-y-1">
-					<Label class="text-xs uppercase tracking-wide text-muted-foreground">Root Type Name</Label
-					>
-					<Input bind:value={jsRootName} placeholder="Root" class="h-7 text-xs" />
-				</div>
+				<FormInput
+					label="Root Type Name"
+					bind:value={jsRootName}
+					placeholder="Root"
+					size="compact"
+				/>
 				<div class="space-y-1.5 pt-1">
 					<FormCheckbox label="Use ES6 class" bind:checked={jsUseClass} />
 					<FormCheckbox label="Generate JSDoc" bind:checked={jsUseJSDoc} />
@@ -352,11 +352,12 @@
 			</FormSection>
 		{:else if generateLanguage === 'go'}
 			<FormSection title="Go Options">
-				<div class="space-y-1">
-					<Label class="text-xs uppercase tracking-wide text-muted-foreground">Root Type Name</Label
-					>
-					<Input bind:value={goRootName} placeholder="Root" class="h-7 text-xs" />
-				</div>
+				<FormInput
+					label="Root Type Name"
+					bind:value={goRootName}
+					placeholder="Root"
+					size="compact"
+				/>
 				<div class="space-y-1.5 pt-1">
 					<FormCheckbox label="Use pointers for nested types" bind:checked={goUsePointers} />
 					<FormCheckbox label="Add json tags" bind:checked={goUseJsonTag} />
@@ -366,11 +367,12 @@
 			</FormSection>
 		{:else if generateLanguage === 'python'}
 			<FormSection title="Python Options">
-				<div class="space-y-1">
-					<Label class="text-xs uppercase tracking-wide text-muted-foreground">Root Type Name</Label
-					>
-					<Input bind:value={pyRootName} placeholder="Root" class="h-7 text-xs" />
-				</div>
+				<FormInput
+					label="Root Type Name"
+					bind:value={pyRootName}
+					placeholder="Root"
+					size="compact"
+				/>
 				<FormSelect
 					label="Style"
 					bind:value={pyStyle}
@@ -391,11 +393,12 @@
 			</FormSection>
 		{:else if generateLanguage === 'rust'}
 			<FormSection title="Rust Options">
-				<div class="space-y-1">
-					<Label class="text-xs uppercase tracking-wide text-muted-foreground">Root Type Name</Label
-					>
-					<Input bind:value={rsRootName} placeholder="Root" class="h-7 text-xs" />
-				</div>
+				<FormInput
+					label="Root Type Name"
+					bind:value={rsRootName}
+					placeholder="Root"
+					size="compact"
+				/>
 				<div class="space-y-1.5 pt-1">
 					<FormCheckbox label="Derive Serialize/Deserialize" bind:checked={rsDeriveSerde} />
 					<FormCheckbox label="Derive Debug" bind:checked={rsDeriveDebug} />
@@ -407,15 +410,18 @@
 			</FormSection>
 		{:else if generateLanguage === 'java'}
 			<FormSection title="Java Options">
-				<div class="space-y-1">
-					<Label class="text-xs uppercase tracking-wide text-muted-foreground">Root Type Name</Label
-					>
-					<Input bind:value={javaRootName} placeholder="Root" class="h-7 text-xs" />
-				</div>
-				<div class="space-y-1">
-					<Label class="text-xs uppercase tracking-wide text-muted-foreground">Package Name</Label>
-					<Input bind:value={javaPackageName} placeholder="com.example" class="h-7 text-xs" />
-				</div>
+				<FormInput
+					label="Root Type Name"
+					bind:value={javaRootName}
+					placeholder="Root"
+					size="compact"
+				/>
+				<FormInput
+					label="Package Name"
+					bind:value={javaPackageName}
+					placeholder="com.example"
+					size="compact"
+				/>
 				<FormSelect
 					label="Class Style"
 					bind:value={javaClassStyle}
@@ -440,11 +446,12 @@
 			</FormSection>
 		{:else if generateLanguage === 'csharp'}
 			<FormSection title="C# Options">
-				<div class="space-y-1">
-					<Label class="text-xs uppercase tracking-wide text-muted-foreground">Root Type Name</Label
-					>
-					<Input bind:value={csRootName} placeholder="Root" class="h-7 text-xs" />
-				</div>
+				<FormInput
+					label="Root Type Name"
+					bind:value={csRootName}
+					placeholder="Root"
+					size="compact"
+				/>
 				<div class="space-y-1.5 pt-1">
 					<FormCheckbox label="Use records (vs class)" bind:checked={csUseRecords} />
 					<FormCheckbox
@@ -459,11 +466,12 @@
 			</FormSection>
 		{:else if generateLanguage === 'kotlin'}
 			<FormSection title="Kotlin Options">
-				<div class="space-y-1">
-					<Label class="text-xs uppercase tracking-wide text-muted-foreground">Root Type Name</Label
-					>
-					<Input bind:value={ktRootName} placeholder="Root" class="h-7 text-xs" />
-				</div>
+				<FormInput
+					label="Root Type Name"
+					bind:value={ktRootName}
+					placeholder="Root"
+					size="compact"
+				/>
 				<FormSelect
 					label="Serialization"
 					bind:value={ktSerializationLibrary}
@@ -477,11 +485,12 @@
 			</FormSection>
 		{:else if generateLanguage === 'swift'}
 			<FormSection title="Swift Options">
-				<div class="space-y-1">
-					<Label class="text-xs uppercase tracking-wide text-muted-foreground">Root Type Name</Label
-					>
-					<Input bind:value={swiftRootName} placeholder="Root" class="h-7 text-xs" />
-				</div>
+				<FormInput
+					label="Root Type Name"
+					bind:value={swiftRootName}
+					placeholder="Root"
+					size="compact"
+				/>
 				<div class="space-y-1.5 pt-1">
 					<FormCheckbox label="Use struct (vs class)" bind:checked={swiftUseStruct} />
 					<FormCheckbox label="Generate CodingKeys" bind:checked={swiftUseCodingKeys} />
@@ -491,15 +500,18 @@
 			</FormSection>
 		{:else if generateLanguage === 'php'}
 			<FormSection title="PHP Options">
-				<div class="space-y-1">
-					<Label class="text-xs uppercase tracking-wide text-muted-foreground">Root Type Name</Label
-					>
-					<Input bind:value={phpRootName} placeholder="Root" class="h-7 text-xs" />
-				</div>
-				<div class="space-y-1">
-					<Label class="text-xs uppercase tracking-wide text-muted-foreground">Namespace</Label>
-					<Input bind:value={phpNamespace} placeholder="App\\Models" class="h-7 text-xs" />
-				</div>
+				<FormInput
+					label="Root Type Name"
+					bind:value={phpRootName}
+					placeholder="Root"
+					size="compact"
+				/>
+				<FormInput
+					label="Namespace"
+					bind:value={phpNamespace}
+					placeholder="App\\Models"
+					size="compact"
+				/>
 				<div class="space-y-1.5 pt-1">
 					<FormCheckbox label="Strict types" bind:checked={phpUseStrictTypes} />
 					<FormCheckbox label="Constructor promotion" bind:checked={phpUseConstructorPromotion} />

@@ -1,8 +1,6 @@
 <script lang="ts">
-	import { FormCheckbox, FormMode, FormSection, FormSelect } from '$lib/components/form';
+	import { FormCheckbox, FormInput, FormMode, FormSection, FormSelect } from '$lib/components/form';
 	import { ConvertTab } from '$lib/components/template';
-	import { Input } from '$lib/components/ui/input/index.js';
-	import { Label } from '$lib/components/ui/label/index.js';
 	import {
 		type XmlToJsonOptions,
 		type XmlToYamlOptions,
@@ -235,18 +233,27 @@
 
 			<FormSection title="Special Values">
 				<div class="grid grid-cols-3 gap-2">
-					<div class="space-y-1">
-						<Label class="text-xs uppercase tracking-wide text-muted-foreground">Null</Label>
-						<Input bind:value={yamlNullStr} placeholder="null" class="h-7 text-xs font-mono" />
-					</div>
-					<div class="space-y-1">
-						<Label class="text-xs uppercase tracking-wide text-muted-foreground">True</Label>
-						<Input bind:value={yamlTrueStr} placeholder="true" class="h-7 text-xs font-mono" />
-					</div>
-					<div class="space-y-1">
-						<Label class="text-xs uppercase tracking-wide text-muted-foreground">False</Label>
-						<Input bind:value={yamlFalseStr} placeholder="false" class="h-7 text-xs font-mono" />
-					</div>
+					<FormInput
+						label="Null"
+						bind:value={yamlNullStr}
+						placeholder="null"
+						size="compact"
+						class="font-mono"
+					/>
+					<FormInput
+						label="True"
+						bind:value={yamlTrueStr}
+						placeholder="true"
+						size="compact"
+						class="font-mono"
+					/>
+					<FormInput
+						label="False"
+						bind:value={yamlFalseStr}
+						placeholder="false"
+						size="compact"
+						class="font-mono"
+					/>
 				</div>
 			</FormSection>
 
