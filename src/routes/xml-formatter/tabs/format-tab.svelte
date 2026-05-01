@@ -1,7 +1,13 @@
 <script lang="ts">
 	import type { ContextMenuItem } from '$lib/components/editor';
 	import { CodeEditor } from '$lib/components/editor';
-	import { FormCheckbox, FormMode, FormSection, FormSelect } from '$lib/components/form';
+	import {
+		FormCheckbox,
+		FormCheckboxGroup,
+		FormMode,
+		FormSection,
+		FormSelect,
+	} from '$lib/components/form';
 	import { SplitPane } from '$lib/components/layout';
 	import { OptionsPanel } from '$lib/components/panel';
 	import {
@@ -193,9 +199,11 @@
 		</FormSection>
 
 		<FormSection title="Content">
-			<FormCheckbox label="Collapse content on single line" bind:checked={collapseContent} />
-			<FormCheckbox label="Preserve whitespace" bind:checked={preserveWhitespace} />
-			<FormCheckbox label="Remove comments" bind:checked={excludeComments} />
+			<FormCheckboxGroup>
+				<FormCheckbox label="Collapse content on single line" bind:checked={collapseContent} />
+				<FormCheckbox label="Preserve whitespace" bind:checked={preserveWhitespace} />
+				<FormCheckbox label="Remove comments" bind:checked={excludeComments} />
+			</FormCheckboxGroup>
 		</FormSection>
 
 		<FormSection title="Attributes">

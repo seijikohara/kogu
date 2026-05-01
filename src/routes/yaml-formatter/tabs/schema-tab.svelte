@@ -5,7 +5,7 @@
 	import { toast } from 'svelte-sonner';
 	import * as yaml from 'yaml';
 	import { CodeEditor } from '$lib/components/editor';
-	import { FormCheckbox, FormMode, FormSection } from '$lib/components/form';
+	import { FormCheckbox, FormCheckboxGroup, FormMode, FormSection } from '$lib/components/form';
 	import SplitPane from '$lib/components/layout/split-pane.svelte';
 	import { OptionsPanel } from '$lib/components/panel';
 	import { Button } from '$lib/components/ui/button/index.js';
@@ -216,16 +216,20 @@
 		</FormSection>
 
 		<FormSection title="Validation">
-			<FormCheckbox label="Report all errors" bind:checked={schemaAllErrors} />
-			<FormCheckbox label="Strict mode" bind:checked={schemaStrictMode} />
-			<FormCheckbox label="Coerce types" bind:checked={schemaCoerceTypes} />
-			<FormCheckbox label="Validate formats" bind:checked={schemaValidateFormats} />
+			<FormCheckboxGroup>
+				<FormCheckbox label="Report all errors" bind:checked={schemaAllErrors} />
+				<FormCheckbox label="Strict mode" bind:checked={schemaStrictMode} />
+				<FormCheckbox label="Coerce types" bind:checked={schemaCoerceTypes} />
+				<FormCheckbox label="Validate formats" bind:checked={schemaValidateFormats} />
+			</FormCheckboxGroup>
 		</FormSection>
 
 		<FormSection title="Advanced">
-			<FormCheckbox label="Use defaults" bind:checked={schemaUseDefaults} />
-			<FormCheckbox label="Remove additional properties" bind:checked={schemaRemoveAdditional} />
-			<FormCheckbox label="Verbose errors" bind:checked={schemaVerboseErrors} />
+			<FormCheckboxGroup>
+				<FormCheckbox label="Use defaults" bind:checked={schemaUseDefaults} />
+				<FormCheckbox label="Remove additional properties" bind:checked={schemaRemoveAdditional} />
+				<FormCheckbox label="Verbose errors" bind:checked={schemaVerboseErrors} />
+			</FormCheckboxGroup>
 		</FormSection>
 
 		<FormSection title="Quick Help">

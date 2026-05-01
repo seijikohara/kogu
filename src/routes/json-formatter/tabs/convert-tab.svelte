@@ -240,8 +240,13 @@
 					]}
 				/>
 				<FormCheckboxGroup class="pt-1">
-					<FormCheckbox label="Indent sequences" bind:checked={yamlIndentSeq} />
-					<FormCheckbox label="Flow collection padding" bind:checked={yamlFlowCollectionPadding} />
+					<FormCheckboxGroup>
+						<FormCheckbox label="Indent sequences" bind:checked={yamlIndentSeq} />
+						<FormCheckbox
+							label="Flow collection padding"
+							bind:checked={yamlFlowCollectionPadding}
+						/>
+					</FormCheckboxGroup>
 				</FormCheckboxGroup>
 			</FormSection>
 
@@ -258,9 +263,14 @@
 					]}
 				/>
 				<FormCheckboxGroup class="pt-1">
-					<FormCheckbox label="Force quotes on all strings" bind:checked={yamlForceQuotes} />
-					<FormCheckbox label="Prefer single quotes" bind:checked={yamlSingleQuote} />
-					<FormCheckbox label="Double-quoted as JSON style" bind:checked={yamlDoubleQuotedAsJSON} />
+					<FormCheckboxGroup>
+						<FormCheckbox label="Force quotes on all strings" bind:checked={yamlForceQuotes} />
+						<FormCheckbox label="Prefer single quotes" bind:checked={yamlSingleQuote} />
+						<FormCheckbox
+							label="Double-quoted as JSON style"
+							bind:checked={yamlDoubleQuotedAsJSON}
+						/>
+					</FormCheckboxGroup>
 				</FormCheckboxGroup>
 			</FormSection>
 
@@ -417,8 +427,10 @@
 			</FormSection>
 
 			<FormSection title="Sorting">
-				<FormCheckbox label="Sort element keys" bind:checked={xmlSortKeys} />
-				<FormCheckbox label="Sort attributes" bind:checked={xmlSortAttributes} />
+				<FormCheckboxGroup>
+					<FormCheckbox label="Sort element keys" bind:checked={xmlSortKeys} />
+					<FormCheckbox label="Sort attributes" bind:checked={xmlSortAttributes} />
+				</FormCheckboxGroup>
 			</FormSection>
 
 			<FormSection title="Comments">

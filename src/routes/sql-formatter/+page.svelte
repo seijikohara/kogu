@@ -1,7 +1,13 @@
 <script lang="ts">
 	import type { SqlLanguage } from 'sql-formatter';
 	import { CodeEditor } from '$lib/components/editor';
-	import { FormCheckbox, FormMode, FormSection, FormSelect } from '$lib/components/form';
+	import {
+		FormCheckbox,
+		FormCheckboxGroup,
+		FormMode,
+		FormSection,
+		FormSelect,
+	} from '$lib/components/form';
 	import { SplitPane } from '$lib/components/layout';
 	import { ToolShell } from '$lib/components/shell';
 	import { StatItem } from '$lib/components/status';
@@ -218,8 +224,10 @@
 		</FormSection>
 
 		<FormSection title="Spacing">
-			<FormCheckbox label="Dense operators (no spaces)" bind:checked={denseOperators} />
-			<FormCheckbox label="Newline before semicolon" bind:checked={newlineBeforeSemicolon} />
+			<FormCheckboxGroup>
+				<FormCheckbox label="Dense operators (no spaces)" bind:checked={denseOperators} />
+				<FormCheckbox label="Newline before semicolon" bind:checked={newlineBeforeSemicolon} />
+			</FormCheckboxGroup>
 		</FormSection>
 	{/snippet}
 
