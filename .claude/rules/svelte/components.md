@@ -463,6 +463,53 @@ Build trees per the W3C tree pattern (`https://www.w3.org/WAI/ARIA/apg/patterns/
 
 When a Tooltip wraps an icon-only button, the trigger still needs its own accessible name. Provide the name via an `<span class="sr-only">` inside the button rather than via `aria-label` that duplicates the visible Tooltip.Content text — the `aria-describedby` from Tooltip.Trigger already announces the tooltip text, so a redundant `aria-label` causes a double-read on most screen readers.
 
+## Form Rhythm
+
+Form-related primitives in `src/lib/components/ui/` (`Checkbox`, `Input`, `Select`, `Textarea`, `Slider`) are intentionally low-level. Do not compose them with `<Label>` directly in routes. Use the project's `Form*` wrappers in `src/lib/components/form/` so spacing, label typography, and hover treatment stay consistent across the app.
+
+| Primitive     | Wrapper        | When to use the wrapper                                  |
+| ------------- | -------------- | -------------------------------------------------------- |
+| `Checkbox`    | `FormCheckbox` | Always — never expose `<Checkbox>` + `<Label>` directly. |
+| `Input`       | `FormInput`    | Always for label + text input pairs.                     |
+| `Select.Root` | `FormSelect`   | Always for label + dropdown pairs.                       |
+| `Slider`      | `FormSlider`   | Always for label + slider pairs.                         |
+| `Textarea`    | (none yet)     | Add `FormTextarea` if a second consumer appears.         |
+
+```svelte
+<!-- Preferred: Form* wrapper drives label, padding, hover, and rhythm. -->
+<FormCheckbox label="Enable Google Fonts" bind:checked={fontSettings.google_fonts_enabled} />
+
+<FormInput label="Root Type Name" bind:value={tsRootName} placeholder="Root" />
+
+<!-- Avoid: hand-composed Label + primitive diverges from Form* rhythm. -->
+<div class="flex items-center gap-2">
+	<Checkbox bind:checked={fontSettings.google_fonts_enabled} />
+	<Label class="text-sm font-medium">Enable Google Fonts</Label>
+</div>
+```
+
+### `size="compact"` for Dense Panels
+
+`FormInput` and `FormSelect` accept `size?: 'default' | 'compact'`:
+
+- `default` (`h-9 text-sm`, label `text-sm font-medium`) — the standard option-rail rhythm.
+- `compact` (`h-7 text-xs`, label `text-xs uppercase tracking-wide text-muted-foreground`) — for dense panels such as code-generator option groups.
+
+```svelte
+<FormInput label="Path Expression" bind:value={queryPath} size="compact" class="font-mono" />
+```
+
+Do not hand-construct the compact look with `<Label class="text-xs uppercase tracking-wide text-muted-foreground">` + `<Input class="h-7 text-xs">` — use `size="compact"` so all dense panels share the same vertical rhythm.
+
+### When to Bypass the Wrappers
+
+Bypassing a `Form*` wrapper is acceptable only when the control is part of an inline composition with a sibling that has its own height, and the wrapper's fixed heights would create misalignment. Document the reason in a comment. Examples:
+
+- A `Select` and a `Button` paired in a single row at `h-8` — using `FormSelect` (`h-9` or `h-7`) would break the row's alignment.
+- A search trigger that lives in the title bar with custom dimensions.
+
+Prefer adding a new `size` value to the wrapper over inline overrides if the same composition repeats.
+
 ## User Feedback
 
 Use svelte-sonner for user notifications:
