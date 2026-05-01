@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { Label } from '$lib/components/ui/label/index.js';
 	import * as Select from '$lib/components/ui/select/index.js';
+	import { cn } from '$lib/utils.js';
 
 	interface SelectOption {
 		value: string;
@@ -8,14 +9,22 @@
 	}
 
 	interface Props {
-		label: string;
+		label?: string;
 		value?: string;
 		options: SelectOption[] | string[];
 		displayValue?: string;
+		size?: 'default' | 'compact';
 		onchange?: (value: string) => void;
 	}
 
-	let { label, value = $bindable(''), options, displayValue, onchange }: Props = $props();
+	let {
+		label,
+		value = $bindable(''),
+		options,
+		displayValue,
+		size = 'default',
+		onchange,
+	}: Props = $props();
 
 	// Normalize options to SelectOption format
 	const normalizedOptions = $derived(
@@ -33,12 +42,24 @@
 			onchange?.(newValue);
 		}
 	};
+
+	const labelClass = $derived(
+		size === 'compact'
+			? 'text-xs uppercase tracking-wide text-muted-foreground'
+			: 'text-sm font-medium'
+	);
+
+	const triggerClass = $derived(
+		cn('w-full bg-background', size === 'compact' ? 'h-7 text-xs' : 'h-9 text-sm')
+	);
 </script>
 
 <div class="space-y-1">
-	<Label class="text-sm font-medium">{label}</Label>
+	{#if label}
+		<Label class={labelClass}>{label}</Label>
+	{/if}
 	<Select.Root type="single" {value} onValueChange={handleChange}>
-		<Select.Trigger class="h-9 w-full text-sm bg-background">{display}</Select.Trigger>
+		<Select.Trigger class={triggerClass}>{display}</Select.Trigger>
 		<Select.Content>
 			{#each normalizedOptions as opt}
 				<Select.Item value={opt.value}>{opt.label}</Select.Item>

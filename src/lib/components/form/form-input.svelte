@@ -3,6 +3,7 @@
 	import { Button } from '$lib/components/ui/button/index.js';
 	import { Input } from '$lib/components/ui/input/index.js';
 	import { Label } from '$lib/components/ui/label/index.js';
+	import { cn } from '$lib/utils.js';
 
 	interface Props {
 		label: string;
@@ -11,6 +12,8 @@
 		type?: 'text' | 'password' | 'email';
 		showToggle?: boolean;
 		hint?: string;
+		size?: 'default' | 'compact';
+		class?: string;
 		onchange?: (value: string) => void;
 		onblur?: () => void;
 	}
@@ -22,6 +25,8 @@
 		type = 'text',
 		showToggle = false,
 		hint,
+		size = 'default',
+		class: className,
 		onchange,
 		onblur,
 	}: Props = $props();
@@ -35,10 +40,25 @@
 		value = target.value;
 		onchange?.(target.value);
 	};
+
+	const labelClass = $derived(
+		size === 'compact'
+			? 'text-xs uppercase tracking-wide text-muted-foreground'
+			: 'text-sm font-medium'
+	);
+
+	const inputClass = $derived(
+		cn(
+			'bg-background',
+			size === 'compact' ? 'h-7 text-xs' : 'h-9 text-sm',
+			showToggle && type === 'password' ? 'pr-9' : '',
+			className
+		)
+	);
 </script>
 
 <div class="space-y-1">
-	<Label class="text-sm font-medium">{label}</Label>
+	<Label class={labelClass}>{label}</Label>
 	<div class="relative">
 		<Input
 			type={inputType}
@@ -46,7 +66,7 @@
 			{value}
 			oninput={handleInput}
 			{onblur}
-			class="h-9 text-sm bg-background {showToggle && type === 'password' ? 'pr-9' : ''}"
+			class={inputClass}
 		/>
 		{#if showToggle && type === 'password'}
 			<Button
