@@ -510,6 +510,57 @@ Bypassing a `Form*` wrapper is acceptable only when the control is part of an in
 
 Prefer adding a new `size` value to the wrapper over inline overrides if the same composition repeats.
 
+### `FormCheckboxGroup` for Dense Checkbox Lists
+
+`FormSection` uses `space-y-3` (12px) between children, which feels too airy when the children are a list of related checkboxes. Wrap groups of two or more `FormCheckbox` instances in `FormCheckboxGroup` so the gap collapses to 6px (the dense rhythm shared with all other checkbox lists in the app):
+
+```svelte
+<FormSection title="Filter">
+	<FormCheckboxGroup>
+		<FormCheckbox label="Active" bind:checked={showActive} />
+		<FormCheckbox label="Inactive" bind:checked={showInactive} />
+		<FormCheckbox label="Loopback" bind:checked={showLoopback} />
+	</FormCheckboxGroup>
+</FormSection>
+```
+
+Use `class="pt-1"` (or `pt-2`) when the group follows a non-checkbox sibling such as a `FormSelect` and visually needs extra separation.
+
+Do not use the legacy inline pattern `<div class="space-y-1.5">…FormCheckbox…</div>`; the explicit component is the discoverable convention.
+
+## Inline Section Labels
+
+`SectionHeader` (in `$lib/components/layout`) is the bordered, surface-2 header used at the top of a content panel. For inline labels above content cards inside that panel, use `SectionLabel` instead:
+
+```svelte
+<SectionLabel icon={Globe}>IP Addresses</SectionLabel>
+<div class="rounded-lg border bg-card p-3">…</div>
+```
+
+The component renders an `<h3 class="mb-2 flex items-center gap-2 text-sm font-medium">` with an optional `h-4 w-4 text-muted-foreground` icon. For state-colored icons (success / warning / destructive on port summary headings), pass `iconClass`:
+
+```svelte
+<SectionLabel icon={CheckCircle2} iconClass="h-4 w-4 text-success">
+	Open Ports ({openPorts.length})
+</SectionLabel>
+```
+
+Do not hand-roll inline `<h3>` with custom typography for section labels; that produced two divergent visual treatments (uppercase muted vs sentence-case medium) before the audit.
+
+## Embedded Empty States
+
+`EmptyState` is the full-page, large empty state with a 16x16 icon container. For empty states embedded in a tab panel or a card, use `EmbeddedEmptyState`:
+
+```svelte
+<EmbeddedEmptyState
+	icon={Network}
+	title="No Port Scan Data"
+	description="Select a scan mode and run a port scan to detect open services."
+/>
+```
+
+Pass `fillHeight` when the empty state should occupy the parent's full height (typical for tab panels) instead of the default vertical padding.
+
 ## User Feedback
 
 Use svelte-sonner for user notifications:
