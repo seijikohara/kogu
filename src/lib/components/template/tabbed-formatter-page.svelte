@@ -73,7 +73,6 @@
 	ontabchange={handleTabChange}
 	valid={page.currentStats.valid}
 	error={page.currentStats.error}
-	preserveTabState
 >
 	{#snippet statusContent()}
 		{#if renderStatusContent}

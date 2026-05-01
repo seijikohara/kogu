@@ -1,10 +1,14 @@
 <script lang="ts">
 	import type { Snippet } from 'svelte';
-	import { FormCheckbox, FormSection, FormSelect } from '$lib/components/form';
+	import {
+		FormCheckbox,
+		FormCheckboxGroup,
+		FormInput,
+		FormMode,
+		FormSection,
+		FormSelect,
+	} from '$lib/components/form';
 	import { ConvertTab } from '$lib/components/template';
-	import { Button } from '$lib/components/ui/button/index.js';
-	import { Input } from '$lib/components/ui/input/index.js';
-	import { Label } from '$lib/components/ui/label/index.js';
 	import {
 		type JsonInputFormat,
 		type JsonToXmlOptions,
@@ -202,24 +206,13 @@
 >
 	{#snippet options()}
 		<FormSection title="Output Format">
-			<div class="flex gap-1">
-				<Button
-					variant={convertFormat === 'yaml' ? 'secondary' : 'ghost'}
-					size="sm"
-					class="h-7 flex-1 text-xs"
-					onclick={() => (convertFormat = 'yaml')}
-				>
-					YAML
-				</Button>
-				<Button
-					variant={convertFormat === 'xml' ? 'secondary' : 'ghost'}
-					size="sm"
-					class="h-7 flex-1 text-xs"
-					onclick={() => (convertFormat = 'xml')}
-				>
-					XML
-				</Button>
-			</div>
+			<FormMode
+				bind:value={convertFormat}
+				options={[
+					{ value: 'yaml', label: 'YAML' },
+					{ value: 'xml', label: 'XML' },
+				]}
+			/>
 		</FormSection>
 
 		{#if convertFormat === 'yaml'}
@@ -246,10 +239,15 @@
 						{ value: 'any', label: 'Auto' },
 					]}
 				/>
-				<div class="space-y-1.5 pt-1">
-					<FormCheckbox label="Indent sequences" bind:checked={yamlIndentSeq} />
-					<FormCheckbox label="Flow collection padding" bind:checked={yamlFlowCollectionPadding} />
-				</div>
+				<FormCheckboxGroup class="pt-1">
+					<FormCheckboxGroup>
+						<FormCheckbox label="Indent sequences" bind:checked={yamlIndentSeq} />
+						<FormCheckbox
+							label="Flow collection padding"
+							bind:checked={yamlFlowCollectionPadding}
+						/>
+					</FormCheckboxGroup>
+				</FormCheckboxGroup>
 			</FormSection>
 
 			<FormSection title="Strings">
@@ -264,11 +262,16 @@
 						{ value: 'BLOCK_FOLDED', label: 'Block Folded (>)' },
 					]}
 				/>
-				<div class="space-y-1.5 pt-1">
-					<FormCheckbox label="Force quotes on all strings" bind:checked={yamlForceQuotes} />
-					<FormCheckbox label="Prefer single quotes" bind:checked={yamlSingleQuote} />
-					<FormCheckbox label="Double-quoted as JSON style" bind:checked={yamlDoubleQuotedAsJSON} />
-				</div>
+				<FormCheckboxGroup class="pt-1">
+					<FormCheckboxGroup>
+						<FormCheckbox label="Force quotes on all strings" bind:checked={yamlForceQuotes} />
+						<FormCheckbox label="Prefer single quotes" bind:checked={yamlSingleQuote} />
+						<FormCheckbox
+							label="Double-quoted as JSON style"
+							bind:checked={yamlDoubleQuotedAsJSON}
+						/>
+					</FormCheckboxGroup>
+				</FormCheckboxGroup>
 			</FormSection>
 
 			<FormSection title="Keys">
@@ -281,25 +284,34 @@
 						{ value: 'QUOTE_DOUBLE', label: 'Double Quote (")' },
 					]}
 				/>
-				<div class="space-y-1.5 pt-1">
+				<FormCheckboxGroup class="pt-1">
 					<FormCheckbox label="Sort keys alphabetically" bind:checked={yamlSortKeys} />
-				</div>
+				</FormCheckboxGroup>
 			</FormSection>
 
 			<FormSection title="Special Values">
 				<div class="grid grid-cols-3 gap-2">
-					<div class="space-y-1">
-						<Label class="text-xs uppercase tracking-wide text-muted-foreground">Null</Label>
-						<Input bind:value={yamlNullStr} placeholder="null" class="h-7 text-xs font-mono" />
-					</div>
-					<div class="space-y-1">
-						<Label class="text-xs uppercase tracking-wide text-muted-foreground">True</Label>
-						<Input bind:value={yamlTrueStr} placeholder="true" class="h-7 text-xs font-mono" />
-					</div>
-					<div class="space-y-1">
-						<Label class="text-xs uppercase tracking-wide text-muted-foreground">False</Label>
-						<Input bind:value={yamlFalseStr} placeholder="false" class="h-7 text-xs font-mono" />
-					</div>
+					<FormInput
+						label="Null"
+						bind:value={yamlNullStr}
+						placeholder="null"
+						size="compact"
+						class="font-mono"
+					/>
+					<FormInput
+						label="True"
+						bind:value={yamlTrueStr}
+						placeholder="true"
+						size="compact"
+						class="font-mono"
+					/>
+					<FormInput
+						label="False"
+						bind:value={yamlFalseStr}
+						placeholder="false"
+						size="compact"
+						class="font-mono"
+					/>
 				</div>
 			</FormSection>
 
@@ -311,22 +323,26 @@
 		{#if convertFormat === 'xml'}
 			<FormSection title="Structure">
 				<div class="grid grid-cols-2 gap-2">
-					<div class="space-y-1">
-						<Label class="text-xs uppercase tracking-wide text-muted-foreground">Root Element</Label
-						>
-						<Input bind:value={xmlRootName} placeholder="root" class="h-7 text-xs" />
-					</div>
-					<div class="space-y-1">
-						<Label class="text-xs uppercase tracking-wide text-muted-foreground">Array Item</Label>
-						<Input bind:value={xmlArrayItemName} placeholder="item" class="h-7 text-xs" />
-					</div>
+					<FormInput
+						label="Root Element"
+						bind:value={xmlRootName}
+						placeholder="root"
+						size="compact"
+					/>
+					<FormInput
+						label="Array Item"
+						bind:value={xmlArrayItemName}
+						placeholder="item"
+						size="compact"
+					/>
 				</div>
-				<div class="space-y-1">
-					<Label class="text-xs uppercase tracking-wide text-muted-foreground"
-						>Attribute Prefix</Label
-					>
-					<Input bind:value={xmlAttributePrefix} placeholder="@" class="h-7 text-xs font-mono" />
-				</div>
+				<FormInput
+					label="Attribute Prefix"
+					bind:value={xmlAttributePrefix}
+					placeholder="@"
+					size="compact"
+					class="font-mono"
+				/>
 			</FormSection>
 
 			<FormSection title="Formatting">
@@ -358,31 +374,29 @@
 						{ value: '\r\n', label: 'CRLF (Windows)' },
 					]}
 				/>
-				<div class="space-y-1.5 pt-1">
+				<FormCheckboxGroup class="pt-1">
 					<FormCheckbox label="Collapse content on single line" bind:checked={xmlCollapseContent} />
-				</div>
+				</FormCheckboxGroup>
 			</FormSection>
 
 			<FormSection title="Declaration">
 				<FormCheckbox label="Include XML declaration" bind:checked={xmlDeclaration} />
 				{#if xmlDeclaration}
 					<div class="grid grid-cols-2 gap-2 pt-1">
-						<div class="space-y-1">
-							<Label class="text-xs uppercase tracking-wide text-muted-foreground">Version</Label>
-							<Input
-								bind:value={xmlDeclarationVersion}
-								placeholder="1.0"
-								class="h-7 text-xs font-mono"
-							/>
-						</div>
-						<div class="space-y-1">
-							<Label class="text-xs uppercase tracking-wide text-muted-foreground">Encoding</Label>
-							<Input
-								bind:value={xmlDeclarationEncoding}
-								placeholder="UTF-8"
-								class="h-7 text-xs font-mono"
-							/>
-						</div>
+						<FormInput
+							label="Version"
+							bind:value={xmlDeclarationVersion}
+							placeholder="1.0"
+							size="compact"
+							class="font-mono"
+						/>
+						<FormInput
+							label="Encoding"
+							bind:value={xmlDeclarationEncoding}
+							placeholder="UTF-8"
+							size="compact"
+							class="font-mono"
+						/>
 					</div>
 				{/if}
 			</FormSection>
@@ -398,36 +412,34 @@
 			<FormSection title="Content">
 				<FormCheckbox label="Wrap text in CDATA" bind:checked={xmlCdata} />
 				{#if xmlCdata}
-					<div class="space-y-1 pt-1">
-						<Label class="text-xs uppercase tracking-wide text-muted-foreground"
-							>CDATA Threshold (chars)</Label
-						>
-						<Input
+					<div class="pt-1">
+						<FormInput
+							label="CDATA Threshold (chars)"
 							bind:value={xmlCdataThresholdStr}
 							placeholder="0"
-							class="h-7 text-xs font-mono"
+							size="compact"
+							class="font-mono"
+							hint="0 = always use CDATA"
 						/>
-						<span class="text-xs text-muted-foreground">0 = always use CDATA</span>
 					</div>
 				{/if}
 				<FormCheckbox label="Escape special characters" bind:checked={xmlEscapeText} />
 			</FormSection>
 
 			<FormSection title="Sorting">
-				<FormCheckbox label="Sort element keys" bind:checked={xmlSortKeys} />
-				<FormCheckbox label="Sort attributes" bind:checked={xmlSortAttributes} />
+				<FormCheckboxGroup>
+					<FormCheckbox label="Sort element keys" bind:checked={xmlSortKeys} />
+					<FormCheckbox label="Sort attributes" bind:checked={xmlSortAttributes} />
+				</FormCheckboxGroup>
 			</FormSection>
 
 			<FormSection title="Comments">
-				<div class="space-y-1">
-					<Label class="text-xs uppercase tracking-wide text-muted-foreground">Header Comment</Label
-					>
-					<Input
-						bind:value={xmlHeaderComment}
-						placeholder="Optional comment..."
-						class="h-7 text-xs"
-					/>
-				</div>
+				<FormInput
+					label="Header Comment"
+					bind:value={xmlHeaderComment}
+					placeholder="Optional comment..."
+					size="compact"
+				/>
 			</FormSection>
 		{/if}
 	{/snippet}

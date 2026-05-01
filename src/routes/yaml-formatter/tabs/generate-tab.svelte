@@ -1,12 +1,16 @@
 <script lang="ts">
 	import * as yaml from 'yaml';
 	import { CodeEditor } from '$lib/components/editor';
-	import { FormCheckbox, FormSection, FormSelect } from '$lib/components/form';
+	import {
+		FormCheckbox,
+		FormCheckboxGroup,
+		FormInput,
+		FormMode,
+		FormSection,
+		FormSelect,
+	} from '$lib/components/form';
 	import SplitPane from '$lib/components/layout/split-pane.svelte';
 	import { OptionsPanel } from '$lib/components/panel';
-	import { Button } from '$lib/components/ui/button/index.js';
-	import { Input } from '$lib/components/ui/input/index.js';
-	import { Label } from '$lib/components/ui/label/index.js';
 	import {
 		type CSharpOptions,
 		type GoOptions,
@@ -314,117 +318,117 @@
 		onopen={() => (showOptions = true)}
 	>
 		<FormSection title="Target Language">
-			<div class="grid grid-cols-2 gap-1">
-				{#each LANGUAGE_OPTIONS as lang}
-					<Button
-						variant={generateLanguage === lang.value ? 'secondary' : 'ghost'}
-						size="sm"
-						class="h-7 justify-start text-xs"
-						onclick={() => (generateLanguage = lang.value)}
-					>
-						{lang.label}
-					</Button>
-				{/each}
-			</div>
+			<FormMode
+				bind:value={generateLanguage}
+				options={LANGUAGE_OPTIONS.map((lang) => ({ value: lang.value, label: lang.label }))}
+			/>
 		</FormSection>
 
 		{#if generateLanguage === 'typescript'}
 			<FormSection title="TypeScript Options">
-				<div class="space-y-1">
-					<Label class="text-xs uppercase tracking-wide text-muted-foreground">Root Type Name</Label
-					>
-					<Input bind:value={tsRootName} placeholder="Root" class="h-7 text-xs" />
-				</div>
-				<div class="space-y-1.5 pt-1">
+				<FormInput
+					label="Root Type Name"
+					bind:value={tsRootName}
+					placeholder="Root"
+					size="compact"
+				/>
+				<FormCheckboxGroup class="pt-1">
 					<FormCheckbox label="Use interface (vs type)" bind:checked={tsUseInterface} />
 					<FormCheckbox label="Export types" bind:checked={tsUseExport} />
 					<FormCheckbox label="Readonly properties" bind:checked={tsUseReadonly} />
 					<FormCheckbox label="Strict null checks" bind:checked={tsStrictNullChecks} />
 					<FormCheckbox label="Optional properties" bind:checked={tsOptionalProperties} />
-				</div>
+				</FormCheckboxGroup>
 			</FormSection>
 		{:else if generateLanguage === 'javascript'}
 			<FormSection title="JavaScript Options">
-				<div class="space-y-1">
-					<Label class="text-xs uppercase tracking-wide text-muted-foreground">Root Type Name</Label
-					>
-					<Input bind:value={jsRootName} placeholder="Root" class="h-7 text-xs" />
-				</div>
-				<div class="space-y-1.5 pt-1">
+				<FormInput
+					label="Root Type Name"
+					bind:value={jsRootName}
+					placeholder="Root"
+					size="compact"
+				/>
+				<FormCheckboxGroup class="pt-1">
 					<FormCheckbox label="Use ES6 class" bind:checked={jsUseClass} />
 					<FormCheckbox label="Generate JSDoc" bind:checked={jsUseJSDoc} />
 					<FormCheckbox label="ES6 syntax" bind:checked={jsUseES6} />
 					<FormCheckbox label="Generate factory function" bind:checked={jsGenerateFactory} />
 					<FormCheckbox label="Generate validator" bind:checked={jsGenerateValidator} />
 					<FormCheckbox label="Optional properties" bind:checked={jsOptionalProperties} />
-				</div>
+				</FormCheckboxGroup>
 			</FormSection>
 		{:else if generateLanguage === 'go'}
 			<FormSection title="Go Options">
-				<div class="space-y-1">
-					<Label class="text-xs uppercase tracking-wide text-muted-foreground">Root Type Name</Label
-					>
-					<Input bind:value={goRootName} placeholder="Root" class="h-7 text-xs" />
-				</div>
-				<div class="space-y-1.5 pt-1">
+				<FormInput
+					label="Root Type Name"
+					bind:value={goRootName}
+					placeholder="Root"
+					size="compact"
+				/>
+				<FormCheckboxGroup class="pt-1">
 					<FormCheckbox label="Use pointers for nested types" bind:checked={goUsePointers} />
 					<FormCheckbox label="Add json tags" bind:checked={goUseJsonTag} />
 					<FormCheckbox label="Add omitempty" bind:checked={goOmitEmpty} />
 					<FormCheckbox label="Optional properties" bind:checked={goOptionalProperties} />
-				</div>
+				</FormCheckboxGroup>
 			</FormSection>
 		{:else if generateLanguage === 'python'}
 			<FormSection title="Python Options">
-				<div class="space-y-1">
-					<Label class="text-xs uppercase tracking-wide text-muted-foreground">Root Type Name</Label
-					>
-					<Input bind:value={pyRootName} placeholder="Root" class="h-7 text-xs" />
-				</div>
+				<FormInput
+					label="Root Type Name"
+					bind:value={pyRootName}
+					placeholder="Root"
+					size="compact"
+				/>
 				<FormSelect
 					label="Style"
 					bind:value={pyStyle}
 					options={PYTHON_STYLE_OPTIONS.map((o) => ({ value: o.value, label: o.label }))}
 				/>
 				{#if pyStyle === 'dataclass'}
-					<div class="space-y-1.5 pt-1">
+					<FormCheckboxGroup class="pt-1">
 						<FormCheckbox label="Frozen (immutable)" bind:checked={pyUseFrozen} />
 						<FormCheckbox label="Use __slots__" bind:checked={pyUseSlots} />
 						<FormCheckbox label="Keyword-only args" bind:checked={pyUseKwOnly} />
-					</div>
+					</FormCheckboxGroup>
 				{:else}
-					<div class="space-y-1.5 pt-1">
+					<FormCheckboxGroup class="pt-1">
 						<FormCheckbox label="Total (all keys required)" bind:checked={pyUseTotal} />
-					</div>
+					</FormCheckboxGroup>
 				{/if}
 				<FormCheckbox label="Optional properties" bind:checked={pyOptionalProperties} />
 			</FormSection>
 		{:else if generateLanguage === 'rust'}
 			<FormSection title="Rust Options">
-				<div class="space-y-1">
-					<Label class="text-xs uppercase tracking-wide text-muted-foreground">Root Type Name</Label
-					>
-					<Input bind:value={rsRootName} placeholder="Root" class="h-7 text-xs" />
-				</div>
-				<div class="space-y-1.5 pt-1">
+				<FormInput
+					label="Root Type Name"
+					bind:value={rsRootName}
+					placeholder="Root"
+					size="compact"
+				/>
+				<FormCheckboxGroup class="pt-1">
 					<FormCheckbox label="Derive Serialize/Deserialize" bind:checked={rsDeriveSerde} />
 					<FormCheckbox label="Derive Debug" bind:checked={rsDeriveDebug} />
 					<FormCheckbox label="Derive Clone" bind:checked={rsDeriveClone} />
 					<FormCheckbox label="Derive Default" bind:checked={rsDeriveDefault} />
 					<FormCheckbox label="Use Box for nested types" bind:checked={rsUseBox} />
 					<FormCheckbox label="Optional properties" bind:checked={rsOptionalProperties} />
-				</div>
+				</FormCheckboxGroup>
 			</FormSection>
 		{:else if generateLanguage === 'java'}
 			<FormSection title="Java Options">
-				<div class="space-y-1">
-					<Label class="text-xs uppercase tracking-wide text-muted-foreground">Root Type Name</Label
-					>
-					<Input bind:value={javaRootName} placeholder="Root" class="h-7 text-xs" />
-				</div>
-				<div class="space-y-1">
-					<Label class="text-xs uppercase tracking-wide text-muted-foreground">Package Name</Label>
-					<Input bind:value={javaPackageName} placeholder="com.example" class="h-7 text-xs" />
-				</div>
+				<FormInput
+					label="Root Type Name"
+					bind:value={javaRootName}
+					placeholder="Root"
+					size="compact"
+				/>
+				<FormInput
+					label="Package Name"
+					bind:value={javaPackageName}
+					placeholder="com.example"
+					size="compact"
+				/>
 				<FormSelect
 					label="Class Style"
 					bind:value={javaClassStyle}
@@ -435,7 +439,7 @@
 					bind:value={javaSerializationLibrary}
 					options={JAVA_SERIALIZATION_OPTIONS.map((o) => ({ value: o.value, label: o.label }))}
 				/>
-				<div class="space-y-1.5 pt-1">
+				<FormCheckboxGroup class="pt-1">
 					<FormCheckbox label="Bean validation" bind:checked={javaUseValidation} />
 					{#if javaClassStyle === 'lombok'}
 						<FormCheckbox label="Generate builder" bind:checked={javaGenerateBuilder} />
@@ -445,16 +449,17 @@
 					{/if}
 					<FormCheckbox label="Use Optional for nullable" bind:checked={javaUseOptional} />
 					<FormCheckbox label="Optional properties" bind:checked={javaOptionalProperties} />
-				</div>
+				</FormCheckboxGroup>
 			</FormSection>
 		{:else if generateLanguage === 'csharp'}
 			<FormSection title="C# Options">
-				<div class="space-y-1">
-					<Label class="text-xs uppercase tracking-wide text-muted-foreground">Root Type Name</Label
-					>
-					<Input bind:value={csRootName} placeholder="Root" class="h-7 text-xs" />
-				</div>
-				<div class="space-y-1.5 pt-1">
+				<FormInput
+					label="Root Type Name"
+					bind:value={csRootName}
+					placeholder="Root"
+					size="compact"
+				/>
+				<FormCheckboxGroup class="pt-1">
 					<FormCheckbox label="Use records (vs class)" bind:checked={csUseRecords} />
 					<FormCheckbox
 						label="Nullable reference types"
@@ -464,57 +469,62 @@
 					<FormCheckbox label="Newtonsoft.Json attributes" bind:checked={csUseNewtonsoft} />
 					<FormCheckbox label="DataContract attributes" bind:checked={csGenerateDataContract} />
 					<FormCheckbox label="Optional properties" bind:checked={csOptionalProperties} />
-				</div>
+				</FormCheckboxGroup>
 			</FormSection>
 		{:else if generateLanguage === 'kotlin'}
 			<FormSection title="Kotlin Options">
-				<div class="space-y-1">
-					<Label class="text-xs uppercase tracking-wide text-muted-foreground">Root Type Name</Label
-					>
-					<Input bind:value={ktRootName} placeholder="Root" class="h-7 text-xs" />
-				</div>
+				<FormInput
+					label="Root Type Name"
+					bind:value={ktRootName}
+					placeholder="Root"
+					size="compact"
+				/>
 				<FormSelect
 					label="Serialization"
 					bind:value={ktSerializationLibrary}
 					options={KOTLIN_SERIALIZATION_OPTIONS.map((o) => ({ value: o.value, label: o.label }))}
 				/>
-				<div class="space-y-1.5 pt-1">
+				<FormCheckboxGroup class="pt-1">
 					<FormCheckbox label="Use data class" bind:checked={ktUseDataClass} />
 					<FormCheckbox label="Default values" bind:checked={ktUseDefaultValues} />
 					<FormCheckbox label="Optional properties" bind:checked={ktOptionalProperties} />
-				</div>
+				</FormCheckboxGroup>
 			</FormSection>
 		{:else if generateLanguage === 'swift'}
 			<FormSection title="Swift Options">
-				<div class="space-y-1">
-					<Label class="text-xs uppercase tracking-wide text-muted-foreground">Root Type Name</Label
-					>
-					<Input bind:value={swiftRootName} placeholder="Root" class="h-7 text-xs" />
-				</div>
-				<div class="space-y-1.5 pt-1">
+				<FormInput
+					label="Root Type Name"
+					bind:value={swiftRootName}
+					placeholder="Root"
+					size="compact"
+				/>
+				<FormCheckboxGroup class="pt-1">
 					<FormCheckbox label="Use struct (vs class)" bind:checked={swiftUseStruct} />
 					<FormCheckbox label="Generate CodingKeys" bind:checked={swiftUseCodingKeys} />
 					<FormCheckbox label="Optional properties" bind:checked={swiftUseOptionalProperties} />
 					<FormCheckbox label="All properties optional" bind:checked={swiftOptionalProperties} />
-				</div>
+				</FormCheckboxGroup>
 			</FormSection>
 		{:else if generateLanguage === 'php'}
 			<FormSection title="PHP Options">
-				<div class="space-y-1">
-					<Label class="text-xs uppercase tracking-wide text-muted-foreground">Root Type Name</Label
-					>
-					<Input bind:value={phpRootName} placeholder="Root" class="h-7 text-xs" />
-				</div>
-				<div class="space-y-1">
-					<Label class="text-xs uppercase tracking-wide text-muted-foreground">Namespace</Label>
-					<Input bind:value={phpNamespace} placeholder="App\\Models" class="h-7 text-xs" />
-				</div>
-				<div class="space-y-1.5 pt-1">
+				<FormInput
+					label="Root Type Name"
+					bind:value={phpRootName}
+					placeholder="Root"
+					size="compact"
+				/>
+				<FormInput
+					label="Namespace"
+					bind:value={phpNamespace}
+					placeholder="App\\Models"
+					size="compact"
+				/>
+				<FormCheckboxGroup class="pt-1">
 					<FormCheckbox label="Strict types" bind:checked={phpUseStrictTypes} />
 					<FormCheckbox label="Constructor promotion" bind:checked={phpUseConstructorPromotion} />
 					<FormCheckbox label="Readonly properties" bind:checked={phpUseReadonlyProperties} />
 					<FormCheckbox label="Optional properties" bind:checked={phpOptionalProperties} />
-				</div>
+				</FormCheckboxGroup>
 			</FormSection>
 		{/if}
 	</OptionsPanel>

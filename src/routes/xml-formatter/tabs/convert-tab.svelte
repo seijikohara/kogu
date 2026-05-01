@@ -1,9 +1,13 @@
 <script lang="ts">
-	import { FormCheckbox, FormSection, FormSelect } from '$lib/components/form';
+	import {
+		FormCheckbox,
+		FormCheckboxGroup,
+		FormInput,
+		FormMode,
+		FormSection,
+		FormSelect,
+	} from '$lib/components/form';
 	import { ConvertTab } from '$lib/components/template';
-	import { Button } from '$lib/components/ui/button/index.js';
-	import { Input } from '$lib/components/ui/input/index.js';
-	import { Label } from '$lib/components/ui/label/index.js';
 	import {
 		type XmlToJsonOptions,
 		type XmlToYamlOptions,
@@ -142,24 +146,13 @@
 >
 	{#snippet options()}
 		<FormSection title="Output Format">
-			<div class="flex gap-1">
-				<Button
-					variant={convertFormat === 'json' ? 'secondary' : 'ghost'}
-					size="sm"
-					class="h-7 flex-1 text-xs"
-					onclick={() => (convertFormat = 'json')}
-				>
-					JSON
-				</Button>
-				<Button
-					variant={convertFormat === 'yaml' ? 'secondary' : 'ghost'}
-					size="sm"
-					class="h-7 flex-1 text-xs"
-					onclick={() => (convertFormat = 'yaml')}
-				>
-					YAML
-				</Button>
-			</div>
+			<FormMode
+				bind:value={convertFormat}
+				options={[
+					{ value: 'json', label: 'JSON' },
+					{ value: 'yaml', label: 'YAML' },
+				]}
+			/>
 		</FormSection>
 
 		{#if convertFormat === 'json'}
@@ -205,10 +198,10 @@
 						{ value: 'any', label: 'Auto' },
 					]}
 				/>
-				<div class="space-y-1.5 pt-1">
+				<FormCheckboxGroup class="pt-1">
 					<FormCheckbox label="Indent sequences" bind:checked={yamlIndentSeq} />
 					<FormCheckbox label="Flow collection padding" bind:checked={yamlFlowCollectionPadding} />
-				</div>
+				</FormCheckboxGroup>
 			</FormSection>
 
 			<FormSection title="Strings">
@@ -223,11 +216,11 @@
 						{ value: 'BLOCK_FOLDED', label: 'Block Folded (>)' },
 					]}
 				/>
-				<div class="space-y-1.5 pt-1">
+				<FormCheckboxGroup class="pt-1">
 					<FormCheckbox label="Force quotes on all strings" bind:checked={yamlForceQuotes} />
 					<FormCheckbox label="Prefer single quotes" bind:checked={yamlSingleQuote} />
 					<FormCheckbox label="Double-quoted as JSON style" bind:checked={yamlDoubleQuotedAsJSON} />
-				</div>
+				</FormCheckboxGroup>
 			</FormSection>
 
 			<FormSection title="Keys">
@@ -240,25 +233,34 @@
 						{ value: 'QUOTE_DOUBLE', label: 'Double Quote (")' },
 					]}
 				/>
-				<div class="space-y-1.5 pt-1">
+				<FormCheckboxGroup class="pt-1">
 					<FormCheckbox label="Sort keys alphabetically" bind:checked={yamlSortKeys} />
-				</div>
+				</FormCheckboxGroup>
 			</FormSection>
 
 			<FormSection title="Special Values">
 				<div class="grid grid-cols-3 gap-2">
-					<div class="space-y-1">
-						<Label class="text-xs uppercase tracking-wide text-muted-foreground">Null</Label>
-						<Input bind:value={yamlNullStr} placeholder="null" class="h-7 text-xs font-mono" />
-					</div>
-					<div class="space-y-1">
-						<Label class="text-xs uppercase tracking-wide text-muted-foreground">True</Label>
-						<Input bind:value={yamlTrueStr} placeholder="true" class="h-7 text-xs font-mono" />
-					</div>
-					<div class="space-y-1">
-						<Label class="text-xs uppercase tracking-wide text-muted-foreground">False</Label>
-						<Input bind:value={yamlFalseStr} placeholder="false" class="h-7 text-xs font-mono" />
-					</div>
+					<FormInput
+						label="Null"
+						bind:value={yamlNullStr}
+						placeholder="null"
+						size="compact"
+						class="font-mono"
+					/>
+					<FormInput
+						label="True"
+						bind:value={yamlTrueStr}
+						placeholder="true"
+						size="compact"
+						class="font-mono"
+					/>
+					<FormInput
+						label="False"
+						bind:value={yamlFalseStr}
+						placeholder="false"
+						size="compact"
+						class="font-mono"
+					/>
 				</div>
 			</FormSection>
 

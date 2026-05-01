@@ -264,3 +264,45 @@ To explicitly include additional sources:
 ```css
 @source "../node_modules/some-package";
 ```
+
+## Data-Attribute Variants
+
+Match data attributes on elements via the explicit arbitrary syntax. Do **not** use shorthand variants like `data-horizontal:` or `data-state:` unless a corresponding `@custom-variant` is registered in `app.css`.
+
+```svelte
+<!-- Preferred: explicit attribute selector. Works without configuration. -->
+<div data-state="active" class="data-[state=active]:bg-primary">…</div>
+<span data-orientation="horizontal" class="data-[orientation=horizontal]:h-1.5">…</span>
+
+<!-- Avoid: shorthand requires a custom-variant declaration that the project does not have. -->
+<span data-orientation="horizontal" class="data-horizontal:h-1.5">…</span>
+```
+
+The shorthand silently no-ops when the variant is not registered. Symptoms include zero-height tracks, missing hidden states, and otherwise invisible UI. Verify with `getComputedStyle` if a Tailwind class on an attribute-driven primitive looks ineffective.
+
+If multiple primitives share the same data attribute and you want a project-wide shorthand, register it once in `app.css`:
+
+```css
+@custom-variant data-horizontal (&[data-orientation='horizontal']);
+@custom-variant data-vertical (&[data-orientation='vertical']);
+```
+
+Otherwise, prefer the arbitrary syntax — it travels with the component and does not assume project configuration.
+
+## CSS Variables for Per-Instance Values
+
+When a single component needs a value that varies by prop or recursion depth, propagate it through a CSS variable rather than inline `style` strings constructed in JavaScript:
+
+```svelte
+<!-- Preferred: CSS variable on the wrapper, Tailwind arbitrary value on consumers. -->
+<div style:--tree-depth={level} style:padding-left="calc(var(--tree-depth) * 16px)">
+	<button class="absolute left-[calc(var(--tree-depth)*16px+4px)]">…</button>
+</div>
+
+<!-- Avoid: hand-built style strings in two places that must agree numerically. -->
+<div style="padding-left: {level * 16}px">
+	<button style="left: {level * 16 + 4}px">…</button>
+</div>
+```
+
+Single source of truth via a CSS variable lets one declaration drive multiple positions and survives theme overrides.

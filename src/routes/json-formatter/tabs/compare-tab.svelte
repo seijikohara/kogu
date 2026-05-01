@@ -1,9 +1,8 @@
 <script lang="ts">
 	import type { Snippet } from 'svelte';
-	import { FormCheckbox } from '$lib/components/form';
+	import { FormCheckbox, FormInput } from '$lib/components/form';
+
 	import { CompareTab } from '$lib/components/template';
-	import { Input } from '$lib/components/ui/input/index.js';
-	import { Label } from '$lib/components/ui/label/index.js';
 	import type { GenericDiffItem } from '$lib/constants/diff.js';
 	import {
 		findJsonDifferences,
@@ -194,10 +193,12 @@
 		<FormCheckbox label="Ignore case" bind:checked={compareIgnoreCase} />
 		<FormCheckbox label="Ignore numeric type" bind:checked={compareIgnoreNumericType} />
 		<FormCheckbox label="Ignore empty values" bind:checked={compareIgnoreEmpty} />
-		<div class="space-y-1 pt-1">
-			<Label class="text-xs uppercase tracking-wide text-muted-foreground">Ignore Keys</Label>
-			<Input bind:value={compareIgnoreKeys} placeholder="key1, key2, key3" class="h-7 text-xs" />
-			<span class="text-xs text-muted-foreground">Comma-separated list of keys to ignore</span>
-		</div>
+		<FormInput
+			label="Ignore Keys"
+			bind:value={compareIgnoreKeys}
+			placeholder="key1, key2, key3"
+			size="compact"
+			hint="Comma-separated list of keys to ignore"
+		/>
 	{/snippet}
 </CompareTab>

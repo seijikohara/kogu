@@ -2,7 +2,14 @@
 	import { Key, Lock, Terminal, Unlock } from '@lucide/svelte';
 	import { toast } from 'svelte-sonner';
 	import { ActionButton, CopyButton } from '$lib/components/action';
-	import { FormCheckbox, FormInfo, FormInput, FormSection, FormSelect } from '$lib/components/form';
+	import {
+		FormCheckbox,
+		FormCheckboxGroup,
+		FormInfo,
+		FormInput,
+		FormSection,
+		FormSelect,
+	} from '$lib/components/form';
 	import { SectionHeader } from '$lib/components/layout';
 	import { ToolShell } from '$lib/components/shell';
 	import { EmptyState, ErrorDisplay, LoadingOverlay, StatItem } from '$lib/components/status';
@@ -218,8 +225,10 @@
 
 		<FormSection title="Display">
 			<div class="space-y-1">
-				<FormCheckbox label="Show fingerprint" bind:checked={showFingerprint} />
-				<FormCheckbox label="Show ssh-keygen command" bind:checked={showEquivalentCommand} />
+				<FormCheckboxGroup>
+					<FormCheckbox label="Show fingerprint" bind:checked={showFingerprint} />
+					<FormCheckbox label="Show ssh-keygen command" bind:checked={showEquivalentCommand} />
+				</FormCheckboxGroup>
 			</div>
 		</FormSection>
 

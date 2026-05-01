@@ -1,11 +1,15 @@
 <script lang="ts">
 	import type { Snippet } from 'svelte';
 	import { CodeEditor } from '$lib/components/editor';
-	import { FormCheckbox, FormSection, FormSelect } from '$lib/components/form';
+	import {
+		FormCheckbox,
+		FormCheckboxGroup,
+		FormInput,
+		FormSection,
+		FormSelect,
+	} from '$lib/components/form';
 	import SplitPane from '$lib/components/layout/split-pane.svelte';
 	import { OptionsPanel } from '$lib/components/panel';
-	import { Input } from '$lib/components/ui/input/index.js';
-	import { Label } from '$lib/components/ui/label/index.js';
 	import { executeJsonPath, type JsonInputFormat, validateJson } from '$lib/services/formatters';
 	import { copyToClipboard, downloadTextFile, pasteFromClipboard } from '../utils.js';
 
@@ -131,10 +135,13 @@
 	>
 		{@render formatSection?.()}
 		<FormSection title="JSONPath Query">
-			<div class="space-y-1">
-				<Label class="text-xs uppercase tracking-wide text-muted-foreground">Path Expression</Label>
-				<Input bind:value={queryPath} placeholder="$.path.to.value" class="h-7 font-mono text-xs" />
-			</div>
+			<FormInput
+				label="Path Expression"
+				bind:value={queryPath}
+				placeholder="$.path.to.value"
+				size="compact"
+				class="font-mono"
+			/>
 		</FormSection>
 
 		<FormSection title="Output">
@@ -160,12 +167,12 @@
 					]}
 				/>
 			</div>
-			<div class="space-y-1.5 pt-1">
+			<FormCheckboxGroup class="pt-1">
 				<FormCheckbox label="First match only" bind:checked={queryFirstMatchOnly} />
 				<FormCheckbox label="Show paths in results" bind:checked={queryShowPaths} />
 				<FormCheckbox label="Flatten nested arrays" bind:checked={queryFlattenArrays} />
 				<FormCheckbox label="Wrap results in array" bind:checked={queryWrapResults} />
-			</div>
+			</FormCheckboxGroup>
 		</FormSection>
 
 		<FormSection title="JSONPath Examples">

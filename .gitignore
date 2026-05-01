@@ -13,6 +13,9 @@ vite.config.ts.timestamp-*
 .claude/settings.local.json
 CLAUDE.local.md
 
+# Superpowers brainstorming/plans (local-only artifacts)
+docs/superpowers/
+
 # Playwright MCP
 .playwright-mcp/
 

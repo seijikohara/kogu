@@ -35,6 +35,11 @@
 		XCircle,
 	} from '@lucide/svelte';
 	import { toast } from 'svelte-sonner';
+	import { SectionLabel } from '$lib/components/layout';
+	import { EmbeddedEmptyState } from '$lib/components/status';
+	import { Button } from '$lib/components/ui/button';
+	import * as Select from '$lib/components/ui/select';
+	import * as Tabs from '$lib/components/ui/tabs';
 	import * as Tooltip from '$lib/components/ui/tooltip';
 	import {
 		DEVICE_CATEGORIES,
@@ -349,37 +354,43 @@
 									{displaySource.toUpperCase()}
 								</span>
 							{/if}
-							<button
-								type="button"
-								class="rounded p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-								onclick={() => copyToClipboard(displayName ?? '', 'Hostname')}
+							<Button
+								variant="ghost"
+								size="icon-sm"
+								class="hover:bg-muted hover:text-foreground h-7 w-7 text-muted-foreground"
+								aria-label="Copy hostname"
 								title="Copy hostname"
+								onclick={() => copyToClipboard(displayName ?? '', 'Hostname')}
 							>
 								<Copy class="h-3.5 w-3.5" />
-							</button>
+							</Button>
 						</div>
 						<div class="flex items-center gap-2">
 							<span class="font-mono text-sm text-muted-foreground">{primaryIp}</span>
-							<button
-								type="button"
-								class="rounded p-0.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-								onclick={() => copyToClipboard(primaryIp, 'IP address')}
+							<Button
+								variant="ghost"
+								size="icon-sm"
+								class="hover:bg-muted hover:text-foreground h-5 w-5 text-muted-foreground"
+								aria-label="Copy IP"
 								title="Copy IP"
+								onclick={() => copyToClipboard(primaryIp, 'IP address')}
 							>
 								<Copy class="h-3 w-3" />
-							</button>
+							</Button>
 						</div>
 					{:else}
 						<div class="flex items-center gap-2">
 							<h2 class="font-mono text-lg font-semibold">{primaryIp}</h2>
-							<button
-								type="button"
-								class="rounded p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-								onclick={() => copyToClipboard(primaryIp, 'IP address')}
+							<Button
+								variant="ghost"
+								size="icon-sm"
+								class="hover:bg-muted hover:text-foreground h-7 w-7 text-muted-foreground"
+								aria-label="Copy IP"
 								title="Copy IP"
+								onclick={() => copyToClipboard(primaryIp, 'IP address')}
 							>
 								<Copy class="h-3.5 w-3.5" />
-							</button>
+							</Button>
 						</div>
 						<p class="text-xs text-muted-foreground">Hostname not resolved</p>
 					{/if}
@@ -401,14 +412,18 @@
 				{#if hasWebPort}
 					<Tooltip.Root>
 						<Tooltip.Trigger>
-							<button
-								type="button"
-								class="rounded p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-								onclick={openInBrowser}
-								aria-label="Open in browser"
-							>
-								<Globe class="h-3.5 w-3.5" />
-							</button>
+							{#snippet child({ props })}
+								<Button
+									{...props}
+									variant="ghost"
+									size="icon-sm"
+									class="hover:bg-muted hover:text-foreground h-7 w-7 text-muted-foreground"
+									onclick={openInBrowser}
+								>
+									<Globe class="h-3.5 w-3.5" />
+									<span class="sr-only">Open in browser</span>
+								</Button>
+							{/snippet}
 						</Tooltip.Trigger>
 						<Tooltip.Content>Open in browser</Tooltip.Content>
 					</Tooltip.Root>
@@ -416,14 +431,18 @@
 				{#if hasSshPort}
 					<Tooltip.Root>
 						<Tooltip.Trigger>
-							<button
-								type="button"
-								class="rounded p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-								onclick={copySshCommand}
-								aria-label="Copy SSH command"
-							>
-								<Terminal class="h-3.5 w-3.5" />
-							</button>
+							{#snippet child({ props })}
+								<Button
+									{...props}
+									variant="ghost"
+									size="icon-sm"
+									class="hover:bg-muted hover:text-foreground h-7 w-7 text-muted-foreground"
+									onclick={copySshCommand}
+								>
+									<Terminal class="h-3.5 w-3.5" />
+									<span class="sr-only">Copy SSH command</span>
+								</Button>
+							{/snippet}
 						</Tooltip.Trigger>
 						<Tooltip.Content>Copy SSH command</Tooltip.Content>
 					</Tooltip.Root>
@@ -438,778 +457,753 @@
 		</div>
 	</div>
 
-	<!-- Tabs -->
-	<div class="shrink-0 flex border-b bg-surface-2">
-		{#each tabs as tab (tab.id)}
-			{@const TabIcon = tab.icon}
-			<button
-				type="button"
-				class="flex items-center gap-1.5 px-4 py-2 text-xs font-medium transition-colors
-					{activeTab === tab.id
-					? 'border-b-2 border-primary text-foreground'
-					: 'text-muted-foreground hover:text-foreground'}"
-				onclick={() => (activeTab = tab.id)}
-			>
-				<TabIcon class="h-3.5 w-3.5" />
-				{tab.label}
-				{#if tab.count !== null}
-					<span class="rounded-full bg-muted px-1.5 py-0.5 text-xs font-medium">{tab.count}</span>
-				{/if}
-			</button>
-		{/each}
-	</div>
+	<Tabs.Root
+		value={activeTab}
+		onValueChange={(v) => (activeTab = v as Tab)}
+		class="flex min-h-0 flex-1 flex-col"
+	>
+		<!-- Tabs -->
+		<Tabs.List
+			class="bg-surface-2 inline-flex h-auto w-full shrink-0 justify-start rounded-none border-b p-0"
+		>
+			{#each tabs as tab (tab.id)}
+				{@const TabIcon = tab.icon}
+				<Tabs.Trigger
+					value={tab.id}
+					class="data-[state=active]:border-primary data-[state=active]:text-foreground data-[state=active]:bg-transparent data-[state=active]:shadow-none h-auto gap-1.5 rounded-none border-b-2 border-transparent bg-transparent px-4 py-2 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
+				>
+					<TabIcon class="h-3.5 w-3.5" />
+					{tab.label}
+					{#if tab.count !== null}
+						<span class="rounded-full bg-muted px-1.5 py-0.5 text-xs font-medium">{tab.count}</span>
+					{/if}
+				</Tabs.Trigger>
+			{/each}
+		</Tabs.List>
 
-	<!-- Tab Content -->
-	<div class="flex-1 overflow-auto p-4">
-		{#key activeTab}
-			<div class="animate-fade-in">
-				<!-- Overview Tab -->
-				{#if activeTab === 'overview'}
-					<!-- Summary Stats -->
-					<div class="mb-4 grid grid-cols-2 gap-2">
-						<div class="rounded-lg border bg-card p-2.5">
-							<div class="flex items-center gap-1.5 text-xs text-muted-foreground">
-								<Hash class="h-3 w-3" />
-								IPs
-							</div>
-							<div class="mt-0.5 text-base font-semibold tabular-nums">{ips.length}</div>
+		<!-- Tab Content -->
+		<div class="flex-1 overflow-auto p-4">
+			<Tabs.Content value="overview" class="animate-fade-in mt-0 outline-none">
+				<!-- Summary Stats -->
+				<div class="mb-4 grid grid-cols-2 gap-2">
+					<div class="rounded-lg border bg-card p-2.5">
+						<div class="flex items-center gap-1.5 text-xs text-muted-foreground">
+							<Hash class="h-3 w-3" />
+							IPs
 						</div>
-						<div class="rounded-lg border bg-card p-2.5">
-							<div class="flex items-center gap-1.5 text-xs text-muted-foreground">
-								<CheckCircle2 class="h-3 w-3 text-success" />
-								Open Ports
-							</div>
-							<div class="mt-0.5 text-base font-semibold tabular-nums">{openPorts.length}</div>
+						<div class="mt-0.5 text-base font-semibold tabular-nums">{ips.length}</div>
+					</div>
+					<div class="rounded-lg border bg-card p-2.5">
+						<div class="flex items-center gap-1.5 text-xs text-muted-foreground">
+							<CheckCircle2 class="h-3 w-3 text-success" />
+							Open Ports
 						</div>
-						<div class="rounded-lg border bg-card p-2.5">
-							<div class="flex items-center gap-1.5 text-xs text-muted-foreground">
-								<Radar class="h-3 w-3 text-primary" />
-								Discovery
-							</div>
-							<div class="mt-0.5 text-base font-semibold tabular-nums">{discoveries.length}</div>
+						<div class="mt-0.5 text-base font-semibold tabular-nums">{openPorts.length}</div>
+					</div>
+					<div class="rounded-lg border bg-card p-2.5">
+						<div class="flex items-center gap-1.5 text-xs text-muted-foreground">
+							<Radar class="h-3 w-3 text-primary" />
+							Discovery
 						</div>
-						<div class="rounded-lg border bg-card p-2.5">
-							<div class="flex items-center gap-1.5 text-xs text-muted-foreground">
-								<Radio class="h-3 w-3 text-info" />
-								Services
+						<div class="mt-0.5 text-base font-semibold tabular-nums">{discoveries.length}</div>
+					</div>
+					<div class="rounded-lg border bg-card p-2.5">
+						<div class="flex items-center gap-1.5 text-xs text-muted-foreground">
+							<Radio class="h-3 w-3 text-info" />
+							Services
+						</div>
+						<div class="mt-0.5 text-base font-semibold tabular-nums">{mdnsServices.length}</div>
+					</div>
+				</div>
+
+				<!-- IP Addresses Section -->
+				{#if ips.length > 1 || ipv6Addresses.length > 0}
+					<div class="mb-4">
+						<SectionLabel icon={Hash}>IP Addresses</SectionLabel>
+						<div class="space-y-2">
+							{#if ipv4Addresses.length > 0}
+								<div class="rounded-lg border bg-card p-3">
+									<div class="mb-1.5 text-xs font-medium text-muted-foreground">IPv4</div>
+									<div class="flex flex-wrap gap-2">
+										{#each ipv4Addresses as ip (ip)}
+											<Button
+												variant="ghost"
+												size="sm"
+												class="bg-muted hover:bg-muted/80 h-auto gap-1.5 rounded px-2 py-1 font-mono text-xs"
+												title="Copy {ip}"
+												onclick={() => copyToClipboard(ip, 'IP address')}
+											>
+												{ip}
+												<Copy class="h-3 w-3 text-muted-foreground" />
+											</Button>
+										{/each}
+									</div>
+								</div>
+							{/if}
+							{#if ipv6Addresses.length > 0}
+								<div class="rounded-lg border bg-card p-3">
+									<div class="mb-1.5 text-xs font-medium text-muted-foreground">IPv6</div>
+									<div class="space-y-1">
+										{#each ipv6Addresses as ip (ip)}
+											<Button
+												variant="ghost"
+												size="sm"
+												class="bg-muted hover:bg-muted/80 h-auto w-full justify-between gap-2 rounded px-2 py-1 font-mono text-xs"
+												title="Copy {ip}"
+												onclick={() => copyToClipboard(ip, 'IP address')}
+											>
+												<span class="truncate">{ip}</span>
+												<Copy class="h-3 w-3 shrink-0 text-muted-foreground" />
+											</Button>
+										{/each}
+									</div>
+								</div>
+							{/if}
+						</div>
+					</div>
+				{/if}
+
+				<!-- Device Classification -->
+				{#if classification && classification.category !== 'unknown'}
+					<div class="mb-4">
+						<SectionLabel icon={HeaderIcon}>Device Type</SectionLabel>
+						<div class="rounded-lg border bg-card p-3">
+							<div class="flex items-center justify-between">
+								<div class="flex items-center gap-2">
+									<span class="text-sm font-medium">
+										{DEVICE_CATEGORIES[classification.category].label}
+									</span>
+									{#if confidenceLabel}
+										<span
+											class="rounded px-1.5 py-0.5 text-xs font-medium {confidenceColor} bg-muted"
+										>
+											{confidenceLabel}
+										</span>
+									{/if}
+								</div>
+								<span class="text-xs text-muted-foreground">
+									{(classification.confidence * 100).toFixed(0)}%
+								</span>
 							</div>
-							<div class="mt-0.5 text-base font-semibold tabular-nums">{mdnsServices.length}</div>
+							<p class="mt-1 text-xs text-muted-foreground">
+								{DEVICE_CATEGORIES[classification.category].description}
+							</p>
+							{#if classification.evidence.length > 0}
+								<div class="mt-2 border-t pt-2">
+									<div class="text-xs text-muted-foreground">
+										{#each classification.evidence as evidence}
+											<div class="flex items-center gap-1">
+												<span class="text-[8px]">-</span>
+												<span>{evidence}</span>
+											</div>
+										{/each}
+									</div>
+								</div>
+							{/if}
+						</div>
+					</div>
+				{/if}
+
+				<!-- Device Info -->
+				{#if macAddress || vendor || netbiosName}
+					<div class="mb-4">
+						<SectionLabel icon={Cpu}>Device Info</SectionLabel>
+						<div class="grid grid-cols-2 gap-2">
+							{#if netbiosName}
+								<div class="rounded-lg border bg-card p-2.5">
+									<div class="text-xs text-muted-foreground">NetBIOS Name</div>
+									<div class="mt-0.5 flex items-center gap-1.5 font-mono text-sm font-medium">
+										{netbiosName}
+										<Button
+											variant="ghost"
+											size="icon-sm"
+											class="hover:bg-muted hover:text-foreground h-5 w-5 text-muted-foreground"
+											aria-label="Copy NetBIOS name"
+											title="Copy NetBIOS name"
+											onclick={() => copyToClipboard(netbiosName ?? '', 'NetBIOS name')}
+										>
+											<Copy class="h-3 w-3" />
+										</Button>
+									</div>
+								</div>
+							{/if}
+							{#if macAddress}
+								<div class="rounded-lg border bg-card p-2.5">
+									<div class="text-xs text-muted-foreground">MAC Address</div>
+									<div class="mt-0.5 flex items-center gap-1.5 font-mono text-sm font-medium">
+										{macAddress}
+										<Button
+											variant="ghost"
+											size="icon-sm"
+											class="hover:bg-muted hover:text-foreground h-5 w-5 text-muted-foreground"
+											aria-label="Copy MAC address"
+											title="Copy MAC address"
+											onclick={() => copyToClipboard(macAddress ?? '', 'MAC address')}
+										>
+											<Copy class="h-3 w-3" />
+										</Button>
+									</div>
+								</div>
+							{/if}
+							{#if vendor}
+								<div
+									class="rounded-lg border bg-card p-2.5 {netbiosName && macAddress
+										? 'col-span-2'
+										: ''}"
+								>
+									<div class="text-xs text-muted-foreground">Vendor</div>
+									<div class="mt-0.5 text-sm">{vendor}</div>
+								</div>
+							{/if}
+						</div>
+					</div>
+				{/if}
+
+				<!-- SSDP/UPnP Device Info -->
+				{#if hasSsdpInfo}
+					<div class="mb-4">
+						<SectionLabel icon={Wifi}>SSDP/UPnP Device</SectionLabel>
+						<div class="rounded-lg border bg-card p-3">
+							{#if ssdpDevice?.friendlyName}
+								<div>
+									<div class="text-xs font-medium text-muted-foreground">Friendly Name</div>
+									<div class="text-sm font-medium">{ssdpDevice.friendlyName}</div>
+								</div>
+							{/if}
+							{#if ssdpDevice?.manufacturer || ssdpDevice?.modelName}
+								<div class={ssdpDevice?.friendlyName ? 'mt-2 border-t pt-2' : ''}>
+									<div class="text-xs font-medium text-muted-foreground">
+										{ssdpDevice?.manufacturer && ssdpDevice?.modelName
+											? 'Manufacturer / Model'
+											: ssdpDevice?.manufacturer
+												? 'Manufacturer'
+												: 'Model'}
+									</div>
+									<div class="text-sm">
+										{[ssdpDevice?.manufacturer, ssdpDevice?.modelName].filter(Boolean).join(' ')}
+										{#if ssdpDevice?.modelNumber}
+											<span class="text-muted-foreground">({ssdpDevice.modelNumber})</span>
+										{/if}
+									</div>
+								</div>
+							{/if}
+							{#if ssdpDevice?.deviceType}
+								<div
+									class={ssdpDevice?.friendlyName ||
+									ssdpDevice?.manufacturer ||
+									ssdpDevice?.modelName
+										? 'mt-2 border-t pt-2'
+										: ''}
+								>
+									<div class="text-xs font-medium text-muted-foreground">Device Type</div>
+									<div class="font-mono text-xs text-muted-foreground">
+										{ssdpDevice.deviceType}
+									</div>
+								</div>
+							{/if}
+							{#if ssdpDevice?.server}
+								<div class="mt-2 border-t pt-2">
+									<div class="text-xs font-medium text-muted-foreground">Server</div>
+									<div class="font-mono text-xs text-muted-foreground">{ssdpDevice.server}</div>
+								</div>
+							{/if}
+						</div>
+					</div>
+				{/if}
+
+				<!-- WS-Discovery Info -->
+				{#if wsDiscovery && (wsDiscovery.deviceTypes.length > 0 || wsDiscovery.scopes.length > 0)}
+					<div class="mb-4">
+						<SectionLabel icon={Globe}>WS-Discovery</SectionLabel>
+						<div class="rounded-lg border bg-card p-3">
+							{#if wsDiscovery.deviceTypes.length > 0}
+								<div>
+									<div class="text-xs font-medium text-muted-foreground">Device Types</div>
+									<div class="mt-1 space-y-0.5">
+										{#each wsDiscovery.deviceTypes as dtype (dtype)}
+											<div class="font-mono text-xs text-muted-foreground">{dtype}</div>
+										{/each}
+									</div>
+								</div>
+							{/if}
+							{#if wsDiscovery.scopes.length > 0}
+								<div class={wsDiscovery.deviceTypes.length > 0 ? 'mt-2 border-t pt-2' : ''}>
+									<div class="text-xs font-medium text-muted-foreground">Scopes</div>
+									<div class="mt-1 max-h-20 space-y-0.5 overflow-y-auto">
+										{#each wsDiscovery.scopes as scope (scope)}
+											<div class="break-all font-mono text-xs text-muted-foreground">{scope}</div>
+										{/each}
+									</div>
+								</div>
+							{/if}
+						</div>
+					</div>
+				{/if}
+
+				<!-- SNMP Info -->
+				{#if snmpInfo && (snmpInfo.sysName || snmpInfo.sysDescr || snmpInfo.sysLocation || snmpInfo.sysContact)}
+					<div class="mb-4">
+						<SectionLabel icon={Server}>SNMP</SectionLabel>
+						<div class="rounded-lg border bg-card p-3 space-y-2">
+							{#if snmpInfo.sysName}
+								<div>
+									<div class="text-xs font-medium text-muted-foreground">System Name</div>
+									<div class="text-sm">{snmpInfo.sysName}</div>
+								</div>
+							{/if}
+							{#if snmpInfo.sysDescr}
+								<div>
+									<div class="text-xs font-medium text-muted-foreground">Description</div>
+									<div class="text-xs text-muted-foreground break-words">{snmpInfo.sysDescr}</div>
+								</div>
+							{/if}
+							{#if snmpInfo.sysLocation}
+								<div>
+									<div class="text-xs font-medium text-muted-foreground">Location</div>
+									<div class="text-sm">{snmpInfo.sysLocation}</div>
+								</div>
+							{/if}
+							{#if snmpInfo.sysContact}
+								<div>
+									<div class="text-xs font-medium text-muted-foreground">Contact</div>
+									<div class="text-sm">{snmpInfo.sysContact}</div>
+								</div>
+							{/if}
+						</div>
+					</div>
+				{/if}
+
+				<!-- TLS Certificate Names -->
+				{#if tlsNames && tlsNames.length > 0}
+					<div class="mb-4">
+						<SectionLabel icon={Shield}>TLS Certificate</SectionLabel>
+						<div class="rounded-lg border bg-card p-3">
+							<div class="text-xs font-medium text-muted-foreground">Subject Alternative Names</div>
+							<div class="mt-1 space-y-0.5">
+								{#each tlsNames as name (name)}
+									<div class="font-mono text-sm">{name}</div>
+								{/each}
+							</div>
+						</div>
+					</div>
+				{/if}
+
+				<!-- Ports Tab -->
+			</Tabs.Content>
+
+			<Tabs.Content value="ports" class="animate-fade-in mt-0 outline-none">
+				<!-- Scan controls / progress -->
+				{#if scanDisabled && scanProgress}
+					<!-- Scan in progress -->
+					<div class="mb-4 rounded-lg border bg-card p-3">
+						<div class="mb-2 flex items-center justify-between">
+							<div class="flex items-center gap-2">
+								<Loader2 class="h-4 w-4 animate-spin text-primary" />
+								<span class="text-sm font-medium">Scanning Ports...</span>
+							</div>
+							<div class="flex items-center gap-2">
+								<span class="text-sm font-medium text-primary">{scanPercentage.toFixed(0)}%</span>
+								{#if oncancel}
+									<Button
+										variant="ghost"
+										size="sm"
+										class="hover:bg-destructive/10 hover:text-destructive h-7 gap-1 px-2 text-xs text-muted-foreground"
+										onclick={oncancel}
+									>
+										<Square class="h-3 w-3" />
+										Cancel
+									</Button>
+								{/if}
+							</div>
+						</div>
+						<!-- Progress bar -->
+						<div class="mb-2 h-1.5 w-full overflow-hidden rounded-full bg-muted">
+							<div
+								class="h-full bg-primary transition-all duration-300"
+								style="width: {scanPercentage}%"
+							></div>
+						</div>
+						<!-- Status details -->
+						<div class="flex items-center justify-between text-xs text-muted-foreground">
+							<span>{scanStatusText}</span>
+							<div class="flex items-center gap-3">
+								{#if scanCurrentIp}
+									<span class="font-mono">{scanCurrentIp}</span>
+								{/if}
+								{#if scanDiscoveredHosts > 0}
+									<span class="text-success">{scanDiscoveredHosts} hosts</span>
+								{/if}
+								{#if scanDiscoveredPorts > 0}
+									<span class="text-success">{scanDiscoveredPorts} ports</span>
+								{/if}
+							</div>
+						</div>
+					</div>
+				{:else if onscan}
+					<!-- Scan controls -->
+					<div class="mb-4 rounded-lg border bg-card p-3">
+						<div class="flex items-center gap-2">
+							<Select.Root type="single" bind:value={localScanMode}>
+								<Select.Trigger class="h-8 flex-1 text-xs">
+									{SCAN_MODES.find((m) => m.value === localScanMode)?.label ?? localScanMode}
+								</Select.Trigger>
+								<Select.Content>
+									{#each SCAN_MODES as mode (mode.value)}
+										<Select.Item value={mode.value}>{mode.label}</Select.Item>
+									{/each}
+								</Select.Content>
+							</Select.Root>
+							<Button
+								variant="default"
+								size="sm"
+								class="h-8 shrink-0 gap-1.5 px-3 text-xs"
+								disabled={scanDisabled}
+								onclick={() => onscan(primaryIp, localScanMode)}
+							>
+								<Play class="h-3.5 w-3.5" />
+								{ports.length > 0 ? 'Re-scan' : 'Scan'}
+							</Button>
+						</div>
+						<p class="mt-1.5 text-xs text-muted-foreground">
+							{SCAN_MODES.find((m) => m.value === localScanMode)?.description ?? ''}
+						</p>
+					</div>
+				{/if}
+
+				{#if ports.length === 0}
+					<EmbeddedEmptyState
+						icon={Network}
+						title="No Port Scan Data"
+						description="Select a scan mode and run a port scan to detect open services."
+					/>
+				{:else}
+					<!-- Port Summary Bar -->
+					<div class="mb-4 rounded-lg border bg-card p-3">
+						<div class="flex items-center justify-between text-sm">
+							<span class="font-medium">Port Summary</span>
+							<span class="text-xs text-muted-foreground">{ports.length} scanned</span>
+						</div>
+						<div class="mt-2 flex gap-4 text-xs">
+							<span class="flex items-center gap-1.5">
+								<span class="h-2 w-2 rounded-full bg-success"></span>
+								{openPorts.length} open
+							</span>
+							<span class="flex items-center gap-1.5">
+								<span class="h-2 w-2 rounded-full bg-warning"></span>
+								{filteredPorts.length} filtered
+							</span>
+							<span class="flex items-center gap-1.5">
+								<span class="h-2 w-2 rounded-full bg-destructive"></span>
+								{closedPorts.length} closed
+							</span>
+						</div>
+						<div class="mt-2 flex h-1.5 overflow-hidden rounded-full bg-muted">
+							{#if openPorts.length > 0}
+								<div
+									class="bg-success"
+									style="width: {(openPorts.length / ports.length) * 100}%"
+								></div>
+							{/if}
+							{#if filteredPorts.length > 0}
+								<div
+									class="bg-warning"
+									style="width: {(filteredPorts.length / ports.length) * 100}%"
+								></div>
+							{/if}
+							{#if closedPorts.length > 0}
+								<div
+									class="bg-destructive"
+									style="width: {(closedPorts.length / ports.length) * 100}%"
+								></div>
+							{/if}
 						</div>
 					</div>
 
-					<!-- IP Addresses Section -->
-					{#if ips.length > 1 || ipv6Addresses.length > 0}
+					<!-- Open Ports -->
+					{#if openPorts.length > 0}
 						<div class="mb-4">
-							<h3 class="mb-2 flex items-center gap-2 text-sm font-medium">
-								<Hash class="h-4 w-4 text-muted-foreground" />
-								IP Addresses
-							</h3>
+							<SectionLabel icon={CheckCircle2} iconClass="h-4 w-4 text-success">
+								Open Ports ({openPorts.length})
+							</SectionLabel>
 							<div class="space-y-2">
-								{#if ipv4Addresses.length > 0}
-									<div class="rounded-lg border bg-card p-3">
-										<div class="mb-1.5 text-xs font-medium text-muted-foreground">IPv4</div>
-										<div class="flex flex-wrap gap-2">
-											{#each ipv4Addresses as ip (ip)}
-												<button
-													type="button"
-													class="flex items-center gap-1.5 rounded bg-muted px-2 py-1 font-mono text-xs transition-colors hover:bg-muted/80"
-													onclick={() => copyToClipboard(ip, 'IP address')}
-													title="Copy {ip}"
-												>
-													{ip}
-													<Copy class="h-3 w-3 text-muted-foreground" />
-												</button>
-											{/each}
+								{#each openPorts as port (port.port)}
+									{@const PortIcon = getPortIcon(port.port)}
+									{@const serviceName = getServiceName(port)}
+									<div
+										class="rounded-lg border bg-card p-3 transition-colors hover:border-border/80"
+									>
+										<div class="flex items-start justify-between">
+											<div class="flex items-start gap-3">
+												<div class="rounded bg-success/10 p-1.5">
+													<PortIcon class="h-4 w-4 text-success" />
+												</div>
+												<div class="min-w-0 flex-1">
+													<div class="flex items-center gap-2">
+														<span class="font-mono text-base font-semibold">{port.port}</span>
+														{#if serviceName}
+															<span class="rounded bg-muted px-1.5 py-0.5 text-xs font-medium">
+																{serviceName}
+															</span>
+														{/if}
+													</div>
+													{#if port.banner}
+														<details class="mt-2">
+															<summary
+																class="flex cursor-pointer items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
+															>
+																<ChevronRight
+																	class="h-3 w-3 transition-transform [[open]>&]:rotate-90"
+																/>
+																Banner / Version Info
+															</summary>
+															<div
+																class="mt-1.5 rounded bg-muted/50 p-2 font-mono text-xs leading-relaxed text-muted-foreground"
+															>
+																{port.banner}
+															</div>
+														</details>
+													{/if}
+													{#if port.tlsCert}
+														<details class="mt-2">
+															<summary
+																class="flex cursor-pointer items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
+															>
+																<ChevronRight
+																	class="h-3 w-3 transition-transform [[open]>&]:rotate-90"
+																/>
+																<Lock class="h-3 w-3" />
+																TLS Certificate
+																{#if port.tlsCert.isSelfSigned}
+																	<span
+																		class="rounded bg-warning/10 px-1.5 py-0.5 text-xs font-medium text-warning"
+																	>
+																		Self-signed
+																	</span>
+																{/if}
+															</summary>
+															<div class="mt-1.5 space-y-1.5 rounded bg-muted/50 p-2 text-xs">
+																{#if port.tlsCert.commonName}
+																	<div class="flex gap-1">
+																		<span class="shrink-0 font-medium text-muted-foreground"
+																			>CN:</span
+																		>
+																		<span class="break-all font-mono">
+																			{port.tlsCert.commonName}
+																		</span>
+																	</div>
+																{/if}
+																{#if port.tlsCert.issuer}
+																	<div class="flex gap-1">
+																		<span class="shrink-0 font-medium text-muted-foreground"
+																			>Issuer:</span
+																		>
+																		<span class="break-all font-mono">
+																			{port.tlsCert.issuer}
+																		</span>
+																	</div>
+																{/if}
+																{#if port.tlsCert.subjectAltNames && port.tlsCert.subjectAltNames.length > 0}
+																	<div>
+																		<span class="font-medium text-muted-foreground">SAN:</span>
+																		<div class="ml-3 mt-0.5 space-y-0.5">
+																			{#each port.tlsCert.subjectAltNames as san (san)}
+																				<div class="break-all font-mono">
+																					{san}
+																				</div>
+																			{/each}
+																		</div>
+																	</div>
+																{/if}
+															</div>
+														</details>
+													{/if}
+												</div>
+											</div>
+											<Button
+												variant="ghost"
+												size="icon-sm"
+												class="hover:bg-muted hover:text-foreground h-6 w-6 text-muted-foreground"
+												aria-label="Copy port"
+												title="Copy port"
+												onclick={() => copyToClipboard(String(port.port), 'Port number')}
+											>
+												<Copy class="h-3 w-3" />
+											</Button>
 										</div>
 									</div>
-								{/if}
-								{#if ipv6Addresses.length > 0}
-									<div class="rounded-lg border bg-card p-3">
-										<div class="mb-1.5 text-xs font-medium text-muted-foreground">IPv6</div>
-										<div class="space-y-1">
-											{#each ipv6Addresses as ip (ip)}
-												<button
-													type="button"
-													class="flex w-full items-center justify-between gap-2 rounded bg-muted px-2 py-1 font-mono text-xs transition-colors hover:bg-muted/80"
-													onclick={() => copyToClipboard(ip, 'IP address')}
-													title="Copy {ip}"
-												>
-													<span class="truncate">{ip}</span>
-													<Copy class="h-3 w-3 shrink-0 text-muted-foreground" />
-												</button>
-											{/each}
-										</div>
-									</div>
-								{/if}
+								{/each}
 							</div>
 						</div>
 					{/if}
 
-					<!-- Device Classification -->
-					{#if classification && classification.category !== 'unknown'}
+					<!-- Filtered Ports -->
+					{#if filteredPorts.length > 0}
 						<div class="mb-4">
-							<h3 class="mb-2 flex items-center gap-2 text-sm font-medium">
-								<HeaderIcon class="h-4 w-4 text-muted-foreground" />
-								Device Type
-							</h3>
-							<div class="rounded-lg border bg-card p-3">
-								<div class="flex items-center justify-between">
-									<div class="flex items-center gap-2">
-										<span class="text-sm font-medium">
-											{DEVICE_CATEGORIES[classification.category].label}
-										</span>
-										{#if confidenceLabel}
-											<span
-												class="rounded px-1.5 py-0.5 text-xs font-medium {confidenceColor} bg-muted"
-											>
-												{confidenceLabel}
-											</span>
+							<SectionLabel icon={Shield} iconClass="h-4 w-4 text-warning">
+								Filtered Ports ({filteredPorts.length})
+							</SectionLabel>
+							<div class="flex flex-wrap gap-2">
+								{#each filteredPorts as port (port.port)}
+									{@const serviceName = getServiceName(port)}
+									<div
+										class="flex items-center gap-1.5 rounded border bg-warning/5 px-2 py-1 text-xs"
+										title={serviceName
+											? `${port.port}/${serviceName} - Firewall or security software blocking`
+											: `Port ${port.port} - Firewall or security software blocking`}
+									>
+										<span class="font-mono font-medium">{port.port}</span>
+										{#if serviceName}
+											<span class="text-muted-foreground">/{serviceName}</span>
 										{/if}
 									</div>
-									<span class="text-xs text-muted-foreground">
-										{(classification.confidence * 100).toFixed(0)}%
-									</span>
-								</div>
-								<p class="mt-1 text-xs text-muted-foreground">
-									{DEVICE_CATEGORIES[classification.category].description}
-								</p>
-								{#if classification.evidence.length > 0}
-									<div class="mt-2 border-t pt-2">
-										<div class="text-xs text-muted-foreground">
-											{#each classification.evidence as evidence}
-												<div class="flex items-center gap-1">
-													<span class="text-[8px]">-</span>
-													<span>{evidence}</span>
-												</div>
-											{/each}
-										</div>
-									</div>
-								{/if}
+								{/each}
 							</div>
 						</div>
 					{/if}
 
-					<!-- Device Info -->
-					{#if macAddress || vendor || netbiosName}
+					<!-- Closed Ports -->
+					{#if closedPorts.length > 0}
 						<div class="mb-4">
-							<h3 class="mb-2 flex items-center gap-2 text-sm font-medium">
-								<Cpu class="h-4 w-4 text-muted-foreground" />
-								Device Info
-							</h3>
-							<div class="grid grid-cols-2 gap-2">
-								{#if netbiosName}
-									<div class="rounded-lg border bg-card p-2.5">
-										<div class="text-xs text-muted-foreground">NetBIOS Name</div>
-										<div class="mt-0.5 flex items-center gap-1.5 font-mono text-sm font-medium">
-											{netbiosName}
-											<button
-												type="button"
-												class="rounded p-0.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-												onclick={() => copyToClipboard(netbiosName ?? '', 'NetBIOS name')}
-												title="Copy NetBIOS name"
-											>
-												<Copy class="h-3 w-3" />
-											</button>
-										</div>
-									</div>
-								{/if}
-								{#if macAddress}
-									<div class="rounded-lg border bg-card p-2.5">
-										<div class="text-xs text-muted-foreground">MAC Address</div>
-										<div class="mt-0.5 flex items-center gap-1.5 font-mono text-sm font-medium">
-											{macAddress}
-											<button
-												type="button"
-												class="rounded p-0.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-												onclick={() => copyToClipboard(macAddress ?? '', 'MAC address')}
-												title="Copy MAC address"
-											>
-												<Copy class="h-3 w-3" />
-											</button>
-										</div>
-									</div>
-								{/if}
-								{#if vendor}
+							<SectionLabel icon={XCircle} iconClass="h-4 w-4 text-destructive">
+								Closed Ports ({closedPorts.length})
+							</SectionLabel>
+							<div class="flex flex-wrap gap-2">
+								{#each closedPorts as port (port.port)}
+									{@const serviceName = getServiceName(port)}
 									<div
-										class="rounded-lg border bg-card p-2.5 {netbiosName && macAddress
-											? 'col-span-2'
-											: ''}"
+										class="flex items-center gap-1.5 rounded border bg-destructive/5 px-2 py-1 text-xs"
+										title={serviceName
+											? `${port.port}/${serviceName} - No service listening`
+											: `Port ${port.port} - No service listening`}
 									>
-										<div class="text-xs text-muted-foreground">Vendor</div>
-										<div class="mt-0.5 text-sm">{vendor}</div>
+										<span class="font-mono font-medium">{port.port}</span>
+										{#if serviceName}
+											<span class="text-muted-foreground">/{serviceName}</span>
+										{/if}
 									</div>
-								{/if}
+								{/each}
 							</div>
-						</div>
-					{/if}
-
-					<!-- SSDP/UPnP Device Info -->
-					{#if hasSsdpInfo}
-						<div class="mb-4">
-							<h3 class="mb-2 flex items-center gap-2 text-sm font-medium">
-								<Wifi class="h-4 w-4 text-muted-foreground" />
-								SSDP/UPnP Device
-							</h3>
-							<div class="rounded-lg border bg-card p-3">
-								{#if ssdpDevice?.friendlyName}
-									<div>
-										<div class="text-xs font-medium text-muted-foreground">Friendly Name</div>
-										<div class="text-sm font-medium">{ssdpDevice.friendlyName}</div>
-									</div>
-								{/if}
-								{#if ssdpDevice?.manufacturer || ssdpDevice?.modelName}
-									<div class={ssdpDevice?.friendlyName ? 'mt-2 border-t pt-2' : ''}>
-										<div class="text-xs font-medium text-muted-foreground">
-											{ssdpDevice?.manufacturer && ssdpDevice?.modelName
-												? 'Manufacturer / Model'
-												: ssdpDevice?.manufacturer
-													? 'Manufacturer'
-													: 'Model'}
-										</div>
-										<div class="text-sm">
-											{[ssdpDevice?.manufacturer, ssdpDevice?.modelName].filter(Boolean).join(' ')}
-											{#if ssdpDevice?.modelNumber}
-												<span class="text-muted-foreground">({ssdpDevice.modelNumber})</span>
-											{/if}
-										</div>
-									</div>
-								{/if}
-								{#if ssdpDevice?.deviceType}
-									<div
-										class={ssdpDevice?.friendlyName ||
-										ssdpDevice?.manufacturer ||
-										ssdpDevice?.modelName
-											? 'mt-2 border-t pt-2'
-											: ''}
-									>
-										<div class="text-xs font-medium text-muted-foreground">Device Type</div>
-										<div class="font-mono text-xs text-muted-foreground">
-											{ssdpDevice.deviceType}
-										</div>
-									</div>
-								{/if}
-								{#if ssdpDevice?.server}
-									<div class="mt-2 border-t pt-2">
-										<div class="text-xs font-medium text-muted-foreground">Server</div>
-										<div class="font-mono text-xs text-muted-foreground">{ssdpDevice.server}</div>
-									</div>
-								{/if}
-							</div>
-						</div>
-					{/if}
-
-					<!-- WS-Discovery Info -->
-					{#if wsDiscovery && (wsDiscovery.deviceTypes.length > 0 || wsDiscovery.scopes.length > 0)}
-						<div class="mb-4">
-							<h3 class="mb-2 flex items-center gap-2 text-sm font-medium">
-								<Globe class="h-4 w-4 text-muted-foreground" />
-								WS-Discovery
-							</h3>
-							<div class="rounded-lg border bg-card p-3">
-								{#if wsDiscovery.deviceTypes.length > 0}
-									<div>
-										<div class="text-xs font-medium text-muted-foreground">Device Types</div>
-										<div class="mt-1 space-y-0.5">
-											{#each wsDiscovery.deviceTypes as dtype (dtype)}
-												<div class="font-mono text-xs text-muted-foreground">{dtype}</div>
-											{/each}
-										</div>
-									</div>
-								{/if}
-								{#if wsDiscovery.scopes.length > 0}
-									<div class={wsDiscovery.deviceTypes.length > 0 ? 'mt-2 border-t pt-2' : ''}>
-										<div class="text-xs font-medium text-muted-foreground">Scopes</div>
-										<div class="mt-1 max-h-20 space-y-0.5 overflow-y-auto">
-											{#each wsDiscovery.scopes as scope (scope)}
-												<div class="break-all font-mono text-xs text-muted-foreground">{scope}</div>
-											{/each}
-										</div>
-									</div>
-								{/if}
-							</div>
-						</div>
-					{/if}
-
-					<!-- SNMP Info -->
-					{#if snmpInfo && (snmpInfo.sysName || snmpInfo.sysDescr || snmpInfo.sysLocation || snmpInfo.sysContact)}
-						<div class="mb-4">
-							<h3 class="mb-2 flex items-center gap-2 text-sm font-medium">
-								<Server class="h-4 w-4 text-muted-foreground" />
-								SNMP
-							</h3>
-							<div class="rounded-lg border bg-card p-3 space-y-2">
-								{#if snmpInfo.sysName}
-									<div>
-										<div class="text-xs font-medium text-muted-foreground">System Name</div>
-										<div class="text-sm">{snmpInfo.sysName}</div>
-									</div>
-								{/if}
-								{#if snmpInfo.sysDescr}
-									<div>
-										<div class="text-xs font-medium text-muted-foreground">Description</div>
-										<div class="text-xs text-muted-foreground break-words">{snmpInfo.sysDescr}</div>
-									</div>
-								{/if}
-								{#if snmpInfo.sysLocation}
-									<div>
-										<div class="text-xs font-medium text-muted-foreground">Location</div>
-										<div class="text-sm">{snmpInfo.sysLocation}</div>
-									</div>
-								{/if}
-								{#if snmpInfo.sysContact}
-									<div>
-										<div class="text-xs font-medium text-muted-foreground">Contact</div>
-										<div class="text-sm">{snmpInfo.sysContact}</div>
-									</div>
-								{/if}
-							</div>
-						</div>
-					{/if}
-
-					<!-- TLS Certificate Names -->
-					{#if tlsNames && tlsNames.length > 0}
-						<div class="mb-4">
-							<h3 class="mb-2 flex items-center gap-2 text-sm font-medium">
-								<Shield class="h-4 w-4 text-muted-foreground" />
-								TLS Certificate
-							</h3>
-							<div class="rounded-lg border bg-card p-3">
-								<div class="text-xs font-medium text-muted-foreground">
-									Subject Alternative Names
-								</div>
-								<div class="mt-1 space-y-0.5">
-									{#each tlsNames as name (name)}
-										<div class="font-mono text-sm">{name}</div>
-									{/each}
-								</div>
-							</div>
-						</div>
-					{/if}
-
-					<!-- Ports Tab -->
-				{:else if activeTab === 'ports'}
-					<!-- Scan controls / progress -->
-					{#if scanDisabled && scanProgress}
-						<!-- Scan in progress -->
-						<div class="mb-4 rounded-lg border bg-card p-3">
-							<div class="mb-2 flex items-center justify-between">
-								<div class="flex items-center gap-2">
-									<Loader2 class="h-4 w-4 animate-spin text-primary" />
-									<span class="text-sm font-medium">Scanning Ports...</span>
-								</div>
-								<div class="flex items-center gap-2">
-									<span class="text-sm font-medium text-primary">{scanPercentage.toFixed(0)}%</span>
-									{#if oncancel}
-										<button
-											type="button"
-											class="inline-flex h-7 items-center gap-1 rounded-md px-2 text-xs text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
-											onclick={oncancel}
-										>
-											<Square class="h-3 w-3" />
-											Cancel
-										</button>
-									{/if}
-								</div>
-							</div>
-							<!-- Progress bar -->
-							<div class="mb-2 h-1.5 w-full overflow-hidden rounded-full bg-muted">
-								<div
-									class="h-full bg-primary transition-all duration-300"
-									style="width: {scanPercentage}%"
-								></div>
-							</div>
-							<!-- Status details -->
-							<div class="flex items-center justify-between text-xs text-muted-foreground">
-								<span>{scanStatusText}</span>
-								<div class="flex items-center gap-3">
-									{#if scanCurrentIp}
-										<span class="font-mono">{scanCurrentIp}</span>
-									{/if}
-									{#if scanDiscoveredHosts > 0}
-										<span class="text-success">{scanDiscoveredHosts} hosts</span>
-									{/if}
-									{#if scanDiscoveredPorts > 0}
-										<span class="text-success">{scanDiscoveredPorts} ports</span>
-									{/if}
-								</div>
-							</div>
-						</div>
-					{:else if onscan}
-						<!-- Scan controls -->
-						<div class="mb-4 rounded-lg border bg-card p-3">
-							<div class="flex items-center gap-2">
-								<select
-									class="h-8 flex-1 rounded-md border border-input bg-background px-2 text-xs"
-									bind:value={localScanMode}
-								>
-									{#each SCAN_MODES as mode (mode.value)}
-										<option value={mode.value}>{mode.label}</option>
-									{/each}
-								</select>
-								<button
-									type="button"
-									class="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-md bg-primary px-3 text-xs font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50"
-									onclick={() => onscan(primaryIp, localScanMode)}
-									disabled={scanDisabled}
-								>
-									<Play class="h-3.5 w-3.5" />
-									{ports.length > 0 ? 'Re-scan' : 'Scan'}
-								</button>
-							</div>
-							<p class="mt-1.5 text-xs text-muted-foreground">
-								{SCAN_MODES.find((m) => m.value === localScanMode)?.description ?? ''}
-							</p>
-						</div>
-					{/if}
-
-					{#if ports.length === 0}
-						<div class="flex items-center justify-center py-8">
-							<div class="text-center">
-								<div class="mx-auto mb-3 inline-flex rounded-2xl bg-muted p-3">
-									<Network class="h-8 w-8 text-muted-foreground" />
-								</div>
-								<h3 class="mb-1 text-sm font-semibold">No Port Scan Data</h3>
-								<p class="text-xs leading-relaxed text-muted-foreground">
-									Select a scan mode and run a port scan to detect open services.
-								</p>
-							</div>
-						</div>
-					{:else}
-						<!-- Port Summary Bar -->
-						<div class="mb-4 rounded-lg border bg-card p-3">
-							<div class="flex items-center justify-between text-sm">
-								<span class="font-medium">Port Summary</span>
-								<span class="text-xs text-muted-foreground">{ports.length} scanned</span>
-							</div>
-							<div class="mt-2 flex gap-4 text-xs">
-								<span class="flex items-center gap-1.5">
-									<span class="h-2 w-2 rounded-full bg-success"></span>
-									{openPorts.length} open
-								</span>
-								<span class="flex items-center gap-1.5">
-									<span class="h-2 w-2 rounded-full bg-warning"></span>
-									{filteredPorts.length} filtered
-								</span>
-								<span class="flex items-center gap-1.5">
-									<span class="h-2 w-2 rounded-full bg-destructive"></span>
-									{closedPorts.length} closed
-								</span>
-							</div>
-							<div class="mt-2 flex h-1.5 overflow-hidden rounded-full bg-muted">
-								{#if openPorts.length > 0}
-									<div
-										class="bg-success"
-										style="width: {(openPorts.length / ports.length) * 100}%"
-									></div>
-								{/if}
-								{#if filteredPorts.length > 0}
-									<div
-										class="bg-warning"
-										style="width: {(filteredPorts.length / ports.length) * 100}%"
-									></div>
-								{/if}
-								{#if closedPorts.length > 0}
-									<div
-										class="bg-destructive"
-										style="width: {(closedPorts.length / ports.length) * 100}%"
-									></div>
-								{/if}
-							</div>
-						</div>
-
-						<!-- Open Ports -->
-						{#if openPorts.length > 0}
-							<div class="mb-4">
-								<h3 class="mb-2 flex items-center gap-2 text-sm font-medium">
-									<CheckCircle2 class="h-4 w-4 text-success" />
-									Open Ports ({openPorts.length})
-								</h3>
-								<div class="space-y-2">
-									{#each openPorts as port (port.port)}
-										{@const PortIcon = getPortIcon(port.port)}
-										{@const serviceName = getServiceName(port)}
-										<div
-											class="rounded-lg border bg-card p-3 transition-colors hover:border-border/80"
-										>
-											<div class="flex items-start justify-between">
-												<div class="flex items-start gap-3">
-													<div class="rounded bg-success/10 p-1.5">
-														<PortIcon class="h-4 w-4 text-success" />
-													</div>
-													<div class="min-w-0 flex-1">
-														<div class="flex items-center gap-2">
-															<span class="font-mono text-base font-semibold">{port.port}</span>
-															{#if serviceName}
-																<span class="rounded bg-muted px-1.5 py-0.5 text-xs font-medium">
-																	{serviceName}
-																</span>
-															{/if}
-														</div>
-														{#if port.banner}
-															<details class="mt-2">
-																<summary
-																	class="flex cursor-pointer items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
-																>
-																	<ChevronRight
-																		class="h-3 w-3 transition-transform [[open]>&]:rotate-90"
-																	/>
-																	Banner / Version Info
-																</summary>
-																<div
-																	class="mt-1.5 rounded bg-muted/50 p-2 font-mono text-xs leading-relaxed text-muted-foreground"
-																>
-																	{port.banner}
-																</div>
-															</details>
-														{/if}
-														{#if port.tlsCert}
-															<details class="mt-2">
-																<summary
-																	class="flex cursor-pointer items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
-																>
-																	<ChevronRight
-																		class="h-3 w-3 transition-transform [[open]>&]:rotate-90"
-																	/>
-																	<Lock class="h-3 w-3" />
-																	TLS Certificate
-																	{#if port.tlsCert.isSelfSigned}
-																		<span
-																			class="rounded bg-warning/10 px-1.5 py-0.5 text-xs font-medium text-warning"
-																		>
-																			Self-signed
-																		</span>
-																	{/if}
-																</summary>
-																<div class="mt-1.5 space-y-1.5 rounded bg-muted/50 p-2 text-xs">
-																	{#if port.tlsCert.commonName}
-																		<div class="flex gap-1">
-																			<span class="shrink-0 font-medium text-muted-foreground"
-																				>CN:</span
-																			>
-																			<span class="break-all font-mono">
-																				{port.tlsCert.commonName}
-																			</span>
-																		</div>
-																	{/if}
-																	{#if port.tlsCert.issuer}
-																		<div class="flex gap-1">
-																			<span class="shrink-0 font-medium text-muted-foreground"
-																				>Issuer:</span
-																			>
-																			<span class="break-all font-mono">
-																				{port.tlsCert.issuer}
-																			</span>
-																		</div>
-																	{/if}
-																	{#if port.tlsCert.subjectAltNames && port.tlsCert.subjectAltNames.length > 0}
-																		<div>
-																			<span class="font-medium text-muted-foreground">SAN:</span>
-																			<div class="ml-3 mt-0.5 space-y-0.5">
-																				{#each port.tlsCert.subjectAltNames as san (san)}
-																					<div class="break-all font-mono">
-																						{san}
-																					</div>
-																				{/each}
-																			</div>
-																		</div>
-																	{/if}
-																</div>
-															</details>
-														{/if}
-													</div>
-												</div>
-												<button
-													type="button"
-													class="rounded p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-													onclick={() => copyToClipboard(String(port.port), 'Port number')}
-													title="Copy port"
-												>
-													<Copy class="h-3 w-3" />
-												</button>
-											</div>
-										</div>
-									{/each}
-								</div>
-							</div>
-						{/if}
-
-						<!-- Filtered Ports -->
-						{#if filteredPorts.length > 0}
-							<div class="mb-4">
-								<h3 class="mb-2 flex items-center gap-2 text-sm font-medium">
-									<Shield class="h-4 w-4 text-warning" />
-									Filtered Ports ({filteredPorts.length})
-								</h3>
-								<div class="flex flex-wrap gap-2">
-									{#each filteredPorts as port (port.port)}
-										{@const serviceName = getServiceName(port)}
-										<div
-											class="flex items-center gap-1.5 rounded border bg-warning/5 px-2 py-1 text-xs"
-											title={serviceName
-												? `${port.port}/${serviceName} - Firewall or security software blocking`
-												: `Port ${port.port} - Firewall or security software blocking`}
-										>
-											<span class="font-mono font-medium">{port.port}</span>
-											{#if serviceName}
-												<span class="text-muted-foreground">/{serviceName}</span>
-											{/if}
-										</div>
-									{/each}
-								</div>
-							</div>
-						{/if}
-
-						<!-- Closed Ports -->
-						{#if closedPorts.length > 0}
-							<div class="mb-4">
-								<h3 class="mb-2 flex items-center gap-2 text-sm font-medium">
-									<XCircle class="h-4 w-4 text-destructive" />
-									Closed Ports ({closedPorts.length})
-								</h3>
-								<div class="flex flex-wrap gap-2">
-									{#each closedPorts as port (port.port)}
-										{@const serviceName = getServiceName(port)}
-										<div
-											class="flex items-center gap-1.5 rounded border bg-destructive/5 px-2 py-1 text-xs"
-											title={serviceName
-												? `${port.port}/${serviceName} - No service listening`
-												: `Port ${port.port} - No service listening`}
-										>
-											<span class="font-mono font-medium">{port.port}</span>
-											{#if serviceName}
-												<span class="text-muted-foreground">/{serviceName}</span>
-											{/if}
-										</div>
-									{/each}
-								</div>
-							</div>
-						{/if}
-					{/if}
-
-					<!-- Discovery Tab -->
-				{:else if activeTab === 'discovery'}
-					{#if discoveries.length === 0}
-						<div class="flex h-full items-center justify-center">
-							<div class="max-w-xs text-center">
-								<div class="mx-auto mb-3 inline-flex rounded-2xl bg-muted p-3">
-									<Radar class="h-8 w-8 text-muted-foreground" />
-								</div>
-								<h3 class="mb-1 text-sm font-semibold">No Discovery Data</h3>
-								<p class="text-xs leading-relaxed text-muted-foreground">
-									Run host discovery to detect this device using various network protocols.
-								</p>
-							</div>
-						</div>
-					{:else}
-						<div class="space-y-2">
-							{#each discoveries as discovery (discovery.method)}
-								<div class="rounded-lg border bg-card p-3 transition-colors hover:border-border/80">
-									<div class="flex items-center justify-between">
-										<div class="flex items-center gap-3">
-											<div
-												class="rounded p-1.5 {discovery.error
-													? 'bg-destructive/10'
-													: 'bg-success/10'}"
-											>
-												{#if discovery.error}
-													<XCircle class="h-4 w-4 text-destructive" />
-												{:else}
-													<CheckCircle2 class="h-4 w-4 text-success" />
-												{/if}
-											</div>
-											<div>
-												<span class="font-medium">{formatMethodName(discovery.method)}</span>
-												<p class="text-xs text-muted-foreground">
-													{getMethodDescription(discovery.method)}
-												</p>
-												{#if discovery.error}
-													<p class="mt-0.5 text-xs text-destructive">{discovery.error}</p>
-												{/if}
-											</div>
-										</div>
-										<div class="flex items-center gap-1 text-xs text-muted-foreground">
-											<Clock class="h-3 w-3" />
-											<span>{formatDuration(discovery.durationMs)}</span>
-										</div>
-									</div>
-								</div>
-							{/each}
-						</div>
-					{/if}
-
-					<!-- Services Tab -->
-				{:else if activeTab === 'services'}
-					{#if !mdnsServices || mdnsServices.length === 0}
-						<div class="flex h-full items-center justify-center">
-							<div class="max-w-xs text-center">
-								<div class="mx-auto mb-3 inline-flex rounded-2xl bg-muted p-3">
-									<Radio class="h-8 w-8 text-muted-foreground" />
-								</div>
-								<h3 class="mb-1 text-sm font-semibold">No mDNS Services</h3>
-								<p class="text-xs leading-relaxed text-muted-foreground">
-									This host is not advertising any services via mDNS/Bonjour.
-								</p>
-							</div>
-						</div>
-					{:else}
-						<div class="space-y-2">
-							{#each mdnsServices as service (`${service.instanceName}-${service.serviceType}`)}
-								<div class="rounded-lg border bg-card p-3 transition-colors hover:border-border/80">
-									<div class="flex items-start justify-between">
-										<div class="min-w-0 flex-1">
-											<div class="flex items-center gap-2">
-												<span class="truncate font-medium">{service.instanceName}</span>
-												<span
-													class="shrink-0 rounded bg-info/10 px-1.5 py-0.5 text-xs font-medium text-info"
-												>
-													{service.serviceType.replace(/\._tcp\.local\.$/, '').replace(/^_/, '')}
-												</span>
-											</div>
-											<div class="mt-1 flex items-center gap-2 text-xs text-muted-foreground">
-												<span class="font-mono">Port {service.port}</span>
-											</div>
-											{#if service.properties.length > 0}
-												<details class="mt-2">
-													<summary
-														class="flex cursor-pointer items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
-													>
-														<ChevronRight
-															class="h-3 w-3 transition-transform [[open]>&]:rotate-90"
-														/>
-														TXT Properties ({service.properties.length})
-													</summary>
-													<div
-														class="mt-1.5 max-h-24 overflow-y-auto rounded bg-muted/50 p-2 text-xs"
-													>
-														{#each service.properties as [key, value] (`${key}-${value}`)}
-															<div class="flex gap-2">
-																<span class="font-medium text-muted-foreground">{key}:</span>
-																<span class="font-mono break-all">{value || '(empty)'}</span>
-															</div>
-														{/each}
-													</div>
-												</details>
-											{/if}
-										</div>
-										<button
-											type="button"
-											class="shrink-0 rounded p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-											onclick={() =>
-												copyToClipboard(
-													`${service.instanceName} (${service.serviceType}:${service.port})`,
-													'Service info'
-												)}
-											title="Copy service info"
-										>
-											<Copy class="h-3 w-3" />
-										</button>
-									</div>
-								</div>
-							{/each}
 						</div>
 					{/if}
 				{/if}
-			</div>
-		{/key}
-	</div>
+
+				<!-- Discovery Tab -->
+			</Tabs.Content>
+
+			<Tabs.Content value="discovery" class="animate-fade-in mt-0 outline-none">
+				{#if discoveries.length === 0}
+					<EmbeddedEmptyState
+						icon={Radar}
+						title="No Discovery Data"
+						description="Run host discovery to detect this device using various network protocols."
+						fillHeight
+					/>
+				{:else}
+					<div class="space-y-2">
+						{#each discoveries as discovery (discovery.method)}
+							<div class="rounded-lg border bg-card p-3 transition-colors hover:border-border/80">
+								<div class="flex items-center justify-between">
+									<div class="flex items-center gap-3">
+										<div
+											class="rounded p-1.5 {discovery.error
+												? 'bg-destructive/10'
+												: 'bg-success/10'}"
+										>
+											{#if discovery.error}
+												<XCircle class="h-4 w-4 text-destructive" />
+											{:else}
+												<CheckCircle2 class="h-4 w-4 text-success" />
+											{/if}
+										</div>
+										<div>
+											<span class="font-medium">{formatMethodName(discovery.method)}</span>
+											<p class="text-xs text-muted-foreground">
+												{getMethodDescription(discovery.method)}
+											</p>
+											{#if discovery.error}
+												<p class="mt-0.5 text-xs text-destructive">{discovery.error}</p>
+											{/if}
+										</div>
+									</div>
+									<div class="flex items-center gap-1 text-xs text-muted-foreground">
+										<Clock class="h-3 w-3" />
+										<span>{formatDuration(discovery.durationMs)}</span>
+									</div>
+								</div>
+							</div>
+						{/each}
+					</div>
+				{/if}
+
+				<!-- Services Tab -->
+			</Tabs.Content>
+
+			<Tabs.Content value="services" class="animate-fade-in mt-0 outline-none">
+				{#if !mdnsServices || mdnsServices.length === 0}
+					<EmbeddedEmptyState
+						icon={Radio}
+						title="No mDNS Services"
+						description="This host is not advertising any services via mDNS/Bonjour."
+						fillHeight
+					/>
+				{:else}
+					<div class="space-y-2">
+						{#each mdnsServices as service (`${service.instanceName}-${service.serviceType}`)}
+							<div class="rounded-lg border bg-card p-3 transition-colors hover:border-border/80">
+								<div class="flex items-start justify-between">
+									<div class="min-w-0 flex-1">
+										<div class="flex items-center gap-2">
+											<span class="truncate font-medium">{service.instanceName}</span>
+											<span
+												class="shrink-0 rounded bg-info/10 px-1.5 py-0.5 text-xs font-medium text-info"
+											>
+												{service.serviceType.replace(/\._tcp\.local\.$/, '').replace(/^_/, '')}
+											</span>
+										</div>
+										<div class="mt-1 flex items-center gap-2 text-xs text-muted-foreground">
+											<span class="font-mono">Port {service.port}</span>
+										</div>
+										{#if service.properties.length > 0}
+											<details class="mt-2">
+												<summary
+													class="flex cursor-pointer items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
+												>
+													<ChevronRight class="h-3 w-3 transition-transform [[open]>&]:rotate-90" />
+													TXT Properties ({service.properties.length})
+												</summary>
+												<div
+													class="mt-1.5 max-h-24 overflow-y-auto rounded bg-muted/50 p-2 text-xs"
+												>
+													{#each service.properties as [key, value] (`${key}-${value}`)}
+														<div class="flex gap-2">
+															<span class="font-medium text-muted-foreground">{key}:</span>
+															<span class="font-mono break-all">{value || '(empty)'}</span>
+														</div>
+													{/each}
+												</div>
+											</details>
+										{/if}
+									</div>
+									<Button
+										variant="ghost"
+										size="icon-sm"
+										class="hover:bg-muted hover:text-foreground h-6 w-6 shrink-0 text-muted-foreground"
+										aria-label="Copy service info"
+										title="Copy service info"
+										onclick={() =>
+											copyToClipboard(
+												`${service.instanceName} (${service.serviceType}:${service.port})`,
+												'Service info'
+											)}
+									>
+										<Copy class="h-3 w-3" />
+									</Button>
+								</div>
+							</div>
+						{/each}
+					</div>
+				{/if}
+			</Tabs.Content>
+		</div>
+	</Tabs.Root>
 </div>

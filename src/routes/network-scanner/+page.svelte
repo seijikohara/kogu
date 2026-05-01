@@ -23,6 +23,7 @@
 	import { ActionButton } from '$lib/components/action';
 	import {
 		FormCheckbox,
+		FormCheckboxGroup,
 		FormInfo,
 		FormInput,
 		FormMode,
@@ -32,6 +33,7 @@
 	import { ToolShell } from '$lib/components/shell';
 	import { EmptyState, ErrorDisplay, StatItem } from '$lib/components/status';
 	import * as Accordion from '$lib/components/ui/accordion/index.js';
+	import { ListItemButton } from '$lib/components/ui/list-item-button';
 	import * as Resizable from '$lib/components/ui/resizable';
 	import { Channel } from '@tauri-apps/api/core';
 	import {
@@ -707,14 +709,12 @@
 					<p class="text-xs font-medium text-muted-foreground">Available interfaces:</p>
 					<div class="max-h-24 space-y-1 overflow-y-auto">
 						{#each networkInfo.interfaces.filter((i) => !i.isLoopback && i.suggestedCidr) as iface (iface.ip)}
-							<button
-								type="button"
-								class="flex w-full items-center justify-between rounded border border-input bg-background px-2 py-1 text-left text-xs transition-colors hover:bg-interactive-hover"
-								onclick={() => handleSelectInterface(iface)}
-							>
+							<ListItemButton variant="card" size="sm" onclick={() => handleSelectInterface(iface)}>
 								<span class="font-medium">{iface.name}</span>
-								<span class="text-muted-foreground">{iface.suggestedCidr}</span>
-							</button>
+								{#snippet trailing()}
+									<span class="text-muted-foreground">{iface.suggestedCidr}</span>
+								{/snippet}
+							</ListItemButton>
 						{/each}
 					</div>
 				</div>
@@ -726,7 +726,7 @@
 			<p class="mb-2 text-xs text-muted-foreground leading-snug">
 				Find active hosts before port scanning.
 			</p>
-			<div class="space-y-1.5">
+			<FormCheckboxGroup>
 				{#each DISCOVERY_METHODS as method (method.value)}
 					{@const privilegesGranted = privilegeStatus?.setupCompleted ?? false}
 					{@const isAvailable = method.requiresPrivileges ? privilegesGranted : true}
@@ -739,7 +739,7 @@
 						onchange={() => toggleDiscoveryMethod(method.value)}
 					/>
 				{/each}
-			</div>
+			</FormCheckboxGroup>
 
 			<!-- Name Resolution (collapsible) -->
 			<Accordion.Root type="multiple" value={['name-resolution']} class="mt-3">
@@ -750,7 +750,7 @@
 						<span>Name Resolution</span>
 					</Accordion.Trigger>
 					<Accordion.Content class="border-t border-border/30 px-2 pb-2">
-						<div class="space-y-1.5 pt-2">
+						<FormCheckboxGroup class="pt-2">
 							<FormCheckbox label="DNS PTR" bind:checked={resolveDns} />
 							<FormCheckbox label="mDNS (.local)" bind:checked={resolveMdns} />
 							<FormCheckbox label="NetBIOS" bind:checked={resolveNetbios} />
@@ -766,7 +766,7 @@
 									/>
 								</div>
 							{/if}
-						</div>
+						</FormCheckboxGroup>
 					</Accordion.Content>
 				</Accordion.Item>
 			</Accordion.Root>

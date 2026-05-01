@@ -1,4 +1,5 @@
 export { default as DetectedInfo } from './detected-info.svelte';
+export { default as EmbeddedEmptyState } from './embedded-empty-state.svelte';
 export { default as EmptyState } from './empty-state.svelte';
 export { default as ErrorDisplay } from './error-display.svelte';
 export { default as LoadingOverlay } from './loading-overlay.svelte';

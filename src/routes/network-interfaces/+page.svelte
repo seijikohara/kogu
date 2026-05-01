@@ -16,10 +16,11 @@
 	import { toast } from 'svelte-sonner';
 	import { ToolShell } from '$lib/components/shell';
 	import { StatItem, EmptyState } from '$lib/components/status';
-	import { SectionHeader } from '$lib/components/layout';
-	import { FormSection, FormCheckbox, FormSelect } from '$lib/components/form';
+	import { SectionHeader, SectionLabel } from '$lib/components/layout';
+	import { FormCheckbox, FormCheckboxGroup, FormSection, FormSelect } from '$lib/components/form';
 	import { CopyButton } from '$lib/components/action';
 	import { Button } from '$lib/components/ui/button';
+	import { ListItemButton } from '$lib/components/ui/list-item-button';
 	import * as Resizable from '$lib/components/ui/resizable';
 	import { cn } from '$lib/utils';
 	import {
@@ -268,9 +269,11 @@
 
 	{#snippet rail()}
 		<FormSection title="Filter">
-			<FormCheckbox label="Active" bind:checked={showActive} />
-			<FormCheckbox label="Inactive" bind:checked={showInactive} />
-			<FormCheckbox label="Loopback" bind:checked={showLoopback} />
+			<FormCheckboxGroup>
+				<FormCheckbox label="Active" bind:checked={showActive} />
+				<FormCheckbox label="Inactive" bind:checked={showInactive} />
+				<FormCheckbox label="Loopback" bind:checked={showLoopback} />
+			</FormCheckboxGroup>
 		</FormSection>
 
 		<FormSection title="Sort">
@@ -298,17 +301,12 @@
 									{@const TypeIcon = getInterfaceTypeIcon(iface.interfaceType)}
 									{@const isSelected = selectedIndex === iface.index}
 									{@const primaryIpv4 = iface.ipv4Addresses[0]?.address ?? null}
-									<button
-										type="button"
+									<ListItemButton
+										variant="option"
 										role="option"
-										aria-selected={isSelected}
+										selected={isSelected}
 										data-iface-index={iface.index}
-										class={cn(
-											'flex w-full items-start gap-2 border-b border-border border-l-2 px-3 py-2.5 text-left transition-colors last:border-b-0',
-											isSelected
-												? 'border-l-primary bg-primary/10'
-												: 'border-l-transparent hover:bg-interactive-hover'
-										)}
+										class="items-start"
 										onclick={() => handleSelect(iface.index)}
 									>
 										<!-- Icon column -->
@@ -386,7 +384,7 @@
 												</div>
 											{/if}
 										</div>
-									</button>
+									</ListItemButton>
 								{/each}
 							</div>
 						</div>
@@ -447,12 +445,7 @@
 								<div class="flex-1 overflow-auto p-4 space-y-4">
 									<!-- ADDRESSES Section -->
 									<div>
-										<h3
-											class="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground"
-										>
-											<Globe class="h-3.5 w-3.5" />
-											Addresses
-										</h3>
+										<SectionLabel icon={Globe}>Addresses</SectionLabel>
 										<div class="space-y-2 rounded-lg border bg-card p-3">
 											{#if iface.macAddress}
 												<div class="flex items-center gap-2">
@@ -529,12 +522,7 @@
 									<!-- NETWORK Section -->
 									{#if hasNetworkInfo(iface)}
 										<div>
-											<h3
-												class="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground"
-											>
-												<Network class="h-3.5 w-3.5" />
-												Network
-											</h3>
+											<SectionLabel icon={Network}>Network</SectionLabel>
 											<div class="rounded-lg border bg-card p-3">
 												<div class="grid grid-cols-2 gap-x-6 gap-y-2 text-xs">
 													{#if iface.mtu !== null}
@@ -600,12 +588,7 @@
 									<!-- TRAFFIC Section -->
 									{#if hasStats(iface)}
 										<div>
-											<h3
-												class="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground"
-											>
-												<Activity class="h-3.5 w-3.5" />
-												Traffic
-											</h3>
+											<SectionLabel icon={Activity}>Traffic</SectionLabel>
 											<div class="flex gap-3">
 												{#if iface.rxBytes !== null}
 													<div class="flex-1 rounded-lg border bg-card p-3">
@@ -636,12 +619,7 @@
 									<!-- FLAGS Section -->
 									{#if flags.length > 0}
 										<div>
-											<h3
-												class="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground"
-											>
-												<Flag class="h-3.5 w-3.5" />
-												Flags
-											</h3>
+											<SectionLabel icon={Flag}>Flags</SectionLabel>
 											<div class="flex flex-wrap gap-1.5">
 												{#each flags as flag}
 													<span
