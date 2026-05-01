@@ -17,7 +17,7 @@
 	import { ToolShell } from '$lib/components/shell';
 	import { StatItem, EmptyState } from '$lib/components/status';
 	import { SectionHeader } from '$lib/components/layout';
-	import { FormSection, FormCheckbox, FormSelect } from '$lib/components/form';
+	import { FormCheckbox, FormCheckboxGroup, FormSection, FormSelect } from '$lib/components/form';
 	import { CopyButton } from '$lib/components/action';
 	import { Button } from '$lib/components/ui/button';
 	import { ListItemButton } from '$lib/components/ui/list-item-button';
@@ -269,9 +269,11 @@
 
 	{#snippet rail()}
 		<FormSection title="Filter">
-			<FormCheckbox label="Active" bind:checked={showActive} />
-			<FormCheckbox label="Inactive" bind:checked={showInactive} />
-			<FormCheckbox label="Loopback" bind:checked={showLoopback} />
+			<FormCheckboxGroup>
+				<FormCheckbox label="Active" bind:checked={showActive} />
+				<FormCheckbox label="Inactive" bind:checked={showInactive} />
+				<FormCheckbox label="Loopback" bind:checked={showLoopback} />
+			</FormCheckboxGroup>
 		</FormSection>
 
 		<FormSection title="Sort">
