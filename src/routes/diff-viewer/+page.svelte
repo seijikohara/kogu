@@ -2,7 +2,14 @@
 	import { Equal, GitCompare, Layers, Minus, Plus, SplitSquareHorizontal } from '@lucide/svelte';
 	import { readText } from '@tauri-apps/plugin-clipboard-manager';
 	import { CodeEditor } from '$lib/components/editor';
-	import { FormCheckbox, FormInfo, FormMode, FormSection, FormSlider } from '$lib/components/form';
+	import {
+		FormCheckbox,
+		FormCheckboxGroup,
+		FormInfo,
+		FormMode,
+		FormSection,
+		FormSlider,
+	} from '$lib/components/form';
 	import { ToolShell } from '$lib/components/shell';
 	import {
 		areTextsIdentical,
@@ -272,9 +279,11 @@
 		</FormSection>
 
 		<FormSection title="Comparison">
-			<FormCheckbox label="Ignore whitespace" bind:checked={ignoreWhitespace} />
-			<FormCheckbox label="Ignore case" bind:checked={ignoreCase} />
-			<FormCheckbox label="Trim lines" bind:checked={trimLines} />
+			<FormCheckboxGroup>
+				<FormCheckbox label="Ignore whitespace" bind:checked={ignoreWhitespace} />
+				<FormCheckbox label="Ignore case" bind:checked={ignoreCase} />
+				<FormCheckbox label="Trim lines" bind:checked={trimLines} />
+			</FormCheckboxGroup>
 		</FormSection>
 
 		<FormSection title="Legend">

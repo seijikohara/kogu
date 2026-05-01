@@ -2,7 +2,7 @@
 	import { FileCheck, Wand2 } from '@lucide/svelte';
 	import { toast } from 'svelte-sonner';
 	import { CodeEditor } from '$lib/components/editor';
-	import { FormCheckbox, FormSection } from '$lib/components/form';
+	import { FormCheckbox, FormCheckboxGroup, FormSection } from '$lib/components/form';
 	import SplitPane from '$lib/components/layout/split-pane.svelte';
 	import { OptionsPanel } from '$lib/components/panel';
 	import { Button } from '$lib/components/ui/button/index.js';
@@ -314,8 +314,10 @@
 		</FormSection>
 
 		<FormSection title="Validation Options">
-			<FormCheckbox label="Validate namespaces" bind:checked={validateNamespaces} />
-			<FormCheckbox label="Validate DTD (if present)" bind:checked={validateDtd} />
+			<FormCheckboxGroup>
+				<FormCheckbox label="Validate namespaces" bind:checked={validateNamespaces} />
+				<FormCheckbox label="Validate DTD (if present)" bind:checked={validateDtd} />
+			</FormCheckboxGroup>
 		</FormSection>
 
 		<FormSection title="Quick Help">

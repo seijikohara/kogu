@@ -281,8 +281,10 @@
 			</FormSection>
 
 			<FormSection title="Sorting">
-				<FormCheckbox label="Sort element keys" bind:checked={xmlSortKeys} />
-				<FormCheckbox label="Sort attributes" bind:checked={xmlSortAttributes} />
+				<FormCheckboxGroup>
+					<FormCheckbox label="Sort element keys" bind:checked={xmlSortKeys} />
+					<FormCheckbox label="Sort attributes" bind:checked={xmlSortAttributes} />
+				</FormCheckboxGroup>
 			</FormSection>
 
 			<FormSection title="Comments">
