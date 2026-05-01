@@ -35,6 +35,7 @@
 		XCircle,
 	} from '@lucide/svelte';
 	import { toast } from 'svelte-sonner';
+	import { SectionLabel } from '$lib/components/layout';
 	import { Button } from '$lib/components/ui/button';
 	import * as Select from '$lib/components/ui/select';
 	import * as Tooltip from '$lib/components/ui/tooltip';
@@ -518,10 +519,7 @@
 					<!-- IP Addresses Section -->
 					{#if ips.length > 1 || ipv6Addresses.length > 0}
 						<div class="mb-4">
-							<h3 class="mb-2 flex items-center gap-2 text-sm font-medium">
-								<Hash class="h-4 w-4 text-muted-foreground" />
-								IP Addresses
-							</h3>
+							<SectionLabel icon={Hash}>IP Addresses</SectionLabel>
 							<div class="space-y-2">
 								{#if ipv4Addresses.length > 0}
 									<div class="rounded-lg border bg-card p-3">
@@ -568,10 +566,7 @@
 					<!-- Device Classification -->
 					{#if classification && classification.category !== 'unknown'}
 						<div class="mb-4">
-							<h3 class="mb-2 flex items-center gap-2 text-sm font-medium">
-								<HeaderIcon class="h-4 w-4 text-muted-foreground" />
-								Device Type
-							</h3>
+							<SectionLabel icon={HeaderIcon}>Device Type</SectionLabel>
 							<div class="rounded-lg border bg-card p-3">
 								<div class="flex items-center justify-between">
 									<div class="flex items-center gap-2">
@@ -612,10 +607,7 @@
 					<!-- Device Info -->
 					{#if macAddress || vendor || netbiosName}
 						<div class="mb-4">
-							<h3 class="mb-2 flex items-center gap-2 text-sm font-medium">
-								<Cpu class="h-4 w-4 text-muted-foreground" />
-								Device Info
-							</h3>
+							<SectionLabel icon={Cpu}>Device Info</SectionLabel>
 							<div class="grid grid-cols-2 gap-2">
 								{#if netbiosName}
 									<div class="rounded-lg border bg-card p-2.5">
@@ -670,10 +662,7 @@
 					<!-- SSDP/UPnP Device Info -->
 					{#if hasSsdpInfo}
 						<div class="mb-4">
-							<h3 class="mb-2 flex items-center gap-2 text-sm font-medium">
-								<Wifi class="h-4 w-4 text-muted-foreground" />
-								SSDP/UPnP Device
-							</h3>
+							<SectionLabel icon={Wifi}>SSDP/UPnP Device</SectionLabel>
 							<div class="rounded-lg border bg-card p-3">
 								{#if ssdpDevice?.friendlyName}
 									<div>
@@ -725,10 +714,7 @@
 					<!-- WS-Discovery Info -->
 					{#if wsDiscovery && (wsDiscovery.deviceTypes.length > 0 || wsDiscovery.scopes.length > 0)}
 						<div class="mb-4">
-							<h3 class="mb-2 flex items-center gap-2 text-sm font-medium">
-								<Globe class="h-4 w-4 text-muted-foreground" />
-								WS-Discovery
-							</h3>
+							<SectionLabel icon={Globe}>WS-Discovery</SectionLabel>
 							<div class="rounded-lg border bg-card p-3">
 								{#if wsDiscovery.deviceTypes.length > 0}
 									<div>
@@ -757,10 +743,7 @@
 					<!-- SNMP Info -->
 					{#if snmpInfo && (snmpInfo.sysName || snmpInfo.sysDescr || snmpInfo.sysLocation || snmpInfo.sysContact)}
 						<div class="mb-4">
-							<h3 class="mb-2 flex items-center gap-2 text-sm font-medium">
-								<Server class="h-4 w-4 text-muted-foreground" />
-								SNMP
-							</h3>
+							<SectionLabel icon={Server}>SNMP</SectionLabel>
 							<div class="rounded-lg border bg-card p-3 space-y-2">
 								{#if snmpInfo.sysName}
 									<div>
@@ -793,10 +776,7 @@
 					<!-- TLS Certificate Names -->
 					{#if tlsNames && tlsNames.length > 0}
 						<div class="mb-4">
-							<h3 class="mb-2 flex items-center gap-2 text-sm font-medium">
-								<Shield class="h-4 w-4 text-muted-foreground" />
-								TLS Certificate
-							</h3>
+							<SectionLabel icon={Shield}>TLS Certificate</SectionLabel>
 							<div class="rounded-lg border bg-card p-3">
 								<div class="text-xs font-medium text-muted-foreground">
 									Subject Alternative Names
@@ -948,10 +928,9 @@
 						<!-- Open Ports -->
 						{#if openPorts.length > 0}
 							<div class="mb-4">
-								<h3 class="mb-2 flex items-center gap-2 text-sm font-medium">
-									<CheckCircle2 class="h-4 w-4 text-success" />
+								<SectionLabel icon={CheckCircle2} iconClass="h-4 w-4 text-success">
 									Open Ports ({openPorts.length})
-								</h3>
+								</SectionLabel>
 								<div class="space-y-2">
 									{#each openPorts as port (port.port)}
 										{@const PortIcon = getPortIcon(port.port)}
@@ -1066,10 +1045,9 @@
 						<!-- Filtered Ports -->
 						{#if filteredPorts.length > 0}
 							<div class="mb-4">
-								<h3 class="mb-2 flex items-center gap-2 text-sm font-medium">
-									<Shield class="h-4 w-4 text-warning" />
+								<SectionLabel icon={Shield} iconClass="h-4 w-4 text-warning">
 									Filtered Ports ({filteredPorts.length})
-								</h3>
+								</SectionLabel>
 								<div class="flex flex-wrap gap-2">
 									{#each filteredPorts as port (port.port)}
 										{@const serviceName = getServiceName(port)}
@@ -1092,10 +1070,9 @@
 						<!-- Closed Ports -->
 						{#if closedPorts.length > 0}
 							<div class="mb-4">
-								<h3 class="mb-2 flex items-center gap-2 text-sm font-medium">
-									<XCircle class="h-4 w-4 text-destructive" />
+								<SectionLabel icon={XCircle} iconClass="h-4 w-4 text-destructive">
 									Closed Ports ({closedPorts.length})
-								</h3>
+								</SectionLabel>
 								<div class="flex flex-wrap gap-2">
 									{#each closedPorts as port (port.port)}
 										{@const serviceName = getServiceName(port)}
