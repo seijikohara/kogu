@@ -1,6 +1,13 @@
 <script lang="ts">
 	import { CodeEditor } from '$lib/components/editor';
-	import { FormCheckbox, FormInfo, FormMode, FormSection, FormSelect } from '$lib/components/form';
+	import {
+		FormCheckbox,
+		FormCheckboxGroup,
+		FormInfo,
+		FormMode,
+		FormSection,
+		FormSelect,
+	} from '$lib/components/form';
 	import { SplitPane } from '$lib/components/layout';
 	import { ToolShell } from '$lib/components/shell';
 	import { StatItem } from '$lib/components/status';
@@ -200,9 +207,11 @@
 			</FormSection>
 		{:else}
 			<FormSection title="Decoding">
-				<FormCheckbox label="Ignore whitespace" bind:checked={ignoreWhitespace} />
-				<FormCheckbox label="Ignore invalid characters" bind:checked={ignoreInvalidChars} />
-				<FormCheckbox label="Auto-detect URL-safe variant" bind:checked={autoDetectVariant} />
+				<FormCheckboxGroup>
+					<FormCheckbox label="Ignore whitespace" bind:checked={ignoreWhitespace} />
+					<FormCheckbox label="Ignore invalid characters" bind:checked={ignoreInvalidChars} />
+					<FormCheckbox label="Auto-detect URL-safe variant" bind:checked={autoDetectVariant} />
+				</FormCheckboxGroup>
 			</FormSection>
 
 			{#if detectedVariant || detectedDataUrl}

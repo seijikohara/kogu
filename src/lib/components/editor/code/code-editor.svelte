@@ -28,6 +28,7 @@
 	import { Button } from '$lib/components/ui/button/index.js';
 	import * as Resizable from '$lib/components/ui/resizable/index.js';
 	import * as Select from '$lib/components/ui/select/index.js';
+	import * as ToggleGroup from '$lib/components/ui/toggle-group/index.js';
 	import {
 		type AstLanguage,
 		type AstNode,
@@ -607,13 +608,19 @@
 
 			<!-- View Toggle (right side) -->
 			{#if showViewToggle && supportsTreeView}
-				<div class="flex items-center gap-0.5 rounded-md bg-muted/50 p-0.5">
-					<Button
-						variant={viewMode === 'code' ? 'secondary' : 'ghost'}
-						size="icon"
-						class="h-6 w-6"
-						onclick={() => (viewMode = 'code')}
+				<ToggleGroup.Root
+					type="single"
+					value={viewMode}
+					onValueChange={(v) => {
+						if (v) viewMode = v as 'code' | 'split' | 'tree';
+					}}
+					class="bg-muted/50 inline-flex h-auto w-fit items-center gap-0.5 rounded-md p-0.5"
+				>
+					<ToggleGroup.Item
+						value="code"
+						aria-label="Code View"
 						title="Code View"
+						class="data-[state=on]:bg-background data-[state=on]:shadow-sm h-6 w-6 rounded p-0"
 					>
 						{#if editorMode === 'xml'}
 							<FileCode class="h-3.5 w-3.5" />
@@ -626,28 +633,26 @@
 						{:else}
 							<Braces class="h-3.5 w-3.5" />
 						{/if}
-					</Button>
-					<Button
-						variant={viewMode === 'split' ? 'secondary' : 'ghost'}
-						size="icon"
-						class="h-6 w-6"
-						onclick={() => (viewMode = 'split')}
+					</ToggleGroup.Item>
+					<ToggleGroup.Item
+						value="split"
+						aria-label="Split View"
 						title="Split View"
 						disabled={!canShowTree}
+						class="data-[state=on]:bg-background data-[state=on]:shadow-sm h-6 w-6 rounded p-0"
 					>
 						<Columns2 class="h-3.5 w-3.5" />
-					</Button>
-					<Button
-						variant={viewMode === 'tree' ? 'secondary' : 'ghost'}
-						size="icon"
-						class="h-6 w-6"
-						onclick={() => (viewMode = 'tree')}
+					</ToggleGroup.Item>
+					<ToggleGroup.Item
+						value="tree"
+						aria-label="Tree View"
 						title="Tree View"
 						disabled={!canShowTree}
+						class="data-[state=on]:bg-background data-[state=on]:shadow-sm h-6 w-6 rounded p-0"
 					>
 						<ListTree class="h-3.5 w-3.5" />
-					</Button>
-				</div>
+					</ToggleGroup.Item>
+				</ToggleGroup.Root>
 			{/if}
 		</div>
 	</div>
@@ -655,7 +660,7 @@
 	<!-- Editor Content -->
 	<div class="flex-1 overflow-hidden">
 		{#if viewMode === 'tree' && canShowTree}
-			<div class="h-full overflow-auto p-3">
+			<div class="h-full overflow-auto p-3" role="tree" aria-label="AST tree">
 				{#if currentAst}
 					<TreeView
 						node={currentAst}
@@ -706,7 +711,11 @@
 				</Resizable.Pane>
 				<Resizable.Handle withHandle />
 				<Resizable.Pane defaultSize={50} minSize={20}>
-					<div class="h-full overflow-auto border-l bg-muted/10 p-3">
+					<div
+						class="h-full overflow-auto border-l bg-muted/10 p-3"
+						role="tree"
+						aria-label="AST tree"
+					>
 						{#if currentAst}
 							<TreeView
 								node={currentAst}

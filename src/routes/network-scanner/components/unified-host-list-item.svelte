@@ -18,6 +18,7 @@
 		Tv,
 		Wifi,
 	} from '@lucide/svelte';
+	import { ListItemButton } from '$lib/components/ui/list-item-button';
 	import type { DeviceCategory } from '$lib/services/device-classifier.js';
 
 	interface Props {
@@ -88,12 +89,11 @@
 	const supplementaryIsMono = $derived(!vendor && !!macDisplay);
 </script>
 
-<button
-	type="button"
+<ListItemButton
+	variant="option"
+	{selected}
 	data-host-id={hostId}
-	class="flex w-full items-start gap-2 border-b border-border border-l-2 px-3 py-2.5 text-left transition-colors last:border-b-0
-		{selected ? 'border-l-primary bg-primary/10' : 'border-l-transparent hover:bg-interactive-hover'}
-		{isNew ? 'animate-highlight-new' : ''}"
+	class={`items-start ${isNew ? 'animate-highlight-new' : ''}`}
 	{onclick}
 >
 	<!-- Device icon -->
@@ -192,4 +192,4 @@
 			</div>
 		{/if}
 	</div>
-</button>
+</ListItemButton>

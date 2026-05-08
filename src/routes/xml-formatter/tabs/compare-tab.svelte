@@ -1,8 +1,6 @@
 <script lang="ts">
-	import { FormCheckbox } from '$lib/components/form';
+	import { FormCheckbox, FormInput } from '$lib/components/form';
 	import { CompareTab } from '$lib/components/template';
-	import { Input } from '$lib/components/ui/input/index.js';
-	import { Label } from '$lib/components/ui/label/index.js';
 	import type { GenericDiffItem } from '$lib/constants/diff.js';
 	import { findXmlDifferences, parseXml, type XmlDiffOptions } from '$lib/services/xml-diff.js';
 	import { pasteFromClipboard } from '../utils.js';
@@ -70,15 +68,12 @@
 	{#snippet advancedOptions()}
 		<FormCheckbox label="Ignore case" bind:checked={compareIgnoreCase} />
 		<FormCheckbox label="Ignore namespaces" bind:checked={compareIgnoreNamespaces} />
-		<div class="space-y-1 pt-1">
-			<Label class="text-xs uppercase tracking-wide text-muted-foreground">Ignore Attributes</Label>
-			<Input
-				bind:value={compareIgnoreAttributes}
-				placeholder="attr1, attr2, attr3"
-				class="h-7 text-xs"
-			/>
-			<span class="text-xs text-muted-foreground">Comma-separated list of attributes to ignore</span
-			>
-		</div>
+		<FormInput
+			label="Ignore Attributes"
+			bind:value={compareIgnoreAttributes}
+			placeholder="attr1, attr2, attr3"
+			size="compact"
+			hint="Comma-separated list of attributes to ignore"
+		/>
 	{/snippet}
 </CompareTab>

@@ -1,11 +1,13 @@
 <script lang="ts">
 	import { Minus, Plus, RefreshCw } from '@lucide/svelte';
+	import { Button } from '$lib/components/ui/button/index.js';
 	import {
 		calculateDiffSummary,
 		type DiffSummary,
 		type DiffType,
 		getDiffTypeClass,
 	} from '$lib/constants/diff.js';
+	import { cn } from '$lib/utils.js';
 
 	interface DiffItem {
 		path: string;
@@ -68,10 +70,15 @@
 	<!-- Diff Results -->
 	<div class="max-h-64 overflow-auto border-t bg-surface-2 p-2">
 		<div class="space-y-1">
-			{#each diffs as diff}
-				<button
-					type="button"
-					class={`flex w-full cursor-pointer items-center gap-2 rounded border px-2 py-1.5 text-left transition-all hover:ring-2 hover:ring-ring/50 ${getDiffTypeClass(diff.type)} ${selectedDiff?.path === diff.path ? 'ring-2 ring-ring' : ''}`}
+			{#each diffs as diff (diff.path)}
+				<Button
+					variant="ghost"
+					size="sm"
+					class={cn(
+						'h-auto w-full justify-start gap-2 rounded border px-2 py-1.5 text-left hover:ring-2 hover:ring-ring/50',
+						getDiffTypeClass(diff.type),
+						selectedDiff?.path === diff.path && 'ring-2 ring-ring'
+					)}
 					onclick={() => handleClick(diff)}
 				>
 					{#if diff.type === 'added'}
@@ -87,7 +94,7 @@
 						{:else if diff.type === 'removed'}{diff.oldValue}
 						{:else}{diff.oldValue} → {diff.newValue}{/if}
 					</span>
-				</button>
+				</Button>
 			{/each}
 		</div>
 	</div>

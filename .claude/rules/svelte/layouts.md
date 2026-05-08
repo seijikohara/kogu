@@ -1,3 +1,7 @@
+---
+paths: '{src/routes/**/*.svelte,src/lib/components/{shell,layout,form,status,panel,editor}/**/*.svelte}'
+---
+
 # Page Layout Patterns
 
 This document defines the standard layout patterns used in Kogu pages.
@@ -265,25 +269,34 @@ CSS Grid layout with areas: toolbar, rail, content, status.
 
 ### Form Components
 
-| Component      | Usage                         |
-| -------------- | ----------------------------- |
-| `FormSection`  | Collapsible section container |
-| `FormMode`     | Mode toggle buttons           |
-| `FormSelect`   | Dropdown select               |
-| `FormInput`    | Text input                    |
-| `FormCheckbox` | Checkbox with label           |
-| `FormSlider`   | Slider with value display     |
-| `FormInfo`     | Info panel                    |
+| Component           | Usage                                                                         |
+| ------------------- | ----------------------------------------------------------------------------- |
+| `FormSection`       | Collapsible section container (12px gap between children)                     |
+| `FormCheckboxGroup` | Wrapper for two or more `FormCheckbox` (collapses gap to 6px for dense lists) |
+| `FormMode`          | Mode toggle buttons                                                           |
+| `FormSelect`        | Dropdown select                                                               |
+| `FormInput`         | Text input                                                                    |
+| `FormCheckbox`      | Checkbox with label                                                           |
+| `FormSlider`        | Slider with value display                                                     |
+| `FormInfo`          | Info panel                                                                    |
+
+### Layout Components
+
+| Component       | Usage                                                                    |
+| --------------- | ------------------------------------------------------------------------ |
+| `SectionHeader` | Bordered, surface-2 panel header (top of a content panel)                |
+| `SectionLabel`  | Inline section label above a content card (lighter than `SectionHeader`) |
+| `SplitPane`     | Resizable two-pane layout                                                |
 
 ### Status Components
 
-| Component        | Usage                                  |
-| ---------------- | -------------------------------------- |
-| `StatItem`       | Label + value display in StatusBar     |
-| `EmptyState`     | Empty state with icon and message      |
-| `ErrorDisplay`   | Error display (inline/centered/banner) |
-| `SectionHeader`  | Section header with optional count     |
-| `LoadingOverlay` | Loading overlay with progress          |
+| Component            | Usage                                                                |
+| -------------------- | -------------------------------------------------------------------- |
+| `StatItem`           | Label + value display in StatusBar                                   |
+| `EmptyState`         | Full-page empty state with large (16x16) icon                        |
+| `EmbeddedEmptyState` | Compact empty state for tab panels and cards (`fillHeight` optional) |
+| `ErrorDisplay`       | Error display (inline/centered/banner)                               |
+| `LoadingOverlay`     | Loading overlay with progress                                        |
 
 ### Action Components
 

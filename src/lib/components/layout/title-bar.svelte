@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { Search } from '@lucide/svelte';
+	import { Button } from '$lib/components/ui/button/index.js';
 	import { initNavigationHistory } from '$lib/services/navigation-history.svelte.js';
 	import { formatShortcut } from '$lib/utils/keyboard.js';
 	import NavButtons from './nav-buttons.svelte';
@@ -20,9 +21,9 @@
 >
 	<!-- Navigation buttons and Search trigger - centered together -->
 	<NavButtons />
-	<button
-		type="button"
-		class="flex h-6 w-full max-w-md items-center gap-2 rounded-lg bg-surface-2 px-3 text-xs text-muted-foreground transition-colors hover:bg-surface-3"
+	<Button
+		variant="outline"
+		class="bg-surface-2 hover:bg-surface-3 h-6 w-full max-w-md justify-start gap-2 rounded-lg border-0 px-3 text-xs font-normal text-muted-foreground"
 		onclick={() => onOpenCommandPalette?.()}
 	>
 		<Search class="h-3.5 w-3.5 shrink-0" />
@@ -32,5 +33,5 @@
 		>
 			{formatShortcut('K', true)}
 		</kbd>
-	</button>
+	</Button>
 </header>

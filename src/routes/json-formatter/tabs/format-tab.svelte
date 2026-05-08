@@ -2,7 +2,13 @@
 	import type { Snippet } from 'svelte';
 	import type { ContextMenuItem } from '$lib/components/editor';
 	import { CodeEditor } from '$lib/components/editor';
-	import { FormCheckbox, FormMode, FormSection, FormSelect } from '$lib/components/form';
+	import {
+		FormCheckbox,
+		FormCheckboxGroup,
+		FormMode,
+		FormSection,
+		FormSelect,
+	} from '$lib/components/form';
 	import { SplitPane } from '$lib/components/layout';
 	import { OptionsPanel } from '$lib/components/panel';
 	import {
@@ -269,25 +275,31 @@
 					]}
 				/>
 			</div>
-			<div class="space-y-1.5 pt-1">
-				<FormCheckbox label="Sort keys alphabetically" bind:checked={sortKeys} />
-				<FormCheckbox label="Escape unicode characters" bind:checked={escapeUnicode} />
-			</div>
+			<FormCheckboxGroup class="pt-1">
+				<FormCheckboxGroup>
+					<FormCheckbox label="Sort keys alphabetically" bind:checked={sortKeys} />
+					<FormCheckbox label="Escape unicode characters" bind:checked={escapeUnicode} />
+				</FormCheckboxGroup>
+			</FormCheckboxGroup>
 		</FormSection>
 
 		<FormSection title="Spacing">
-			<FormCheckbox label="Space after colon" bind:checked={colonSpacing} />
-			<FormCheckbox label="Array bracket spacing" bind:checked={arrayBracketSpacing} />
-			<FormCheckbox label="Object bracket spacing" bind:checked={objectBracketSpacing} />
-			<FormCheckbox label="Trailing commas" bind:checked={trailingComma} />
-			<FormCheckbox label="Compact arrays" bind:checked={compactArrays} />
+			<FormCheckboxGroup>
+				<FormCheckbox label="Space after colon" bind:checked={colonSpacing} />
+				<FormCheckbox label="Array bracket spacing" bind:checked={arrayBracketSpacing} />
+				<FormCheckbox label="Object bracket spacing" bind:checked={objectBracketSpacing} />
+				<FormCheckbox label="Trailing commas" bind:checked={trailingComma} />
+				<FormCheckbox label="Compact arrays" bind:checked={compactArrays} />
+			</FormCheckboxGroup>
 		</FormSection>
 
 		<FormSection title="Filtering">
-			<FormCheckbox label="Remove null values" bind:checked={removeNulls} />
-			<FormCheckbox label="Remove empty strings" bind:checked={removeEmptyStrings} />
-			<FormCheckbox label="Remove empty arrays" bind:checked={removeEmptyArrays} />
-			<FormCheckbox label="Remove empty objects" bind:checked={removeEmptyObjects} />
+			<FormCheckboxGroup>
+				<FormCheckbox label="Remove null values" bind:checked={removeNulls} />
+				<FormCheckbox label="Remove empty strings" bind:checked={removeEmptyStrings} />
+				<FormCheckbox label="Remove empty arrays" bind:checked={removeEmptyArrays} />
+				<FormCheckbox label="Remove empty objects" bind:checked={removeEmptyObjects} />
+			</FormCheckboxGroup>
 		</FormSection>
 	</OptionsPanel>
 

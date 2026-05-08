@@ -394,35 +394,6 @@
 	font-weight: 600;
 }
 
-/* Custom range slider */
-input[type='range'] {
-	-webkit-appearance: none;
-	appearance: none;
-	height: 6px;
-	border-radius: 3px;
-	background: var(--border);
-	outline: none;
-}
-
-input[type='range']::-webkit-slider-thumb {
-	-webkit-appearance: none;
-	width: 14px;
-	height: 14px;
-	border-radius: 50%;
-	background: var(--primary);
-	cursor: pointer;
-	box-shadow: 0 1px 3px oklch(0% 0 0 / 15%);
-	transition: transform 100ms ease;
-}
-
-input[type='range']::-webkit-slider-thumb:hover {
-	transform: scale(1.15);
-}
-
-input[type='range']::-webkit-slider-thumb:active {
-	transform: scale(1.05);
-}
-
 /* Highlight animation for newly discovered hosts */
 @keyframes highlight-new {
 	0% {

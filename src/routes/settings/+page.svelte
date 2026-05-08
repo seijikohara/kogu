@@ -8,8 +8,8 @@
 	import * as Popover from '$lib/components/ui/popover/index.js';
 	import * as Command from '$lib/components/ui/command/index.js';
 	import { Button } from '$lib/components/ui/button/index.js';
-	import { Checkbox } from '$lib/components/ui/checkbox/index.js';
 	import { Label } from '$lib/components/ui/label/index.js';
+	import { FormCheckbox, FormSlider } from '$lib/components/form/index.js';
 	import {
 		type AppSettings,
 		type FontSettings,
@@ -222,26 +222,15 @@
 					</div>
 
 					<!-- UI Font Size -->
-					<div class="space-y-1.5">
-						<div class="flex items-center justify-between gap-2">
-							<Label class="text-sm font-medium">UI Font Size</Label>
-							<span class="text-sm font-medium tabular-nums">{fontSettings.ui_size}px</span>
-						</div>
-						<input
-							type="range"
-							value={fontSettings.ui_size}
-							min={10}
-							max={24}
-							step={1}
-							oninput={(e) => {
-								fontSettings = {
-									...fontSettings,
-									ui_size: Number((e.target as HTMLInputElement).value),
-								};
-							}}
-							class="h-1.5 w-full cursor-pointer appearance-none rounded-full bg-border accent-primary"
-						/>
-					</div>
+					<FormSlider
+						label="UI Font Size"
+						value={fontSettings.ui_size}
+						valueLabel={`${fontSettings.ui_size}px`}
+						min={10}
+						max={24}
+						step={1}
+						onchange={(v) => (fontSettings = { ...fontSettings, ui_size: v })}
+					/>
 
 					<!-- Code Font Family -->
 					<div class="space-y-1.5">
@@ -321,38 +310,23 @@
 					</div>
 
 					<!-- Code Font Size -->
-					<div class="space-y-1.5">
-						<div class="flex items-center justify-between gap-2">
-							<Label class="text-sm font-medium">Code Font Size</Label>
-							<span class="text-sm font-medium tabular-nums">{fontSettings.code_size}px</span>
-						</div>
-						<input
-							type="range"
-							value={fontSettings.code_size}
-							min={10}
-							max={24}
-							step={1}
-							oninput={(e) => {
-								fontSettings = {
-									...fontSettings,
-									code_size: Number((e.target as HTMLInputElement).value),
-								};
-							}}
-							class="h-1.5 w-full cursor-pointer appearance-none rounded-full bg-border accent-primary"
-						/>
-					</div>
+					<FormSlider
+						label="Code Font Size"
+						value={fontSettings.code_size}
+						valueLabel={`${fontSettings.code_size}px`}
+						min={10}
+						max={24}
+						step={1}
+						onchange={(v) => (fontSettings = { ...fontSettings, code_size: v })}
+					/>
 
 					<!-- Google Fonts Toggle -->
 					<div class="space-y-3">
-						<div class="flex items-center gap-2">
-							<Checkbox
-								checked={fontSettings.google_fonts_enabled}
-								onCheckedChange={(v) => {
-									fontSettings = { ...fontSettings, google_fonts_enabled: v === true };
-								}}
-							/>
-							<Label class="text-sm font-medium">Enable Google Fonts</Label>
-						</div>
+						<FormCheckbox
+							label="Enable Google Fonts"
+							checked={fontSettings.google_fonts_enabled}
+							onchange={(v) => (fontSettings = { ...fontSettings, google_fonts_enabled: v })}
+						/>
 
 						{#if fontSettings.google_fonts_enabled}
 							<Alert.Root variant="destructive">

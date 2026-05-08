@@ -2,11 +2,16 @@
 	import * as yaml from 'yaml';
 	import type { ContextMenuItem } from '$lib/components/editor';
 	import { CodeEditor } from '$lib/components/editor';
-	import { FormCheckbox, FormMode, FormSection, FormSelect } from '$lib/components/form';
+	import {
+		FormCheckbox,
+		FormCheckboxGroup,
+		FormInput,
+		FormMode,
+		FormSection,
+		FormSelect,
+	} from '$lib/components/form';
 	import { SplitPane } from '$lib/components/layout';
 	import { OptionsPanel } from '$lib/components/panel';
-	import { Input } from '$lib/components/ui/input/index.js';
-	import { Label } from '$lib/components/ui/label/index.js';
 	import { SAMPLE_YAML, sortKeysDeep, validateYaml } from '$lib/services/formatters';
 
 	interface Props {
@@ -227,10 +232,10 @@
 					{ value: 'any', label: 'Auto' },
 				]}
 			/>
-			<div class="space-y-1.5 pt-1">
+			<FormCheckboxGroup class="pt-1">
 				<FormCheckbox label="Indent sequences" bind:checked={indentSeq} />
 				<FormCheckbox label="Flow collection padding" bind:checked={flowCollectionPadding} />
-			</div>
+			</FormCheckboxGroup>
 		</FormSection>
 
 		<FormSection title="Strings">
@@ -245,11 +250,11 @@
 					{ value: 'BLOCK_FOLDED', label: 'Block Folded (>)' },
 				]}
 			/>
-			<div class="space-y-1.5 pt-1">
+			<FormCheckboxGroup class="pt-1">
 				<FormCheckbox label="Force quotes on all strings" bind:checked={forceQuotes} />
 				<FormCheckbox label="Prefer single quotes" bind:checked={singleQuote} />
 				<FormCheckbox label="Double-quoted as JSON style" bind:checked={doubleQuotedAsJSON} />
-			</div>
+			</FormCheckboxGroup>
 		</FormSection>
 
 		<FormSection title="Keys">
@@ -262,25 +267,34 @@
 					{ value: 'QUOTE_DOUBLE', label: 'Double Quote (")' },
 				]}
 			/>
-			<div class="space-y-1.5 pt-1">
+			<FormCheckboxGroup class="pt-1">
 				<FormCheckbox label="Sort keys alphabetically" bind:checked={sortKeys} />
-			</div>
+			</FormCheckboxGroup>
 		</FormSection>
 
 		<FormSection title="Special Values">
 			<div class="grid grid-cols-3 gap-2">
-				<div class="space-y-1">
-					<Label class="text-xs uppercase tracking-wide text-muted-foreground">Null</Label>
-					<Input bind:value={nullStr} placeholder="null" class="h-7 font-mono text-xs" />
-				</div>
-				<div class="space-y-1">
-					<Label class="text-xs uppercase tracking-wide text-muted-foreground">True</Label>
-					<Input bind:value={trueStr} placeholder="true" class="h-7 font-mono text-xs" />
-				</div>
-				<div class="space-y-1">
-					<Label class="text-xs uppercase tracking-wide text-muted-foreground">False</Label>
-					<Input bind:value={falseStr} placeholder="false" class="h-7 font-mono text-xs" />
-				</div>
+				<FormInput
+					label="Null"
+					bind:value={nullStr}
+					placeholder="null"
+					size="compact"
+					class="font-mono"
+				/>
+				<FormInput
+					label="True"
+					bind:value={trueStr}
+					placeholder="true"
+					size="compact"
+					class="font-mono"
+				/>
+				<FormInput
+					label="False"
+					bind:value={falseStr}
+					placeholder="false"
+					size="compact"
+					class="font-mono"
+				/>
 			</div>
 		</FormSection>
 

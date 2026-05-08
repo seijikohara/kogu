@@ -1,11 +1,11 @@
-<script lang="ts">
+<script lang="ts" generics="T extends string">
 	import type { Component } from 'svelte';
 	import { Label } from '$lib/components/ui/label/index.js';
 	import * as ToggleGroup from '$lib/components/ui/toggle-group/index.js';
 	import { cn } from '$lib/utils.js';
 
 	interface ModeOption {
-		value: string;
+		value: T;
 		label: string;
 		description?: string;
 		icon?: Component;
@@ -13,16 +13,16 @@
 
 	interface Props {
 		label?: string;
-		value?: string;
+		value?: T;
 		options: ModeOption[];
-		onchange?: (value: string) => void;
+		onchange?: (value: T) => void;
 		layout?: 'horizontal' | 'stacked';
 		descriptionDisplay?: 'selected' | 'all' | 'none';
 	}
 
 	let {
 		label,
-		value = $bindable(''),
+		value = $bindable(),
 		options,
 		onchange,
 		layout = 'horizontal',
@@ -31,21 +31,19 @@
 
 	const selected = $derived(options.find((o) => o.value === value));
 
-	// Generate grid-cols class based on options count for horizontal layout
 	const gridColsClass = $derived(
 		layout === 'horizontal'
 			? options.length === 2
 				? 'grid-cols-2'
 				: options.length === 3
 					? 'grid-cols-3'
-					: options.length === 4
-						? 'grid-cols-2'
-						: 'grid-cols-2'
+					: 'grid-cols-2'
 			: ''
 	);
 
-	// Generate unique ID for accessibility
 	const uid = $props.id();
+
+	const isAllowedValue = (v: string): v is T => options.some((o) => o.value === v);
 </script>
 
 <div class="space-y-2">
@@ -57,7 +55,10 @@
 		type="single"
 		{value}
 		onValueChange={(v) => {
-			if (v) {
+			// Radiogroup semantics: ignore the empty string emitted when the user
+			// re-clicks the active item, so one option is always selected. Also
+			// guard the cast back to T against unexpected values.
+			if (isAllowedValue(v)) {
 				value = v;
 				onchange?.(v);
 			}
@@ -73,7 +74,7 @@
 			<ToggleGroup.Item
 				value={option.value}
 				class={cn(
-					'h-9 w-full min-w-0 px-2 text-sm font-medium rounded-md transition-all',
+					'h-9 w-full min-w-0 rounded-md px-2 text-sm font-medium transition-all',
 					'flex items-center gap-1.5',
 					layout === 'horizontal' ? 'justify-center' : 'justify-start',
 					'data-[state=on]:bg-background data-[state=on]:shadow-sm',

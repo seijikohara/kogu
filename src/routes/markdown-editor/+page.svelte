@@ -40,6 +40,7 @@
 	import { Button } from '$lib/components/ui/button';
 	import * as ContextMenu from '$lib/components/ui/context-menu';
 	import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
+	import { ListItemButton } from '$lib/components/ui/list-item-button';
 	import {
 		applyFormat,
 		exportAsHtml,
@@ -446,13 +447,9 @@ ${tocToMarkdown(toc)}
 
 {#snippet tocItem(item: TocItem)}
 	<li>
-		<button
-			type="button"
-			class="text-left text-xs hover:underline hover:text-primary"
-			onclick={() => handleTocClick(item.line)}
-		>
+		<ListItemButton variant="toc" size="sm" onclick={() => handleTocClick(item.line)}>
 			{item.text}
-		</button>
+		</ListItemButton>
 		{#if item.children.length > 0}
 			<ul class="ml-3 mt-0.5 space-y-0.5">
 				{#each item.children as child}
