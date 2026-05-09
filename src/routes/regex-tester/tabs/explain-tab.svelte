@@ -2,6 +2,8 @@
 	import { Check, X } from '@lucide/svelte';
 	import { FormCheckbox, FormCheckboxGroup, FormInput } from '$lib/components/form';
 	import { SectionHeader } from '$lib/components/layout';
+	import { Badge } from '$lib/components/ui/badge';
+	import * as Card from '$lib/components/ui/card';
 	import { EmbeddedEmptyState } from '$lib/components/status';
 	import {
 		compileRegex,
@@ -37,78 +39,99 @@
 	<SectionHeader title="Explain" />
 
 	<div class="flex-1 overflow-auto p-4">
-		<div class="space-y-4">
-			<div class="rounded-lg border bg-surface-3 p-4">
-				<FormInput label="Pattern" bind:value={pattern} placeholder="\\d+" class="font-mono" />
-			</div>
+		<div class="mx-auto flex max-w-5xl flex-col gap-4">
+			<Card.Root>
+				<Card.Header class="pb-3">
+					<Card.Title class="text-sm font-medium">Pattern</Card.Title>
+				</Card.Header>
+				<Card.Content class="space-y-3">
+					<FormInput label="" bind:value={pattern} placeholder="\\d+" class="font-mono" />
+					<FormCheckboxGroup>
+						{#each FLAG_INFO as info (info.id)}
+							<FormCheckbox
+								label={`${info.char} - ${info.label}`}
+								hint={info.description}
+								bind:checked={flags[info.id]}
+							/>
+						{/each}
+					</FormCheckboxGroup>
+				</Card.Content>
+			</Card.Root>
 
-			<div class="rounded-lg border bg-surface-3 p-4">
-				<span class="mb-2 block text-sm font-medium">Flags ({flagString || 'none'})</span>
-				<FormCheckboxGroup>
-					{#each FLAG_INFO as info (info.id)}
-						<FormCheckbox
-							label={`${info.char} - ${info.label}`}
-							hint={info.description}
-							bind:checked={flags[info.id]}
-						/>
-					{/each}
-				</FormCheckboxGroup>
-			</div>
+			<div class="grid gap-4 sm:grid-cols-3">
+				<Card.Root>
+					<Card.Header class="pb-3">
+						<Card.Title class="text-sm font-medium">Validity</Card.Title>
+					</Card.Header>
+					<Card.Content>
+						{#if compiled.ok}
+							<div class="flex items-center gap-2">
+								<Check class="h-4 w-4 text-success" />
+								<span class="text-sm font-medium text-success">Valid</span>
+							</div>
+						{:else}
+							<div class="flex items-center gap-2">
+								<X class="h-4 w-4 text-destructive" />
+								<span class="text-sm font-medium text-destructive">Invalid</span>
+							</div>
+							<p class="mt-2 text-xs text-destructive">{compiled.error}</p>
+						{/if}
+					</Card.Content>
+				</Card.Root>
 
-			<div class="rounded-lg border bg-surface-3 p-4">
-				<div class="mb-2 flex items-center gap-2">
-					{#if compiled.ok}
-						<Check class="h-4 w-4 text-success" />
-						<span class="text-sm font-medium text-success">Pattern is valid</span>
-					{:else}
-						<X class="h-4 w-4 text-destructive" />
-						<span class="text-sm font-medium text-destructive">Invalid pattern</span>
-					{/if}
-				</div>
-				{#if !compiled.ok}
-					<p class="text-sm text-destructive">{compiled.error}</p>
-				{/if}
-			</div>
+				<Card.Root>
+					<Card.Header class="pb-3">
+						<Card.Title class="text-sm font-medium">Capture groups</Card.Title>
+					</Card.Header>
+					<Card.Content>
+						<p class="text-2xl font-mono tabular-nums">{groupCount}</p>
+					</Card.Content>
+				</Card.Root>
 
-			<div class="rounded-lg border bg-surface-3 p-4">
-				<span class="mb-2 block text-sm font-medium">Capture groups</span>
-				<p class="font-mono text-sm tabular-nums">{groupCount}</p>
-			</div>
-
-			{#if activeFlags.length > 0}
-				<div class="rounded-lg border bg-surface-3 p-4">
-					<span class="mb-2 block text-sm font-medium">Enabled flags</span>
-					<ul class="space-y-1 text-sm">
+				<Card.Root>
+					<Card.Header class="pb-3">
+						<Card.Title class="text-sm font-medium">
+							Active flags <span class="text-muted-foreground">({flagString || '—'})</span>
+						</Card.Title>
+					</Card.Header>
+					<Card.Content class="flex flex-wrap gap-1">
 						{#each activeFlags as info (info.id)}
-							<li class="flex items-baseline gap-2">
-								<code class="font-mono font-semibold">{info.char}</code>
-								<span class="text-muted-foreground">{info.description}</span>
-							</li>
+							<Badge variant="outline" class="font-mono text-2xs">{info.char} {info.label}</Badge>
 						{/each}
-					</ul>
-				</div>
-			{/if}
-
-			<div class="rounded-lg border bg-surface-3 p-4">
-				<span class="mb-2 block text-sm font-medium">Detected features</span>
-				{#if features.length > 0}
-					<ul class="space-y-1 text-sm">
-						{#each features as feature (feature.token)}
-							<li class="flex items-baseline gap-2">
-								<code class="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">{feature.token}</code
-								>
-								<span class="text-muted-foreground">{feature.description}</span>
-							</li>
-						{/each}
-					</ul>
-				{:else}
-					<EmbeddedEmptyState
-						icon={Check}
-						title="Plain text pattern"
-						description="No regex metacharacters detected; pattern matches literally."
-					/>
-				{/if}
+						{#if activeFlags.length === 0}
+							<span class="text-xs text-muted-foreground">None enabled</span>
+						{/if}
+					</Card.Content>
+				</Card.Root>
 			</div>
+
+			<Card.Root>
+				<Card.Header class="pb-3">
+					<Card.Title class="text-sm font-medium">Detected features</Card.Title>
+					<Card.Description class="text-xs">
+						Metacharacter classes and constructs found in the pattern.
+					</Card.Description>
+				</Card.Header>
+				<Card.Content>
+					{#if features.length > 0}
+						<ul class="space-y-1.5">
+							{#each features as feature (feature.token)}
+								<li class="flex items-baseline gap-3 rounded-md border bg-surface-3 px-3 py-2">
+									<code class="rounded bg-muted px-2 py-0.5 font-mono text-xs">{feature.token}</code
+									>
+									<span class="text-sm text-muted-foreground">{feature.description}</span>
+								</li>
+							{/each}
+						</ul>
+					{:else}
+						<EmbeddedEmptyState
+							icon={Check}
+							title="Plain text pattern"
+							description="No regex metacharacters detected; pattern matches literally."
+						/>
+					{/if}
+				</Card.Content>
+			</Card.Root>
 		</div>
 	</div>
 </div>
