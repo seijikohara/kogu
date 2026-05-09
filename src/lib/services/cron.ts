@@ -51,18 +51,69 @@ export const CRON_FIELDS: readonly CronFieldInfo[] = [
 export interface CronPreset {
 	readonly label: string;
 	readonly value: string;
+	readonly description?: string;
 }
 
-export const CRON_PRESETS: readonly CronPreset[] = [
-	{ label: 'Every minute', value: '* * * * *' },
-	{ label: 'Every 5 minutes', value: '*/5 * * * *' },
-	{ label: 'Every hour', value: '0 * * * *' },
-	{ label: 'Every day at midnight', value: '0 0 * * *' },
-	{ label: 'Every weekday at 9am', value: '0 9 * * 1-5' },
-	{ label: 'Every Monday at 8am', value: '0 8 * * 1' },
-	{ label: 'First of every month', value: '0 0 1 * *' },
-	{ label: 'Every quarter', value: '0 0 1 */3 *' },
-	{ label: 'Every year on Jan 1st', value: '0 0 1 1 *' },
+export interface CronPresetCategory {
+	readonly label: string;
+	readonly presets: readonly CronPreset[];
+}
+
+export const CRON_PRESET_CATEGORIES: readonly CronPresetCategory[] = [
+	{
+		label: 'Frequency',
+		presets: [
+			{ label: 'Every minute', value: '* * * * *' },
+			{ label: 'Every 5 minutes', value: '*/5 * * * *' },
+			{ label: 'Every 10 minutes', value: '*/10 * * * *' },
+			{ label: 'Every 15 minutes', value: '*/15 * * * *' },
+			{ label: 'Every 30 minutes', value: '*/30 * * * *' },
+			{ label: 'Every hour', value: '0 * * * *' },
+			{ label: 'Every 2 hours', value: '0 */2 * * *' },
+			{ label: 'Every 6 hours', value: '0 */6 * * *' },
+			{ label: 'Every 12 hours', value: '0 */12 * * *' },
+		],
+	},
+	{
+		label: 'Time of day',
+		presets: [
+			{ label: 'Daily at midnight', value: '0 0 * * *' },
+			{ label: 'Daily at 6am', value: '0 6 * * *' },
+			{ label: 'Daily at noon', value: '0 12 * * *' },
+			{ label: 'Daily at 6pm', value: '0 18 * * *' },
+			{ label: 'Twice daily (6am & 6pm)', value: '0 6,18 * * *' },
+			{ label: 'Business hours every hour', value: '0 9-17 * * 1-5' },
+		],
+	},
+	{
+		label: 'Day of week',
+		presets: [
+			{ label: 'Every weekday at 9am', value: '0 9 * * 1-5' },
+			{ label: 'Every weekend at 10am', value: '0 10 * * 6,0' },
+			{ label: 'Every Monday at 8am', value: '0 8 * * 1' },
+			{ label: 'Every Friday at 5pm', value: '0 17 * * 5' },
+			{ label: 'Every Sunday at midnight', value: '0 0 * * 0' },
+		],
+	},
+	{
+		label: 'Day of month',
+		presets: [
+			{ label: 'First of every month', value: '0 0 1 * *' },
+			{ label: 'Last day attempt (28th)', value: '0 0 28 * *' },
+			{ label: 'Mid-month at 9am', value: '0 9 15 * *' },
+			{ label: 'Every quarter', value: '0 0 1 */3 *' },
+		],
+	},
+	{
+		label: 'Yearly',
+		presets: [
+			{ label: 'New Year (Jan 1)', value: '0 0 1 1 *' },
+			{ label: 'Spring (Mar 1)', value: '0 0 1 3 *' },
+			{ label: 'Summer (Jun 1)', value: '0 0 1 6 *' },
+			{ label: 'Fall (Sep 1)', value: '0 0 1 9 *' },
+			{ label: 'Christmas (Dec 25)', value: '0 0 25 12 *' },
+		],
+	},
 ];
 
 export const buildExpression = (parts: CronParts): string =>
@@ -88,10 +139,24 @@ export const explainExpression = (expression: string): Result<string> => {
 	}
 };
 
+export const validateField = (field: keyof CronParts, value: string): Result<true> => {
+	const trimmed = value.trim();
+	if (trimmed.length === 0) return { ok: false, error: 'Required' };
+	// Build a synthetic expression with the candidate field and validate via cron-parser.
+	const placeholders: CronParts = { ...DEFAULT_CRON_PARTS, [field]: trimmed };
+	const candidate = buildExpression(placeholders);
+	try {
+		CronExpressionParser.parse(candidate);
+		return { ok: true, value: true };
+	} catch (e) {
+		return { ok: false, error: e instanceof Error ? e.message : String(e) };
+	}
+};
+
 export const nextExecutions = (expression: string, count: number): Result<readonly Date[]> => {
 	if (count <= 0) return { ok: true, value: [] };
 	try {
-		const interval = CronExpressionParser.parse(expression, { tz: undefined });
+		const interval = CronExpressionParser.parse(expression);
 		const dates = Array.from({ length: count }, () => interval.next().toDate());
 		return { ok: true, value: dates };
 	} catch (e) {
@@ -100,15 +165,49 @@ export const nextExecutions = (expression: string, count: number): Result<readon
 };
 
 const DAY_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'] as const;
+export type DayLabel = (typeof DAY_LABELS)[number];
+
+export interface FormattedDate {
+	readonly date: string;
+	readonly time: string;
+	readonly dayLabel: DayLabel;
+	readonly dayIndex: number;
+	readonly isWeekend: boolean;
+	readonly relative: string;
+}
+
+const padTwo = (value: number): string => value.toString().padStart(2, '0');
+
+const formatRelative = (target: Date, base: Date): string => {
+	const diff = target.getTime() - base.getTime();
+	if (diff < 0) return 'past';
+	const seconds = Math.floor(diff / 1000);
+	if (seconds < 60) return 'in seconds';
+	const minutes = Math.floor(seconds / 60);
+	if (minutes < 60) return `in ${minutes} min`;
+	const hours = Math.floor(minutes / 60);
+	if (hours < 24) return `in ${hours} h`;
+	const days = Math.floor(hours / 24);
+	if (days < 30) return `in ${days} d`;
+	const months = Math.floor(days / 30);
+	if (months < 12) return `in ${months} mo`;
+	return `in ${Math.floor(months / 12)} y`;
+};
+
+export const formatDateParts = (date: Date, base: Date = new Date()): FormattedDate => {
+	const dayIndex = date.getDay();
+	const dayLabel = DAY_LABELS[dayIndex] ?? 'Sun';
+	return {
+		date: `${date.getFullYear()}-${padTwo(date.getMonth() + 1)}-${padTwo(date.getDate())}`,
+		time: `${padTwo(date.getHours())}:${padTwo(date.getMinutes())}:${padTwo(date.getSeconds())}`,
+		dayLabel,
+		dayIndex,
+		isWeekend: dayIndex === 0 || dayIndex === 6,
+		relative: formatRelative(date, base),
+	};
+};
 
 export const formatDate = (date: Date): string => {
-	const pad = (n: number) => n.toString().padStart(2, '0');
-	const yyyy = date.getFullYear();
-	const mm = pad(date.getMonth() + 1);
-	const dd = pad(date.getDate());
-	const hh = pad(date.getHours());
-	const mi = pad(date.getMinutes());
-	const ss = pad(date.getSeconds());
-	const day = DAY_LABELS[date.getDay()] ?? '';
-	return `${yyyy}-${mm}-${dd} (${day}) ${hh}:${mi}:${ss}`;
+	const parts = formatDateParts(date);
+	return `${parts.date} (${parts.dayLabel}) ${parts.time}`;
 };
