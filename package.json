@@ -67,6 +67,8 @@
 		"@xml-tools/parser": "^1.0.11",
 		"ajv": "^8.18.0",
 		"ajv-formats": "^3.0.1",
+		"cron-parser": "^5.5.0",
+		"cronstrue": "^3.14.0",
 		"crypto-js": "^4.2.0",
 		"fuse.js": "^7.3.0",
 		"json5": "^2.2.3",
