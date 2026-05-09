@@ -26,6 +26,7 @@ import {
 	Lock,
 	Network,
 	Play,
+	QrCode,
 	Radar,
 	Search,
 	Settings,
@@ -210,6 +211,15 @@ export const PAGES: readonly PageDefinition[] = [
 		icon: Shield,
 		description: 'Generate GPG/PGP key pairs for encryption and signing',
 		color: 'text-indigo-500',
+		category: 'generators',
+	},
+	{
+		id: 'qr-code-generator',
+		title: 'QR Code Generator',
+		url: '/qr-code-generator',
+		icon: QrCode,
+		description: 'Generate QR codes with adjustable error correction, size, and colors',
+		color: 'text-green-500',
 		category: 'generators',
 	},
 	{
