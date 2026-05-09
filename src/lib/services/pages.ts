@@ -245,12 +245,13 @@ export const PAGES: readonly PageDefinition[] = [
 		title: 'cURL Builder',
 		url: '/curl-builder',
 		icon: Terminal,
-		description: 'Build and parse cURL commands with method, headers, and body',
+		description: 'Build and parse cURL commands; emit fetch / Python / Go snippets',
 		color: 'text-zinc-500',
 		category: 'generators',
 		tabs: [
 			{ id: 'build', label: 'Build', icon: Pencil },
 			{ id: 'parse', label: 'Parse', icon: Search },
+			{ id: 'code', label: 'Code', icon: CodeXml },
 		],
 	},
 	{
