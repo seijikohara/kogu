@@ -15,6 +15,7 @@ import {
 	FileDiff,
 	FileJson2,
 	FileText,
+	Fingerprint,
 	GitCompare,
 	Hash,
 	House,
@@ -156,6 +157,15 @@ export const PAGES: readonly PageDefinition[] = [
 		description: 'Decode and inspect JWT tokens',
 		color: 'text-purple-500',
 		category: 'encoders',
+	},
+	{
+		id: 'uuid-generator',
+		title: 'UUID Generator',
+		url: '/uuid-generator',
+		icon: Fingerprint,
+		description: 'Generate UUIDs (v1, v3, v4, v5, v7) with formatting options',
+		color: 'text-fuchsia-500',
+		category: 'generators',
 	},
 	{
 		id: 'hash-generator',
