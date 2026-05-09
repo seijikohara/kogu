@@ -6,3 +6,4 @@ export { default as FormMode } from './form-mode.svelte';
 export { default as FormSection } from './form-section.svelte';
 export { default as FormSelect } from './form-select.svelte';
 export { default as FormSlider } from './form-slider.svelte';
+export { default as FormTextarea } from './form-textarea.svelte';
