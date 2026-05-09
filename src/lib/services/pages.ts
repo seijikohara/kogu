@@ -35,6 +35,7 @@ import {
 	Shield,
 	ShieldCheck,
 	Sparkles,
+	Terminal,
 } from '@lucide/svelte';
 
 /**
@@ -231,6 +232,19 @@ export const PAGES: readonly PageDefinition[] = [
 		icon: Clock,
 		description: 'Build and parse cron expressions with next-execution preview',
 		color: 'text-stone-500',
+		category: 'generators',
+		tabs: [
+			{ id: 'build', label: 'Build', icon: Pencil },
+			{ id: 'parse', label: 'Parse', icon: Search },
+		],
+	},
+	{
+		id: 'curl-builder',
+		title: 'cURL Builder',
+		url: '/curl-builder',
+		icon: Terminal,
+		description: 'Build and parse cURL commands with method, headers, and body',
+		color: 'text-zinc-500',
 		category: 'generators',
 		tabs: [
 			{ id: 'build', label: 'Build', icon: Pencil },
