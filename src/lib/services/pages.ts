@@ -186,6 +186,15 @@ export const PAGES: readonly PageDefinition[] = [
 		category: 'generators',
 	},
 	{
+		id: 'password-generator',
+		title: 'Password Generator',
+		url: '/password-generator',
+		icon: Lock,
+		description: 'Generate cryptographically secure passwords with entropy estimation',
+		color: 'text-lime-500',
+		category: 'generators',
+	},
+	{
 		id: 'ssh-key-generator',
 		title: 'SSH Key Generator',
 		url: '/ssh-key-generator',
