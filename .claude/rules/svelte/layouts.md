@@ -212,6 +212,56 @@ Pages: Diff Viewer, Markdown Editor
 
 ---
 
+## Pattern: ReactiveSinglePage
+
+Single-input tool with multiple synchronized views of the same underlying state. Inspired by `regex101.com` — one source-of-truth input at the top, with derived panels (matches, replacements, structural visualization, explanation) updating reactively.
+
+```
+┌──────────────────────────────────────────────────────────────┐
+│ ToolBar  [Icon] Title                                        │
+├──────────┬───────────────────────────────────────────────────┤
+│ Options  │ Pattern bar (sticky)                              │
+│  Rail    │ ┌─────────────────────────┐ [g][i][m][s][u][y]   │
+│          │ │ Syntax-highlighted input │ flag pills           │
+│  [Info]  │ └─────────────────────────┘                        │
+│  [Help]  │ ✓ valid · stats · features                        │
+│          ├──────────────────────────┬────────────────────────┤
+│          │ Primary input + action   │ Side accordion         │
+│          │  ┌────────────────────┐  │  ▼ Section 1           │
+│          │  │ Test input         │  │  ▼ Section 2           │
+│          │  │ Inline preview     │  │  ▼ Section 3           │
+│          │  └────────────────────┘  │                        │
+│          │  ┌────────────────────┐  │                        │
+│          │  │ Action toggle      │  │                        │
+│          │  │ Result preview     │  │                        │
+│          │  └────────────────────┘  │                        │
+├──────────┴──────────────────────────┴────────────────────────┤
+│ StatusBar  ...                                               │
+└──────────────────────────────────────────────────────────────┘
+```
+
+Distinguishing features:
+
+- **Single source of truth at the top** — pattern, query, or expression. All derived views read from this.
+- **Live reactive updates** — no Generate button. Edits propagate immediately to all panels.
+- **Two-column body** — left for the user's working area (test text + secondary action), right for collapsible analytical panels.
+- **Accordion side panel** — multiple viewpoints (Matches / Structure / Explain) collapse independently.
+- **Flag/option pills next to the input** — compact toggles instead of a dedicated options card.
+
+### When to Use
+
+Pick this pattern when:
+
+- The tool centers on a single complex input (regex, query, expression)
+- Users iterate fast and benefit from seeing all derived views simultaneously
+- Match/Replace style "modes" exist that share input but produce different outputs
+
+### Pages Using This Pattern
+
+- `src/routes/regex-tester/+page.svelte`
+
+---
+
 ## Pattern: MasterDetail
 
 Options rail with resizable two-pane layout for list + detail view.
@@ -340,11 +390,23 @@ CSS Grid layout with areas: toolbar, rail, content, status.
 
 ## Pattern Selection Guide
 
-| Use Case                       | Pattern                  |
-| ------------------------------ | ------------------------ |
-| Multi-format tool with tabs    | Tabbed                   |
-| Simple encoder/formatter       | Transform (split-h)      |
-| Parser with structured results | Transform (split-v)      |
-| Generator with form input      | Transform (form-results) |
-| Preview/comparison             | Transform (dual-view)    |
-| List + detail navigation       | MasterDetail             |
+| Use Case                                     | Pattern                  |
+| -------------------------------------------- | ------------------------ |
+| Multi-format tool with tabs                  | Tabbed                   |
+| Simple encoder/formatter                     | Transform (split-h)      |
+| Parser with structured results               | Transform (split-v)      |
+| Generator with form input                    | Transform (form-results) |
+| Preview/comparison                           | Transform (dual-view)    |
+| Single complex input with synchronized views | ReactiveSinglePage       |
+| List + detail navigation                     | MasterDetail             |
+
+## Pattern Overview Table
+
+| Pattern            | Tabs?    | Rail?    | Body layout                  | Card system |
+| ------------------ | -------- | -------- | ---------------------------- | ----------- |
+| Tabbed             | Required | Optional | Tab content panels           | `Card.Root` |
+| Transform          | No       | Required | Single split                 | `Card.Root` |
+| ReactiveSinglePage | No       | Optional | Pattern bar + 2-col + accord | `Card.Root` |
+| MasterDetail       | No       | Required | Resizable list + detail      | `Card.Root` |
+
+Every pattern uses **`Card.Root` for sectioned content**. The legacy `<div class="rounded-lg border bg-surface-3 ...">` ad-hoc card is deprecated in favor of the shadcn primitive — see `components.md` § Container Patterns for the canonical mapping.
