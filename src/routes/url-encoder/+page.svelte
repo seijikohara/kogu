@@ -24,6 +24,7 @@
 	import { ToolShell } from '$lib/components/shell';
 	import { StatItem } from '$lib/components/status';
 	import { Button } from '$lib/components/ui/button/index.js';
+	import * as Card from '$lib/components/ui/card';
 	import { Input } from '$lib/components/ui/input/index.js';
 	import {
 		buildUrl,
@@ -438,44 +439,58 @@
 
 				{#if parsedUrl}
 					<div class="flex-1 space-y-4 overflow-auto">
-						<!-- URL Components -->
-						<div class="rounded-lg border bg-surface-3 p-4">
-							<SectionLabel class="mb-3">URL Components</SectionLabel>
-							<div class="grid gap-2 text-xs">
-								{#each Object.entries(parsedUrl.components).filter(([_, v]) => v) as [key, value]}
-									<div class="flex items-center gap-2">
-										<span class="w-24 font-medium text-muted-foreground">{key}:</span>
-										<code class="flex-1 rounded bg-muted px-2 py-1 font-mono">{value}</code>
-										<CopyButton text={String(value)} toastLabel={key} size="icon" class="h-6 w-6" />
-									</div>
-								{/each}
-							</div>
-						</div>
-
-						<!-- Query Parameters -->
-						{#if parsedUrl.params.length > 0}
-							<div class="rounded-lg border bg-surface-3 p-4">
-								<SectionLabel class="mb-3">
-									Query Parameters ({parsedUrl.params.length})
-								</SectionLabel>
-								<div class="space-y-2">
-									{#each parsedUrl.params as param}
-										<div class="flex items-center gap-2 text-xs">
-											<code class="rounded bg-primary/10 px-2 py-1 font-mono text-primary"
-												>{param.key}</code
-											>
-											<span class="text-muted-foreground">=</span>
-											<code class="flex-1 rounded bg-muted px-2 py-1 font-mono">{param.value}</code>
+						<Card.Root>
+							<Card.Header class="pb-3">
+								<Card.Title class="text-sm font-medium">URL Components</Card.Title>
+							</Card.Header>
+							<Card.Content>
+								<div class="grid gap-2 text-xs">
+									{#each Object.entries(parsedUrl.components).filter(([_, v]) => v) as [key, value]}
+										<div class="flex items-center gap-2">
+											<span class="w-24 font-medium text-muted-foreground">{key}:</span>
+											<code class="flex-1 rounded bg-muted px-2 py-1 font-mono">{value}</code>
 											<CopyButton
-												text={param.value}
-												toastLabel={param.key}
+												text={String(value)}
+												toastLabel={key}
 												size="icon"
 												class="h-6 w-6"
 											/>
 										</div>
 									{/each}
 								</div>
-							</div>
+							</Card.Content>
+						</Card.Root>
+
+						{#if parsedUrl.params.length > 0}
+							<Card.Root>
+								<Card.Header class="pb-3">
+									<Card.Title class="text-sm font-medium">
+										Query Parameters
+										<span class="text-muted-foreground">({parsedUrl.params.length})</span>
+									</Card.Title>
+								</Card.Header>
+								<Card.Content>
+									<div class="space-y-2">
+										{#each parsedUrl.params as param}
+											<div class="flex items-center gap-2 text-xs">
+												<code class="rounded bg-primary/10 px-2 py-1 font-mono text-primary">
+													{param.key}
+												</code>
+												<span class="text-muted-foreground">=</span>
+												<code class="flex-1 rounded bg-muted px-2 py-1 font-mono"
+													>{param.value}</code
+												>
+												<CopyButton
+													text={param.value}
+													toastLabel={param.key}
+													size="icon"
+													class="h-6 w-6"
+												/>
+											</div>
+										{/each}
+									</div>
+								</Card.Content>
+							</Card.Root>
 						{/if}
 					</div>
 				{:else if parseInput.trim()}
@@ -538,9 +553,9 @@
 					</div>
 				</div>
 
-				<div class="rounded-lg border bg-surface-3 p-4">
-					<div class="mb-2 flex items-center justify-between">
-						<span class="text-xs font-medium text-muted-foreground">Generated URL</span>
+				<Card.Root>
+					<Card.Header class="flex flex-row items-center justify-between space-y-0 pb-3">
+						<Card.Title class="text-sm font-medium">Generated URL</Card.Title>
 						<div class="flex gap-1">
 							<CopyButton text={builtUrl} toastLabel="URL" size="sm" showLabel class="h-7" />
 							<Button variant="ghost" size="sm" onclick={() => window.open(builtUrl, '_blank')}>
@@ -548,28 +563,34 @@
 								Open
 							</Button>
 						</div>
-					</div>
-					<code class="block break-all rounded bg-muted p-3 font-mono text-sm">{builtUrl}</code>
-				</div>
+					</Card.Header>
+					<Card.Content>
+						<code class="block break-all rounded bg-muted p-3 font-mono text-sm">{builtUrl}</code>
+					</Card.Content>
+				</Card.Root>
 			</div>
 		{:else if tab === 'reference'}
 			<div class="flex-1 overflow-auto p-4">
-				<div class="rounded-lg border bg-surface-3 p-4">
-					<SectionLabel class="mb-4">Common URL Encoded Characters</SectionLabel>
-					<div class="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4">
-						{#each URL_ENCODING_EXAMPLES as example}
-							<div class="flex items-center gap-2 rounded bg-muted/50 p-2 text-xs">
-								<code class="rounded bg-background px-2 py-1 font-mono"
-									>{example.char === ' ' ? '␣' : example.char}</code
-								>
-								<span class="text-muted-foreground">→</span>
-								<code class="rounded bg-primary/10 px-2 py-1 font-mono text-primary"
-									>{example.encoded}</code
-								>
-							</div>
-						{/each}
-					</div>
-				</div>
+				<Card.Root>
+					<Card.Header class="pb-3">
+						<Card.Title class="text-sm font-medium">Common URL Encoded Characters</Card.Title>
+					</Card.Header>
+					<Card.Content>
+						<div class="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4">
+							{#each URL_ENCODING_EXAMPLES as example}
+								<div class="flex items-center gap-2 rounded bg-muted/50 p-2 text-xs">
+									<code class="rounded bg-background px-2 py-1 font-mono">
+										{example.char === ' ' ? '␣' : example.char}
+									</code>
+									<span class="text-muted-foreground">→</span>
+									<code class="rounded bg-primary/10 px-2 py-1 font-mono text-primary">
+										{example.encoded}
+									</code>
+								</div>
+							{/each}
+						</div>
+					</Card.Content>
+				</Card.Root>
 			</div>
 		{/if}
 	{/snippet}
