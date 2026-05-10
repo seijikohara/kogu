@@ -228,10 +228,14 @@ const buildVizNode = (node: any): VizNode => {
 	};
 };
 
+// `regexp-tree.parse` accepts either a `/pattern/flags` literal string or a
+// real RegExp instance. Building a RegExp first sidesteps the literal's
+// forward-slash escaping rule, so patterns like `https?://...` parse cleanly.
 export const visualizeRegex = (pattern: string, flagString: string): Result<VizNode> => {
 	if (pattern.length === 0) return { ok: false, error: 'Empty pattern' };
 	try {
-		const ast = parse(`/${pattern}/${flagString}`);
+		const re = new RegExp(pattern, flagString);
+		const ast = parse(re);
 		return { ok: true, value: buildVizNode(ast) };
 	} catch (e) {
 		return { ok: false, error: e instanceof Error ? e.message : String(e) };
