@@ -21,7 +21,6 @@ import {
 	Hash,
 	House,
 	type Icon,
-	Info,
 	Key,
 	KeyRound,
 	Link,
@@ -245,12 +244,13 @@ export const PAGES: readonly PageDefinition[] = [
 		title: 'cURL Builder',
 		url: '/curl-builder',
 		icon: Terminal,
-		description: 'Build and parse cURL commands with method, headers, and body',
+		description: 'Build and parse cURL commands; emit fetch / Python / Go snippets',
 		color: 'text-zinc-500',
 		category: 'generators',
 		tabs: [
 			{ id: 'build', label: 'Build', icon: Pencil },
 			{ id: 'parse', label: 'Parse', icon: Search },
+			{ id: 'code', label: 'Code', icon: CodeXml },
 		],
 	},
 	{
@@ -285,14 +285,9 @@ export const PAGES: readonly PageDefinition[] = [
 		title: 'Regex Tester',
 		url: '/regex-tester',
 		icon: Regex,
-		description: 'Test regular expressions, replace text, and explain pattern features',
+		description: 'Test, replace, visualize, and explain regular expressions',
 		color: 'text-neutral-500',
 		category: 'text',
-		tabs: [
-			{ id: 'match', label: 'Match', icon: Search },
-			{ id: 'replace', label: 'Replace', icon: ArrowRightLeft },
-			{ id: 'explain', label: 'Explain', icon: Info },
-		],
 	},
 	{
 		id: 'network-interfaces',

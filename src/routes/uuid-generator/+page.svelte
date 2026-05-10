@@ -30,7 +30,7 @@
 	} from '$lib/services/uuid.js';
 
 	// State
-	let version = $state<UuidVersion>('v4');
+	let version = $state<UuidVersion>('v7');
 	let count = $state<number>(DEFAULT_COUNT);
 	let namespace = $state<string>(NAMESPACE_DNS);
 	let nameInput = $state<string>('');

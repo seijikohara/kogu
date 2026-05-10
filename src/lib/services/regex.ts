@@ -53,29 +53,76 @@ export const flagsToString = (flags: RegexFlags): string =>
 		.map((info) => info.char)
 		.join('');
 
+// Always request capture-group indices via the `d` flag so the page can
+// color each captured slice inside the test text. Sticky and global
+// together would conflict with `matchAll`, so the caller controls those
+// — we only inject `d` if it isn't already in the user's flag string.
+const withIndicesFlag = (flagString: string): string =>
+	flagString.includes('d') ? flagString : `${flagString}d`;
+
 export const compileRegex = (pattern: string, flags: RegexFlags): Result<RegExp> => {
 	try {
-		const flagString = flagsToString(flags);
-		// Sticky and global cannot be combined in some contexts, but JS will error on its own.
+		const flagString = withIndicesFlag(flagsToString(flags));
 		return { ok: true, value: new RegExp(pattern, flagString) };
 	} catch (e) {
 		return { ok: false, error: e instanceof Error ? e.message : String(e) };
 	}
 };
 
-export interface RegexMatch {
-	readonly index: number;
-	readonly fullMatch: string;
-	readonly groups: readonly string[];
-	readonly namedGroups: Readonly<Record<string, string>>;
+export interface GroupSlice {
+	readonly value: string;
+	readonly start: number;
+	readonly end: number;
 }
 
-const toMatch = (m: RegExpMatchArray | RegExpExecArray): RegexMatch => ({
-	index: m.index ?? 0,
-	fullMatch: m[0] ?? '',
-	groups: m.slice(1).map((g) => g ?? ''),
-	namedGroups: { ...(m.groups ?? {}) },
-});
+export interface RegexMatch {
+	readonly index: number;
+	readonly endIndex: number;
+	readonly fullMatch: string;
+	readonly groups: readonly GroupSlice[];
+	readonly namedGroups: Readonly<Record<string, GroupSlice>>;
+}
+
+type IndicesArray = ReadonlyArray<readonly [number, number] | undefined>;
+type IndicesGroups = Readonly<Record<string, readonly [number, number] | undefined>>;
+
+const readIndices = (m: RegExpMatchArray | RegExpExecArray): IndicesArray => {
+	const raw = (m as unknown as { indices?: IndicesArray }).indices;
+	return raw ?? [];
+};
+
+const readIndicesGroups = (indices: IndicesArray): IndicesGroups => {
+	const raw = (indices as unknown as { groups?: IndicesGroups }).groups;
+	return raw ?? {};
+};
+
+const toMatch = (m: RegExpMatchArray | RegExpExecArray): RegexMatch => {
+	const indices = readIndices(m);
+	const matchStart = m.index ?? 0;
+	const matchEnd = matchStart + (m[0]?.length ?? 0);
+	const groups = m.slice(1).map<GroupSlice>((value, idx) => {
+		const range = indices[idx + 1];
+		if (range && value !== undefined) {
+			return { value: value ?? '', start: range[0], end: range[1] };
+		}
+		return { value: value ?? '', start: -1, end: -1 };
+	});
+	const namedRanges = readIndicesGroups(indices);
+	const namedEntries = Object.entries(m.groups ?? {}).map<[string, GroupSlice]>(([name, value]) => {
+		const range = namedRanges[name];
+		if (range && value !== undefined) {
+			return [name, { value: value ?? '', start: range[0], end: range[1] }];
+		}
+		return [name, { value: value ?? '', start: -1, end: -1 }];
+	});
+	return {
+		index: matchStart,
+		endIndex: matchEnd,
+		fullMatch: m[0] ?? '',
+		groups,
+		namedGroups: Object.fromEntries(namedEntries),
+	};
+};
 
 export const findMatches = (
 	pattern: string,
