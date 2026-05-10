@@ -6,6 +6,8 @@
 	import { SectionHeader } from '$lib/components/layout';
 	import { ToolShell } from '$lib/components/shell';
 	import { EmptyState, StatItem } from '$lib/components/status';
+	import { Badge } from '$lib/components/ui/badge';
+	import * as Card from '$lib/components/ui/card';
 	import {
 		formatBytes,
 		generateAllHashes,
@@ -126,21 +128,21 @@
 				{#if textHashes.length > 0}
 					<div class="space-y-3">
 						{#each textHashes as result}
-							<div class="rounded-lg border bg-surface-3 p-3">
-								<div class="mb-2 flex items-center justify-between">
+							<Card.Root>
+								<Card.Header class="flex flex-row items-center justify-between space-y-0 pb-3">
 									<div class="flex items-center gap-2">
-										<span class="font-mono text-sm font-medium">{result.algorithm}</span>
+										<Card.Title class="font-mono text-sm">{result.algorithm}</Card.Title>
 										<span class="text-xs text-muted-foreground">({result.bits} bits)</span>
 										{#if getSecurityBadge(result.algorithm)}
-											<span class="flex items-center gap-1 text-xs text-success">
+											<Badge variant="outline" class="gap-1 bg-success/10 text-success">
 												<ShieldCheck class="h-3 w-3" />
 												Secure
-											</span>
+											</Badge>
 										{:else}
-											<span class="flex items-center gap-1 text-xs text-warning">
+											<Badge variant="outline" class="gap-1 bg-warning/10 text-warning">
 												<ShieldAlert class="h-3 w-3" />
 												Weak
-											</span>
+											</Badge>
 										{/if}
 									</div>
 									<CopyButton
@@ -150,11 +152,13 @@
 										showLabel
 										class="h-6"
 									/>
-								</div>
-								<code class="block break-all rounded bg-muted p-2 font-mono text-xs"
-									>{result.hash}</code
-								>
-							</div>
+								</Card.Header>
+								<Card.Content>
+									<code class="block break-all rounded bg-muted p-2 font-mono text-xs">
+										{result.hash}
+									</code>
+								</Card.Content>
+							</Card.Root>
 						{/each}
 					</div>
 				{:else}

@@ -13,6 +13,7 @@
 	import { SectionHeader } from '$lib/components/layout';
 	import { ToolShell } from '$lib/components/shell';
 	import { EmptyState, ErrorDisplay, LoadingOverlay, StatItem } from '$lib/components/status';
+	import * as Card from '$lib/components/ui/card';
 	import {
 		cancelWorkerOperation,
 		type CliAvailability,
@@ -285,11 +286,10 @@
 		<div class="flex-1 overflow-auto p-4">
 			{#if keyResult}
 				<div class="space-y-4">
-					<!-- Fingerprint -->
 					{#if showFingerprint}
-						<div class="rounded-lg border bg-surface-3 p-4">
-							<div class="mb-2 flex items-center justify-between">
-								<span class="text-sm font-medium">Fingerprint (SHA-256)</span>
+						<Card.Root>
+							<Card.Header class="flex flex-row items-center justify-between space-y-0 pb-3">
+								<Card.Title class="text-sm font-medium">Fingerprint (SHA-256)</Card.Title>
 								<CopyButton
 									text={keyResult.fingerprint}
 									toastLabel="Fingerprint"
@@ -297,19 +297,20 @@
 									showLabel
 									class="h-7"
 								/>
-							</div>
-							<code class="block rounded bg-muted p-2 font-mono text-sm">
-								{keyResult.fingerprint}
-							</code>
-						</div>
+							</Card.Header>
+							<Card.Content>
+								<code class="block rounded bg-muted p-2 font-mono text-sm">
+									{keyResult.fingerprint}
+								</code>
+							</Card.Content>
+						</Card.Root>
 					{/if}
 
-					<!-- Public Key -->
-					<div class="rounded-lg border bg-surface-3 p-4">
-						<div class="mb-2 flex items-center justify-between">
+					<Card.Root>
+						<Card.Header class="flex flex-row items-center justify-between space-y-0 pb-3">
 							<div class="flex items-center gap-2">
 								<Unlock class="h-4 w-4 text-success" />
-								<span class="text-sm font-medium">Public Key</span>
+								<Card.Title class="text-sm font-medium">Public Key</Card.Title>
 							</div>
 							<CopyButton
 								text={keyResult.public_key}
@@ -318,13 +319,15 @@
 								showLabel
 								class="h-7"
 							/>
-						</div>
-						<pre
-							class="max-h-32 overflow-auto whitespace-pre-wrap break-all rounded bg-muted p-2 font-mono text-xs">{keyResult.public_key}</pre>
-						<p class="mt-2 text-xs text-muted-foreground">
-							Add this to <code>~/.ssh/authorized_keys</code> on remote servers
-						</p>
-					</div>
+						</Card.Header>
+						<Card.Content>
+							<pre
+								class="max-h-32 overflow-auto whitespace-pre-wrap break-all rounded bg-muted p-2 font-mono text-xs">{keyResult.public_key}</pre>
+							<p class="mt-2 text-xs text-muted-foreground">
+								Add this to <code>~/.ssh/authorized_keys</code> on remote servers
+							</p>
+						</Card.Content>
+					</Card.Root>
 
 					<!-- Private Key -->
 					<div class="rounded-lg border border-warning/30 bg-warning/5 p-4">
@@ -355,13 +358,12 @@
 						</p>
 					</div>
 
-					<!-- ssh-keygen Command -->
 					{#if showEquivalentCommand}
-						<div class="rounded-lg border bg-surface-3 p-4">
-							<div class="mb-2 flex items-center justify-between">
+						<Card.Root>
+							<Card.Header class="flex flex-row items-center justify-between space-y-0 pb-3">
 								<div class="flex items-center gap-2">
 									<Terminal class="h-4 w-4" />
-									<span class="text-sm font-medium">Equivalent ssh-keygen Command</span>
+									<Card.Title class="text-sm font-medium">Equivalent ssh-keygen Command</Card.Title>
 								</div>
 								<CopyButton
 									text={keyResult.ssh_keygen_command}
@@ -370,11 +372,13 @@
 									showLabel
 									class="h-7"
 								/>
-							</div>
-							<code class="block rounded bg-muted p-2 font-mono text-xs">
-								{keyResult.ssh_keygen_command}
-							</code>
-						</div>
+							</Card.Header>
+							<Card.Content>
+								<code class="block rounded bg-muted p-2 font-mono text-xs">
+									{keyResult.ssh_keygen_command}
+								</code>
+							</Card.Content>
+						</Card.Root>
 					{/if}
 				</div>
 			{:else if error}
