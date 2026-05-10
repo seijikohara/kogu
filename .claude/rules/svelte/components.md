@@ -395,6 +395,104 @@ When using shadcn-svelte `Tabs.Root` + `Tabs.List` + `Tabs.Trigger`, you must al
 
 bits-ui keeps inactive `Tabs.Content` mounted by default (it sets `hidden=true` rather than unmounting), so wrapping each tab body in `<Tabs.Content value={tab.id}>` automatically preserves component state across switches without an explicit `forceMount`.
 
+## Container Patterns
+
+Tool pages compose their main content out of a small set of container primitives. The mapping below is canonical — do not invent ad-hoc containers when a shadcn primitive exists for the role.
+
+| Role                              | Canonical container                          | Rule                                                                       |
+| --------------------------------- | -------------------------------------------- | -------------------------------------------------------------------------- |
+| Card-like section in main content | `Card.Root` / `Card.Header` / `Card.Content` | Always. Do **not** use `<div class="rounded-lg border bg-surface-3 ...">`. |
+| Section heading inside a panel    | `Card.Title` (inside `Card.Header`)          | Default. Use `SectionLabel` only for inline cards inside another panel.    |
+| Status indicator (small)          | `Badge`                                      | Use `Badge variant="outline"` for neutral, semantic tones via `cn()`.      |
+| Collapsible disclosure            | `Accordion.Root` / `Accordion.Item`          | Use for groups of related panels that the user may want to fold.           |
+| Boolean toggle (on/off)           | `Switch` or `Button` with `variant`          | Prefer `Switch` for true on/off, `Button` for two-state actions.           |
+| Modal / dialog                    | `Dialog.Root`                                | Use `AlertDialog` for destructive confirmations.                           |
+
+### Card.Root is the Canonical Card
+
+A card is **any rectangular grouping with border + padding + optional header**. Build it with the `Card.*` primitive set, never with a hand-rolled `<div>`:
+
+```svelte
+<!-- Preferred -->
+<Card.Root>
+	<Card.Header class="pb-3">
+		<div class="flex items-center gap-2">
+			<Clock class="h-4 w-4 text-muted-foreground" />
+			<Card.Title class="text-sm font-medium">Expression</Card.Title>
+		</div>
+	</Card.Header>
+	<Card.Content>
+		<code class="block rounded-md bg-muted p-3 font-mono text-base">{expression}</code>
+	</Card.Content>
+</Card.Root>
+
+<!-- Avoid: ad-hoc div with utility classes -->
+<div class="rounded-lg border bg-surface-3 p-4">
+	<div class="flex items-center gap-2">
+		<Clock class="h-4 w-4 text-muted-foreground" />
+		<span class="text-sm font-medium">Expression</span>
+	</div>
+	<code class="mt-2 block rounded bg-muted p-3 font-mono text-base">{expression}</code>
+</div>
+```
+
+The shadcn `Card.Root` already provides `bg-card`, `text-card-foreground`, `rounded-xl`, `border`, and `shadow-sm`; per-instance overrides should go through `class` on the root, not by re-implementing the surface treatment.
+
+When a card needs an action affordance on its header, place it on the `Card.Header` with `flex flex-row items-center justify-between space-y-0 pb-3`:
+
+```svelte
+<Card.Root>
+	<Card.Header class="flex flex-row items-center justify-between space-y-0 pb-3">
+		<div class="flex items-center gap-2">
+			<Sparkles class="h-4 w-4 text-muted-foreground" />
+			<Card.Title class="text-sm font-medium">Generated command</Card.Title>
+		</div>
+		<CopyButton text={command} toastLabel="Command" size="sm" />
+	</Card.Header>
+	<Card.Content>...</Card.Content>
+</Card.Root>
+```
+
+### Badge for Status
+
+Always render status / count / category indicators as `Badge`, not as a hand-rolled `<span>`:
+
+```svelte
+<!-- Preferred -->
+<Badge variant="outline" class="bg-success/10 text-success">✓ valid</Badge>
+<Badge variant="outline" class="font-mono text-2xs">{matches.length} matches</Badge>
+
+<!-- Avoid -->
+<span class="rounded bg-success/10 px-1.5 py-0.5 text-xs text-success">✓ valid</span>
+```
+
+Semantic tone via `bg-{success,warning,info,destructive}/10` + matching text color. Reserve `Badge variant="default"` for highlights, `variant="outline"` for neutral.
+
+### Accordion for Grouped Disclosure
+
+When a panel has multiple sections the user might want to fold, use `Accordion`:
+
+```svelte
+<Accordion.Root type="multiple" value={['matches', 'structure']} class="w-full">
+	<Accordion.Item value="matches">
+		<Accordion.Trigger>
+			<div class="flex items-center gap-2">
+				<Search class="h-4 w-4 text-muted-foreground" />
+				<span class="text-sm font-medium">Matches</span>
+				<Badge variant="outline" class="font-mono text-2xs">{matches.length}</Badge>
+			</div>
+		</Accordion.Trigger>
+		<Accordion.Content>…</Accordion.Content>
+	</Accordion.Item>
+</Accordion.Root>
+```
+
+Use `type="multiple"` when independent toggling makes sense, `type="single"` when only one should be open at a time. The default `value={[]}` keeps every item collapsed.
+
+### Auditing
+
+`bg-surface-3` is reserved for **rail** and **status bar** backgrounds. A grep across `src/routes/` for `bg-surface-3 rounded` or `bg-surface-3.*p-4` should return zero hits — any match is a card masquerading as a div and should be migrated to `Card.Root`.
+
 ## Accessibility
 
 Always include proper ARIA attributes:
