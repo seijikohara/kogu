@@ -13,6 +13,7 @@
 	import { SectionHeader } from '$lib/components/layout';
 	import { ToolShell } from '$lib/components/shell';
 	import { EmptyState, StatItem } from '$lib/components/status';
+	import * as Card from '$lib/components/ui/card';
 	import {
 		CASE_DEFINITIONS,
 		type CaseResult,
@@ -178,22 +179,24 @@
 				{#if caseResults.length > 0}
 					<div class="space-y-2">
 						{#each caseResults as result}
-							<div class="flex items-start gap-3 rounded-lg border bg-surface-3 px-3 py-2">
-								<span class="w-32 shrink-0 pt-0.5 font-mono text-xs font-medium"
-									>{result.label}</span
-								>
-								<code
-									class="min-w-0 flex-1 whitespace-pre-wrap break-all font-mono text-xs text-muted-foreground"
-								>
-									{result.value}
-								</code>
-								<CopyButton
-									text={result.value}
-									toastLabel={result.label}
-									size="sm"
-									class="h-6 shrink-0"
-								/>
-							</div>
+							<Card.Root>
+								<Card.Content class="flex items-start gap-3 px-3 py-2">
+									<span class="w-32 shrink-0 pt-0.5 font-mono text-xs font-medium">
+										{result.label}
+									</span>
+									<code
+										class="min-w-0 flex-1 whitespace-pre-wrap break-all font-mono text-xs text-muted-foreground"
+									>
+										{result.value}
+									</code>
+									<CopyButton
+										text={result.value}
+										toastLabel={result.label}
+										size="sm"
+										class="h-6 shrink-0"
+									/>
+								</Card.Content>
+							</Card.Root>
 						{/each}
 					</div>
 				{:else}

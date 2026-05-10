@@ -6,6 +6,7 @@
 	import { SectionHeader } from '$lib/components/layout';
 	import { ToolShell } from '$lib/components/shell';
 	import { EmptyState, ErrorDisplay, LoadingOverlay, StatItem } from '$lib/components/status';
+	import * as Card from '$lib/components/ui/card';
 	import {
 		type BcryptCostInfo,
 		type BcryptHashResult,
@@ -344,10 +345,9 @@
 			{#if activeTab === 'generate'}
 				{#if hashResult}
 					<div class="space-y-4">
-						<!-- Hash Result -->
-						<div class="rounded-lg border bg-surface-3 p-4">
-							<div class="mb-2 flex items-center justify-between">
-								<span class="text-sm font-medium">BCrypt Hash</span>
+						<Card.Root>
+							<Card.Header class="flex flex-row items-center justify-between space-y-0 pb-3">
+								<Card.Title class="text-sm font-medium">BCrypt Hash</Card.Title>
 								<CopyButton
 									text={hashResult.hash}
 									toastLabel="Hash"
@@ -355,34 +355,39 @@
 									showLabel
 									class="h-7"
 								/>
-							</div>
-							<code class="block break-all rounded bg-muted p-3 font-mono text-sm">
-								{hashResult.hash}
-							</code>
-						</div>
+							</Card.Header>
+							<Card.Content>
+								<code class="block break-all rounded bg-muted p-3 font-mono text-sm">
+									{hashResult.hash}
+								</code>
+							</Card.Content>
+						</Card.Root>
 
-						<!-- Hash Details -->
-						<div class="rounded-lg border bg-surface-3 p-4">
-							<span class="mb-3 block text-sm font-medium">Hash Details</span>
-							<div class="space-y-2 text-sm">
-								<div class="flex justify-between">
-									<span class="text-muted-foreground">Algorithm</span>
-									<span class="font-mono">${hashResult.algorithm}$</span>
+						<Card.Root>
+							<Card.Header class="pb-3">
+								<Card.Title class="text-sm font-medium">Hash Details</Card.Title>
+							</Card.Header>
+							<Card.Content>
+								<div class="space-y-2 text-sm">
+									<div class="flex justify-between">
+										<span class="text-muted-foreground">Algorithm</span>
+										<span class="font-mono">${hashResult.algorithm}$</span>
+									</div>
+									<div class="flex justify-between">
+										<span class="text-muted-foreground">Cost Factor</span>
+										<span class="font-mono">{hashResult.cost}</span>
+									</div>
+									<div class="flex justify-between">
+										<span class="text-muted-foreground">Security Level</span>
+										<span>{costInfo?.security_level ?? 'Unknown'}</span>
+									</div>
+									<div class="flex justify-between">
+										<span class="text-muted-foreground">Hash Length</span>
+										<span class="font-mono">{hashResult.hash.length} chars</span>
+									</div>
 								</div>
-								<div class="flex justify-between">
-									<span class="text-muted-foreground">Cost Factor</span>
-									<span class="font-mono">{hashResult.cost}</span>
-								</div>
-								<div class="flex justify-between">
-									<span class="text-muted-foreground">Security Level</span>
-									<span>{costInfo?.security_level ?? 'Unknown'}</span>
-								</div>
-								<div class="flex justify-between">
-									<span class="text-muted-foreground">Hash Length</span>
-									<span class="font-mono">{hashResult.hash.length} chars</span>
-								</div>
-							</div>
-						</div>
+							</Card.Content>
+						</Card.Root>
 					</div>
 				{:else if generateError}
 					<ErrorDisplay variant="centered" message={generateError} />

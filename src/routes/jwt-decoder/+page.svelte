@@ -6,6 +6,7 @@
 	import { SectionHeader } from '$lib/components/layout';
 	import { ToolShell } from '$lib/components/shell';
 	import { EmptyState } from '$lib/components/status';
+	import * as Card from '$lib/components/ui/card';
 	import {
 		decodeJwt,
 		JWT_STANDARD_CLAIMS,
@@ -198,10 +199,9 @@
 						</div>
 					{/if}
 
-					<!-- Header section -->
-					<div class="rounded-lg border bg-surface-3">
-						<div class="flex items-center justify-between border-b px-4 py-2">
-							<h3 class="text-sm font-medium text-destructive">Header</h3>
+					<Card.Root>
+						<Card.Header class="flex flex-row items-center justify-between space-y-0 pb-3">
+							<Card.Title class="text-sm font-medium text-destructive">Header</Card.Title>
 							<CopyButton
 								text={formatJson(decoded.header)}
 								toastLabel="Header"
@@ -209,18 +209,17 @@
 								showLabel
 								class="h-6"
 							/>
-						</div>
-						<div class="p-4">
+						</Card.Header>
+						<Card.Content>
 							<pre class="overflow-auto rounded bg-muted p-3 font-mono text-xs">{formatJson(
 									decoded.header
 								)}</pre>
-						</div>
-					</div>
+						</Card.Content>
+					</Card.Root>
 
-					<!-- Payload section -->
-					<div class="rounded-lg border bg-surface-3">
-						<div class="flex items-center justify-between border-b px-4 py-2">
-							<h3 class="text-sm font-medium text-primary">Payload</h3>
+					<Card.Root>
+						<Card.Header class="flex flex-row items-center justify-between space-y-0 pb-3">
+							<Card.Title class="text-sm font-medium text-primary">Payload</Card.Title>
 							<CopyButton
 								text={formatJson(decoded.payload)}
 								toastLabel="Payload"
@@ -228,43 +227,43 @@
 								showLabel
 								class="h-6"
 							/>
-						</div>
-						<div class="p-4">
+						</Card.Header>
+						<Card.Content>
 							<pre class="overflow-auto rounded bg-muted p-3 font-mono text-xs">{formatJson(
 									decoded.payload
 								)}</pre>
-						</div>
-					</div>
+						</Card.Content>
+					</Card.Root>
 
-					<!-- Standard Claims -->
 					{#if Object.keys(decoded.payload).some( (k) => JWT_STANDARD_CLAIMS.some((c) => c.claim === k) )}
-						<div class="rounded-lg border bg-surface-3">
-							<div class="border-b px-4 py-2">
-								<h3 class="text-sm font-medium">Standard Claims</h3>
-							</div>
-							<div class="divide-y">
-								{#each Object.entries(decoded.payload).filter( ([k]) => JWT_STANDARD_CLAIMS.some((c) => c.claim === k) ) as [key, value]}
-									<div class="flex items-center gap-4 px-4 py-2 text-xs">
-										<span class="w-20 font-mono font-medium text-primary">{key}</span>
-										<span class="w-32 text-muted-foreground">{getClaimDescription(key)}</span>
-										<span class="flex-1 font-mono">
-											{#if key === 'exp' || key === 'iat' || key === 'nbf'}
-												{formatDate(new Date(Number(value) * 1000))}
-												<span class="ml-2 text-muted-foreground">({value})</span>
-											{:else}
-												{JSON.stringify(value)}
-											{/if}
-										</span>
-									</div>
-								{/each}
-							</div>
-						</div>
+						<Card.Root>
+							<Card.Header class="pb-3">
+								<Card.Title class="text-sm font-medium">Standard Claims</Card.Title>
+							</Card.Header>
+							<Card.Content class="p-0">
+								<div class="divide-y border-t">
+									{#each Object.entries(decoded.payload).filter( ([k]) => JWT_STANDARD_CLAIMS.some((c) => c.claim === k) ) as [key, value]}
+										<div class="flex items-center gap-4 px-4 py-2 text-xs">
+											<span class="w-20 font-mono font-medium text-primary">{key}</span>
+											<span class="w-32 text-muted-foreground">{getClaimDescription(key)}</span>
+											<span class="flex-1 font-mono">
+												{#if key === 'exp' || key === 'iat' || key === 'nbf'}
+													{formatDate(new Date(Number(value) * 1000))}
+													<span class="ml-2 text-muted-foreground">({value})</span>
+												{:else}
+													{JSON.stringify(value)}
+												{/if}
+											</span>
+										</div>
+									{/each}
+								</div>
+							</Card.Content>
+						</Card.Root>
 					{/if}
 
-					<!-- Signature section -->
-					<div class="rounded-lg border bg-surface-3">
-						<div class="flex items-center justify-between border-b px-4 py-2">
-							<h3 class="text-sm font-medium text-info">Signature</h3>
+					<Card.Root>
+						<Card.Header class="flex flex-row items-center justify-between space-y-0 pb-3">
+							<Card.Title class="text-sm font-medium text-info">Signature</Card.Title>
 							<CopyButton
 								text={decoded.signature}
 								toastLabel="Signature"
@@ -272,17 +271,17 @@
 								showLabel
 								class="h-6"
 							/>
-						</div>
-						<div class="p-4">
-							<code class="block break-all rounded bg-muted p-3 font-mono text-xs"
-								>{decoded.signature}</code
-							>
+						</Card.Header>
+						<Card.Content>
+							<code class="block break-all rounded bg-muted p-3 font-mono text-xs">
+								{decoded.signature}
+							</code>
 							<p class="mt-2 text-xs text-muted-foreground">
 								Note: Signature verification requires the secret key and is not performed
 								client-side.
 							</p>
-						</div>
-					</div>
+						</Card.Content>
+					</Card.Root>
 				</div>
 			{:else}
 				<div class="flex-1">
