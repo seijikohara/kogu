@@ -19,6 +19,7 @@
 	import { SectionHeader, SectionLabel } from '$lib/components/layout';
 	import { FormCheckbox, FormCheckboxGroup, FormSection, FormSelect } from '$lib/components/form';
 	import { CopyButton } from '$lib/components/action';
+	import { Badge } from '$lib/components/ui/badge';
 	import { Button } from '$lib/components/ui/button';
 	import { ListItemButton } from '$lib/components/ui/list-item-button';
 	import * as Resizable from '$lib/components/ui/resizable';
@@ -622,11 +623,12 @@
 											<SectionLabel icon={Flag}>Flags</SectionLabel>
 											<div class="flex flex-wrap gap-1.5">
 												{#each flags as flag}
-													<span
-														class="rounded border border-border/40 bg-surface-3 px-1.5 py-0.5 text-xs font-medium text-muted-foreground"
+													<Badge
+														variant="outline"
+														class="text-2xs font-medium text-muted-foreground"
 													>
 														{flag}
-													</span>
+													</Badge>
 												{/each}
 											</div>
 										</div>
