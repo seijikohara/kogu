@@ -26,28 +26,28 @@ If the command returns one or more PIDs, a Tauri dev session is active. Proceed 
 
 ### 2. Stop the running session
 
-Find the top-level `bun run tauri:dev` PID and kill its process group so the bash wrapper, `tauri dev`, and `vite dev` children all exit together:
+Send `SIGTERM` directly to each of the three process-name patterns. Do **not** rely on parent-child relationships: the `vite dev` process is typically spawned with a parent outside the `bun run tauri:dev` tree, so `pkill -P <top-level-pid>` does not reach it, and `pgrep -f "bun run tauri:dev"` also matches the outer shell wrapper whose process group does not own the workers.
 
 ```bash
-TAURI_PID=$(pgrep -f "bun run tauri:dev" | head -1)
-if [ -n "$TAURI_PID" ]; then
-  pkill -TERM -P "$TAURI_PID" 2>/dev/null
-  kill -TERM "$TAURI_PID" 2>/dev/null
-fi
+pkill -TERM -f "bun run tauri:dev" 2>/dev/null
+pkill -TERM -f "tauri dev" 2>/dev/null
+pkill -TERM -f "vite dev" 2>/dev/null
+sleep 3
 ```
 
 Verify everything is gone (Vite listens on port 1420, so its absence is a good signal):
 
 ```bash
-sleep 2
-lsof -nP -iTCP:1420 -sTCP:LISTEN
-pgrep -af "bun run tauri:dev|tauri dev|vite dev"
+lsof -nP -iTCP:1420 -sTCP:LISTEN || echo "(port free)"
+pgrep -af "bun run tauri:dev|tauri dev|vite dev" | grep -v "$$" || echo "(no processes)"
 ```
 
 If processes remain after 5 seconds, escalate with `SIGKILL`:
 
 ```bash
-pkill -KILL -f "bun run tauri:dev|tauri dev|vite dev"
+pkill -KILL -f "bun run tauri:dev" 2>/dev/null
+pkill -KILL -f "tauri dev" 2>/dev/null
+pkill -KILL -f "vite dev" 2>/dev/null
 ```
 
 Do not use `kill -9` as the first move — it leaves the Cargo build lockfile and Vite's IPC socket in a dirty state, which makes the next start slower.
@@ -76,13 +76,21 @@ Run this via `Bash` with `run_in_background: true`. The bash wrapper runs `bun r
 Poll for the Vite dev port and report when it is listening:
 
 ```bash
-for i in {1..60}; do
-  lsof -nP -iTCP:1420 -sTCP:LISTEN >/dev/null 2>&1 && echo "ready" && break
+for i in $(seq 1 90); do
+  if lsof -nP -iTCP:1420 -sTCP:LISTEN >/dev/null 2>&1; then
+    echo "ready after $((i * 2))s"
+    break
+  fi
   sleep 2
 done
 ```
 
-If the loop times out (120 seconds), inspect the background task output for the first error before retrying.
+Expected timing:
+
+- **~15–30 seconds** when the Rust sidecar target is warm and only Vite needs a cold start.
+- **~60–120 seconds** after a cache wipe (Vite re-bundles the entire dep graph) or after a `Cargo.toml` change (sidecar rebuild).
+
+If the loop times out (180 seconds), inspect the background task output for the first error before retrying.
 
 ## Why clear caches
 
