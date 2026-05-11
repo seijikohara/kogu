@@ -1,8 +1,8 @@
 <script lang="ts">
-	import { Eye, GitBranch, Info, Search, Sparkles } from '@lucide/svelte';
+	import { Eye, GitBranch, Info, Search, Sparkles, Workflow } from '@lucide/svelte';
 	import { CopyButton } from '$lib/components/action';
 	import { FormInfo, FormSection, FormTextarea } from '$lib/components/form';
-	import { PatternEditor } from '$lib/components/regex';
+	import { PatternEditor, RailroadView } from '$lib/components/regex';
 	import { ToolShell } from '$lib/components/shell';
 	import { EmbeddedEmptyState, StatItem } from '$lib/components/status';
 	import * as Accordion from '$lib/components/ui/accordion';
@@ -200,16 +200,17 @@ Also see https://kogu.io/docs and http://test.local:3000/.`
 			<FormInfo>Regex literal in JavaScript syntax. Forward slashes don't need escaping.</FormInfo>
 		</FormSection>
 
-		<FormSection title="Capture groups">
+		<FormSection title="Railroad">
 			<FormInfo>
-				Each capture group is assigned a color used across the pattern, test text, and structure
-				panels.
+				The diagram below the pattern bar is read left-to-right. Branches stack vertically; dashed
+				loops mark quantifiers. Each capture group is boxed with a unique color shared across the
+				pattern bar, test text, and match list.
 			</FormInfo>
 		</FormSection>
 
 		<FormSection title="Replace mode">
 			<FormInfo>
-				Toggle the switch in the Test Text card to replace matches. Use
+				Toggle the button in the Replace card to apply a substitution. Use
 				<code class="rounded bg-muted px-1 font-mono">$1</code>,
 				<code class="rounded bg-muted px-1 font-mono">$&lt;name&gt;</code>, or
 				<code class="rounded bg-muted px-1 font-mono">$&amp;</code> placeholders.
@@ -274,6 +275,38 @@ Also see https://kogu.io/docs and http://test.local:3000/.`
 						<CopyButton text={`/${pattern}/${flagString}`} toastLabel="Pattern" size="sm" />
 					</div>
 				</div>
+			</div>
+		</div>
+
+		<!-- Hero Railroad -->
+		<div class="shrink-0 border-b bg-background px-4 py-3">
+			<div class="mx-auto max-w-6xl">
+				<Card.Root>
+					<Card.Header class="flex flex-row items-center justify-between space-y-0 pb-2 pt-3">
+						<div class="flex items-center gap-2">
+							<Workflow class="h-4 w-4 text-muted-foreground" />
+							<Card.Title class="text-sm font-medium">Railroad</Card.Title>
+							{#if captureGroupCount > 0}
+								<Badge variant="outline" class="font-mono text-2xs">
+									{captureGroupCount} group{captureGroupCount === 1 ? '' : 's'}
+								</Badge>
+							{/if}
+						</div>
+					</Card.Header>
+					<Card.Content class="max-h-80 overflow-auto p-3">
+						{#if pattern.length === 0}
+							<EmbeddedEmptyState
+								icon={Workflow}
+								title="Enter a pattern"
+								description="The railroad diagram appears here once you type a regex."
+							/>
+						{:else if visualization.ok}
+							<RailroadView node={visualization.value} />
+						{:else}
+							<p class="text-sm text-destructive">{visualization.error}</p>
+						{/if}
+					</Card.Content>
+				</Card.Root>
 			</div>
 		</div>
 
@@ -369,7 +402,7 @@ Also see https://kogu.io/docs and http://test.local:3000/.`
 
 			<!-- Right column: accordion -->
 			<div class="w-96 shrink-0 overflow-auto border-l bg-surface-2 p-4">
-				<Accordion.Root type="multiple" value={['matches', 'structure', 'explain']} class="w-full">
+				<Accordion.Root type="multiple" value={['matches', 'explain']} class="w-full">
 					<Accordion.Item value="matches">
 						<Accordion.Trigger>
 							<div class="flex items-center gap-2">
