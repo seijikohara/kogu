@@ -491,7 +491,21 @@ Use `type="multiple"` when independent toggling makes sense, `type="single"` whe
 
 ### Auditing
 
-`bg-surface-3` is reserved for **rail** and **status bar** backgrounds. A grep across `src/routes/` for `bg-surface-3 rounded` or `bg-surface-3.*p-4` should return zero hits — any match is a card masquerading as a div and should be migrated to `Card.Root`.
+`bg-surface-3` is reserved for **rail backgrounds**, **status bar backgrounds**, **panel header / footer strips** (e.g. `border-b bg-surface-3 px-4 py-2`), and **interactive hover/focus states** (e.g. `hover:bg-surface-3`).
+
+A grep across `src/routes/` and `src/lib/components/` for **static** `bg-surface-3` paired with `rounded` (e.g. `rounded-(lg|md|xl) border ... bg-surface-3`) should return zero hits — any match is a card masquerading as a div and should be migrated to `Card.Root`, or its surface tone changed to `bg-card` if it is an inline list row that does not warrant the full Card.Root primitive (Card.Root, Card.Content with compact padding is preferred for rows that contain multiple semantic parts; `bg-card` alone is acceptable for tiny single-value pills or kbd indicators).
+
+The grep that catches violations is:
+
+```sh
+grep -rEn 'rounded(-(lg|md|xl))? (border [^ ]+ )?bg-surface-3|bg-surface-3 rounded(-(lg|md|xl))?' src/routes src/lib/components
+```
+
+The grep that ignores `hover:` and `focus:` prefixes (acceptable usage) is:
+
+```sh
+grep -rEn '(?<!hover:)(?<!focus:)(?<!group-hover:)bg-surface-3 .*rounded' src/routes src/lib/components
+```
 
 ## Accessibility
 

@@ -164,7 +164,7 @@ Also see https://kogu.io/docs and http://test.local:3000/.`
 
 {#snippet renderNode(node: VizNode, depth: number)}
 	{@const meta = KIND_BADGE[node.kind]}
-	<div class={cn('flex flex-col gap-1.5 rounded-md border bg-surface-3 p-2', depth > 0 && 'ml-3')}>
+	<div class={cn('flex flex-col gap-1.5 rounded-md border bg-card p-2', depth > 0 && 'ml-3')}>
 		<div class="flex items-center gap-2">
 			<Badge class={cn('font-mono text-2xs', meta.className)}>{meta.label}</Badge>
 			<code class="break-all font-mono text-xs">{node.label}</code>
@@ -372,7 +372,7 @@ Also see https://kogu.io/docs and http://test.local:3000/.`
 							{#if matches.length > 0}
 								<div class="space-y-2">
 									{#each matches as match, mIdx (mIdx)}
-										<div class="rounded-md border bg-surface-3 p-2">
+										<div class="rounded-md border bg-card p-2">
 											<div class="flex items-center gap-2">
 												<Badge variant="outline" class="font-mono text-2xs">@{match.index}</Badge>
 												<code class="break-all font-mono text-xs">{match.fullMatch}</code>
@@ -451,7 +451,7 @@ Also see https://kogu.io/docs and http://test.local:3000/.`
 						</Accordion.Trigger>
 						<Accordion.Content>
 							<div class="space-y-3">
-								<div class="rounded-md border bg-surface-3 p-2">
+								<div class="rounded-md border bg-card p-2">
 									<div class="text-2xs font-medium uppercase tracking-wide text-muted-foreground">
 										Active flags
 									</div>
@@ -467,7 +467,7 @@ Also see https://kogu.io/docs and http://test.local:3000/.`
 										{/if}
 									</div>
 								</div>
-								<div class="rounded-md border bg-surface-3 p-2">
+								<div class="rounded-md border bg-card p-2">
 									<div class="flex items-center justify-between">
 										<span
 											class="text-2xs font-medium uppercase tracking-wide text-muted-foreground"
@@ -477,7 +477,7 @@ Also see https://kogu.io/docs and http://test.local:3000/.`
 										<Badge variant="outline" class="font-mono text-2xs">{captureGroupCount}</Badge>
 									</div>
 								</div>
-								<div class="rounded-md border bg-surface-3 p-2">
+								<div class="rounded-md border bg-card p-2">
 									<div class="text-2xs font-medium uppercase tracking-wide text-muted-foreground">
 										Detected features
 									</div>
