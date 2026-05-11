@@ -33,6 +33,7 @@
 	import { ToolShell } from '$lib/components/shell';
 	import { EmptyState, ErrorDisplay, StatItem } from '$lib/components/status';
 	import * as Accordion from '$lib/components/ui/accordion/index.js';
+	import * as Card from '$lib/components/ui/card';
 	import { ListItemButton } from '$lib/components/ui/list-item-button';
 	import * as Resizable from '$lib/components/ui/resizable';
 	import { Channel } from '@tauri-apps/api/core';
@@ -743,7 +744,7 @@
 
 			<!-- Name Resolution (collapsible) -->
 			<Accordion.Root type="multiple" value={['name-resolution']} class="mt-3">
-				<Accordion.Item value="name-resolution" class="rounded border border-border bg-surface-3">
+				<Accordion.Item value="name-resolution" class="rounded border border-border bg-card">
 					<Accordion.Trigger
 						class="px-2 py-1.5 text-xs font-medium hover:no-underline [&>svg]:h-3.5 [&>svg]:w-3.5"
 					>
@@ -792,24 +793,26 @@
 				</div>
 			{/if}
 			{#if discoveryResults.length > 0}
-				<div class="mt-2 rounded border border-border bg-surface-3 p-2">
-					<p class="text-xs font-medium text-muted-foreground">Results:</p>
-					<div class="mt-1 max-h-20 space-y-0.5 overflow-y-auto">
-						{#each discoveryResults as result (result.method)}
-							<div class="text-xs">
-								<span class="font-medium"
-									>{DISCOVERY_METHODS.find((m) => m.value === result.method)?.label ??
-										result.method}:</span
-								>
-								{#if result.error}
-									<span class="text-destructive">{result.error}</span>
-								{:else}
-									<span class="text-muted-foreground">{result.hosts.length} host(s)</span>
-								{/if}
-							</div>
-						{/each}
-					</div>
-				</div>
+				<Card.Root class="mt-2">
+					<Card.Content class="p-2">
+						<p class="text-xs font-medium text-muted-foreground">Results:</p>
+						<div class="mt-1 max-h-20 space-y-0.5 overflow-y-auto">
+							{#each discoveryResults as result (result.method)}
+								<div class="text-xs">
+									<span class="font-medium">
+										{DISCOVERY_METHODS.find((m) => m.value === result.method)?.label ??
+											result.method}:
+									</span>
+									{#if result.error}
+										<span class="text-destructive">{result.error}</span>
+									{:else}
+										<span class="text-muted-foreground">{result.hosts.length} host(s)</span>
+									{/if}
+								</div>
+							{/each}
+						</div>
+					</Card.Content>
+				</Card.Root>
 			{/if}
 		</FormSection>
 
@@ -831,7 +834,7 @@
 
 			<!-- Quick Scan Port Details -->
 			{#if scanMode === 'quick'}
-				<details class="mt-2 rounded border border-border bg-surface-3">
+				<details class="mt-2 rounded border border-border bg-card">
 					<summary
 						class="flex cursor-pointer items-center gap-1 px-2 py-1.5 text-xs font-medium text-muted-foreground hover:text-foreground"
 					>
@@ -876,7 +879,7 @@
 					{#if portPreset === 'well_known'}
 						<p class="mt-1.5 text-xs text-muted-foreground">Standard ports 1-1024 (1,024 ports)</p>
 					{:else if portPreset === 'web'}
-						<details class="mt-2 rounded border border-border bg-surface-3">
+						<details class="mt-2 rounded border border-border bg-card">
 							<summary
 								class="flex cursor-pointer items-center gap-1 px-2 py-1.5 text-xs font-medium text-muted-foreground hover:text-foreground"
 							>
@@ -900,7 +903,7 @@
 							</div>
 						</details>
 					{:else if portPreset === 'database'}
-						<details class="mt-2 rounded border border-border bg-surface-3">
+						<details class="mt-2 rounded border border-border bg-card">
 							<summary
 								class="flex cursor-pointer items-center gap-1 px-2 py-1.5 text-xs font-medium text-muted-foreground hover:text-foreground"
 							>
