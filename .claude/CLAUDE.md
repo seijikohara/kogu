@@ -77,3 +77,4 @@ See `.claude/rules/` for comprehensive guidelines. All rules use `paths:` frontm
 Procedural workflows are packaged as on-demand skills in `.claude/skills/`:
 
 - `release/` - Release process (`/release`, see `.claude/skills/release/SKILL.md`)
+- `tauri-dev/` - Tauri dev restart with cache cleanup (`/tauri-dev`, see `.claude/skills/tauri-dev/SKILL.md`)
