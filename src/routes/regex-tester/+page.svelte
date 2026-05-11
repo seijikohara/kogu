@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { Eye, GitBranch, Info, Search, Sparkles } from '@lucide/svelte';
 	import { CopyButton } from '$lib/components/action';
-	import { FormTextarea } from '$lib/components/form';
+	import { FormInfo, FormSection, FormTextarea } from '$lib/components/form';
 	import { PatternEditor } from '$lib/components/regex';
 	import { ToolShell } from '$lib/components/shell';
 	import { EmbeddedEmptyState, StatItem } from '$lib/components/status';
@@ -196,28 +196,38 @@ Also see https://kogu.io/docs and http://test.local:3000/.`
 	{/snippet}
 
 	{#snippet rail()}
-		<div class="space-y-3 text-xs text-muted-foreground">
-			<div>
-				<div class="mb-1 font-semibold uppercase tracking-wide">Pattern</div>
-				<p>Regex literal in JavaScript syntax. Forward slashes don't need escaping.</p>
-			</div>
-			<div>
-				<div class="mb-1 font-semibold uppercase tracking-wide">Capture groups</div>
-				<p>
-					Each capture group is assigned a color used across the pattern, test text, and structure
-					panels.
-				</p>
-			</div>
-			<div>
-				<div class="mb-1 font-semibold uppercase tracking-wide">Replace mode</div>
-				<p>
-					Toggle the switch in the Test Text card to replace matches. Use
-					<code class="rounded bg-muted px-1 font-mono">$1</code>,
-					<code class="rounded bg-muted px-1 font-mono">$&lt;name&gt;</code>, or
-					<code class="rounded bg-muted px-1 font-mono">$&amp;</code> placeholders.
-				</p>
-			</div>
-		</div>
+		<FormSection title="Pattern">
+			<FormInfo>Regex literal in JavaScript syntax. Forward slashes don't need escaping.</FormInfo>
+		</FormSection>
+
+		<FormSection title="Capture groups">
+			<FormInfo>
+				Each capture group is assigned a color used across the pattern, test text, and structure
+				panels.
+			</FormInfo>
+		</FormSection>
+
+		<FormSection title="Replace mode">
+			<FormInfo>
+				Toggle the switch in the Test Text card to replace matches. Use
+				<code class="rounded bg-muted px-1 font-mono">$1</code>,
+				<code class="rounded bg-muted px-1 font-mono">$&lt;name&gt;</code>, or
+				<code class="rounded bg-muted px-1 font-mono">$&amp;</code> placeholders.
+			</FormInfo>
+		</FormSection>
+
+		<FormSection title="Flags">
+			<FormInfo>
+				<ul class="list-inside list-disc space-y-0.5">
+					<li><code class="font-mono">g</code> — find all matches, not just the first</li>
+					<li><code class="font-mono">i</code> — case-insensitive matching</li>
+					<li><code class="font-mono">m</code> — ^ and $ match line boundaries</li>
+					<li><code class="font-mono">s</code> — . matches newline characters</li>
+					<li><code class="font-mono">u</code> — Unicode code point parsing</li>
+					<li><code class="font-mono">y</code> — sticky, match only at lastIndex</li>
+				</ul>
+			</FormInfo>
+		</FormSection>
 	{/snippet}
 
 	<div class="flex h-full flex-col overflow-hidden">
