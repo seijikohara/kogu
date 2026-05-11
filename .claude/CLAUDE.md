@@ -7,13 +7,14 @@ See @README.md for project overview and @package.json for available commands and
 ### Development Commands
 
 ```bash
-bun run dev          # Start Vite dev server
-bun run tauri dev    # Start Tauri dev mode
-bun run build        # Build frontend
-bun run tauri build  # Build desktop app
-bun run check        # TypeScript/Svelte check
-bun run format       # Format with Prettier
-bun run format:check # Check formatting
+bun run dev           # Start Vite dev server
+bun run tauri dev     # Start Tauri dev mode
+bun run build         # Build frontend
+bun run tauri build   # Build desktop app
+bun run check         # TypeScript/Svelte check + validate-pages + audit-design
+bun run audit:design  # Container Patterns audit (Card.Root rule)
+bun run format        # Format with Prettier
+bun run format:check  # Check formatting
 ```
 
 ### Prettier Settings
