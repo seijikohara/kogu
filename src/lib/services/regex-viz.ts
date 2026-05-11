@@ -29,11 +29,20 @@ export type VizNodeKind =
 	| 'backreference'
 	| 'unknown';
 
+export interface QuantifierInfo {
+	readonly min: number;
+	readonly max: number | null;
+	readonly greedy: boolean;
+}
+
 export interface VizNode {
 	readonly kind: VizNodeKind;
 	readonly label: string;
 	readonly detail?: string;
 	readonly children: readonly VizNode[];
+	readonly groupNumber?: number;
+	readonly groupName?: string;
+	readonly quantifier?: QuantifierInfo;
 }
 
 const groupKind = (node: { capturing?: boolean; name?: string; kind?: string }): VizNodeKind => {
@@ -86,6 +95,23 @@ const repetitionLabel = (q: {
 		return `${q.from}-${q.to} times${greedy}`;
 	}
 	return q.kind;
+};
+
+const repetitionInfo = (q: {
+	kind: string;
+	from?: number;
+	to?: number;
+	greedy: boolean;
+}): QuantifierInfo => {
+	if (q.kind === '*') return { min: 0, max: null, greedy: q.greedy };
+	if (q.kind === '+') return { min: 1, max: null, greedy: q.greedy };
+	if (q.kind === '?') return { min: 0, max: 1, greedy: q.greedy };
+	if (q.kind === 'Range') {
+		const min = q.from ?? 0;
+		const max = q.to ?? null;
+		return { min, max, greedy: q.greedy };
+	}
+	return { min: 1, max: 1, greedy: q.greedy };
 };
 
 const characterClassLabel = (node: {
@@ -162,6 +188,8 @@ const buildVizNode = (node: any): VizNode => {
 			label: labelMap[kind],
 			detail: node.number !== undefined ? `#${node.number}` : undefined,
 			children: [buildVizNode(node.expression)],
+			groupNumber: typeof node.number === 'number' ? node.number : undefined,
+			groupName: typeof node.name === 'string' ? node.name : undefined,
 		};
 	}
 	if (type === 'Repetition') {
@@ -169,6 +197,7 @@ const buildVizNode = (node: any): VizNode => {
 			kind: 'repetition',
 			label: repetitionLabel(node.quantifier),
 			children: [buildVizNode(node.expression)],
+			quantifier: repetitionInfo(node.quantifier),
 		};
 	}
 	if (type === 'Char') {
