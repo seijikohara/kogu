@@ -523,7 +523,7 @@
 				class="block w-full cursor-pointer rounded-md border bg-background px-3 py-1.5 text-xs file:mr-3 file:rounded file:border-0 file:bg-muted file:px-2 file:py-1 file:text-xs file:font-medium hover:bg-accent"
 			/>
 			{#if style.logoDataUrl}
-				<div class="flex items-center gap-2 rounded-md border bg-surface-3 p-2">
+				<div class="flex items-center gap-2 rounded-md border bg-card p-2">
 					<img
 						src={style.logoDataUrl}
 						alt="logo preview"

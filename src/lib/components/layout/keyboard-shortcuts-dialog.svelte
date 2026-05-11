@@ -81,7 +81,7 @@
 								<div class="flex items-center gap-1">
 									{#each shortcut.keys.split('+') as part}
 										<kbd
-											class="rounded border border-border/40 bg-surface-3 px-1.5 py-0.5 font-mono text-2xs text-muted-foreground"
+											class="rounded border border-border/40 bg-card px-1.5 py-0.5 font-mono text-2xs text-muted-foreground"
 										>
 											{part.trim()}
 										</kbd>

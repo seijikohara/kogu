@@ -80,7 +80,7 @@
 									parsed.value.month,
 									parsed.value.dayOfWeek,
 								][idx]}
-								<div class="rounded-md border bg-surface-3 p-3">
+								<div class="rounded-md border bg-card p-3">
 									<div class="text-2xs font-medium uppercase tracking-wide text-muted-foreground">
 										{field.label}
 									</div>
@@ -124,7 +124,7 @@
 							<ul class="space-y-1.5">
 								{#each nextRuns.value as date, idx (idx)}
 									{@const fmt = formatDateParts(date)}
-									<li class="flex items-center gap-3 rounded-md border bg-surface-3 px-3 py-2">
+									<li class="flex items-center gap-3 rounded-md border bg-card px-3 py-2">
 										<span class="w-6 text-xs tabular-nums text-muted-foreground">{idx + 1}.</span>
 										<Badge
 											class={cn('text-2xs font-mono', dayBadgeClass(fmt.dayIndex, fmt.isWeekend))}

@@ -99,7 +99,7 @@
 						{#if parsed.value.headers.length > 0}
 							<div class="space-y-1.5">
 								{#each parsed.value.headers as header, idx (idx)}
-									<div class="flex items-baseline gap-2 rounded-md border bg-surface-3 px-3 py-2">
+									<div class="flex items-baseline gap-2 rounded-md border bg-card px-3 py-2">
 										<Badge variant="outline" class="font-mono text-2xs">{header.key}</Badge>
 										<span class="break-all font-mono text-xs text-muted-foreground">
 											{header.value}

@@ -216,7 +216,7 @@
 			{#if results.length > 0}
 				<div class="space-y-2">
 					{#each results as password, idx (`${idx}-${password}`)}
-						<div class="flex items-center gap-2 rounded-lg border bg-surface-3 p-3">
+						<div class="flex items-center gap-2 rounded-lg border bg-card p-3">
 							<code class="flex-1 break-all font-mono text-sm">{password}</code>
 							<CopyButton text={password} toastLabel="Password" size="sm" showLabel={false} />
 						</div>

@@ -402,11 +402,16 @@ CSS Grid layout with areas: toolbar, rail, content, status.
 
 ## Pattern Overview Table
 
-| Pattern            | Tabs?    | Rail?    | Body layout                  | Card system |
-| ------------------ | -------- | -------- | ---------------------------- | ----------- |
-| Tabbed             | Required | Optional | Tab content panels           | `Card.Root` |
-| Transform          | No       | Required | Single split                 | `Card.Root` |
-| ReactiveSinglePage | No       | Optional | Pattern bar + 2-col + accord | `Card.Root` |
-| MasterDetail       | No       | Required | Resizable list + detail      | `Card.Root` |
+| Pattern            | Tabs?    | Rail?    | Body layout                  | Card system                        |
+| ------------------ | -------- | -------- | ---------------------------- | ---------------------------------- |
+| Tabbed (Formatter) | Required | No       | OptionsPanel + SplitPane     | OptionsPanel chrome (editor-heavy) |
+| Tabbed (General)   | Required | Optional | Tab content panels           | `Card.Root`                        |
+| Transform          | No       | Required | Single split                 | `Card.Root`                        |
+| ReactiveSinglePage | No       | Optional | Pattern bar + 2-col + accord | `Card.Root`                        |
+| MasterDetail       | No       | Required | Resizable list + detail      | `Card.Root`                        |
 
-Every pattern uses **`Card.Root` for sectioned content**. The legacy `<div class="rounded-lg border bg-surface-3 ...">` ad-hoc card is deprecated in favor of the shadcn primitive — see `components.md` § Container Patterns for the canonical mapping.
+Every pattern uses **`Card.Root` for sectioned content**, with one principled exception:
+
+- **Tabbed (Formatter)** — JSON / YAML / XML / URL Encoder formatter tabs are editor-heavy: the canonical body is a `CodeEditor` (or two via `SplitPane`) with an `OptionsPanel` (project-owned shell component) on the left. The OptionsPanel uses `bg-surface-2` and stacks `FormSection`s; cards inside the editor pane would compete with the editor for visual weight. This is a deliberate divergence — see the `useFormatterPage` hook + `OptionsPanel` for the shared infrastructure.
+
+For all other patterns, the legacy `<div class="rounded-lg border bg-surface-3 ...">` ad-hoc card is deprecated in favor of the shadcn primitive — see `components.md` § Container Patterns for the canonical mapping.
