@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { Code2, Pencil, Search } from '@lucide/svelte';
+	import { FormInfo, FormSection } from '$lib/components/form';
 	import { ToolShell } from '$lib/components/shell';
 	import { StatItem } from '$lib/components/status';
 	import { type CurlRequest, DEFAULT_REQUEST } from '$lib/services/curl.js';
@@ -45,6 +46,51 @@
 		{#if currentStats.command}
 			<StatItem label="Length" value={currentStats.command.length} />
 		{/if}
+	{/snippet}
+
+	{#snippet rail()}
+		<FormSection title="Tabs">
+			<FormInfo>
+				<ul class="list-inside list-disc space-y-0.5">
+					<li><strong>Build</strong> — compose a request with form controls</li>
+					<li><strong>Parse</strong> — paste an existing command to inspect it</li>
+					<li><strong>Code</strong> — convert the request to other languages</li>
+				</ul>
+			</FormInfo>
+		</FormSection>
+
+		<FormSection title="Authentication">
+			<FormInfo>
+				<ul class="list-inside list-disc space-y-0.5">
+					<li><strong>None</strong> — no auth header</li>
+					<li><strong>Basic</strong> — <code class="font-mono">user:password</code> via -u</li>
+					<li><strong>Bearer</strong> — <code class="font-mono">Authorization: Bearer …</code></li>
+					<li><strong>API key</strong> — custom header name + value</li>
+				</ul>
+			</FormInfo>
+		</FormSection>
+
+		<FormSection title="Body types">
+			<FormInfo>
+				<ul class="list-inside list-disc space-y-0.5">
+					<li><strong>JSON</strong> — application/json, raw payload via -d</li>
+					<li><strong>Form</strong> — urlencoded, --data-urlencode per field</li>
+					<li><strong>Multipart</strong> — -F for files and form parts</li>
+					<li><strong>Raw</strong> — arbitrary text body</li>
+				</ul>
+			</FormInfo>
+		</FormSection>
+
+		<FormSection title="Common flags">
+			<FormInfo>
+				<ul class="list-inside list-disc space-y-0.5">
+					<li><code class="font-mono">-i</code> — include response headers</li>
+					<li><code class="font-mono">-L</code> — follow redirects</li>
+					<li><code class="font-mono">-k</code> — skip TLS verification</li>
+					<li><code class="font-mono">--max-time</code> — total timeout in seconds</li>
+				</ul>
+			</FormInfo>
+		</FormSection>
 	{/snippet}
 
 	{#snippet tabContent(tab)}
