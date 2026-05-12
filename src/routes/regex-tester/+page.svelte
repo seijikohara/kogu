@@ -9,6 +9,7 @@
 	import { Badge } from '$lib/components/ui/badge';
 	import { Button } from '$lib/components/ui/button';
 	import * as Card from '$lib/components/ui/card';
+	import * as ToggleGroup from '$lib/components/ui/toggle-group';
 	import { cn } from '$lib/utils';
 	import { groupColor, matchBackdropColor } from '$lib/services/regex-design.js';
 	import {
@@ -150,9 +151,17 @@ Also see https://kogu.io/docs and http://test.local:3000/.`
 		unknown: { label: 'Unknown', className: 'bg-destructive/10 text-destructive' },
 	};
 
-	// Flag pill toggle helper
-	const toggleFlag = (id: keyof RegexFlags) => {
-		flags = { ...flags, [id]: !flags[id] };
+	const activeFlagIds = $derived(FLAG_INFO.filter((info) => flags[info.id]).map((info) => info.id));
+
+	const handleFlagsChange = (selected: string[]) => {
+		flags = {
+			global: selected.includes('global'),
+			ignoreCase: selected.includes('ignoreCase'),
+			multiline: selected.includes('multiline'),
+			dotAll: selected.includes('dotAll'),
+			unicode: selected.includes('unicode'),
+			sticky: selected.includes('sticky'),
+		};
 	};
 
 	const errorMessage = $derived(compiled.ok ? undefined : compiled.error);
@@ -239,23 +248,23 @@ Also see https://kogu.io/docs and http://test.local:3000/.`
 					<div class="flex-1">
 						<PatternEditor bind:value={pattern} placeholder="\\d+" />
 					</div>
-					<div class="flex flex-wrap gap-1">
+					<ToggleGroup.Root
+						type="multiple"
+						variant="outline"
+						value={activeFlagIds}
+						onValueChange={handleFlagsChange}
+					>
 						{#each FLAG_INFO as info (info.id)}
-							<button
-								type="button"
-								class={cn(
-									'inline-flex h-9 w-9 items-center justify-center rounded-md border font-mono text-sm transition-colors',
-									flags[info.id]
-										? 'border-primary bg-primary text-primary-foreground'
-										: 'border-border bg-background text-muted-foreground hover:bg-accent'
-								)}
+							<ToggleGroup.Item
+								value={info.id}
+								aria-label={info.label}
 								title={`${info.label} — ${info.description}`}
-								onclick={() => toggleFlag(info.id)}
+								class="h-9 w-9 font-mono data-[state=on]:border-primary data-[state=on]:bg-primary data-[state=on]:text-primary-foreground"
 							>
 								{info.char}
-							</button>
+							</ToggleGroup.Item>
 						{/each}
-					</div>
+					</ToggleGroup.Root>
 				</div>
 				<div class="flex flex-wrap items-center gap-2 text-xs">
 					{#if compiled.ok}
