@@ -234,9 +234,9 @@
 					label="Collection Style"
 					bind:value={yamlCollectionStyle}
 					options={[
-						{ value: 'block', label: 'Block' },
-						{ value: 'flow', label: 'Flow ({...})' },
-						{ value: 'any', label: 'Auto' },
+						{ value: 'block', label: 'Block', description: 'Indented, readable' },
+						{ value: 'flow', label: 'Flow', description: 'Inline {key: value} / [1, 2]' },
+						{ value: 'any', label: 'Auto', description: 'Engine chooses per value' },
 					]}
 				/>
 				<FormCheckboxGroup class="pt-1">

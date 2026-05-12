@@ -56,12 +56,42 @@ export interface SshKeyResult {
 }
 
 export const SSH_ALGORITHMS = [
-	{ value: 'ed25519' as const, label: 'Ed25519', recommended: true },
-	{ value: 'ecdsa_p256' as const, label: 'ECDSA P-256', recommended: false },
-	{ value: 'ecdsa_p384' as const, label: 'ECDSA P-384', recommended: false },
-	{ value: 'rsa2048' as const, label: 'RSA 2048', recommended: false },
-	{ value: 'rsa3072' as const, label: 'RSA 3072', recommended: false },
-	{ value: 'rsa4096' as const, label: 'RSA 4096', recommended: false },
+	{
+		value: 'ed25519' as const,
+		label: 'Ed25519',
+		description: 'Modern, fast, small keys',
+		recommended: true,
+	},
+	{
+		value: 'ecdsa_p256' as const,
+		label: 'ECDSA P-256',
+		description: 'NIST curve, widely supported',
+		recommended: false,
+	},
+	{
+		value: 'ecdsa_p384' as const,
+		label: 'ECDSA P-384',
+		description: 'NIST curve, higher security',
+		recommended: false,
+	},
+	{
+		value: 'rsa2048' as const,
+		label: 'RSA 2048',
+		description: 'Legacy compatible',
+		recommended: false,
+	},
+	{
+		value: 'rsa3072' as const,
+		label: 'RSA 3072',
+		description: 'Stronger than 2048',
+		recommended: false,
+	},
+	{
+		value: 'rsa4096' as const,
+		label: 'RSA 4096',
+		description: 'Maximum strength, large keys',
+		recommended: false,
+	},
 ] as const;
 
 // =============================================================================
@@ -91,11 +121,36 @@ export interface GpgKeyResult {
 }
 
 export const GPG_ALGORITHMS = [
-	{ value: 'ecdsa_p256' as const, label: 'ECDSA P-256', recommended: true },
-	{ value: 'ecdsa_p384' as const, label: 'ECDSA P-384', recommended: false },
-	{ value: 'rsa4096' as const, label: 'RSA 4096', recommended: false },
-	{ value: 'rsa3072' as const, label: 'RSA 3072', recommended: false },
-	{ value: 'rsa2048' as const, label: 'RSA 2048', recommended: false },
+	{
+		value: 'ecdsa_p256' as const,
+		label: 'ECDSA P-256',
+		description: 'NIST curve, recommended',
+		recommended: true,
+	},
+	{
+		value: 'ecdsa_p384' as const,
+		label: 'ECDSA P-384',
+		description: 'Higher security NIST curve',
+		recommended: false,
+	},
+	{
+		value: 'rsa4096' as const,
+		label: 'RSA 4096',
+		description: 'Maximum compatibility, large keys',
+		recommended: false,
+	},
+	{
+		value: 'rsa3072' as const,
+		label: 'RSA 3072',
+		description: 'Stronger than 2048',
+		recommended: false,
+	},
+	{
+		value: 'rsa2048' as const,
+		label: 'RSA 2048',
+		description: 'Legacy compatible',
+		recommended: false,
+	},
 ] as const;
 
 // =============================================================================

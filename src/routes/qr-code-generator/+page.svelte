@@ -120,13 +120,16 @@
 	const kindOptions = CONTENT_KINDS.map((info) => ({
 		value: info.kind,
 		label: info.label,
+		description: info.description,
+		icon: KIND_ICONS[info.kind],
 	}));
 
 	const ActiveKindIcon = $derived(KIND_ICONS[activeKind]);
 
 	const errorCorrectionOptions = ERROR_CORRECTION_LEVELS.map((info) => ({
 		value: info.level,
-		label: `${info.label} (${info.recovery})`,
+		label: `${info.label} ${info.recovery}`,
+		description: info.description,
 	}));
 
 	const dotOptions = DOT_TYPES.map((opt) => ({ value: opt.value, label: opt.label }));

@@ -268,9 +268,21 @@
 								label="Mode"
 								bind:value={encodeMode}
 								options={[
-									{ value: 'component', label: 'Component (strict)' },
-									{ value: 'uri', label: 'URI (preserve structure)' },
-									{ value: 'form', label: 'Form (x-www-form-urlencoded)' },
+									{
+										value: 'component',
+										label: 'Component',
+										description: 'Strict: encodes reserved chars',
+									},
+									{
+										value: 'uri',
+										label: 'URI',
+										description: 'Preserves URI structure characters',
+									},
+									{
+										value: 'form',
+										label: 'Form',
+										description: 'application/x-www-form-urlencoded',
+									},
 									{ value: 'path', label: 'Path segment' },
 									{ value: 'custom', label: 'Custom' },
 								]}
@@ -279,8 +291,12 @@
 								label="Space Encoding"
 								bind:value={spaceEncoding}
 								options={[
-									{ value: 'percent', label: '%20 (standard)' },
-									{ value: 'plus', label: '+ (form data)' },
+									{ value: 'percent', label: '%20', description: 'RFC 3986 standard' },
+									{
+										value: 'plus',
+										label: '+',
+										description: 'Form data (application/x-www-form-urlencoded)',
+									},
 								]}
 							/>
 							<FormSelect

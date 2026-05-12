@@ -183,7 +183,11 @@
 			<FormSelect
 				label="Type"
 				bind:value={algorithm}
-				options={GPG_ALGORITHMS.map((a) => ({ value: a.value, label: a.label }))}
+				options={GPG_ALGORITHMS.map((a) => ({
+					value: a.value,
+					label: a.recommended ? `${a.label} (Recommended)` : a.label,
+					description: a.description,
+				}))}
 			/>
 		</FormSection>
 
@@ -203,8 +207,17 @@
 				label="Method"
 				bind:value={method}
 				options={[
-					{ value: 'library', label: 'Library (pgp)' },
-					{ value: 'cli', label: gpgAvailable ? 'CLI (gpg)' : 'CLI (not available)' },
+					{
+						value: 'library',
+						label: 'Library',
+						description: 'Bundled openpgp.js — no system install needed',
+					},
+					{
+						value: 'cli',
+						label: 'CLI',
+						description: gpgAvailable ? 'Uses local gpg binary' : 'gpg not detected on PATH',
+						disabled: !gpgAvailable,
+					},
 				]}
 			/>
 			{#if cliAvailability?.gpg_version}

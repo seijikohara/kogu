@@ -177,14 +177,14 @@ export const SQL_KEYWORD_CASE_OPTIONS = [
 ] as const;
 
 export const SQL_INDENT_STYLE_OPTIONS = [
-	{ value: 'standard', label: 'Standard' },
-	{ value: 'tabularLeft', label: 'Tabular Left' },
-	{ value: 'tabularRight', label: 'Tabular Right' },
+	{ value: 'standard', label: 'Standard', description: 'Conventional indentation' },
+	{ value: 'tabularLeft', label: 'Tabular Left', description: 'Right-align keywords' },
+	{ value: 'tabularRight', label: 'Tabular Right', description: 'Left-align keywords' },
 ] as const;
 
 export const SQL_LOGICAL_OPERATOR_OPTIONS = [
-	{ value: 'before', label: 'Before' },
-	{ value: 'after', label: 'After' },
+	{ value: 'before', label: 'Before', description: 'Newline before AND / OR' },
+	{ value: 'after', label: 'After', description: 'Newline after AND / OR' },
 ] as const;
 
 // ============================================================================

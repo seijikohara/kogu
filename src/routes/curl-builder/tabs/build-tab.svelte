@@ -64,9 +64,30 @@
 	const command = $derived(buildCurl(fullRequest, { multiline }));
 	const isValid = $derived(request.url.length > 0);
 
-	const methodOptions = HTTP_METHODS.map((m) => ({ value: m, label: m }));
-	const authOptions = AUTH_SCHEMES.map((info) => ({ value: info.id, label: info.label }));
-	const bodyOptions = BODY_MODES.map((info) => ({ value: info.id, label: info.label }));
+	const METHOD_DESCRIPTIONS: Record<HttpMethod, string> = {
+		GET: 'Retrieve a resource',
+		POST: 'Create a resource or submit form',
+		PUT: 'Replace a resource',
+		PATCH: 'Partially update a resource',
+		DELETE: 'Remove a resource',
+		HEAD: 'Retrieve headers only',
+		OPTIONS: 'List allowed methods (CORS preflight)',
+	};
+	const methodOptions = HTTP_METHODS.map((m) => ({
+		value: m,
+		label: m,
+		description: METHOD_DESCRIPTIONS[m],
+	}));
+	const authOptions = AUTH_SCHEMES.map((info) => ({
+		value: info.id,
+		label: info.label,
+		description: info.description,
+	}));
+	const bodyOptions = BODY_MODES.map((info) => ({
+		value: info.id,
+		label: info.label,
+		description: info.description,
+	}));
 
 	const handleMethodChange = (value: string) => {
 		if (isHttpMethod(value)) request = { ...request, method: value };
