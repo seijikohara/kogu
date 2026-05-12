@@ -287,7 +287,7 @@
 			{#if keyResult}
 				<div class="space-y-4">
 					{#if showFingerprint}
-						<Card.Root>
+						<Card.Root density="compact">
 							<Card.Header class="flex flex-row items-center justify-between space-y-0 pb-3">
 								<Card.Title class="text-sm font-medium">Fingerprint (SHA-256)</Card.Title>
 								<CopyButton
@@ -306,7 +306,7 @@
 						</Card.Root>
 					{/if}
 
-					<Card.Root>
+					<Card.Root density="compact">
 						<Card.Header class="flex flex-row items-center justify-between space-y-0 pb-3">
 							<div class="flex items-center gap-2">
 								<Unlock class="h-4 w-4 text-success" />
@@ -359,7 +359,7 @@
 					</div>
 
 					{#if showEquivalentCommand}
-						<Card.Root>
+						<Card.Root density="compact">
 							<Card.Header class="flex flex-row items-center justify-between space-y-0 pb-3">
 								<div class="flex items-center gap-2">
 									<Terminal class="h-4 w-4" />

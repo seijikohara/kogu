@@ -199,7 +199,7 @@
 						</div>
 					{/if}
 
-					<Card.Root>
+					<Card.Root density="compact">
 						<Card.Header class="flex flex-row items-center justify-between space-y-0 pb-3">
 							<Card.Title class="text-sm font-medium text-destructive">Header</Card.Title>
 							<CopyButton
@@ -217,7 +217,7 @@
 						</Card.Content>
 					</Card.Root>
 
-					<Card.Root>
+					<Card.Root density="compact">
 						<Card.Header class="flex flex-row items-center justify-between space-y-0 pb-3">
 							<Card.Title class="text-sm font-medium text-primary">Payload</Card.Title>
 							<CopyButton
@@ -236,7 +236,7 @@
 					</Card.Root>
 
 					{#if Object.keys(decoded.payload).some( (k) => JWT_STANDARD_CLAIMS.some((c) => c.claim === k) )}
-						<Card.Root>
+						<Card.Root density="compact">
 							<Card.Header class="pb-3">
 								<Card.Title class="text-sm font-medium">Standard Claims</Card.Title>
 							</Card.Header>
@@ -261,7 +261,7 @@
 						</Card.Root>
 					{/if}
 
-					<Card.Root>
+					<Card.Root density="compact">
 						<Card.Header class="flex flex-row items-center justify-between space-y-0 pb-3">
 							<Card.Title class="text-sm font-medium text-info">Signature</Card.Title>
 							<CopyButton

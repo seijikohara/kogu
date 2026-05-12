@@ -611,14 +611,14 @@
 
 		<div class="flex-1 overflow-auto p-6">
 			<div class="mx-auto flex max-w-3xl flex-col gap-6">
-				<Card.Root class="overflow-hidden">
+				<Card.Root density="compact" class="overflow-hidden">
 					<Card.Content class="flex items-center justify-center p-8">
 						<div bind:this={previewEl} class="flex items-center justify-center"></div>
 					</Card.Content>
 				</Card.Root>
 
 				{#if !valid}
-					<Card.Root class="border-warning/40 bg-warning/5">
+					<Card.Root density="compact" class="border-warning/40 bg-warning/5">
 						<Card.Content class="flex items-start gap-3 py-4">
 							<ImageIcon class="mt-0.5 h-4 w-4 text-warning" />
 							<div class="text-sm text-muted-foreground">
@@ -628,7 +628,7 @@
 					</Card.Root>
 				{/if}
 
-				<Card.Root>
+				<Card.Root density="compact">
 					<Card.Header class="flex flex-row items-center justify-between space-y-0 py-4">
 						<div class="flex items-center gap-2">
 							<ActiveKindIcon class="h-4 w-4 text-muted-foreground" />

@@ -4,7 +4,7 @@
 </script>
 
 <FormSection title="Legend">
-	<Card.Root>
+	<Card.Root density="compact">
 		<Card.Content class="space-y-1.5 p-2">
 			<div class="flex items-center gap-2 text-xs">
 				<span class="h-2.5 w-2.5 rounded-sm bg-success/40"></span>

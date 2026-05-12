@@ -37,7 +37,7 @@
 
 	<div class="flex-1 overflow-auto p-4">
 		<div class="mx-auto flex max-w-5xl flex-col gap-4">
-			<Card.Root>
+			<Card.Root density="compact">
 				<Card.Header class="flex flex-row items-start justify-between space-y-0 pb-3">
 					<div class="space-y-1.5">
 						<Card.Title class="text-sm font-medium">cURL command</Card.Title>
@@ -72,7 +72,7 @@
 			</Card.Root>
 
 			{#if command.trim().length === 0}
-				<Card.Root>
+				<Card.Root density="compact">
 					<Card.Content class="py-10">
 						<EmbeddedEmptyState
 							icon={Terminal}
@@ -83,7 +83,7 @@
 				</Card.Root>
 			{:else if parsed.ok}
 				<div class="grid gap-4 lg:grid-cols-3">
-					<Card.Root>
+					<Card.Root density="compact">
 						<Card.Header class="pb-3">
 							<div class="flex items-center gap-2">
 								<Globe class="h-4 w-4 text-muted-foreground" />
@@ -95,7 +95,7 @@
 						</Card.Content>
 					</Card.Root>
 
-					<Card.Root class="lg:col-span-2">
+					<Card.Root density="compact" class="lg:col-span-2">
 						<Card.Header class="pb-3">
 							<div class="flex items-center gap-2">
 								<Globe class="h-4 w-4 text-muted-foreground" />
@@ -108,7 +108,7 @@
 					</Card.Root>
 				</div>
 
-				<Card.Root>
+				<Card.Root density="compact">
 					<Card.Header class="pb-3">
 						<Card.Title class="text-sm font-medium">
 							Headers <span class="text-muted-foreground">({parsed.value.headers.length})</span>
@@ -136,7 +136,7 @@
 					</Card.Content>
 				</Card.Root>
 
-				<Card.Root>
+				<Card.Root density="compact">
 					<Card.Header class="flex flex-row items-center justify-between space-y-0 pb-3">
 						<Card.Title class="text-sm font-medium">Body</Card.Title>
 						{#if parsed.value.body.length > 0}
@@ -153,7 +153,7 @@
 					</Card.Content>
 				</Card.Root>
 
-				<Card.Root>
+				<Card.Root density="compact">
 					<Card.Header class="pb-3">
 						<div class="flex items-center gap-2">
 							<Settings2 class="h-4 w-4 text-muted-foreground" />
@@ -176,7 +176,7 @@
 					</Card.Content>
 				</Card.Root>
 			{:else}
-				<Card.Root class="border-destructive/40 bg-destructive/5">
+				<Card.Root density="compact" class="border-destructive/40 bg-destructive/5">
 					<Card.Header class="pb-3">
 						<div class="flex items-center gap-2">
 							<Terminal class="h-4 w-4 text-destructive" />

@@ -167,7 +167,7 @@
 
 		{#if name || email}
 			<FormSection title="User ID Preview">
-				<Card.Root class="bg-muted/30">
+				<Card.Root density="compact" class="bg-muted/30">
 					<Card.Content class="p-3">
 						<div class="mb-1 flex items-center gap-1.5 text-xs text-muted-foreground">
 							<User class="h-3 w-3" />
@@ -301,7 +301,7 @@
 			{#if keyResult}
 				<div class="space-y-4">
 					{#if showKeyInfo}
-						<Card.Root>
+						<Card.Root density="compact">
 							<Card.Header class="pb-3">
 								<div class="flex items-center gap-2">
 									<User class="h-4 w-4" />
@@ -331,7 +331,7 @@
 						</Card.Root>
 					{/if}
 
-					<Card.Root>
+					<Card.Root density="compact">
 						<Card.Header class="flex flex-row items-center justify-between space-y-0 pb-3">
 							<div class="flex items-center gap-2">
 								<Unlock class="h-4 w-4 text-success" />
@@ -378,7 +378,7 @@
 					</div>
 
 					{#if showGpgCommands}
-						<Card.Root>
+						<Card.Root density="compact">
 							<Card.Header class="pb-3">
 								<div class="flex items-center gap-2">
 									<Terminal class="h-4 w-4" />

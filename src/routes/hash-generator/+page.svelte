@@ -128,7 +128,7 @@
 				{#if textHashes.length > 0}
 					<div class="space-y-3">
 						{#each textHashes as result}
-							<Card.Root>
+							<Card.Root density="compact">
 								<Card.Header class="flex flex-row items-center justify-between space-y-0 pb-3">
 									<div class="flex items-center gap-2">
 										<Card.Title class="font-mono text-sm">{result.algorithm}</Card.Title>

@@ -138,7 +138,7 @@
 			</div>
 
 			<!-- Appearance Card -->
-			<Card.Root id="appearance">
+			<Card.Root density="compact" id="appearance">
 				<Card.Header>
 					<Card.Title>Appearance</Card.Title>
 					<Card.Description>Customize fonts used throughout the application</Card.Description>
@@ -367,7 +367,7 @@
 			</Card.Root>
 
 			<!-- Data Card -->
-			<Card.Root id="data">
+			<Card.Root density="compact" id="data">
 				<Card.Header>
 					<Card.Title>Data</Card.Title>
 					<Card.Description>Settings file location and reset options</Card.Description>

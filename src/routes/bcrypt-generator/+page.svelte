@@ -345,7 +345,7 @@
 			{#if activeTab === 'generate'}
 				{#if hashResult}
 					<div class="space-y-4">
-						<Card.Root>
+						<Card.Root density="compact">
 							<Card.Header class="flex flex-row items-center justify-between space-y-0 pb-3">
 								<Card.Title class="text-sm font-medium">BCrypt Hash</Card.Title>
 								<CopyButton
@@ -363,7 +363,7 @@
 							</Card.Content>
 						</Card.Root>
 
-						<Card.Root>
+						<Card.Root density="compact">
 							<Card.Header class="pb-3">
 								<Card.Title class="text-sm font-medium">Hash Details</Card.Title>
 							</Card.Header>

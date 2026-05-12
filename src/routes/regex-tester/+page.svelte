@@ -308,7 +308,7 @@
 		<!-- Hero Railroad -->
 		<div class="shrink-0 border-b bg-background px-4 py-3">
 			<div class="mx-auto max-w-6xl">
-				<Card.Root>
+				<Card.Root density="compact">
 					<Card.Header class="flex flex-row items-center justify-between space-y-0 pb-2 pt-3">
 						<div class="flex items-center gap-2">
 							<Workflow class="h-4 w-4 text-muted-foreground" />
@@ -320,7 +320,7 @@
 							{/if}
 						</div>
 					</Card.Header>
-					<Card.Content class="max-h-80 overflow-auto p-3">
+					<Card.Content class="max-h-80 overflow-auto">
 						{#if pattern.length === 0}
 							<EmbeddedEmptyState
 								icon={Workflow}
@@ -341,7 +341,7 @@
 		<div class="flex flex-1 overflow-hidden">
 			<!-- Left column -->
 			<div class="flex flex-1 flex-col gap-4 overflow-auto p-4">
-				<Card.Root>
+				<Card.Root density="compact">
 					<Card.Header class="flex flex-row items-center justify-between space-y-0 pb-3">
 						<div class="flex items-center gap-2">
 							<Eye class="h-4 w-4 text-muted-foreground" />
@@ -377,7 +377,7 @@
 					</Card.Content>
 				</Card.Root>
 
-				<Card.Root>
+				<Card.Root density="compact">
 					<Card.Header class="flex flex-row items-center justify-between space-y-0 pb-3">
 						<div class="flex items-center gap-2">
 							<Sparkles class="h-4 w-4 text-muted-foreground" />
