@@ -453,6 +453,42 @@ When a card needs an action affordance on its header, place it on the `Card.Head
 </Card.Root>
 ```
 
+### `density="compact"` for Tool UI
+
+`Card.Root` accepts `density?: 'default' | 'compact'`:
+
+- `default` (Root `py-6 gap-6`, Header / Content / Footer `px-6`) — the shadcn baseline, intended for marketing-style spacious surfaces. Reserve for the home page and any deliberately-airy layout.
+- `compact` (Root `py-4 gap-3`, Header / Content / Footer `px-4`, `[.border-b]` / `[.border-t]` strip drops to `pb-4` / `pt-4`) — the tool-UI default. Use on every tool page card.
+
+```svelte
+<!-- Preferred for tool pages -->
+<Card.Root density="compact">
+	<Card.Header>
+		<Card.Title>Test text</Card.Title>
+	</Card.Header>
+	<Card.Content>...</Card.Content>
+</Card.Root>
+
+<!-- Reserve default for marketing-style surfaces -->
+<Card.Root>
+	<Card.Header>
+		<Card.Title>Home tile</Card.Title>
+	</Card.Header>
+	<Card.Content>...</Card.Content>
+</Card.Root>
+```
+
+Density propagates from `Card.Root` to its descendants via `data-density` + a named Tailwind group (`group/card`), so child slots react without prop drilling. Override `density` at the call site rather than reaching for ad-hoc `class="p-3"` / `class="py-4"` overrides — these were the previous workaround and produce inconsistent vertical rhythm across pages.
+
+Specialised exceptions where a class override is still appropriate (after switching to `compact`):
+
+| Override                                         | Use case                                                                |
+| ------------------------------------------------ | ----------------------------------------------------------------------- |
+| `Card.Content class="py-10"`                     | Embedded empty states that want generous vertical breathing             |
+| `Card.Content class="p-2"` / `class="px-3 py-2"` | Inline list-row cards that are denser than `compact`                    |
+| `Card.Content class="p-0"`                       | Editor wrappers that must reach the card border                         |
+| `Card.Content class="p-8"`                       | Preview surfaces (e.g. QR code) where the artifact wants generous frame |
+
 ### Badge for Status
 
 Always render status / count / category indicators as `Badge`, not as a hand-rolled `<span>`:

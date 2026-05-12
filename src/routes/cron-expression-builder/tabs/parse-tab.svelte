@@ -56,7 +56,7 @@
 
 	<div class="flex-1 overflow-auto p-4">
 		<div class="mx-auto flex max-w-5xl flex-col gap-4">
-			<Card.Root>
+			<Card.Root density="compact">
 				<Card.Header class="flex flex-row items-start justify-between space-y-0 pb-3">
 					<div class="space-y-1.5">
 						<Card.Title class="text-sm font-medium">Expression</Card.Title>
@@ -75,7 +75,7 @@
 			</Card.Root>
 
 			{#if expression.trim().length === 0}
-				<Card.Root>
+				<Card.Root density="compact">
 					<Card.Content class="py-10">
 						<EmbeddedEmptyState
 							icon={Clock}
@@ -85,7 +85,7 @@
 					</Card.Content>
 				</Card.Root>
 			{:else}
-				<Card.Root>
+				<Card.Root density="compact">
 					<Card.Header class="pb-3">
 						<div class="flex items-center gap-2">
 							<Clock class="h-4 w-4 text-muted-foreground" />
@@ -118,7 +118,7 @@
 					</Card.Content>
 				</Card.Root>
 
-				<Card.Root>
+				<Card.Root density="compact">
 					<Card.Header class="pb-3">
 						<div class="flex items-center gap-2">
 							<Sparkles class="h-4 w-4 text-muted-foreground" />
@@ -134,7 +134,7 @@
 					</Card.Content>
 				</Card.Root>
 
-				<Card.Root>
+				<Card.Root density="compact">
 					<Card.Header class="pb-3">
 						<div class="flex items-center gap-2">
 							<Calendar class="h-4 w-4 text-muted-foreground" />
@@ -172,7 +172,7 @@
 				</Card.Root>
 			{/if}
 
-			<Card.Root>
+			<Card.Root density="compact">
 				<Card.Header class="pb-3">
 					<Card.Title class="text-sm font-medium">Presets</Card.Title>
 					<Card.Description class="text-xs">

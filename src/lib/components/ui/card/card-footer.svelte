@@ -13,7 +13,12 @@
 <div
 	bind:this={ref}
 	data-slot="card-footer"
-	class={cn('[.border-t]:pt-6 flex items-center px-6', className)}
+	class={cn(
+		'flex items-center [.border-t]:pt-6',
+		'px-6',
+		'group-data-[density=compact]/card:px-4 group-data-[density=compact]/card:[.border-t]:pt-4',
+		className
+	)}
 	{...restProps}
 >
 	{@render children?.()}

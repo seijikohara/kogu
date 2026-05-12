@@ -103,7 +103,7 @@
 	<div class="flex-1 overflow-auto p-4">
 		<div class="mx-auto flex max-w-5xl flex-col gap-4">
 			<!-- Request line -->
-			<Card.Root>
+			<Card.Root density="compact">
 				<Card.Header class="pb-3">
 					<div class="flex items-center gap-2">
 						<Globe class="h-4 w-4 text-muted-foreground" />
@@ -127,7 +127,7 @@
 			</Card.Root>
 
 			<!-- Authentication -->
-			<Card.Root>
+			<Card.Root density="compact">
 				<Card.Header class="pb-3">
 					<div class="flex items-center gap-2">
 						<Lock class="h-4 w-4 text-muted-foreground" />
@@ -202,7 +202,7 @@
 			</Card.Root>
 
 			<!-- Headers -->
-			<Card.Root>
+			<Card.Root density="compact">
 				<Card.Header class="pb-3">
 					<Card.Title class="text-sm font-medium">Headers</Card.Title>
 					<Card.Description class="text-xs">
@@ -222,7 +222,7 @@
 			</Card.Root>
 
 			<!-- Body -->
-			<Card.Root>
+			<Card.Root density="compact">
 				<Card.Header class="pb-3">
 					<Card.Title class="text-sm font-medium">Body</Card.Title>
 					<Card.Description class="text-xs">
@@ -267,7 +267,7 @@
 			</Card.Root>
 
 			<!-- Options -->
-			<Card.Root>
+			<Card.Root density="compact">
 				<Card.Header class="pb-3">
 					<div class="flex items-center gap-2">
 						<Settings2 class="h-4 w-4 text-muted-foreground" />
@@ -311,7 +311,7 @@
 			</Card.Root>
 
 			<!-- Output -->
-			<Card.Root>
+			<Card.Root density="compact">
 				<Card.Header class="flex flex-row items-center justify-between space-y-0 pb-3">
 					<div class="flex items-center gap-2">
 						<Terminal class="h-4 w-4 text-muted-foreground" />

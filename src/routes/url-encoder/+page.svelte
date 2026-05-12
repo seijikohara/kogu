@@ -439,7 +439,7 @@
 
 				{#if parsedUrl}
 					<div class="flex-1 space-y-4 overflow-auto">
-						<Card.Root>
+						<Card.Root density="compact">
 							<Card.Header class="pb-3">
 								<Card.Title class="text-sm font-medium">URL Components</Card.Title>
 							</Card.Header>
@@ -462,7 +462,7 @@
 						</Card.Root>
 
 						{#if parsedUrl.params.length > 0}
-							<Card.Root>
+							<Card.Root density="compact">
 								<Card.Header class="pb-3">
 									<Card.Title class="text-sm font-medium">
 										Query Parameters
@@ -553,7 +553,7 @@
 					</div>
 				</div>
 
-				<Card.Root>
+				<Card.Root density="compact">
 					<Card.Header class="flex flex-row items-center justify-between space-y-0 pb-3">
 						<Card.Title class="text-sm font-medium">Generated URL</Card.Title>
 						<div class="flex gap-1">
@@ -571,7 +571,7 @@
 			</div>
 		{:else if tab === 'reference'}
 			<div class="flex-1 overflow-auto p-4">
-				<Card.Root>
+				<Card.Root density="compact">
 					<Card.Header class="pb-3">
 						<Card.Title class="text-sm font-medium">Common URL Encoded Characters</Card.Title>
 					</Card.Header>

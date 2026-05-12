@@ -179,7 +179,7 @@
 				{#if caseResults.length > 0}
 					<div class="space-y-2">
 						{#each caseResults as result}
-							<Card.Root>
+							<Card.Root density="compact">
 								<Card.Content class="flex items-start gap-3 px-3 py-2">
 									<span class="w-32 shrink-0 pt-0.5 font-mono text-xs font-medium">
 										{result.label}

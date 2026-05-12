@@ -793,7 +793,7 @@
 				</div>
 			{/if}
 			{#if discoveryResults.length > 0}
-				<Card.Root class="mt-2">
+				<Card.Root density="compact" class="mt-2">
 					<Card.Content class="p-2">
 						<p class="text-xs font-medium text-muted-foreground">Results:</p>
 						<div class="mt-1 max-h-20 space-y-0.5 overflow-y-auto">

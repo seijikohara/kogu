@@ -56,7 +56,7 @@
 
 	<div class="flex-1 overflow-auto p-4">
 		<div class="mx-auto flex max-w-5xl flex-col gap-4">
-			<Card.Root>
+			<Card.Root density="compact">
 				<Card.Header class="pb-3">
 					<div class="flex items-center gap-2">
 						<Code2 class="h-4 w-4 text-muted-foreground" />
@@ -84,7 +84,7 @@
 				</Card.Content>
 			</Card.Root>
 
-			<Card.Root>
+			<Card.Root density="compact">
 				<Card.Header class="flex flex-row items-center justify-between space-y-0 pb-3">
 					<div class="flex items-center gap-2">
 						<FileCode class="h-4 w-4 text-muted-foreground" />
