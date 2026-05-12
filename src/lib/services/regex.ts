@@ -61,6 +61,7 @@ const withIndicesFlag = (flagString: string): string =>
 	flagString.includes('d') ? flagString : `${flagString}d`;
 
 export const compileRegex = (pattern: string, flags: RegexFlags): Result<RegExp> => {
+	if (pattern.length === 0) return { ok: false, error: 'Empty pattern' };
 	try {
 		const flagString = withIndicesFlag(flagsToString(flags));
 		return { ok: true, value: new RegExp(pattern, flagString) };
@@ -194,3 +195,11 @@ export const countCaptureGroups = (pattern: string): number => {
 	const matches = stripped.matchAll(/\((?!\?[:=!]|\?<[=!])/g);
 	return Array.from(matches).length;
 };
+
+export const SAMPLE_PATTERN =
+	'(?<protocol>https?)://(?<host>[\\w.-]+)(?::(?<port>\\d+))?(?<path>/[^?#\\s]*)?';
+
+export const SAMPLE_TEST_TEXT = `Visit https://example.com and http://example.org:8080/path?query=1.
+Also see https://kogu.io/docs and http://test.local:3000/.`;
+
+export const SAMPLE_REPLACEMENT = '[$<host>]';

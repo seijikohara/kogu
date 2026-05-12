@@ -1,8 +1,9 @@
 <script lang="ts">
-	import { Calendar, Clock, Sparkles } from '@lucide/svelte';
+	import { Calendar, Clock, FlaskConical, Sparkles } from '@lucide/svelte';
 	import { CopyButton } from '$lib/components/action';
 	import { FormInput } from '$lib/components/form';
 	import { SectionHeader } from '$lib/components/layout';
+	import { EmbeddedEmptyState } from '$lib/components/status';
 	import { Badge } from '$lib/components/ui/badge';
 	import { Button } from '$lib/components/ui/button';
 	import * as Card from '$lib/components/ui/card';
@@ -14,6 +15,7 @@
 		formatDateParts,
 		nextExecutions,
 		parseExpression,
+		SAMPLE_CRON_EXPRESSION,
 	} from '$lib/services/cron.js';
 
 	interface Props {
@@ -22,7 +24,11 @@
 
 	let { onstatschange }: Props = $props();
 
-	let expression = $state<string>('*/5 * * * *');
+	let expression = $state<string>('');
+
+	const loadSample = () => {
+		expression = SAMPLE_CRON_EXPRESSION;
+	};
 
 	const parsed = $derived(parseExpression(expression));
 	const description = $derived(explainExpression(expression));
@@ -51,102 +57,120 @@
 	<div class="flex-1 overflow-auto p-4">
 		<div class="mx-auto flex max-w-5xl flex-col gap-4">
 			<Card.Root>
-				<Card.Header class="pb-3">
-					<Card.Title class="text-sm font-medium">Expression</Card.Title>
-					<Card.Description class="text-xs">
-						Paste a 5-field cron expression — minute, hour, day-of-month, month, day-of-week.
-					</Card.Description>
+				<Card.Header class="flex flex-row items-start justify-between space-y-0 pb-3">
+					<div class="space-y-1.5">
+						<Card.Title class="text-sm font-medium">Expression</Card.Title>
+						<Card.Description class="text-xs">
+							Paste a 5-field cron expression — minute, hour, day-of-month, month, day-of-week.
+						</Card.Description>
+					</div>
+					<Button variant="outline" size="sm" class="h-7" onclick={loadSample}>
+						<FlaskConical class="mr-1.5 h-3.5 w-3.5" />
+						Sample
+					</Button>
 				</Card.Header>
 				<Card.Content>
 					<FormInput label="" bind:value={expression} placeholder="*/5 * * * *" class="font-mono" />
 				</Card.Content>
 			</Card.Root>
 
-			<Card.Root>
-				<Card.Header class="pb-3">
-					<div class="flex items-center gap-2">
-						<Clock class="h-4 w-4 text-muted-foreground" />
-						<Card.Title class="text-sm font-medium">Fields</Card.Title>
-					</div>
-				</Card.Header>
-				<Card.Content>
-					{#if parsed.ok}
-						<div class="grid gap-2 sm:grid-cols-5">
-							{#each CRON_FIELDS as field, idx (field.id)}
-								{@const value = [
-									parsed.value.minute,
-									parsed.value.hour,
-									parsed.value.dayOfMonth,
-									parsed.value.month,
-									parsed.value.dayOfWeek,
-								][idx]}
-								<div class="rounded-md border bg-card p-3">
-									<div class="text-2xs font-medium uppercase tracking-wide text-muted-foreground">
-										{field.label}
-									</div>
-									<div class="mt-1 font-mono text-sm">{value}</div>
-									<div class="mt-0.5 text-2xs text-muted-foreground">{field.hint}</div>
-								</div>
-							{/each}
+			{#if expression.trim().length === 0}
+				<Card.Root>
+					<Card.Content class="py-10">
+						<EmbeddedEmptyState
+							icon={Clock}
+							title="Enter a cron expression"
+							description="Click Sample to load a representative expression, choose a preset below, or type your own."
+						/>
+					</Card.Content>
+				</Card.Root>
+			{:else}
+				<Card.Root>
+					<Card.Header class="pb-3">
+						<div class="flex items-center gap-2">
+							<Clock class="h-4 w-4 text-muted-foreground" />
+							<Card.Title class="text-sm font-medium">Fields</Card.Title>
 						</div>
-					{:else}
-						<p class="text-sm text-destructive">{parsed.error}</p>
-					{/if}
-				</Card.Content>
-			</Card.Root>
-
-			<Card.Root>
-				<Card.Header class="pb-3">
-					<div class="flex items-center gap-2">
-						<Sparkles class="h-4 w-4 text-muted-foreground" />
-						<Card.Title class="text-sm font-medium">Description</Card.Title>
-					</div>
-				</Card.Header>
-				<Card.Content>
-					{#if description.ok}
-						<p class="text-sm">{description.value}</p>
-					{:else}
-						<p class="text-sm text-destructive">{description.error}</p>
-					{/if}
-				</Card.Content>
-			</Card.Root>
-
-			<Card.Root>
-				<Card.Header class="pb-3">
-					<div class="flex items-center gap-2">
-						<Calendar class="h-4 w-4 text-muted-foreground" />
-						<Card.Title class="text-sm font-medium">Next 8 executions</Card.Title>
-					</div>
-				</Card.Header>
-				<Card.Content>
-					{#if nextRuns.ok}
-						{#if nextRuns.value.length > 0}
-							<ul class="space-y-1.5">
-								{#each nextRuns.value as date, idx (idx)}
-									{@const fmt = formatDateParts(date)}
-									<li class="flex items-center gap-3 rounded-md border bg-card px-3 py-2">
-										<span class="w-6 text-xs tabular-nums text-muted-foreground">{idx + 1}.</span>
-										<Badge
-											class={cn('text-2xs font-mono', dayBadgeClass(fmt.dayIndex, fmt.isWeekend))}
-										>
-											{fmt.dayLabel}
-										</Badge>
-										<span class="font-mono text-sm tabular-nums">{fmt.date}</span>
-										<span class="font-mono text-sm tabular-nums text-muted-foreground">
-											{fmt.time}
-										</span>
-										<span class="ml-auto text-xs text-muted-foreground">{fmt.relative}</span>
-									</li>
+					</Card.Header>
+					<Card.Content>
+						{#if parsed.ok}
+							<div class="grid gap-2 sm:grid-cols-5">
+								{#each CRON_FIELDS as field, idx (field.id)}
+									{@const value = [
+										parsed.value.minute,
+										parsed.value.hour,
+										parsed.value.dayOfMonth,
+										parsed.value.month,
+										parsed.value.dayOfWeek,
+									][idx]}
+									<div class="rounded-md border bg-card p-3">
+										<div class="text-2xs font-medium uppercase tracking-wide text-muted-foreground">
+											{field.label}
+										</div>
+										<div class="mt-1 font-mono text-sm">{value}</div>
+										<div class="mt-0.5 text-2xs text-muted-foreground">{field.hint}</div>
+									</div>
 								{/each}
-							</ul>
+							</div>
 						{:else}
-							<p class="text-sm text-muted-foreground">No upcoming executions.</p>
+							<p class="text-sm text-destructive">{parsed.error}</p>
 						{/if}
-					{:else}
-						<p class="text-sm text-destructive">{nextRuns.error}</p>
-					{/if}
-				</Card.Content>
-			</Card.Root>
+					</Card.Content>
+				</Card.Root>
+
+				<Card.Root>
+					<Card.Header class="pb-3">
+						<div class="flex items-center gap-2">
+							<Sparkles class="h-4 w-4 text-muted-foreground" />
+							<Card.Title class="text-sm font-medium">Description</Card.Title>
+						</div>
+					</Card.Header>
+					<Card.Content>
+						{#if description.ok}
+							<p class="text-sm">{description.value}</p>
+						{:else}
+							<p class="text-sm text-destructive">{description.error}</p>
+						{/if}
+					</Card.Content>
+				</Card.Root>
+
+				<Card.Root>
+					<Card.Header class="pb-3">
+						<div class="flex items-center gap-2">
+							<Calendar class="h-4 w-4 text-muted-foreground" />
+							<Card.Title class="text-sm font-medium">Next 8 executions</Card.Title>
+						</div>
+					</Card.Header>
+					<Card.Content>
+						{#if nextRuns.ok}
+							{#if nextRuns.value.length > 0}
+								<ul class="space-y-1.5">
+									{#each nextRuns.value as date, idx (idx)}
+										{@const fmt = formatDateParts(date)}
+										<li class="flex items-center gap-3 rounded-md border bg-card px-3 py-2">
+											<span class="w-6 text-xs tabular-nums text-muted-foreground">{idx + 1}.</span>
+											<Badge
+												class={cn('text-2xs font-mono', dayBadgeClass(fmt.dayIndex, fmt.isWeekend))}
+											>
+												{fmt.dayLabel}
+											</Badge>
+											<span class="font-mono text-sm tabular-nums">{fmt.date}</span>
+											<span class="font-mono text-sm tabular-nums text-muted-foreground">
+												{fmt.time}
+											</span>
+											<span class="ml-auto text-xs text-muted-foreground">{fmt.relative}</span>
+										</li>
+									{/each}
+								</ul>
+							{:else}
+								<p class="text-sm text-muted-foreground">No upcoming executions.</p>
+							{/if}
+						{:else}
+							<p class="text-sm text-destructive">{nextRuns.error}</p>
+						{/if}
+					</Card.Content>
+				</Card.Root>
+			{/if}
 
 			<Card.Root>
 				<Card.Header class="pb-3">

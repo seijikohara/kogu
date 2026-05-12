@@ -155,6 +155,7 @@ export const validateField = (field: keyof CronParts, value: string): Result<tru
 
 export const nextExecutions = (expression: string, count: number): Result<readonly Date[]> => {
 	if (count <= 0) return { ok: true, value: [] };
+	if (expression.trim().length === 0) return { ok: false, error: 'Empty expression' };
 	try {
 		const interval = CronExpressionParser.parse(expression);
 		const dates = Array.from({ length: count }, () => interval.next().toDate());
@@ -211,3 +212,5 @@ export const formatDate = (date: Date): string => {
 	const parts = formatDateParts(date);
 	return `${parts.date} (${parts.dayLabel}) ${parts.time}`;
 };
+
+export const SAMPLE_CRON_EXPRESSION = '*/5 * * * *';
