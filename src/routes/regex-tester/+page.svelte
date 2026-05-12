@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { Eye, GitBranch, Info, Search, Sparkles, Workflow } from '@lucide/svelte';
+	import { Eye, FlaskConical, GitBranch, Info, Search, Sparkles, Workflow } from '@lucide/svelte';
 	import { CopyButton } from '$lib/components/action';
 	import { FormInfo, FormSection, FormTextarea } from '$lib/components/form';
 	import { PatternEditor, RailroadView } from '$lib/components/regex';
@@ -23,21 +23,25 @@
 		type RegexFlags,
 		type RegexMatch,
 		replaceText,
+		SAMPLE_PATTERN,
+		SAMPLE_REPLACEMENT,
+		SAMPLE_TEST_TEXT,
 	} from '$lib/services/regex.js';
 	import { type VizNode, type VizNodeKind, visualizeRegex } from '$lib/services/regex-viz.js';
 
 	// State
-	let pattern = $state<string>(
-		'(?<protocol>https?)://(?<host>[\\w.-]+)(?::(?<port>\\d+))?(?<path>/[^?#\\s]*)?'
-	);
+	let pattern = $state<string>('');
 	let flags = $state<RegexFlags>({ ...DEFAULT_FLAGS });
-	let testText = $state<string>(
-		`Visit https://example.com and http://example.org:8080/path?query=1.
-Also see https://kogu.io/docs and http://test.local:3000/.`
-	);
+	let testText = $state<string>('');
 	let replaceEnabled = $state<boolean>(false);
-	let replacement = $state<string>('[$<host>]');
+	let replacement = $state<string>('');
 	let showOptions = $state<boolean>(true);
+
+	const loadSample = () => {
+		pattern = SAMPLE_PATTERN;
+		testText = SAMPLE_TEST_TEXT;
+		replacement = SAMPLE_REPLACEMENT;
+	};
 
 	// Derived
 	const flagString = $derived(flagsToString(flags));
@@ -49,7 +53,9 @@ Also see https://kogu.io/docs and http://test.local:3000/.`
 	const features = $derived(findFeatures(pattern));
 	const captureGroupCount = $derived(countCaptureGroups(pattern));
 
-	const validity = $derived(compiled.ok ? 'valid' : 'invalid');
+	const validity = $derived<'empty' | 'valid' | 'invalid'>(
+		pattern.length === 0 ? 'empty' : compiled.ok ? 'valid' : 'invalid'
+	);
 
 	// Build inline-highlight segments for the test text.
 	interface Segment {
@@ -164,7 +170,9 @@ Also see https://kogu.io/docs and http://test.local:3000/.`
 		};
 	};
 
-	const errorMessage = $derived(compiled.ok ? undefined : compiled.error);
+	const errorMessage = $derived(
+		validity === 'invalid' && !compiled.ok ? compiled.error : undefined
+	);
 </script>
 
 <svelte:head>
@@ -197,7 +205,11 @@ Also see https://kogu.io/docs and http://test.local:3000/.`
 	</div>
 {/snippet}
 
-<ToolShell valid={validity === 'valid'} error={errorMessage} bind:showRail={showOptions}>
+<ToolShell
+	valid={validity === 'empty' ? null : validity === 'valid'}
+	error={errorMessage}
+	bind:showRail={showOptions}
+>
 	{#snippet statusContent()}
 		<StatItem label="Matches" value={matches.length} />
 		<StatItem label="Groups" value={captureGroupCount} />
@@ -267,7 +279,9 @@ Also see https://kogu.io/docs and http://test.local:3000/.`
 					</ToggleGroup.Root>
 				</div>
 				<div class="flex flex-wrap items-center gap-2 text-xs">
-					{#if compiled.ok}
+					{#if validity === 'empty'}
+						<Badge variant="outline" class="text-muted-foreground">empty</Badge>
+					{:else if compiled.ok}
 						<Badge variant="outline" class="bg-success/10 text-success">✓ valid</Badge>
 					{:else}
 						<Badge variant="outline" class="bg-destructive/10 text-destructive">
@@ -280,7 +294,11 @@ Also see https://kogu.io/docs and http://test.local:3000/.`
 					<Badge variant="outline"
 						>{features.length} feature{features.length === 1 ? '' : 's'}</Badge
 					>
-					<div class="ml-auto">
+					<div class="ml-auto flex items-center gap-1">
+						<Button variant="ghost" size="sm" class="h-7" onclick={loadSample}>
+							<FlaskConical class="mr-1.5 h-3.5 w-3.5" />
+							Sample
+						</Button>
 						<CopyButton text={`/${pattern}/${flagString}`} toastLabel="Pattern" size="sm" />
 					</div>
 				</div>

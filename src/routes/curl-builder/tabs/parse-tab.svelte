@@ -1,12 +1,13 @@
 <script lang="ts">
-	import { Globe, Settings2, Terminal } from '@lucide/svelte';
+	import { FlaskConical, Globe, Settings2, Terminal } from '@lucide/svelte';
 	import { CopyButton } from '$lib/components/action';
 	import { FormTextarea } from '$lib/components/form';
 	import { SectionHeader } from '$lib/components/layout';
 	import { Badge } from '$lib/components/ui/badge';
+	import { Button } from '$lib/components/ui/button';
 	import * as Card from '$lib/components/ui/card';
 	import { EmbeddedEmptyState } from '$lib/components/status';
-	import { parseCurl } from '$lib/services/curl.js';
+	import { parseCurl, SAMPLE_CURL_COMMAND } from '$lib/services/curl.js';
 
 	interface Props {
 		onstatschange?: (info: { command: string; valid: boolean }) => void;
@@ -14,11 +15,13 @@
 
 	let { onstatschange }: Props = $props();
 
-	let command = $state<string>(
-		`curl -X POST 'https://api.example.com/login' \\\n  -H 'Content-Type: application/json' \\\n  -L --max-time 30 \\\n  --data-raw '{"username":"alice","password":"secret"}'`
-	);
+	let command = $state<string>('');
 
 	const parsed = $derived(parseCurl(command));
+
+	const loadSample = () => {
+		command = SAMPLE_CURL_COMMAND;
+	};
 
 	$effect(() => {
 		onstatschange?.({ command, valid: parsed.ok });
@@ -35,21 +38,27 @@
 	<div class="flex-1 overflow-auto p-4">
 		<div class="mx-auto flex max-w-5xl flex-col gap-4">
 			<Card.Root>
-				<Card.Header class="pb-3">
-					<Card.Title class="text-sm font-medium">cURL command</Card.Title>
-					<Card.Description class="text-xs">
-						Supports <code class="rounded bg-muted px-1 font-mono">-X</code>,
-						<code class="rounded bg-muted px-1 font-mono">-H</code>,
-						<code class="rounded bg-muted px-1 font-mono"
-							>-d / --data / --data-raw / --data-binary</code
-						>,
-						<code class="rounded bg-muted px-1 font-mono">-G</code>,
-						<code class="rounded bg-muted px-1 font-mono">-L</code>,
-						<code class="rounded bg-muted px-1 font-mono">-k</code>,
-						<code class="rounded bg-muted px-1 font-mono">-i</code>,
-						<code class="rounded bg-muted px-1 font-mono">--max-time</code>; backslash continuations
-						are joined.
-					</Card.Description>
+				<Card.Header class="flex flex-row items-start justify-between space-y-0 pb-3">
+					<div class="space-y-1.5">
+						<Card.Title class="text-sm font-medium">cURL command</Card.Title>
+						<Card.Description class="text-xs">
+							Supports <code class="rounded bg-muted px-1 font-mono">-X</code>,
+							<code class="rounded bg-muted px-1 font-mono">-H</code>,
+							<code class="rounded bg-muted px-1 font-mono"
+								>-d / --data / --data-raw / --data-binary</code
+							>,
+							<code class="rounded bg-muted px-1 font-mono">-G</code>,
+							<code class="rounded bg-muted px-1 font-mono">-L</code>,
+							<code class="rounded bg-muted px-1 font-mono">-k</code>,
+							<code class="rounded bg-muted px-1 font-mono">-i</code>,
+							<code class="rounded bg-muted px-1 font-mono">--max-time</code>; backslash
+							continuations are joined.
+						</Card.Description>
+					</div>
+					<Button variant="outline" size="sm" class="h-7 shrink-0" onclick={loadSample}>
+						<FlaskConical class="mr-1.5 h-3.5 w-3.5" />
+						Sample
+					</Button>
 				</Card.Header>
 				<Card.Content>
 					<FormTextarea
@@ -62,7 +71,17 @@
 				</Card.Content>
 			</Card.Root>
 
-			{#if parsed.ok}
+			{#if command.trim().length === 0}
+				<Card.Root>
+					<Card.Content class="py-10">
+						<EmbeddedEmptyState
+							icon={Terminal}
+							title="Paste a cURL command"
+							description="Click Sample to load a representative request, or paste your own command."
+						/>
+					</Card.Content>
+				</Card.Root>
+			{:else if parsed.ok}
 				<div class="grid gap-4 lg:grid-cols-3">
 					<Card.Root>
 						<Card.Header class="pb-3">

@@ -418,3 +418,8 @@ export const generateGoCode = (request: CurlRequest): string => {
 	lines.push('}');
 	return lines.join('\n');
 };
+
+export const SAMPLE_CURL_COMMAND = `curl -X POST 'https://api.example.com/login' \\
+  -H 'Content-Type: application/json' \\
+  -L --max-time 30 \\
+  --data-raw '{"username":"alice","password":"secret"}'`;
