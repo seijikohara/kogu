@@ -259,7 +259,7 @@ Also see https://kogu.io/docs and http://test.local:3000/.`
 								value={info.id}
 								aria-label={info.label}
 								title={`${info.label} — ${info.description}`}
-								class="h-9 w-9 font-mono"
+								class="h-9 w-9 font-mono data-[state=on]:border-primary data-[state=on]:bg-primary data-[state=on]:text-primary-foreground"
 							>
 								{info.char}
 							</ToggleGroup.Item>
