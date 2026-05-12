@@ -65,8 +65,16 @@
 	const isValid = $derived(request.url.length > 0);
 
 	const methodOptions = HTTP_METHODS.map((m) => ({ value: m, label: m }));
-	const authOptions = AUTH_SCHEMES.map((info) => ({ value: info.id, label: info.label }));
-	const bodyOptions = BODY_MODES.map((info) => ({ value: info.id, label: info.label }));
+	const authOptions = AUTH_SCHEMES.map((info) => ({
+		value: info.id,
+		label: info.label,
+		description: info.description,
+	}));
+	const bodyOptions = BODY_MODES.map((info) => ({
+		value: info.id,
+		label: info.label,
+		description: info.description,
+	}));
 
 	const handleMethodChange = (value: string) => {
 		if (isHttpMethod(value)) request = { ...request, method: value };

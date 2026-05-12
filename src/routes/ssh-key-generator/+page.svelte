@@ -167,6 +167,7 @@
 				options={SSH_ALGORITHMS.map((a) => ({
 					value: a.value,
 					label: a.recommended ? `${a.label} (Recommended)` : a.label,
+					description: a.description,
 				}))}
 			/>
 		</FormSection>

@@ -45,7 +45,8 @@
 
 	const versionOptions = UUID_VERSIONS.map((info) => ({
 		value: info.version,
-		label: `${info.label} - ${info.description}`,
+		label: info.label,
+		description: info.description,
 	}));
 
 	const namespaceOptions = NAMESPACE_PRESETS.map((preset) => ({

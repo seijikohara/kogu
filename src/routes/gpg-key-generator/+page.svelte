@@ -183,7 +183,11 @@
 			<FormSelect
 				label="Type"
 				bind:value={algorithm}
-				options={GPG_ALGORITHMS.map((a) => ({ value: a.value, label: a.label }))}
+				options={GPG_ALGORITHMS.map((a) => ({
+					value: a.value,
+					label: a.recommended ? `${a.label} (Recommended)` : a.label,
+					description: a.description,
+				}))}
 			/>
 		</FormSection>
 
