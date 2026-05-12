@@ -207,8 +207,17 @@
 				label="Method"
 				bind:value={method}
 				options={[
-					{ value: 'library', label: 'Library (pgp)' },
-					{ value: 'cli', label: gpgAvailable ? 'CLI (gpg)' : 'CLI (not available)' },
+					{
+						value: 'library',
+						label: 'Library',
+						description: 'Bundled openpgp.js — no system install needed',
+					},
+					{
+						value: 'cli',
+						label: 'CLI',
+						description: gpgAvailable ? 'Uses local gpg binary' : 'gpg not detected on PATH',
+						disabled: !gpgAvailable,
+					},
 				]}
 			/>
 			{#if cliAvailability?.gpg_version}

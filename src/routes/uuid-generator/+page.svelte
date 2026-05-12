@@ -51,7 +51,8 @@
 
 	const namespaceOptions = NAMESPACE_PRESETS.map((preset) => ({
 		value: preset.value,
-		label: `${preset.label} (${preset.value})`,
+		label: preset.label,
+		description: preset.value,
 	}));
 
 	// Handlers

@@ -196,10 +196,18 @@
 				label="Method"
 				bind:value={method}
 				options={[
-					{ value: 'library', label: 'Library (ssh-key)' },
+					{
+						value: 'library',
+						label: 'Library',
+						description: 'Bundled sshpk — no system install needed',
+					},
 					{
 						value: 'cli',
-						label: sshKeygenAvailable ? 'CLI (ssh-keygen)' : 'CLI (not available)',
+						label: 'CLI',
+						description: sshKeygenAvailable
+							? 'Uses local ssh-keygen binary'
+							: 'ssh-keygen not detected on PATH',
+						disabled: !sshKeygenAvailable,
 					},
 				]}
 			/>

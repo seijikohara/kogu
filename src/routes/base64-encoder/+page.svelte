@@ -169,17 +169,25 @@
 					label="Variant"
 					bind:value={variant}
 					options={[
-						{ value: 'standard', label: 'Standard (+/)' },
-						{ value: 'url-safe', label: 'URL-safe (-_)' },
+						{
+							value: 'standard',
+							label: 'Standard',
+							description: 'Uses + and / (RFC 4648 §4)',
+						},
+						{
+							value: 'url-safe',
+							label: 'URL-safe',
+							description: 'Uses - and _ (RFC 4648 §5)',
+						},
 					]}
 				/>
 				<FormSelect
 					label="Line Break"
 					bind:value={lineBreak}
 					options={[
-						{ value: 'none', label: 'None' },
-						{ value: '64', label: '64 chars (PEM)' },
-						{ value: '76', label: '76 chars (MIME)' },
+						{ value: 'none', label: 'None', description: 'Single continuous line' },
+						{ value: '64', label: '64 chars', description: 'PEM convention' },
+						{ value: '76', label: '76 chars', description: 'MIME / RFC 2045' },
 					]}
 				/>
 				<div class="pt-1">

@@ -181,6 +181,7 @@
 					options={SQL_INDENT_STYLE_OPTIONS.map((opt) => ({
 						value: opt.value,
 						label: opt.label,
+						description: opt.description,
 					}))}
 				/>
 			</div>
@@ -207,6 +208,7 @@
 				options={SQL_LOGICAL_OPERATOR_OPTIONS.map((opt) => ({
 					value: opt.value,
 					label: opt.label,
+					description: opt.description,
 				}))}
 			/>
 			<FormSelect
