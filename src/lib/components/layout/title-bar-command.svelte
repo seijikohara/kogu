@@ -102,8 +102,8 @@
 										onSelect={() => handleNavigate(page.url)}
 									>
 										<PageIcon />
-										<span class="font-medium">{page.title}</span>
-										<span class="ml-auto truncate text-xs text-muted-foreground">
+										<span class="whitespace-nowrap font-medium">{page.title}</span>
+										<span class="ml-auto min-w-0 truncate text-xs text-muted-foreground">
 											{page.description}
 										</span>
 									</Command.Item>
