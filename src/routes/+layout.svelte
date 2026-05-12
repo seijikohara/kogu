@@ -5,12 +5,7 @@
 	import { toast } from 'svelte-sonner';
 	import { listen } from '@tauri-apps/api/event';
 	import { confirm } from '@tauri-apps/plugin-dialog';
-	import {
-		AppSidebar,
-		CommandPalette,
-		KeyboardShortcutsDialog,
-		TitleBar,
-	} from '$lib/components/layout/index.js';
+	import { AppSidebar, KeyboardShortcutsDialog, TitleBar } from '$lib/components/layout/index.js';
 	import * as Sidebar from '$lib/components/ui/sidebar/index.js';
 	import { Sonner } from '$lib/components/ui/sonner/index.js';
 	import { goBack, goForward } from '$lib/services/navigation-history.svelte.js';
@@ -24,14 +19,14 @@
 
 	let { children } = $props();
 
-	let commandPaletteOpen = $state(false);
+	let titleBarCommand = $state<{ focusInput: () => void } | null>(null);
 	let shortcutsHelpOpen = $state(false);
 
 	const handleGlobalKeydown = (e: KeyboardEvent) => {
-		// Cmd+K → command palette
+		// Cmd+K → focus inline command palette in title bar
 		if (isModKey(e) && e.key === 'k') {
 			e.preventDefault();
-			commandPaletteOpen = true;
+			titleBarCommand?.focusInput();
 			return;
 		}
 		// Cmd+[ → navigate back
@@ -122,11 +117,10 @@
 
 <ModeWatcher />
 <Sonner richColors />
-<CommandPalette bind:open={commandPaletteOpen} />
 <KeyboardShortcutsDialog bind:open={shortcutsHelpOpen} />
 
 <div class="flex h-screen flex-col">
-	<TitleBar onOpenCommandPalette={() => (commandPaletteOpen = true)} />
+	<TitleBar bind:commandRef={titleBarCommand} />
 	<Sidebar.Provider
 		class="flex-1 !min-h-0 [&_[data-slot=sidebar-container]]:top-8 [&_[data-slot=sidebar-container]]:h-[calc(100svh-2rem)]"
 	>
