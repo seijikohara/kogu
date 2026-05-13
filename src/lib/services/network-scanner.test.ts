@@ -272,4 +272,85 @@ describe('mergeHosts', () => {
 		expect(result[0]?.ports.map((p) => p.port)).toEqual([22, 443]);
 		expect(result[0]?.scanDurationMs).toBe(1500);
 	});
+
+	it('surfaces TCP banner-grab results on UnifiedHost.serviceBanners', () => {
+		const discovery = buildDiscoveryResult({
+			method: 'tcp_connect',
+			hosts: ['192.168.1.90'],
+			hostMetadata: {
+				'192.168.1.90': buildMetadata({
+					banners: [
+						{ protocol: 'ssh', version: 'OpenSSH_8.6p1', raw: 'SSH-2.0-OpenSSH_8.6p1' },
+						{ protocol: 'http', version: 'nginx/1.25.0', raw: 'nginx/1.25.0' },
+					],
+				}),
+			},
+		});
+
+		const result = mergeHosts([discovery], []);
+
+		expect(result).toHaveLength(1);
+		expect(result[0]?.serviceBanners).toHaveLength(2);
+		expect(result[0]?.serviceBanners.map((b) => b.protocol)).toEqual(['ssh', 'http']);
+		expect(result[0]?.serviceBanners[0]?.version).toBe('OpenSSH_8.6p1');
+	});
+
+	it('deduplicates identical banners reported by multiple discoveries', () => {
+		const a = buildDiscoveryResult({
+			method: 'tcp_connect',
+			hosts: ['192.168.1.91'],
+			hostMetadata: {
+				'192.168.1.91': buildMetadata({
+					banners: [{ protocol: 'ssh', version: 'OpenSSH_9.0', raw: 'SSH-2.0-OpenSSH_9.0' }],
+				}),
+			},
+		});
+		const b = buildDiscoveryResult({
+			method: 'tcp_connect',
+			hosts: ['192.168.1.91'],
+			hostMetadata: {
+				'192.168.1.91': buildMetadata({
+					banners: [{ protocol: 'ssh', version: 'OpenSSH_9.0', raw: 'SSH-2.0-OpenSSH_9.0' }],
+				}),
+			},
+		});
+
+		const result = mergeHosts([a, b], []);
+
+		expect(result).toHaveLength(1);
+		expect(result[0]?.serviceBanners).toHaveLength(1);
+	});
+
+	it('merges v4 mDNS with v6 SNMP via shared sysName signal', () => {
+		const mdns = buildDiscoveryResult({
+			method: 'mdns',
+			hosts: ['192.168.1.100'],
+			hostnames: { '192.168.1.100': 'switch.local' },
+			hostMetadata: {
+				'192.168.1.100': buildMetadata({
+					hostname: 'switch.local',
+					hostnameSource: 'mdns',
+				}),
+			},
+		});
+		const snmp = buildDiscoveryResult({
+			method: 'snmp',
+			hosts: ['fe80::cafe'],
+			hostMetadata: {
+				'fe80::cafe': buildMetadata({
+					hostname: 'switch',
+					hostnameSource: 'snmp',
+					snmpInfo: { sysName: 'switch', sysDescr: 'Cisco' },
+				}),
+			},
+		});
+
+		const result = mergeHosts([mdns, snmp], []);
+
+		expect(result).toHaveLength(1);
+		expect(result[0]?.ips.sort()).toEqual(['192.168.1.100', 'fe80::cafe']);
+		// mDNS retains priority over SNMP for the displayed hostname.
+		expect(result[0]?.hostname).toBe('switch.local');
+		expect(result[0]?.snmpInfo?.sysName).toBe('switch');
+	});
 });

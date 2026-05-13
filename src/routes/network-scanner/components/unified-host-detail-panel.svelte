@@ -50,6 +50,7 @@
 		MdnsServiceInfo,
 		PortInfo,
 		ScanProgress,
+		ServiceBanner,
 		SnmpDeviceInfo,
 		SsdpDeviceInfo,
 		WsDiscoveryInfo,
@@ -79,6 +80,7 @@
 		readonly wsDiscovery?: WsDiscoveryInfo | null;
 		readonly snmpInfo?: SnmpDeviceInfo | null;
 		readonly tlsNames?: readonly string[];
+		readonly serviceBanners?: readonly ServiceBanner[];
 		readonly classification?: DeviceClassification | null;
 		readonly discoveryMethods: readonly string[];
 		readonly discoveries: readonly DiscoveryInfo[];
@@ -102,6 +104,7 @@
 		wsDiscovery = null,
 		snmpInfo = null,
 		tlsNames = [],
+		serviceBanners = [],
 		classification = null,
 		discoveryMethods,
 		discoveries,
@@ -244,6 +247,8 @@
 		udp_scan: 'UDP Scan',
 		ws_discovery: 'WS-Discovery',
 		arp_cache: 'ARP Cache',
+		snmp: 'SNMP Broadcast',
+		llmnr: 'LLMNR',
 		local: 'Local',
 	};
 
@@ -263,6 +268,10 @@
 				return 'WS-Discovery (SOAP/UDP)';
 			case 'arp_cache':
 				return 'OS ARP Cache';
+			case 'snmp':
+				return 'SNMP sysName broadcast';
+			case 'llmnr':
+				return 'LLMNR multicast PTR resolution';
 			case 'local':
 				return 'Local Interface';
 			default:
@@ -757,6 +766,25 @@
 									<div class="text-sm">{snmpInfo.sysContact}</div>
 								</div>
 							{/if}
+						</div>
+					</div>
+				{/if}
+
+				<!-- Service Banners -->
+				{#if serviceBanners && serviceBanners.length > 0}
+					<div class="mb-4">
+						<SectionLabel icon={Terminal}>Service Banners</SectionLabel>
+						<div class="rounded-lg border bg-card p-3">
+							<div class="flex flex-wrap gap-1.5">
+								{#each serviceBanners as banner (banner.protocol + (banner.version ?? '') + banner.raw)}
+									<span class="rounded bg-muted px-1.5 py-0.5 font-mono text-xs" title={banner.raw}>
+										<span class="font-medium text-foreground">{banner.protocol}</span>
+										{#if banner.version}
+											<span class="text-muted-foreground">{banner.version}</span>
+										{/if}
+									</span>
+								{/each}
+							</div>
 						</div>
 					</div>
 				{/if}

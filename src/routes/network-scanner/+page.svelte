@@ -37,6 +37,7 @@
 		cancelNetworkScan,
 		DATABASE_PORTS,
 		DEFAULT_CONCURRENCY,
+		DEFAULT_DISCOVERY_METHODS,
 		DEFAULT_SYN_PORTS,
 		DEFAULT_TIMEOUT_MS,
 		discoverHosts,
@@ -95,10 +96,9 @@
 	// Derived: any resolution enabled
 	const resolveHostname = $derived(resolveDns || resolveMdns || resolveNetbios);
 
-	// Discovery options (all remaining methods are userspace)
-	let discoveryMethods = $state<Set<DiscoveryMethod>>(
-		new Set(DISCOVERY_METHODS.map((m) => m.value))
-	);
+	// Discovery options (all remaining methods are userspace; SNMP is opt-in
+	// because broadcast SNMP queries can be noisy on some networks).
+	let discoveryMethods = $state<Set<DiscoveryMethod>>(new Set(DEFAULT_DISCOVERY_METHODS));
 	let discoveryResults = $state<DiscoveryResult[]>([]);
 	let isDiscovering = $state(false);
 
@@ -1177,6 +1177,7 @@
 								wsDiscovery={selectedHost.wsDiscovery}
 								snmpInfo={selectedHost.snmpInfo}
 								tlsNames={selectedHost.tlsNames}
+								serviceBanners={selectedHost.serviceBanners}
 								classification={hostClassifications.get(selectedHost.id) ?? null}
 								discoveryMethods={selectedHost.discoveryMethods}
 								discoveries={selectedHost.discoveries}

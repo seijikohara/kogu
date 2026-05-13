@@ -55,6 +55,7 @@
 //! coordinated through per-operation tokens tracked by [`NetworkScannerState`].
 
 mod arp_cache;
+mod banner;
 pub mod discovery;
 pub mod interfaces;
 mod llmnr;

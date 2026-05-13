@@ -267,6 +267,8 @@ export type DiscoveryMethod =
 	| 'udp_scan'
 	| 'ws_discovery'
 	| 'arp_cache'
+	| 'snmp'
+	| 'llmnr'
 	| 'none';
 
 export interface DiscoveryOptions {
@@ -331,6 +333,16 @@ export interface SnmpDeviceInfo {
 	readonly sysContact?: string;
 }
 
+/** Service banner harvested by TCP banner-grab during discovery */
+export interface ServiceBanner {
+	/** Detected protocol (ssh, http, smtp, redis, memcached, ftp, telnet) */
+	readonly protocol: string;
+	/** Parsed product / version string when extractable */
+	readonly version?: string;
+	/** Truncated raw banner bytes for display */
+	readonly raw: string;
+}
+
 /** Host metadata collected during discovery */
 export interface HostMetadata {
 	/** Hostname (from mDNS, DNS reverse lookup, NetBIOS, SNMP, TLS, etc.) */
@@ -353,6 +365,8 @@ export interface HostMetadata {
 	readonly snmpInfo?: SnmpDeviceInfo;
 	/** TLS certificate Subject Alternative Names (dNSName) */
 	readonly tlsNames: readonly string[];
+	/** Service banners harvested via TCP banner-grab */
+	readonly banners?: readonly ServiceBanner[];
 }
 
 export interface DiscoveryResult {
@@ -425,7 +439,33 @@ export const DISCOVERY_METHODS = [
 		description: 'Read OS ARP cache for MAC addresses (no scan)',
 		requiresPrivileges: false,
 	},
+	{
+		value: 'snmp' as const,
+		label: 'SNMP Broadcast',
+		description: 'Query sysName via SNMP v2c (opt-in, can be noisy)',
+		requiresPrivileges: false,
+	},
+	{
+		value: 'llmnr' as const,
+		label: 'LLMNR',
+		description: 'Multicast PTR resolution for Windows-style hosts',
+		requiresPrivileges: false,
+	},
 ] as const;
+
+/**
+ * Discovery methods that are enabled by default. SNMP is intentionally
+ * excluded because broadcast SNMP queries can be noisy on some networks.
+ */
+export const DEFAULT_DISCOVERY_METHODS: readonly DiscoveryMethod[] = [
+	'tcp_connect',
+	'mdns',
+	'ssdp',
+	'udp_scan',
+	'ws_discovery',
+	'arp_cache',
+	'llmnr',
+];
 
 export const DEFAULT_SYN_PORTS = [22, 80, 443, 445, 3389] as const;
 
@@ -622,6 +662,8 @@ export interface UnifiedHost {
 	snmpInfo: SnmpDeviceInfo | null;
 	/** TLS certificate Subject Alternative Names */
 	tlsNames: string[];
+	/** Service banners harvested via TCP banner-grab */
+	serviceBanners: ServiceBanner[];
 	/** Discovery methods that found this host */
 	discoveryMethods: string[];
 	/** Discovery details */
@@ -840,6 +882,17 @@ const mergeScalarMetadata = (host: UnifiedHost, metadata: HostMetadata): void =>
 			if (!host.tlsNames.includes(name)) host.tlsNames.push(name);
 		}
 	}
+	if (metadata.banners && metadata.banners.length > 0) {
+		for (const banner of metadata.banners) {
+			const exists = host.serviceBanners.some(
+				(existing) =>
+					existing.protocol === banner.protocol &&
+					existing.version === banner.version &&
+					existing.raw === banner.raw
+			);
+			if (!exists) host.serviceBanners.push(banner);
+		}
+	}
 };
 
 /** Merge SSDP device info (field-level merge, preferring existing non-null values) */
@@ -922,6 +975,10 @@ const collectObservations = (
 				// NetBIOS name lives on metadata.netbiosName, not metadata.hostname.
 				// Treat it as a separate hostname signal for merging purposes.
 				recordHostname(observation, metadata.netbiosName, 'netbios');
+				// SNMP sysName may differ from metadata.hostname when another
+				// source already populated hostname; surface it as a signal so
+				// it participates in hostname-based union-find merging.
+				recordHostname(observation, metadata.snmpInfo?.sysName, 'snmp');
 				recordMac(observation, metadata.macAddress);
 			}
 		}
@@ -1011,6 +1068,7 @@ const buildUnifiedHost = (group: readonly IpObservation[]): UnifiedHost => {
 		wsDiscovery: null,
 		snmpInfo: null,
 		tlsNames: [],
+		serviceBanners: [],
 		discoveryMethods: [],
 		discoveries: [],
 		ports: [],
