@@ -3,7 +3,6 @@ fn main() {
     #[cfg(target_os = "macos")]
     {
         build_swift_helper();
-        build_net_scanner_daemon();
     }
 
     tauri_build::build()
@@ -131,71 +130,5 @@ fn build_swift_helper() {
         // /usr/lib/swift/libswiftCore.dylib is embedded in the dyld shared cache
         // and does not exist as a physical file, but dyld resolves it automatically.
         println!("cargo:rustc-link-arg=-Wl,-rpath,/usr/lib/swift");
-    }
-}
-
-/// Build the NetScannerDaemon Swift executable
-///
-/// This daemon runs as a launchd service with root privileges for network scanning.
-/// It's only used when the app is properly signed and notarized.
-#[cfg(target_os = "macos")]
-fn build_net_scanner_daemon() {
-    use std::env;
-    use std::path::PathBuf;
-    use std::process::Command;
-
-    let manifest_dir = PathBuf::from(env::var("CARGO_MANIFEST_DIR").unwrap());
-    let daemon_package_dir = manifest_dir.join("swift").join("NetScannerDaemon");
-
-    // Skip if package doesn't exist
-    if !daemon_package_dir.exists() {
-        println!(
-            "cargo:warning=NetScannerDaemon not found at {:?}, skipping",
-            daemon_package_dir
-        );
-        return;
-    }
-
-    let target = env::var("TARGET").unwrap();
-    let profile = env::var("PROFILE").unwrap();
-
-    let swift_config = match profile.as_str() {
-        "release" => "release",
-        _ => "debug",
-    };
-
-    let swift_arch = if target.contains("aarch64") {
-        "arm64"
-    } else if target.contains("x86_64") {
-        "x86_64"
-    } else {
-        println!(
-            "cargo:warning=Unsupported architecture for NetScannerDaemon: {}",
-            target
-        );
-        return;
-    };
-
-    println!("cargo:rerun-if-changed=swift/NetScannerDaemon/Sources/");
-    println!("cargo:rerun-if-changed=swift/NetScannerDaemon/Package.swift");
-
-    // Build the daemon
-    let status = Command::new("swift")
-        .current_dir(&daemon_package_dir)
-        .args([
-            "build",
-            "-c",
-            swift_config,
-            "--arch",
-            swift_arch,
-            "--product",
-            "NetScannerDaemon",
-        ])
-        .status()
-        .expect("Failed to execute swift build for NetScannerDaemon");
-
-    if !status.success() {
-        // Don't fail the build - daemon is optional for development
-        println!("cargo:warning=NetScannerDaemon build failed (optional for development)");
     }
 }

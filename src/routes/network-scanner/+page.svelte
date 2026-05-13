@@ -1,21 +1,16 @@
 <script lang="ts">
 	import {
-		AlertCircle,
 		Check,
 		CheckCircle2,
 		ChevronRight,
 		Clock,
 		Download,
-		ExternalLink,
 		Loader2,
 		Network,
 		Play,
 		Radar,
 		RefreshCw,
 		Server,
-		Settings,
-		Shield,
-		ShieldCheck,
 		Square,
 		X,
 	} from '@lucide/svelte';
@@ -66,22 +61,15 @@
 		startNetworkScan,
 		WEB_PORTS,
 		WELL_KNOWN_SERVICES,
-		checkNetScannerPrivileges,
-		setupNetScannerPrivileges,
 		type DiscoveryEvent,
-		type DiscoveryInfo,
 		type DiscoveryMethod,
 		type DiscoveryOptions,
 		type DiscoveryProgress,
 		type DiscoveryResult,
-		type HostMetadata,
 		type HostResult,
 		type LocalNetworkInfo,
-		type MdnsServiceInfo,
 		type NetworkInterface,
-		type PortInfo,
 		type PortPreset,
-		type PrivilegeStatus,
 		type ScanMode,
 		type ScanProgress,
 		type ScanResults,
@@ -107,21 +95,16 @@
 	// Derived: any resolution enabled
 	const resolveHostname = $derived(resolveDns || resolveMdns || resolveNetbios);
 
-	// Discovery options (only non-privileged methods enabled by default)
+	// Discovery options (all remaining methods are userspace)
 	let discoveryMethods = $state<Set<DiscoveryMethod>>(
-		new Set(DISCOVERY_METHODS.filter((m) => !m.requiresPrivileges).map((m) => m.value))
+		new Set(DISCOVERY_METHODS.map((m) => m.value))
 	);
-	let availableMethods = $state<Map<string, boolean>>(new Map());
 	let discoveryResults = $state<DiscoveryResult[]>([]);
 	let isDiscovering = $state(false);
 
 	// Per-method progress tracking
 	let methodProgress = $state<Map<string, DiscoveryProgress>>(new Map());
 	let currentDiscoveryId = $state<string | null>(null);
-
-	// Privilege state
-	let privilegeStatus = $state<PrivilegeStatus | null>(null);
-	let isSettingUpPrivileges = $state(false);
 
 	// Network interface state
 	let networkInfo = $state<LocalNetworkInfo | null>(null);
@@ -216,10 +199,9 @@
 	// Event listener cleanup
 	let unlistenFn = $state<(() => void) | null>(null);
 
-	// Load available discovery methods and privilege status on mount, cleanup on unmount
+	// Load available discovery methods on mount, cleanup on unmount
 	$effect(() => {
 		handleLoadDiscoveryMethods();
-		handleCheckPrivileges();
 
 		return () => {
 			stopTimer();
@@ -431,45 +413,10 @@
 
 	const handleLoadDiscoveryMethods = async () => {
 		try {
-			const methods = await getDiscoveryMethods();
-			availableMethods = new Map(methods);
+			// Sanity-check availability; all remaining methods are unconditionally true.
+			await getDiscoveryMethods();
 		} catch (e) {
 			toast.error('Failed to check discovery method availability');
-		}
-	};
-
-	const handleCheckPrivileges = async () => {
-		try {
-			privilegeStatus = await checkNetScannerPrivileges();
-		} catch {
-			// Net-scanner sidecar not available - silently handle
-			privilegeStatus = null;
-		}
-	};
-
-	const handleSetupPrivileges = async () => {
-		isSettingUpPrivileges = true;
-		try {
-			privilegeStatus = await setupNetScannerPrivileges();
-			if (privilegeStatus.setupCompleted) {
-				toast.success('Privilege setup completed', {
-					description: 'Advanced scanning methods are now available',
-				});
-				// Reload discovery methods to reflect new availability
-				await handleLoadDiscoveryMethods();
-				// Enable and check privileged methods now that they're available
-				const privilegedMethods = DISCOVERY_METHODS.filter((m) => m.requiresPrivileges).map(
-					(m) => m.value
-				);
-				discoveryMethods = new Set([...discoveryMethods, ...privilegedMethods]);
-			}
-		} catch (e) {
-			const msg = e instanceof Error ? e.message : String(e);
-			if (!msg.includes('cancelled')) {
-				toast.error('Privilege setup failed', { description: msg });
-			}
-		} finally {
-			isSettingUpPrivileges = false;
 		}
 	};
 
@@ -729,10 +676,8 @@
 			</p>
 			<FormCheckboxGroup>
 				{#each DISCOVERY_METHODS as method (method.value)}
-					{@const privilegesGranted = privilegeStatus?.setupCompleted ?? false}
-					{@const isAvailable = method.requiresPrivileges ? privilegesGranted : true}
 					{@const isSelected = discoveryMethods.has(method.value)}
-					{@const isDisabled = !isAvailable || isDiscovering || isScanning}
+					{@const isDisabled = isDiscovering || isScanning}
 					<FormCheckbox
 						label={method.label}
 						checked={isSelected}
@@ -1016,61 +961,6 @@
 
 	<!-- Results Panel -->
 	<div class="relative flex h-full flex-col overflow-hidden">
-		<!-- Privilege Status Banners -->
-		{#if privilegeStatus}
-			{#if privilegeStatus.requiresApproval}
-				<!-- macOS: Waiting for user approval in System Settings -->
-				<div class="flex shrink-0 items-center gap-3 border-b bg-info/10 px-4 py-2">
-					<Settings class="h-4 w-4 text-info" />
-					<span class="flex-1 text-xs text-info">
-						Approve Kogu in System Settings → General → Login Items & Extensions
-					</span>
-					<a
-						href="https://github.com/seijikohara/kogu/blob/main/docs/network-scanner/macos-setup.md"
-						target="_blank"
-						rel="noopener noreferrer"
-						class="flex items-center gap-1 text-xs text-info underline-offset-2 hover:underline"
-					>
-						Learn More
-						<ExternalLink class="h-3 w-3" />
-					</a>
-					<ActionButton
-						label="Check Status"
-						loading={isSettingUpPrivileges}
-						loadingLabel="Checking..."
-						size="sm"
-						class="w-auto bg-info text-info-foreground hover:bg-info/90"
-						onclick={handleCheckPrivileges}
-					/>
-				</div>
-			{:else if !privilegeStatus.setupCompleted && privilegeStatus.setupAvailable}
-				<!-- Setup required -->
-				<div class="flex shrink-0 items-center gap-3 border-b bg-warning/10 px-4 py-2">
-					<Shield class="h-4 w-4 text-warning" />
-					<span class="flex-1 text-xs text-warning">
-						ICMP Ping, ARP Scan, and TCP SYN require privilege setup
-					</span>
-					<a
-						href="https://github.com/seijikohara/kogu/blob/main/docs/network-scanner/README.md"
-						target="_blank"
-						rel="noopener noreferrer"
-						class="flex items-center gap-1 text-xs text-warning underline-offset-2 hover:underline"
-					>
-						Learn More
-						<ExternalLink class="h-3 w-3" />
-					</a>
-					<ActionButton
-						label="Setup Privileges"
-						loading={isSettingUpPrivileges}
-						loadingLabel="Setting up..."
-						size="sm"
-						class="w-auto bg-warning text-warning-foreground hover:bg-warning/90"
-						onclick={handleSetupPrivileges}
-					/>
-				</div>
-			{/if}
-		{/if}
-
 		<!-- Discovery Progress Panel -->
 		{#if isDiscovering}
 			<div class="shrink-0 border-b bg-surface-2 px-4 py-3">

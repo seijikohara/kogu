@@ -238,14 +238,10 @@
 	};
 
 	const METHOD_LABELS: Record<string, string> = {
-		icmp_ping: 'ICMP Ping',
-		arp_scan: 'ARP Scan',
-		tcp_syn: 'TCP SYN',
 		tcp_connect: 'TCP Connect',
 		mdns: 'mDNS/Bonjour',
 		ssdp: 'SSDP/UPnP',
 		udp_scan: 'UDP Scan',
-		icmpv6_ping: 'ICMPv6 Ping',
 		ws_discovery: 'WS-Discovery',
 		arp_cache: 'ARP Cache',
 		local: 'Local',
@@ -255,12 +251,6 @@
 
 	const getMethodDescription = (method: string): string => {
 		switch (method) {
-			case 'icmp_ping':
-				return 'ICMP Echo Request (ping)';
-			case 'arp_scan':
-				return 'ARP Request (local network)';
-			case 'tcp_syn':
-				return 'TCP SYN Probe (half-open)';
 			case 'tcp_connect':
 				return 'TCP Connect (full handshake)';
 			case 'mdns':
@@ -269,8 +259,6 @@
 				return 'SSDP/UPnP Discovery';
 			case 'udp_scan':
 				return 'UDP Probe (DNS, NetBIOS, SNMP)';
-			case 'icmpv6_ping':
-				return 'ICMPv6 Echo Request';
 			case 'ws_discovery':
 				return 'WS-Discovery (SOAP/UDP)';
 			case 'arp_cache':

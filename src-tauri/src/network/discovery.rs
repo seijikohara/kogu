@@ -1,41 +1,22 @@
 //! Host discovery methods for network scanning
 //!
-//! Provides multiple methods for discovering live hosts:
-//! - ICMP Ping (cross-platform, may require elevated privileges on some systems)
-//! - ARP Scan (local network only, requires libpcap and elevated privileges)
-//! - TCP Connect (no special privileges, uses standard OS connect)
-//! - mDNS/Bonjour (no special privileges, discovers advertised services)
+//! Provides userspace methods for discovering live hosts without requiring
+//! raw socket privileges:
+//! - TCP Connect (probes common ports via standard OS connect)
+//! - mDNS/Bonjour (discovers advertised services)
+//! - SSDP/UPnP (discovers UPnP devices)
+//! - UDP Scan (probes common UDP ports)
+//! - WS-Discovery (discovers Windows devices and printers)
+//! - ARP Cache (reads the OS ARP table)
 
 use std::collections::HashSet;
-use std::net::{IpAddr, Ipv4Addr, Ipv6Addr, SocketAddr};
+use std::net::{IpAddr, SocketAddr};
 use std::sync::Arc;
 use std::time::Duration;
 
 use futures::stream::FuturesUnordered;
 use futures::StreamExt;
-#[cfg(unix)]
-use ipnetwork::IpNetwork;
-#[cfg(unix)]
-use pnet::datalink::{self, Channel as PnetChannel, NetworkInterface};
-#[cfg(unix)]
-use pnet::packet::arp::{ArpHardwareTypes, ArpOperations, ArpPacket, MutableArpPacket};
-#[cfg(unix)]
-use pnet::packet::ethernet::{EtherTypes, EthernetPacket, MutableEthernetPacket};
-#[cfg(unix)]
-use pnet::packet::ip::IpNextHeaderProtocols;
-#[cfg(unix)]
-use pnet::packet::tcp::{MutableTcpPacket, TcpFlags, TcpPacket};
-#[cfg(unix)]
-use pnet::packet::Packet;
-#[cfg(unix)]
-use pnet::transport::{
-    self, tcp_packet_iter, TransportChannelType, TransportProtocol, TransportReceiver,
-    TransportSender,
-};
-#[cfg(unix)]
-use pnet::util::MacAddr;
 use serde::{Deserialize, Serialize};
-use surge_ping::{Client, Config, PingIdentifier, PingSequence};
 use tokio::sync::Semaphore;
 use tokio::time::timeout;
 
@@ -47,23 +28,15 @@ use super::interfaces::discover_mdns_services;
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default)]
 #[serde(rename_all = "snake_case")]
 pub enum DiscoveryMethod {
-    /// ICMP Echo Request (ping)
-    #[default]
-    IcmpPing,
-    /// ARP scan (local network only)
-    ArpScan,
     /// TCP Connect scan to common ports (no privileges needed)
+    #[default]
     TcpConnect,
-    /// TCP SYN scan (half-open) - requires raw socket privileges
-    TcpSyn,
     /// mDNS/Bonjour service discovery
     Mdns,
     /// SSDP/UPnP discovery for smart devices
     Ssdp,
     /// UDP scan to common ports (DNS, NetBIOS, SNMP)
     UdpScan,
-    /// ICMPv6 Echo Request (ping) for IPv6 hosts
-    Icmpv6Ping,
     /// WS-Discovery (Windows devices, printers)
     WsDiscovery,
     /// ARP cache reading (no privileges needed)
@@ -75,14 +48,10 @@ pub enum DiscoveryMethod {
 impl std::fmt::Display for DiscoveryMethod {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let name = match self {
-            Self::IcmpPing => "icmp_ping",
-            Self::ArpScan => "arp_scan",
             Self::TcpConnect => "tcp_connect",
-            Self::TcpSyn => "tcp_syn",
             Self::Mdns => "mdns",
             Self::Ssdp => "ssdp",
             Self::UdpScan => "udp_scan",
-            Self::Icmpv6Ping => "icmpv6_ping",
             Self::WsDiscovery => "ws_discovery",
             Self::ArpCache => "arp_cache",
             Self::None => "none",
@@ -186,7 +155,7 @@ pub struct DiscoveryOptions {
 impl Default for DiscoveryOptions {
     fn default() -> Self {
         Self {
-            methods: vec![DiscoveryMethod::IcmpPing],
+            methods: vec![DiscoveryMethod::TcpConnect],
             timeout_ms: 1000,
             concurrency: 100,
             syn_ports: Some(vec![80, 443, 22, 445, 139]),
@@ -392,26 +361,10 @@ async fn execute_discovery_method(
     options: &DiscoveryOptions,
 ) -> DiscoveryResult {
     match method {
-        DiscoveryMethod::IcmpPing => icmp_ping_discovery(targets, options).await,
-        #[cfg(unix)]
-        DiscoveryMethod::ArpScan => arp_scan_discovery(targets, options).await,
-        #[cfg(not(unix))]
-        DiscoveryMethod::ArpScan => DiscoveryResult {
-            method: "arp_scan".to_string(),
-            hosts: vec![],
-            hostnames: std::collections::HashMap::new(),
-            host_metadata: std::collections::HashMap::new(),
-            unreachable: targets.iter().map(ToString::to_string).collect(),
-            duration_ms: 0,
-            error: Some("ARP scan is not available on this platform".to_string()),
-            requires_privileges: false,
-        },
         DiscoveryMethod::TcpConnect => tcp_connect_discovery(targets, options).await,
-        DiscoveryMethod::TcpSyn => tcp_syn_discovery(targets, options).await,
         DiscoveryMethod::Mdns => mdns_discovery(options).await,
         DiscoveryMethod::Ssdp => ssdp_discovery(options).await,
         DiscoveryMethod::UdpScan => udp_scan_discovery(targets, options).await,
-        DiscoveryMethod::Icmpv6Ping => icmpv6_ping_discovery(targets, options).await,
         DiscoveryMethod::WsDiscovery => ws_discovery_method(options).await,
         DiscoveryMethod::ArpCache => arp_cache_discovery(targets),
         DiscoveryMethod::None => DiscoveryResult {
@@ -799,374 +752,6 @@ async fn resolve_dns_ptr_batch(
 }
 
 // =============================================================================
-// ICMP Ping Discovery
-// =============================================================================
-
-/// Number of ICMP ping retries for better discovery accuracy
-const ICMP_RETRY_COUNT: u32 = 2;
-
-/// Discover hosts using ICMP ping with retry support
-async fn icmp_ping_discovery(targets: &[IpAddr], options: &DiscoveryOptions) -> DiscoveryResult {
-    let start = std::time::Instant::now();
-    let timeout_per_ping =
-        Duration::from_millis(u64::from(options.timeout_ms) / (u64::from(ICMP_RETRY_COUNT) + 1));
-    let semaphore = Arc::new(Semaphore::new(options.concurrency as usize));
-
-    let mut hosts = Vec::new();
-    let mut unreachable = Vec::new();
-
-    // Create ping client
-    let client = match Client::new(&Config::default()) {
-        Ok(c) => Arc::new(c),
-        Err(e) => {
-            return DiscoveryResult {
-                method: "icmp_ping".to_string(),
-                hosts: vec![],
-                hostnames: std::collections::HashMap::new(),
-                host_metadata: std::collections::HashMap::new(),
-                unreachable: targets.iter().map(ToString::to_string).collect(),
-                duration_ms: start.elapsed().as_millis() as u64,
-                error: Some(format!(
-                    "Failed to create ICMP client: {e}. May require elevated privileges."
-                )),
-                requires_privileges: true,
-            };
-        }
-    };
-
-    let mut handles = Vec::with_capacity(targets.len());
-
-    for (idx, &target) in targets.iter().enumerate() {
-        let sem = Arc::clone(&semaphore);
-        let client = Arc::clone(&client);
-
-        let handle = tokio::spawn(async move {
-            let _permit = sem.acquire().await.ok()?;
-
-            let payload = [0u8; 56];
-            let mut pinger = client.pinger(target, PingIdentifier(idx as u16)).await;
-
-            // Try multiple ping attempts
-            for seq in 0..=ICMP_RETRY_COUNT as u16 {
-                match timeout(timeout_per_ping, pinger.ping(PingSequence(seq), &payload)).await {
-                    Ok(Ok(_reply)) => return Some((target, true)),
-                    Ok(Err(_)) | Err(_) => {
-                        // Continue to next attempt
-                    }
-                }
-            }
-
-            Some((target, false))
-        });
-
-        handles.push(handle);
-    }
-
-    for handle in handles {
-        if let Ok(Some((ip, alive))) = handle.await {
-            if alive {
-                hosts.push(ip.to_string());
-            } else {
-                unreachable.push(ip.to_string());
-            }
-        }
-    }
-
-    DiscoveryResult {
-        method: "icmp_ping".to_string(),
-        hosts,
-        hostnames: std::collections::HashMap::new(),
-        host_metadata: std::collections::HashMap::new(),
-        unreachable,
-        duration_ms: start.elapsed().as_millis() as u64,
-        error: None,
-        requires_privileges: cfg!(target_os = "linux"),
-    }
-}
-
-// =============================================================================
-// ARP Scan Discovery
-// =============================================================================
-
-/// Discover hosts using ARP scan (local network only)
-#[cfg(unix)]
-async fn arp_scan_discovery(targets: &[IpAddr], options: &DiscoveryOptions) -> DiscoveryResult {
-    let start = std::time::Instant::now();
-
-    // ARP only works for IPv4 on local network
-    let ipv4_targets: Vec<Ipv4Addr> = targets
-        .iter()
-        .filter_map(|ip| match ip {
-            IpAddr::V4(v4) => Some(*v4),
-            IpAddr::V6(_) => None,
-        })
-        .collect();
-
-    if ipv4_targets.is_empty() {
-        return DiscoveryResult {
-            method: "arp_scan".to_string(),
-            hosts: vec![],
-            hostnames: std::collections::HashMap::new(),
-            host_metadata: std::collections::HashMap::new(),
-            unreachable: vec![],
-            duration_ms: start.elapsed().as_millis() as u64,
-            error: None,
-            requires_privileges: false,
-        };
-    }
-
-    // Find a suitable network interface
-    let interface = match find_interface_for_targets(&ipv4_targets) {
-        Some(iface) => iface,
-        None => {
-            return DiscoveryResult {
-                method: "arp_scan".to_string(),
-                hosts: vec![],
-                hostnames: std::collections::HashMap::new(),
-                host_metadata: std::collections::HashMap::new(),
-                unreachable: targets.iter().map(ToString::to_string).collect(),
-                duration_ms: start.elapsed().as_millis() as u64,
-                error: Some("No suitable network interface found for ARP scan".to_string()),
-                requires_privileges: true,
-            };
-        }
-    };
-
-    // Perform ARP scan
-    match perform_arp_scan(&interface, &ipv4_targets, options.timeout_ms).await {
-        Ok(discovered) => {
-            use super::oui;
-
-            // Build host metadata with MAC addresses and vendor lookup
-            let mut host_metadata = std::collections::HashMap::new();
-            let hosts: Vec<String> = discovered
-                .iter()
-                .map(|(ip, mac)| {
-                    let mac_str = oui::format_mac(mac);
-                    let vendor = oui::lookup_vendor(&mac_str).map(String::from);
-                    host_metadata.insert(
-                        ip.to_string(),
-                        HostMetadata {
-                            mac_address: Some(mac_str),
-                            vendor,
-                            ..Default::default()
-                        },
-                    );
-                    ip.to_string()
-                })
-                .collect();
-
-            let discovered_set: HashSet<_> = discovered.keys().copied().collect();
-            let unreachable: Vec<String> = ipv4_targets
-                .iter()
-                .filter(|ip| !discovered_set.contains(ip))
-                .map(ToString::to_string)
-                .collect();
-
-            DiscoveryResult {
-                method: "arp_scan".to_string(),
-                hosts,
-                hostnames: std::collections::HashMap::new(),
-                host_metadata,
-                unreachable,
-                duration_ms: start.elapsed().as_millis() as u64,
-                error: None,
-                requires_privileges: true,
-            }
-        }
-        Err(e) => DiscoveryResult {
-            method: "arp_scan".to_string(),
-            hosts: vec![],
-            hostnames: std::collections::HashMap::new(),
-            host_metadata: std::collections::HashMap::new(),
-            unreachable: targets.iter().map(ToString::to_string).collect(),
-            duration_ms: start.elapsed().as_millis() as u64,
-            error: Some(e),
-            requires_privileges: true,
-        },
-    }
-}
-
-/// Find a network interface that can reach the target IPs
-#[cfg(unix)]
-fn find_interface_for_targets(targets: &[Ipv4Addr]) -> Option<NetworkInterface> {
-    let interfaces = datalink::interfaces();
-
-    for iface in interfaces {
-        if iface.is_loopback() || !iface.is_up() {
-            continue;
-        }
-
-        for ip in &iface.ips {
-            if let IpNetwork::V4(network) = ip {
-                // Check if any target is in this network
-                for target in targets {
-                    if network.contains(*target) {
-                        return Some(iface.clone());
-                    }
-                }
-            }
-        }
-    }
-
-    None
-}
-
-/// Number of ARP request retries for better discovery accuracy
-#[cfg(unix)]
-const ARP_RETRY_COUNT: u32 = 3;
-
-/// Delay between ARP retry rounds in milliseconds
-#[cfg(unix)]
-const ARP_RETRY_DELAY_MS: u64 = 100;
-
-/// Perform ARP scan on the given interface with retry support
-/// Returns a map of IP address to MAC address (as 6-byte array)
-#[cfg(unix)]
-async fn perform_arp_scan(
-    interface: &NetworkInterface,
-    targets: &[Ipv4Addr],
-    timeout_ms: u32,
-) -> Result<std::collections::HashMap<Ipv4Addr, [u8; 6]>, String> {
-    let source_mac = interface
-        .mac
-        .ok_or_else(|| "Interface has no MAC address".to_string())?;
-
-    let source_ip = interface
-        .ips
-        .iter()
-        .find_map(|ip| match ip {
-            IpNetwork::V4(net) => Some(net.ip()),
-            _ => None,
-        })
-        .ok_or_else(|| "Interface has no IPv4 address".to_string())?;
-
-    // Create datalink channel
-    let (mut tx, mut rx) = match datalink::channel(interface, Default::default()) {
-        Ok(PnetChannel::Ethernet(tx, rx)) => (tx, rx),
-        Ok(_) => return Err("Unsupported channel type".to_string()),
-        Err(e) => {
-            return Err(format!(
-                "Failed to create datalink channel: {e}. Requires elevated privileges."
-            ))
-        }
-    };
-
-    let mut discovered: std::collections::HashMap<Ipv4Addr, [u8; 6]> =
-        std::collections::HashMap::new();
-    let target_set: HashSet<_> = targets.iter().copied().collect();
-
-    // Send ARP requests with retry for undiscovered hosts
-    for retry in 0..ARP_RETRY_COUNT {
-        // Determine which targets still need ARP requests
-        let pending_targets: Vec<_> = if retry == 0 {
-            targets.to_vec()
-        } else {
-            targets
-                .iter()
-                .copied()
-                .filter(|ip| !discovered.contains_key(ip))
-                .collect()
-        };
-
-        if pending_targets.is_empty() {
-            break;
-        }
-
-        // Add delay between retries (not on first attempt)
-        if retry > 0 {
-            tokio::time::sleep(Duration::from_millis(ARP_RETRY_DELAY_MS)).await;
-        }
-
-        // Send ARP requests for pending targets
-        for target in &pending_targets {
-            let _ = send_arp_request(&mut tx, source_mac, source_ip, *target);
-        }
-
-        // Collect responses for this round
-        let round_timeout =
-            Duration::from_millis(u64::from(timeout_ms) / u64::from(ARP_RETRY_COUNT));
-        let start = std::time::Instant::now();
-
-        while start.elapsed() < round_timeout {
-            match rx.next() {
-                Ok(packet) => {
-                    if let Some(ethernet) = EthernetPacket::new(packet) {
-                        if ethernet.get_ethertype() == EtherTypes::Arp {
-                            if let Some(arp) = ArpPacket::new(ethernet.payload()) {
-                                if arp.get_operation() == ArpOperations::Reply {
-                                    let sender_ip = arp.get_sender_proto_addr();
-                                    if target_set.contains(&sender_ip)
-                                        && !discovered.contains_key(&sender_ip)
-                                    {
-                                        // Capture MAC address from ARP reply
-                                        let sender_mac = arp.get_sender_hw_addr();
-                                        let mac_bytes = [
-                                            sender_mac.0,
-                                            sender_mac.1,
-                                            sender_mac.2,
-                                            sender_mac.3,
-                                            sender_mac.4,
-                                            sender_mac.5,
-                                        ];
-                                        discovered.insert(sender_ip, mac_bytes);
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-                Err(_) => {
-                    tokio::time::sleep(Duration::from_millis(5)).await;
-                }
-            }
-
-            // Early exit if all targets discovered
-            if discovered.len() == targets.len() {
-                return Ok(discovered);
-            }
-        }
-    }
-
-    Ok(discovered)
-}
-
-/// Send a single ARP request for the given target IP
-#[cfg(unix)]
-fn send_arp_request(
-    tx: &mut Box<dyn datalink::DataLinkSender>,
-    source_mac: MacAddr,
-    source_ip: Ipv4Addr,
-    target_ip: Ipv4Addr,
-) -> Result<(), String> {
-    let mut ethernet_buffer = [0u8; 42];
-    let mut ethernet_packet = MutableEthernetPacket::new(&mut ethernet_buffer)
-        .ok_or("Failed to create ethernet packet")?;
-
-    ethernet_packet.set_destination(MacAddr::broadcast());
-    ethernet_packet.set_source(source_mac);
-    ethernet_packet.set_ethertype(EtherTypes::Arp);
-
-    let mut arp_buffer = [0u8; 28];
-    let mut arp_packet =
-        MutableArpPacket::new(&mut arp_buffer).ok_or("Failed to create ARP packet")?;
-
-    arp_packet.set_hardware_type(ArpHardwareTypes::Ethernet);
-    arp_packet.set_protocol_type(EtherTypes::Ipv4);
-    arp_packet.set_hw_addr_len(6);
-    arp_packet.set_proto_addr_len(4);
-    arp_packet.set_operation(ArpOperations::Request);
-    arp_packet.set_sender_hw_addr(source_mac);
-    arp_packet.set_sender_proto_addr(source_ip);
-    arp_packet.set_target_hw_addr(MacAddr::zero());
-    arp_packet.set_target_proto_addr(target_ip);
-
-    ethernet_packet.set_payload(arp_packet.packet());
-    tx.send_to(ethernet_packet.packet(), None);
-    Ok(())
-}
-
-// =============================================================================
 // mDNS Discovery
 // =============================================================================
 
@@ -1387,392 +972,28 @@ async fn tcp_connect_discovery(targets: &[IpAddr], options: &DiscoveryOptions) -
 }
 
 // =============================================================================
-// TCP SYN Discovery (Half-Open Scan) - Requires Raw Socket Privileges
-// =============================================================================
-
-/// Default source port for TCP SYN scanning
-#[cfg(unix)]
-const TCP_SYN_SOURCE_PORT: u16 = 54321;
-
-/// Discover hosts using TCP SYN scan (half-open scan, requires privileges)
-///
-/// This method sends TCP SYN packets and listens for SYN-ACK or RST responses.
-/// It's faster than TCP connect scan because it doesn't complete the 3-way handshake.
-async fn tcp_syn_discovery(targets: &[IpAddr], options: &DiscoveryOptions) -> DiscoveryResult {
-    let start = std::time::Instant::now();
-    let timeout_duration = Duration::from_millis(u64::from(options.timeout_ms));
-
-    // Only support IPv4 for now (IPv6 raw sockets are more complex)
-    let ipv4_targets: Vec<Ipv4Addr> = targets
-        .iter()
-        .filter_map(|ip| match ip {
-            IpAddr::V4(v4) => Some(*v4),
-            IpAddr::V6(_) => None,
-        })
-        .collect();
-
-    if ipv4_targets.is_empty() {
-        return DiscoveryResult {
-            method: "tcp_syn".to_string(),
-            hosts: vec![],
-            hostnames: std::collections::HashMap::new(),
-            host_metadata: std::collections::HashMap::new(),
-            unreachable: targets.iter().map(ToString::to_string).collect(),
-            duration_ms: start.elapsed().as_millis() as u64,
-            error: Some("TCP SYN scan only supports IPv4 addresses".to_string()),
-            requires_privileges: true,
-        };
-    }
-
-    // Use ports from options or default discovery ports
-    let ports = options
-        .syn_ports
-        .as_ref()
-        .map_or(CONNECT_DISCOVERY_PORTS, Vec::as_slice);
-
-    // Pre-calculate the list of all targets as strings for error cases
-    let all_targets_str: Vec<String> = ipv4_targets.iter().map(ToString::to_string).collect();
-
-    // Perform the TCP SYN scan in a blocking task since pnet is synchronous
-    let ports_vec = ports.to_vec();
-    let result = tokio::task::spawn_blocking(move || {
-        tcp_syn_scan_blocking(&ipv4_targets, &ports_vec, timeout_duration)
-    })
-    .await;
-
-    match result {
-        Ok(Ok((hosts, unreachable))) => DiscoveryResult {
-            method: "tcp_syn".to_string(),
-            hosts,
-            hostnames: std::collections::HashMap::new(),
-            host_metadata: std::collections::HashMap::new(),
-            unreachable,
-            duration_ms: start.elapsed().as_millis() as u64,
-            error: None,
-            requires_privileges: true,
-        },
-        Ok(Err(e)) => DiscoveryResult {
-            method: "tcp_syn".to_string(),
-            hosts: vec![],
-            hostnames: std::collections::HashMap::new(),
-            host_metadata: std::collections::HashMap::new(),
-            unreachable: all_targets_str.clone(),
-            duration_ms: start.elapsed().as_millis() as u64,
-            error: Some(e),
-            requires_privileges: true,
-        },
-        Err(e) => DiscoveryResult {
-            method: "tcp_syn".to_string(),
-            hosts: vec![],
-            hostnames: std::collections::HashMap::new(),
-            host_metadata: std::collections::HashMap::new(),
-            unreachable: all_targets_str,
-            duration_ms: start.elapsed().as_millis() as u64,
-            error: Some(format!("Task join error: {e}")),
-            requires_privileges: true,
-        },
-    }
-}
-
-/// Perform TCP SYN scan synchronously (runs in blocking task)
-/// Note: Only available on Unix systems (pnet's next_with_timeout is not supported on Windows)
-#[cfg(unix)]
-#[allow(clippy::significant_drop_tightening)]
-fn tcp_syn_scan_blocking(
-    targets: &[Ipv4Addr],
-    ports: &[u16],
-    timeout: Duration,
-) -> Result<(Vec<String>, Vec<String>), String> {
-    use std::collections::HashSet;
-    use std::sync::atomic::{AtomicBool, Ordering};
-    use std::sync::Arc;
-
-    // Create transport channel for sending TCP packets
-    let protocol =
-        TransportChannelType::Layer4(TransportProtocol::Ipv4(IpNextHeaderProtocols::Tcp));
-
-    let (mut tx, mut rx) = transport::transport_channel(4096, protocol)
-        .map_err(|e| format!("Failed to create transport channel: {e}"))?;
-
-    let alive_hosts: Arc<std::sync::Mutex<HashSet<Ipv4Addr>>> =
-        Arc::new(std::sync::Mutex::new(HashSet::new()));
-    let stop_flag = Arc::new(AtomicBool::new(false));
-
-    // Spawn receiver thread
-    let alive_hosts_clone = Arc::clone(&alive_hosts);
-    let stop_flag_clone = Arc::clone(&stop_flag);
-    let targets_set: HashSet<Ipv4Addr> = targets.iter().copied().collect();
-
-    let receiver_handle = std::thread::spawn(move || {
-        receive_syn_responses(&mut rx, &targets_set, &alive_hosts_clone, &stop_flag_clone);
-    });
-
-    // Send SYN packets to all targets and ports
-    let source_port = TCP_SYN_SOURCE_PORT;
-    for &target in targets {
-        for &port in ports {
-            if let Err(e) = send_syn_packet(&mut tx, target, port, source_port) {
-                eprintln!("Failed to send SYN to {target}:{port}: {e}");
-            }
-        }
-    }
-
-    // Wait for responses (with timeout)
-    std::thread::sleep(timeout);
-
-    // Signal receiver to stop
-    stop_flag.store(true, Ordering::SeqCst);
-
-    // Wait for receiver thread to finish (with small timeout)
-    let _ = receiver_handle.join();
-
-    // Collect results - acquire lock, collect data, release lock immediately
-    let (hosts, unreachable) = {
-        let alive = alive_hosts
-            .lock()
-            .unwrap_or_else(std::sync::PoisonError::into_inner);
-        let hosts: Vec<String> = alive.iter().map(ToString::to_string).collect();
-        let unreachable: Vec<String> = targets
-            .iter()
-            .filter(|t| !alive.contains(t))
-            .map(ToString::to_string)
-            .collect();
-        (hosts, unreachable)
-    };
-
-    Ok((hosts, unreachable))
-}
-
-/// TCP SYN scan stub for Windows (not supported due to pnet limitations)
-#[cfg(windows)]
-fn tcp_syn_scan_blocking(
-    _targets: &[Ipv4Addr],
-    _ports: &[u16],
-    _timeout: Duration,
-) -> Result<(Vec<String>, Vec<String>), String> {
-    // TCP SYN scan requires raw socket access which pnet doesn't fully support on Windows
-    Err("TCP SYN scan is not supported on Windows. Use TCP Connect scan instead.".to_string())
-}
-
-/// Send a TCP SYN packet to the specified target
-#[cfg(unix)]
-fn send_syn_packet(
-    tx: &mut TransportSender,
-    target: Ipv4Addr,
-    dest_port: u16,
-    source_port: u16,
-) -> Result<(), String> {
-    // Build TCP SYN packet
-    let mut tcp_buffer = [0u8; 20]; // Minimum TCP header size
-    let mut tcp_packet =
-        MutableTcpPacket::new(&mut tcp_buffer).ok_or("Failed to create TCP packet buffer")?;
-
-    tcp_packet.set_source(source_port);
-    tcp_packet.set_destination(dest_port);
-    tcp_packet.set_sequence(rand::random::<u32>());
-    tcp_packet.set_acknowledgement(0);
-    tcp_packet.set_data_offset(5); // 5 * 4 = 20 bytes (minimum header)
-    tcp_packet.set_reserved(0);
-    tcp_packet.set_flags(TcpFlags::SYN);
-    tcp_packet.set_window(65535);
-    tcp_packet.set_urgent_ptr(0);
-
-    // Calculate checksum (pseudo-header required)
-    let source_ip = get_source_ip_for_target(target);
-    let checksum = tcp_checksum(&tcp_packet.to_immutable(), source_ip, target);
-    tcp_packet.set_checksum(checksum);
-
-    // Send the packet
-    tx.send_to(tcp_packet, IpAddr::V4(target))
-        .map_err(|e| format!("Send error: {e}"))?;
-
-    Ok(())
-}
-
-/// Receive TCP responses (SYN-ACK or RST) and mark hosts as alive
-#[cfg(unix)]
-fn receive_syn_responses(
-    rx: &mut TransportReceiver,
-    targets: &HashSet<Ipv4Addr>,
-    alive_hosts: &Arc<std::sync::Mutex<HashSet<Ipv4Addr>>>,
-    stop_flag: &Arc<std::sync::atomic::AtomicBool>,
-) {
-    use std::sync::atomic::Ordering;
-
-    let mut iter = tcp_packet_iter(rx);
-
-    while !stop_flag.load(Ordering::SeqCst) {
-        // Use a short timeout for each receive attempt
-        match iter.next_with_timeout(Duration::from_millis(100)) {
-            Ok(Some((packet, source))) => {
-                let source_ip = match source {
-                    IpAddr::V4(v4) => v4,
-                    IpAddr::V6(_) => continue,
-                };
-
-                // Check if this is from one of our targets
-                if !targets.contains(&source_ip) {
-                    continue;
-                }
-
-                // Check if it's a response to our SYN (SYN-ACK or RST)
-                let flags = packet.get_flags();
-                if (flags & TcpFlags::SYN != 0 && flags & TcpFlags::ACK != 0)
-                    || (flags & TcpFlags::RST != 0)
-                {
-                    // Host is alive (responded to our SYN)
-                    if let Ok(mut hosts) = alive_hosts.lock() {
-                        hosts.insert(source_ip);
-                    }
-                }
-            }
-            Ok(None) => {
-                // Timeout, continue checking stop flag
-                continue;
-            }
-            Err(_) => {
-                // Error receiving, break out
-                break;
-            }
-        }
-    }
-}
-
-/// Get the source IP address to use for a given target
-#[cfg(unix)]
-fn get_source_ip_for_target(target: Ipv4Addr) -> Ipv4Addr {
-    // Find an appropriate interface for the target
-    for iface in datalink::interfaces() {
-        for ip in &iface.ips {
-            if let IpNetwork::V4(v4_net) = ip {
-                // Simple heuristic: use this interface if target is in same subnet
-                // or if it's a non-loopback interface
-                if v4_net.contains(target) || (!iface.is_loopback() && iface.is_up()) {
-                    return v4_net.ip();
-                }
-            }
-        }
-    }
-    // Fallback to unspecified address
-    Ipv4Addr::UNSPECIFIED
-}
-
-/// Calculate TCP checksum with pseudo-header
-#[cfg(unix)]
-fn tcp_checksum(tcp: &TcpPacket<'_>, source: Ipv4Addr, dest: Ipv4Addr) -> u16 {
-    // Create a pseudo-header for checksum calculation
-    // The proper way is to use pnet's checksum utilities
-    let tcp_len = tcp.packet().len();
-
-    // Build pseudo-header: source IP, dest IP, zero, protocol, TCP length
-    let mut pseudo_header = Vec::with_capacity(12 + tcp_len);
-    pseudo_header.extend_from_slice(&source.octets());
-    pseudo_header.extend_from_slice(&dest.octets());
-    pseudo_header.push(0); // Zero
-    pseudo_header.push(6); // TCP protocol number
-    pseudo_header.push((tcp_len >> 8) as u8);
-    pseudo_header.push((tcp_len & 0xff) as u8);
-    pseudo_header.extend_from_slice(tcp.packet());
-
-    // Calculate checksum
-    let mut sum: u32 = 0;
-    let mut i = 0;
-    while i < pseudo_header.len() {
-        let word = if i + 1 < pseudo_header.len() {
-            u16::from_be_bytes([pseudo_header[i], pseudo_header[i + 1]])
-        } else {
-            u16::from_be_bytes([pseudo_header[i], 0])
-        };
-        sum = sum.wrapping_add(u32::from(word));
-        i += 2;
-    }
-
-    // Fold 32-bit sum to 16-bit
-    while sum >> 16 != 0 {
-        sum = (sum & 0xFFFF) + (sum >> 16);
-    }
-
-    !sum as u16
-}
-
-// =============================================================================
 // Utility Functions
 // =============================================================================
 
-/// Check if the current process has the privileges needed for a discovery method
+/// Check if the current process can run a given discovery method.
 ///
-/// Note: This function is async because `surge_ping::Client::new` requires a tokio runtime.
-pub async fn check_privileges(method: DiscoveryMethod) -> bool {
-    match method {
-        DiscoveryMethod::IcmpPing => {
-            // Try to create a ping client (requires tokio runtime)
-            Client::new(&Config::default()).is_ok()
-        }
-        #[cfg(unix)]
-        DiscoveryMethod::ArpScan => {
-            // Try to create a datalink channel on any interface
-            let interfaces = datalink::interfaces();
-            for iface in interfaces {
-                if !iface.is_loopback() && iface.is_up() {
-                    if datalink::channel(&iface, Default::default()).is_ok() {
-                        return true;
-                    }
-                }
-            }
-            false
-        }
-        #[cfg(not(unix))]
-        DiscoveryMethod::ArpScan => {
-            // ARP scan is not available on Windows (requires WinPcap/Npcap)
-            false
-        }
-        #[cfg(unix)]
-        DiscoveryMethod::TcpSyn => {
-            // TCP SYN requires raw socket - check by trying to create one
-            let protocol =
-                TransportChannelType::Layer4(TransportProtocol::Ipv4(IpNextHeaderProtocols::Tcp));
-            transport::transport_channel(4096, protocol).is_ok()
-        }
-        #[cfg(windows)]
-        DiscoveryMethod::TcpSyn => {
-            // TCP SYN is not supported on Windows
-            false
-        }
-        DiscoveryMethod::TcpConnect
-        | DiscoveryMethod::Mdns
-        | DiscoveryMethod::Ssdp
-        | DiscoveryMethod::UdpScan
-        | DiscoveryMethod::Icmpv6Ping
-        | DiscoveryMethod::WsDiscovery
-        | DiscoveryMethod::ArpCache
-        | DiscoveryMethod::None => true,
-    }
+/// All remaining methods are userspace and require no special privileges,
+/// so this always returns `true`. Kept for API stability.
+pub fn check_privileges(_method: DiscoveryMethod) -> bool {
+    true
 }
 
-/// Get available discovery methods for the current system
+/// Get available discovery methods for the current system.
 ///
-/// Note: This function is async because privilege checking for ICMP requires a tokio runtime.
-pub async fn get_available_methods() -> Vec<(DiscoveryMethod, bool)> {
+/// All remaining methods are userspace and unconditionally available.
+pub fn get_available_methods() -> Vec<(DiscoveryMethod, bool)> {
     vec![
-        (DiscoveryMethod::TcpConnect, true), // Always available (no privileges needed)
-        (
-            DiscoveryMethod::IcmpPing,
-            check_privileges(DiscoveryMethod::IcmpPing).await,
-        ),
-        (
-            DiscoveryMethod::ArpScan,
-            check_privileges(DiscoveryMethod::ArpScan).await,
-        ),
-        (
-            DiscoveryMethod::TcpSyn,
-            check_privileges(DiscoveryMethod::TcpSyn).await,
-        ),
+        (DiscoveryMethod::TcpConnect, true),
         (DiscoveryMethod::Mdns, true),
-        (DiscoveryMethod::Ssdp, true),        // No privileges needed
-        (DiscoveryMethod::UdpScan, true),     // No privileges needed
-        (DiscoveryMethod::Icmpv6Ping, true),  // No privileges needed on most systems
-        (DiscoveryMethod::WsDiscovery, true), // No privileges needed
-        (DiscoveryMethod::ArpCache, true),    // No privileges needed (reads OS cache)
+        (DiscoveryMethod::Ssdp, true),
+        (DiscoveryMethod::UdpScan, true),
+        (DiscoveryMethod::WsDiscovery, true),
+        (DiscoveryMethod::ArpCache, true),
         (DiscoveryMethod::None, true),
     ]
 }
@@ -2382,115 +1603,6 @@ async fn udp_scan_discovery(targets: &[IpAddr], options: &DiscoveryOptions) -> D
 
     DiscoveryResult {
         method: "udp_scan".to_string(),
-        hosts,
-        hostnames: std::collections::HashMap::new(),
-        host_metadata: std::collections::HashMap::new(),
-        unreachable,
-        duration_ms: start.elapsed().as_millis() as u64,
-        error: None,
-        requires_privileges: false,
-    }
-}
-
-// =============================================================================
-// ICMPv6 Ping Discovery
-// =============================================================================
-
-/// ICMPv6 Echo Request (ping) for discovering IPv6 hosts
-///
-/// Uses ICMPv6 Echo Request/Reply (Type 128/129) to discover live hosts.
-/// This is different from ICMPv6 Neighbor Discovery Protocol (RFC 4861)
-/// which uses Neighbor Solicitation/Advertisement for link-layer address resolution.
-/// ICMPv6 ping works across routers while NDP is limited to the local link.
-async fn icmpv6_ping_discovery(targets: &[IpAddr], options: &DiscoveryOptions) -> DiscoveryResult {
-    let start = std::time::Instant::now();
-    let timeout_duration = Duration::from_millis(u64::from(options.timeout_ms));
-    let semaphore = Arc::new(Semaphore::new(options.concurrency as usize));
-
-    let mut hosts = Vec::new();
-    let mut unreachable = Vec::new();
-
-    // Filter to IPv6 targets only
-    let ipv6_targets: Vec<Ipv6Addr> = targets
-        .iter()
-        .filter_map(|ip| match ip {
-            IpAddr::V6(v6) => Some(*v6),
-            IpAddr::V4(_) => None,
-        })
-        .collect();
-
-    if ipv6_targets.is_empty() {
-        return DiscoveryResult {
-            method: "icmpv6_ping".to_string(),
-            hosts: vec![],
-            hostnames: std::collections::HashMap::new(),
-            host_metadata: std::collections::HashMap::new(),
-            unreachable: vec![],
-            duration_ms: start.elapsed().as_millis() as u64,
-            error: None,
-            requires_privileges: false,
-        };
-    }
-
-    // Use surge_ping for ICMPv6 Echo Request/Reply
-    let client = match Client::new(&Config::default()) {
-        Ok(c) => Arc::new(c),
-        Err(e) => {
-            return DiscoveryResult {
-                method: "icmpv6_ping".to_string(),
-                hosts: vec![],
-                hostnames: std::collections::HashMap::new(),
-                host_metadata: std::collections::HashMap::new(),
-                unreachable: ipv6_targets.iter().map(ToString::to_string).collect(),
-                duration_ms: start.elapsed().as_millis() as u64,
-                error: Some(format!("Failed to create ICMPv6 client: {e}")),
-                requires_privileges: true,
-            };
-        }
-    };
-
-    let mut handles = Vec::with_capacity(ipv6_targets.len());
-
-    for (idx, target) in ipv6_targets.iter().enumerate() {
-        let sem = Arc::clone(&semaphore);
-        let client = Arc::clone(&client);
-        let target = *target;
-
-        let handle = tokio::spawn(async move {
-            let _permit = sem.acquire().await.ok()?;
-
-            let payload = [0u8; 56];
-            let mut pinger = client
-                .pinger(IpAddr::V6(target), PingIdentifier(idx as u16))
-                .await;
-
-            // Try ping with retries
-            for seq in 0..2u16 {
-                let timeout_per_ping = timeout_duration / 2;
-                match timeout(timeout_per_ping, pinger.ping(PingSequence(seq), &payload)).await {
-                    Ok(Ok(_reply)) => return Some((target, true)),
-                    Ok(Err(_)) | Err(_) => continue,
-                }
-            }
-
-            Some((target, false))
-        });
-
-        handles.push(handle);
-    }
-
-    for handle in handles {
-        if let Ok(Some((ip, alive))) = handle.await {
-            if alive {
-                hosts.push(ip.to_string());
-            } else {
-                unreachable.push(ip.to_string());
-            }
-        }
-    }
-
-    DiscoveryResult {
-        method: "icmpv6_ping".to_string(),
         hosts,
         hostnames: std::collections::HashMap::new(),
         host_metadata: std::collections::HashMap::new(),

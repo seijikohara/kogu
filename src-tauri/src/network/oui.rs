@@ -1514,15 +1514,6 @@ pub fn lookup_vendor(mac: &str) -> Option<&'static str> {
     OUI_DATABASE.get(prefix).copied()
 }
 
-/// Format a MAC address from raw bytes
-#[cfg(unix)]
-pub fn format_mac(bytes: &[u8; 6]) -> String {
-    format!(
-        "{:02X}:{:02X}:{:02X}:{:02X}:{:02X}:{:02X}",
-        bytes[0], bytes[1], bytes[2], bytes[3], bytes[4], bytes[5]
-    )
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -1543,12 +1534,5 @@ mod tests {
     #[test]
     fn test_lookup_unknown_vendor() {
         assert_eq!(lookup_vendor("FF:FF:FF:FF:FF:FF"), None);
-    }
-
-    #[test]
-    #[cfg(unix)]
-    fn test_format_mac() {
-        let bytes = [0x00, 0x03, 0x93, 0xAA, 0xBB, 0xCC];
-        assert_eq!(format_mac(&bytes), "00:03:93:AA:BB:CC");
     }
 }
