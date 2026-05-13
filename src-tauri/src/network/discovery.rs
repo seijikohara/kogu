@@ -1621,8 +1621,8 @@ async fn udp_scan_discovery(targets: &[IpAddr], options: &DiscoveryOptions) -> D
 fn arp_cache_discovery(targets: &[IpAddr]) -> DiscoveryResult {
     let start = std::time::Instant::now();
 
-    // Read system ARP cache
-    let entries = super::arp_cache::read_arp_cache();
+    // Read both IPv4 ARP and IPv6 NDP caches to expose MAC addresses for both families
+    let entries = super::arp_cache::read_neighbor_cache();
     let target_set: HashSet<String> = targets.iter().map(ToString::to_string).collect();
 
     let mut hosts = Vec::new();
