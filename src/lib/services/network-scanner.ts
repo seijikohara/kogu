@@ -655,20 +655,169 @@ const compareIpAddresses = (a: string, b: string): number => {
 	return a.localeCompare(b);
 };
 
-/** Get merge key for a host (hostname if available, otherwise IP) */
+/**
+ * Get merge key for a host (hostname if available, otherwise IP).
+ *
+ * Note: Retained as a public export for backward compatibility with existing
+ * callers. The internal merging algorithm now uses Union-Find on a richer
+ * signal set (IP, MAC, normalized hostname) rather than a single string key.
+ */
 export const getMergeKey = (ip: string, hostname: string | null): string => {
 	if (hostname) return `host:${hostname.toLowerCase()}`;
 	return `ip:${ip}`;
 };
 
 /** Sort IPs: IPv4 first (numerically), then IPv6 */
-const sortIps = (ips: string[]): string[] => [...ips].sort(compareIpAddresses);
+const sortIps = (ips: readonly string[]): string[] => [...ips].sort(compareIpAddresses);
 
 /** Compare hosts by their primary IP address (numerically) */
 const compareByIp = (a: UnifiedHost, b: UnifiedHost): number => {
 	const aIp = a.ips[0] ?? '';
 	const bIp = b.ips[0] ?? '';
 	return compareIpAddresses(aIp, bIp);
+};
+
+/** Suffixes stripped during hostname normalization (case-insensitive). */
+const HOSTNAME_STRIP_SUFFIXES = ['.local', '.lan', '.home.arpa'] as const;
+
+/**
+ * Normalize a hostname for cross-source equality comparison.
+ *
+ * Steps: lowercase, strip a trailing `.`, then strip a single trailing
+ * `.local` / `.lan` / `.home.arpa` suffix. Returns `null` for empty input
+ * so callers can treat "no hostname" uniformly.
+ */
+const normalizeHostname = (hostname: string | null | undefined): string | null => {
+	if (!hostname) return null;
+	const lowered = hostname.toLowerCase().replace(/\.$/, '');
+	if (!lowered) return null;
+	const stripped = HOSTNAME_STRIP_SUFFIXES.reduce(
+		(acc, suffix) => (acc.endsWith(suffix) ? acc.slice(0, -suffix.length) : acc),
+		lowered
+	);
+	const trimmed = stripped.length > 0 ? stripped : lowered;
+	return trimmed || null;
+};
+
+/** Normalize a MAC address: lowercase, use `:` separators. Empty input returns null. */
+const normalizeMac = (mac: string | null | undefined): string | null => {
+	if (!mac) return null;
+	const normalized = mac.toLowerCase().replace(/-/g, ':').trim();
+	return normalized || null;
+};
+
+/** Priority ordering for hostname sources when multiple are reported per host. */
+const HOSTNAME_SOURCE_PRIORITY: Record<string, number> = {
+	mdns: 0,
+	dns: 1,
+	llmnr: 2,
+	netbios: 3,
+	snmp: 4,
+	tls: 5,
+	ssdp: 6,
+};
+
+const hostnameSourceRank = (source: string | null | undefined): number => {
+	if (!source) return Number.POSITIVE_INFINITY;
+	const rank = HOSTNAME_SOURCE_PRIORITY[source.toLowerCase()];
+	return rank ?? Number.POSITIVE_INFINITY;
+};
+
+/** Disjoint-set / Union-Find over string keys (IP strings here). */
+class DisjointSet {
+	private readonly parent = new Map<string, string>();
+	private readonly rank = new Map<string, number>();
+
+	add(key: string): void {
+		if (this.parent.has(key)) return;
+		this.parent.set(key, key);
+		this.rank.set(key, 0);
+	}
+
+	find(key: string): string {
+		const parent = this.parent.get(key);
+		if (parent === undefined) {
+			// Auto-add to keep find total — caller errors should be impossible here.
+			this.add(key);
+			return key;
+		}
+		if (parent === key) return key;
+		const root = this.find(parent);
+		this.parent.set(key, root);
+		return root;
+	}
+
+	union(a: string, b: string): void {
+		const rootA = this.find(a);
+		const rootB = this.find(b);
+		if (rootA === rootB) return;
+		const rankA = this.rank.get(rootA) ?? 0;
+		const rankB = this.rank.get(rootB) ?? 0;
+		if (rankA < rankB) {
+			this.parent.set(rootA, rootB);
+		} else if (rankA > rankB) {
+			this.parent.set(rootB, rootA);
+		} else {
+			this.parent.set(rootB, rootA);
+			this.rank.set(rootA, rankA + 1);
+		}
+	}
+
+	keys(): readonly string[] {
+		return [...this.parent.keys()];
+	}
+}
+
+/** Per-IP record describing what each source contributed about this IP. */
+interface IpObservation {
+	readonly ip: string;
+	readonly hostnames: { value: string; source: string | null }[];
+	readonly macs: string[];
+	readonly metadatas: HostMetadata[];
+	readonly discoveries: DiscoveryResult[];
+	readonly ports: PortInfo[];
+	scanDurationMs: number;
+}
+
+const getOrCreateObservation = (
+	observations: Map<string, IpObservation>,
+	ip: string
+): IpObservation => {
+	const existing = observations.get(ip);
+	if (existing) return existing;
+	const created: IpObservation = {
+		ip,
+		hostnames: [],
+		macs: [],
+		metadatas: [],
+		discoveries: [],
+		ports: [],
+		scanDurationMs: 0,
+	};
+	observations.set(ip, created);
+	return created;
+};
+
+/** Record a hostname/source pair on an observation if non-empty and not duplicate. */
+const recordHostname = (
+	observation: IpObservation,
+	hostname: string | null | undefined,
+	source: string | null | undefined
+): void => {
+	if (!hostname) return;
+	const trimmed = hostname.trim();
+	if (!trimmed) return;
+	const alreadyPresent = observation.hostnames.some(
+		(entry) => entry.value === trimmed && (entry.source ?? null) === (source ?? null)
+	);
+	if (alreadyPresent) return;
+	observation.hostnames.push({ value: trimmed, source: source ?? null });
+};
+
+const recordMac = (observation: IpObservation, mac: string | null | undefined): void => {
+	const normalized = normalizeMac(mac);
+	if (!normalized) return;
+	if (!observation.macs.includes(normalized)) observation.macs.push(normalized);
 };
 
 /** Add an mDNS service to a host if not already present */
@@ -681,19 +830,14 @@ const addMdnsServiceIfNew = (host: UnifiedHost, service: MdnsServiceInfo): void 
 
 /** Merge scalar metadata fields from source into target (target wins if non-null) */
 const mergeScalarMetadata = (host: UnifiedHost, metadata: HostMetadata): void => {
-	if (!host.hostnameSource && metadata.hostnameSource)
-		host.hostnameSource = metadata.hostnameSource;
 	if (!host.netbiosName && metadata.netbiosName) host.netbiosName = metadata.netbiosName;
 	if (!host.macAddress && metadata.macAddress) host.macAddress = metadata.macAddress;
 	if (!host.vendor && metadata.vendor) host.vendor = metadata.vendor;
 	if (!host.wsDiscovery && metadata.wsDiscovery) host.wsDiscovery = metadata.wsDiscovery;
 	if (!host.snmpInfo && metadata.snmpInfo) host.snmpInfo = metadata.snmpInfo;
-	// Merge TLS names (union of all discovered names)
 	if (metadata.tlsNames && metadata.tlsNames.length > 0) {
 		for (const name of metadata.tlsNames) {
-			if (!host.tlsNames.includes(name)) {
-				host.tlsNames.push(name);
-			}
+			if (!host.tlsNames.includes(name)) host.tlsNames.push(name);
 		}
 	}
 };
@@ -702,22 +846,21 @@ const mergeScalarMetadata = (host: UnifiedHost, metadata: HostMetadata): void =>
 const mergeSsdpDevice = (host: UnifiedHost, ssdpDevice: SsdpDeviceInfo): void => {
 	if (!host.ssdpDevice) {
 		host.ssdpDevice = ssdpDevice;
-	} else {
-		host.ssdpDevice = {
-			friendlyName: host.ssdpDevice.friendlyName ?? ssdpDevice.friendlyName,
-			manufacturer: host.ssdpDevice.manufacturer ?? ssdpDevice.manufacturer,
-			modelName: host.ssdpDevice.modelName ?? ssdpDevice.modelName,
-			modelNumber: host.ssdpDevice.modelNumber ?? ssdpDevice.modelNumber,
-			deviceType: host.ssdpDevice.deviceType ?? ssdpDevice.deviceType,
-			location: host.ssdpDevice.location ?? ssdpDevice.location,
-			server: host.ssdpDevice.server ?? ssdpDevice.server,
-		};
+		return;
 	}
+	host.ssdpDevice = {
+		friendlyName: host.ssdpDevice.friendlyName ?? ssdpDevice.friendlyName,
+		manufacturer: host.ssdpDevice.manufacturer ?? ssdpDevice.manufacturer,
+		modelName: host.ssdpDevice.modelName ?? ssdpDevice.modelName,
+		modelNumber: host.ssdpDevice.modelNumber ?? ssdpDevice.modelNumber,
+		deviceType: host.ssdpDevice.deviceType ?? ssdpDevice.deviceType,
+		location: host.ssdpDevice.location ?? ssdpDevice.location,
+		server: host.ssdpDevice.server ?? ssdpDevice.server,
+	};
 };
 
-/** Apply all metadata fields from HostMetadata to a UnifiedHost */
-const applyMetadata = (host: UnifiedHost, metadata: HostMetadata | undefined): void => {
-	if (!metadata) return;
+/** Apply non-hostname metadata fields onto a UnifiedHost. */
+const applyMetadata = (host: UnifiedHost, metadata: HostMetadata): void => {
 	mergeScalarMetadata(host, metadata);
 	if (metadata.ssdpDevice) mergeSsdpDevice(host, metadata.ssdpDevice);
 	if (metadata.mdnsServices) {
@@ -725,98 +868,19 @@ const applyMetadata = (host: UnifiedHost, metadata: HostMetadata | undefined): v
 	}
 };
 
-/** Absorb all data from source host into target, then delete source from maps */
-const absorbHost = (
-	target: UnifiedHost,
-	source: UnifiedHost,
-	hostMap: Map<string, UnifiedHost>,
-	ipToKey: Map<string, string>,
-	targetKey: string
-): void => {
-	for (const ip of source.ips) {
-		if (!target.ips.includes(ip)) target.ips.push(ip);
-		ipToKey.set(ip, targetKey);
-	}
-	target.ips = sortIps(target.ips);
-	for (const method of source.discoveryMethods) {
-		if (!target.discoveryMethods.includes(method)) target.discoveryMethods.push(method);
-	}
-	for (const discovery of source.discoveries) target.discoveries.push(discovery);
-	if (!target.macAddress && source.macAddress) target.macAddress = source.macAddress;
-	if (!target.vendor && source.vendor) target.vendor = source.vendor;
-	if (!target.netbiosName && source.netbiosName) target.netbiosName = source.netbiosName;
-	if (!target.ssdpDevice && source.ssdpDevice) target.ssdpDevice = source.ssdpDevice;
-	if (!target.wsDiscovery && source.wsDiscovery) target.wsDiscovery = source.wsDiscovery;
-	for (const service of source.mdnsServices) addMdnsServiceIfNew(target, service);
-	hostMap.delete(source.id);
-};
-
-/** Handle hostname update for an existing host, potentially re-keying or merging */
-const handleHostnameUpdate = (
-	host: UnifiedHost,
-	ip: string,
-	hostname: string,
-	metadata: HostMetadata | undefined,
-	hostMap: Map<string, UnifiedHost>,
-	ipToKey: Map<string, string>
-): UnifiedHost => {
-	host.hostname = hostname;
-	host.hostnameSource = metadata?.hostnameSource ?? null;
-	const newKey = getMergeKey(ip, hostname);
-	if (newKey === host.id) return host;
-
-	const existingHostAtNewKey = hostMap.get(newKey);
-	if (existingHostAtNewKey && existingHostAtNewKey !== host) {
-		absorbHost(existingHostAtNewKey, host, hostMap, ipToKey, newKey);
-		return existingHostAtNewKey;
-	}
-	// Re-key the host
-	hostMap.delete(host.id);
-	host.id = newKey;
-	hostMap.set(newKey, host);
-	for (const hostIp of host.ips) ipToKey.set(hostIp, newKey);
-	return host;
-};
-
-/** Create a new UnifiedHost */
-const createHost = (
-	key: string,
-	ip: string,
-	hostname: string | null,
-	metadata: HostMetadata | undefined
-): UnifiedHost => ({
-	id: key,
-	ips: [ip],
-	hostname: hostname ?? metadata?.hostname ?? null,
-	hostnameSource: metadata?.hostnameSource ?? null,
-	netbiosName: metadata?.netbiosName ?? null,
-	macAddress: metadata?.macAddress ?? null,
-	vendor: metadata?.vendor ?? null,
-	mdnsServices: metadata?.mdnsServices ? [...metadata.mdnsServices] : [],
-	ssdpDevice: metadata?.ssdpDevice ?? null,
-	wsDiscovery: metadata?.wsDiscovery ?? null,
-	snmpInfo: metadata?.snmpInfo ?? null,
-	tlsNames: metadata?.tlsNames ? [...metadata.tlsNames] : [],
-	discoveryMethods: [],
-	discoveries: [],
-	ports: [],
-	scanDurationMs: null,
-});
-
-/** Merge port into host's port list, preferring open state */
+/** Merge a single port into host's port list, preferring open state. */
 const mergePort = (host: UnifiedHost, port: PortInfo): void => {
 	const existingIdx = host.ports.findIndex((p) => p.port === port.port);
 	if (existingIdx === -1) {
 		host.ports.push(port);
-	} else {
-		const existingPort = host.ports[existingIdx];
-		if (existingPort && port.state === 'open' && existingPort.state !== 'open') {
-			host.ports[existingIdx] = port;
-		}
+		return;
+	}
+	const existingPort = host.ports[existingIdx];
+	if (existingPort && port.state === 'open' && existingPort.state !== 'open') {
+		host.ports[existingIdx] = port;
 	}
 };
 
-/** Add discovery info to host if not already present */
 const addDiscoveryToHost = (host: UnifiedHost, result: DiscoveryResult): void => {
 	if (!host.discoveryMethods.includes(result.method)) {
 		host.discoveryMethods.push(result.method);
@@ -824,98 +888,174 @@ const addDiscoveryToHost = (host: UnifiedHost, result: DiscoveryResult): void =>
 	const hasDiscovery = host.discoveries.some(
 		(d) => d.method === result.method && d.durationMs === result.durationMs
 	);
-	if (!hasDiscovery) {
-		host.discoveries.push({
-			method: result.method,
-			durationMs: result.durationMs,
-			error: result.error,
-		});
-	}
+	if (hasDiscovery) return;
+	host.discoveries.push({
+		method: result.method,
+		durationMs: result.durationMs,
+		error: result.error,
+	});
 };
 
-/** Get or create a unified host entry */
-const getOrCreateHost = (
-	ip: string,
-	hostname: string | null,
-	metadata: HostMetadata | undefined,
-	hostMap: Map<string, UnifiedHost>,
-	ipToKey: Map<string, string>
-): UnifiedHost => {
-	const existingKey = ipToKey.get(ip);
-	if (existingKey) {
-		const host = hostMap.get(existingKey);
-		if (host) {
-			const result =
-				hostname && !host.hostname
-					? handleHostnameUpdate(host, ip, hostname, metadata, hostMap, ipToKey)
-					: host;
-			applyMetadata(result, metadata);
-			return result;
-		}
-	}
+/**
+ * Collect per-IP observations from discovery and scan inputs. This is the
+ * "signal gathering" pass: every IP gets one IpObservation, with hostnames,
+ * MACs, raw metadata, discoveries and ports attached in input order.
+ */
+const collectObservations = (
+	discoveryResults: readonly DiscoveryResult[],
+	scanHosts: readonly HostResult[]
+): Map<string, IpObservation> => {
+	const observations = new Map<string, IpObservation>();
 
-	if (hostname) {
-		const hostnameKey = getMergeKey(ip, hostname);
-		const hostByHostname = hostMap.get(hostnameKey);
-		if (hostByHostname) {
-			if (!hostByHostname.ips.includes(ip)) {
-				hostByHostname.ips.push(ip);
-				hostByHostname.ips = sortIps(hostByHostname.ips);
-				ipToKey.set(ip, hostnameKey);
+	for (const result of discoveryResults) {
+		for (const ip of result.hosts) {
+			const observation = getOrCreateObservation(observations, ip);
+			observation.discoveries.push(result);
+			const metadata = result.hostMetadata?.[ip];
+			const hostnamesMapEntry = result.hostnames?.[ip];
+			// Top-level hostnames map has no explicit source — attribute it to
+			// the discovery method that reported it.
+			recordHostname(observation, hostnamesMapEntry, result.method);
+			if (metadata) {
+				observation.metadatas.push(metadata);
+				recordHostname(observation, metadata.hostname, metadata.hostnameSource);
+				// NetBIOS name lives on metadata.netbiosName, not metadata.hostname.
+				// Treat it as a separate hostname signal for merging purposes.
+				recordHostname(observation, metadata.netbiosName, 'netbios');
+				recordMac(observation, metadata.macAddress);
 			}
-			return hostByHostname;
 		}
 	}
 
-	const key = getMergeKey(ip, hostname);
-	const host = createHost(key, ip, hostname, metadata);
-	hostMap.set(key, host);
-	ipToKey.set(ip, key);
+	for (const scanHost of scanHosts) {
+		const observation = getOrCreateObservation(observations, scanHost.ip);
+		recordHostname(observation, scanHost.hostname, null);
+		for (const port of scanHost.ports) observation.ports.push(port);
+		observation.scanDurationMs += scanHost.scanDurationMs ?? 0;
+	}
+
+	return observations;
+};
+
+/** Build the Union-Find by linking IPs that share any normalized signal. */
+const buildDisjointSet = (observations: ReadonlyMap<string, IpObservation>): DisjointSet => {
+	const dsu = new DisjointSet();
+	for (const ip of observations.keys()) dsu.add(ip);
+
+	// Signal → first IP that emitted it; subsequent IPs union with that anchor.
+	const signalToIp = new Map<string, string>();
+	const linkSignal = (signal: string, ip: string): void => {
+		const anchor = signalToIp.get(signal);
+		if (anchor === undefined) {
+			signalToIp.set(signal, ip);
+			return;
+		}
+		dsu.union(anchor, ip);
+	};
+
+	for (const [ip, observation] of observations) {
+		for (const mac of observation.macs) linkSignal(`mac:${mac}`, ip);
+		for (const entry of observation.hostnames) {
+			const normalized = normalizeHostname(entry.value);
+			if (normalized) linkSignal(`hostname:${normalized}`, ip);
+		}
+	}
+
+	return dsu;
+};
+
+/**
+ * Pick the best hostname for a group based on source priority. Returns the
+ * original (un-normalized) hostname string and the source it came from.
+ */
+const selectHostname = (
+	entries: readonly { value: string; source: string | null }[]
+): { hostname: string | null; source: string | null } => {
+	if (entries.length === 0) return { hostname: null, source: null };
+	let bestRank = Number.POSITIVE_INFINITY;
+	let best: { value: string; source: string | null } | null = null;
+	for (const entry of entries) {
+		const rank = hostnameSourceRank(entry.source);
+		if (rank < bestRank) {
+			bestRank = rank;
+			best = entry;
+		}
+	}
+	const fallback = best ?? entries[0] ?? null;
+	return fallback
+		? { hostname: fallback.value, source: fallback.source }
+		: { hostname: null, source: null };
+};
+
+/** Build a single UnifiedHost from a group of merged IP observations. */
+const buildUnifiedHost = (group: readonly IpObservation[]): UnifiedHost => {
+	const ips = sortIps(group.map((obs) => obs.ip));
+	const primaryIp = ips[0] ?? '';
+
+	const allHostnames = group.flatMap((obs) => obs.hostnames);
+	const { hostname, source } = selectHostname(allHostnames);
+	const macFromObservations = group.flatMap((obs) => obs.macs)[0] ?? null;
+
+	const host: UnifiedHost = {
+		// Preserve historical id shape (`host:<lowercased hostname>` or `ip:<ip>`)
+		// so external callers that key off `id` continue to work.
+		id: getMergeKey(primaryIp, hostname),
+		ips,
+		hostname,
+		hostnameSource: source,
+		netbiosName: null,
+		macAddress: macFromObservations,
+		vendor: null,
+		mdnsServices: [],
+		ssdpDevice: null,
+		wsDiscovery: null,
+		snmpInfo: null,
+		tlsNames: [],
+		discoveryMethods: [],
+		discoveries: [],
+		ports: [],
+		scanDurationMs: null,
+	};
+
+	for (const observation of group) {
+		for (const metadata of observation.metadatas) applyMetadata(host, metadata);
+		for (const discovery of observation.discoveries) addDiscoveryToHost(host, discovery);
+		for (const port of observation.ports) mergePort(host, port);
+		if (observation.scanDurationMs > 0) {
+			host.scanDurationMs = (host.scanDurationMs ?? 0) + observation.scanDurationMs;
+		}
+	}
+
+	host.ports.sort((a, b) => a.port - b.port);
 	return host;
 };
 
 /**
  * Merge discovery and scan results into a unified host list.
- * Uses O(n) algorithm with IP-to-key index for fast lookups.
+ *
+ * Uses Union-Find over per-IP identity signals (IP itself, normalized MAC,
+ * and normalized hostname) so that two records describing the same physical
+ * host get merged regardless of which discovery method first reported them.
+ * This addresses the v4-from-ARP / v6-from-mDNS split case in particular.
  */
 export const mergeHosts = (
 	discoveryResults: readonly DiscoveryResult[],
 	scanHosts: readonly HostResult[]
 ): UnifiedHost[] => {
-	const hostMap = new Map<string, UnifiedHost>();
-	const ipToKey = new Map<string, string>();
+	const observations = collectObservations(discoveryResults, scanHosts);
+	if (observations.size === 0) return [];
 
-	// 1. Add hosts from discovery results
-	for (const result of discoveryResults) {
-		for (const ip of result.hosts) {
-			const host = getOrCreateHost(
-				ip,
-				result.hostnames[ip] ?? null,
-				result.hostMetadata?.[ip],
-				hostMap,
-				ipToKey
-			);
-			addDiscoveryToHost(host, result);
-		}
+	const dsu = buildDisjointSet(observations);
+
+	const groups = new Map<string, IpObservation[]>();
+	for (const [ip, observation] of observations) {
+		const root = dsu.find(ip);
+		const bucket = groups.get(root) ?? [];
+		bucket.push(observation);
+		groups.set(root, bucket);
 	}
 
-	// 2. Add/merge hosts from port scan results
-	for (const scanHost of scanHosts) {
-		const host = getOrCreateHost(
-			scanHost.ip,
-			scanHost.hostname ?? null,
-			undefined,
-			hostMap,
-			ipToKey
-		);
-		scanHost.ports.forEach((port) => mergePort(host, port));
-		host.ports.sort((a, b) => a.port - b.port);
-		if (scanHost.scanDurationMs) {
-			host.scanDurationMs = (host.scanDurationMs ?? 0) + scanHost.scanDurationMs;
-		}
-	}
-
-	return [...hostMap.values()].sort(compareByIp);
+	return [...groups.values()].map(buildUnifiedHost).sort(compareByIp);
 };
 
 // =============================================================================
