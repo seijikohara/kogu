@@ -22,10 +22,6 @@ crate-type = ["staticlib", "cdylib", "rlib"]
 name = "worker"
 path = "src/bin/worker.rs"
 
-[[bin]]
-name = "net-scanner"
-path = "src/bin/net-scanner.rs"
-
 [build-dependencies]
 tauri-build = { version = "2", features = [] }
 
@@ -56,6 +52,7 @@ font-kit = "0.14"
 
 # Async Runtime (for cancellable operations and network)
 tokio = { version = "1", features = ["sync", "net", "time", "rt", "macros"] }
+tokio-util = { version = "0.7", default-features = false }
 
 # Cryptographic Generators
 bcrypt = "0.19"
@@ -66,15 +63,11 @@ rand = "0.8"
 # Network Scanning
 futures = "0.3"
 ipnetwork = "0.20"
-socket2 = "0.6"
 dns-lookup = "3"
 uuid = { version = "1", features = ["v4"] }
 if-addrs = "0.15"
 mdns-sd = "0.19"
 netdev = { version = "0.43", features = ["gateway"] }
-
-# Host Discovery
-surge-ping = "0.8"
 
 # UPnP Device Description Fetch
 reqwest = { version = "0.13", default-features = false, features = ["rustls"] }
@@ -92,13 +85,4 @@ hickory-resolver = { version = "0.26", features = ["tokio", "system-config"] }
 
 # SNMP sysName Query
 snmp2 = "0.4"
-
-# pnet is only available on Unix (Windows requires WinPcap/Npcap SDK)
-[target.'cfg(unix)'.dependencies]
-pnet = "0.35"
-pnet_datalink = "0.35"
-
-# FFI support for Swift bridge (macOS)
-[target.'cfg(target_os = "macos")'.dependencies]
-libc = "0.2"
 

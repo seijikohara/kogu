@@ -261,14 +261,10 @@ export const MAX_TIMEOUT_MS = 10000;
 // =============================================================================
 
 export type DiscoveryMethod =
-	| 'icmp_ping'
-	| 'arp_scan'
-	| 'tcp_syn'
 	| 'tcp_connect'
 	| 'mdns'
 	| 'ssdp'
 	| 'udp_scan'
-	| 'icmpv6_ping'
 	| 'ws_discovery'
 	| 'arp_cache'
 	| 'none';
@@ -394,24 +390,6 @@ export interface DiscoveryProgress {
 
 export const DISCOVERY_METHODS = [
 	{
-		value: 'icmp_ping' as const,
-		label: 'ICMP Ping',
-		description: 'Standard ping, requires elevated privileges',
-		requiresPrivileges: true,
-	},
-	{
-		value: 'arp_scan' as const,
-		label: 'ARP Scan',
-		description: 'Local network only, requires libpcap',
-		requiresPrivileges: true,
-	},
-	{
-		value: 'tcp_syn' as const,
-		label: 'TCP SYN',
-		description: 'Half-open scan, requires raw sockets',
-		requiresPrivileges: true,
-	},
-	{
 		value: 'tcp_connect' as const,
 		label: 'TCP Connect',
 		description: 'Connect to common ports, no privileges needed',
@@ -433,12 +411,6 @@ export const DISCOVERY_METHODS = [
 		value: 'udp_scan' as const,
 		label: 'UDP Scan',
 		description: 'Probe common UDP ports (DNS, NetBIOS, SNMP)',
-		requiresPrivileges: false,
-	},
-	{
-		value: 'icmpv6_ping' as const,
-		label: 'ICMPv6 Ping',
-		description: 'IPv6 Echo Request for remote host discovery',
 		requiresPrivileges: false,
 	},
 	{
@@ -536,41 +508,6 @@ export const getDiscoveryMethods = async (): Promise<readonly [string, boolean][
  */
 export const checkDiscoveryPrivilege = async (method: DiscoveryMethod): Promise<boolean> =>
 	invoke<boolean>('check_discovery_privilege', { method });
-
-// =============================================================================
-// Net-Scanner Privilege Management
-// =============================================================================
-
-/** Privilege status of the net-scanner sidecar */
-export interface PrivilegeStatus {
-	/** Whether TCP SYN scanning is available */
-	readonly tcpSyn: boolean;
-	/** Whether privilege setup has been completed */
-	readonly setupCompleted: boolean;
-	/** Whether privilege setup is available on this platform */
-	readonly setupAvailable: boolean;
-	/** Whether user approval is required in System Settings (macOS 13+) */
-	readonly requiresApproval: boolean;
-	/** Human-readable status message */
-	readonly message: string;
-}
-
-/**
- * Check the current privilege status of the net-scanner sidecar.
- * Returns whether raw socket operations are available.
- */
-export const checkNetScannerPrivileges = async (): Promise<PrivilegeStatus> =>
-	invoke<PrivilegeStatus>('check_net_scanner_privileges');
-
-/**
- * Set up persistent privileges for the net-scanner sidecar.
- * Triggers a platform-specific privilege setup:
- * - macOS 13+: SMAppService daemon registration (shows in Login Items)
- * - macOS <13: Legacy osascript setuid
- * - Linux: pkexec → setcap cap_net_raw,cap_net_admin+ep
- */
-export const setupNetScannerPrivileges = async (): Promise<PrivilegeStatus> =>
-	invoke<PrivilegeStatus>('setup_net_scanner_privileges');
 
 // =============================================================================
 // mDNS Service Types
