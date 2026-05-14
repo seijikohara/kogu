@@ -458,8 +458,8 @@ export const DISCOVERY_METHODS = [
 ] as const;
 
 /**
- * Discovery methods that are enabled by default. SNMP is intentionally
- * excluded because broadcast SNMP queries can be noisy on some networks.
+ * Discovery methods that are enabled by default. All entries are
+ * userspace probes that do not require elevated privileges.
  */
 export const DEFAULT_DISCOVERY_METHODS: readonly DiscoveryMethod[] = [
 	'tcp_connect',
@@ -469,6 +469,7 @@ export const DEFAULT_DISCOVERY_METHODS: readonly DiscoveryMethod[] = [
 	'ws_discovery',
 	'arp_cache',
 	'llmnr',
+	'snmp',
 ];
 
 export const DEFAULT_SYN_PORTS = [22, 80, 443, 445, 3389] as const;

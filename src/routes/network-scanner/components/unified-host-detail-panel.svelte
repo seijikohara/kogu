@@ -37,6 +37,7 @@
 	import { toast } from 'svelte-sonner';
 	import { SectionLabel } from '$lib/components/layout';
 	import { EmbeddedEmptyState } from '$lib/components/status';
+	import { Badge } from '$lib/components/ui/badge';
 	import { Button } from '$lib/components/ui/button';
 	import * as Select from '$lib/components/ui/select';
 	import * as Tabs from '$lib/components/ui/tabs';
@@ -459,20 +460,15 @@
 		onValueChange={(v) => (activeTab = v as Tab)}
 		class="flex min-h-0 flex-1 flex-col"
 	>
-		<!-- Tabs -->
-		<Tabs.List
-			class="bg-surface-2 inline-flex h-auto w-full shrink-0 justify-start rounded-none border-b p-0"
-		>
+		<!-- Tabs: shadcn-svelte pill-style segmented control. -->
+		<Tabs.List class="mx-4 mt-3">
 			{#each tabs as tab (tab.id)}
 				{@const TabIcon = tab.icon}
-				<Tabs.Trigger
-					value={tab.id}
-					class="data-[state=active]:border-primary data-[state=active]:text-foreground data-[state=active]:bg-transparent data-[state=active]:shadow-none h-auto gap-1.5 rounded-none border-b-2 border-transparent bg-transparent px-4 py-2 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
-				>
-					<TabIcon class="h-3.5 w-3.5" />
+				<Tabs.Trigger value={tab.id}>
+					<TabIcon />
 					{tab.label}
 					{#if tab.count !== null}
-						<span class="rounded-full bg-muted px-1.5 py-0.5 text-xs font-medium">{tab.count}</span>
+						<Badge variant="outline" class="font-mono text-2xs">{tab.count}</Badge>
 					{/if}
 				</Tabs.Trigger>
 			{/each}
