@@ -73,6 +73,7 @@
 	/* Layout */
 	--toolbar-h: 3rem;
 	--rail-w: 18rem;
+	--rail-w-wide: 24rem;
 	--rail-w-collapsed: 2.75rem;
 	--status-h: 1.75rem;
 	--editor-header-h: 2rem;

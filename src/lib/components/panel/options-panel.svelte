@@ -13,7 +13,7 @@
 
 	let {
 		title = 'Options',
-		width = 'w-64',
+		width = 'w-[var(--rail-w)]',
 		show = $bindable(true),
 		onclose,
 		onopen,

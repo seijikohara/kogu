@@ -22,7 +22,7 @@ Every page uses the `ToolShell` component (CSS Grid based):
 │          │ ├──────────┬─────────────────────────────────┐ │
 │  [Home]  │ │ Options  │                                  │ │
 │  [JSON]  │ │  Rail    │        Main Content Area         │ │
-│  [XML]   │ │ (w-64)   │                                  │ │
+│  [XML]   │ │(rail-w)  │                                  │ │
 │  [YAML]  │ │          │    (varies by pattern below)     │ │
 │  [SQL]   │ │          │                                  │ │
 │  [...]   │ ├──────────┴─────────────────────────────────┤ │
@@ -302,10 +302,24 @@ CSS Grid layout with areas: toolbar, rail, content, status.
 
 ### OptionsRail (`src/lib/components/shell/options-rail.svelte`)
 
-- Width: `w-64` (256px), collapsed: `w-10` (40px)
+- Width: `var(--rail-w)` (288px), collapsed: `var(--rail-w-collapsed)` (44px)
 - Uses `ScrollArea` for content overflow
-- Background: `bg-surface-2`
-- Border: `border-r border-border/60`
+- Background: `bg-sidebar`
+- Border: `border-r border-border/50`
+- Toggle interaction: edge-strip hit zone hugging the aside's right border
+  (mirrors the shadcn `SidebarRail` pattern). Hover surfaces a 2px vertical
+  accent line; `cursor-w-resize` when open, `cursor-e-resize` when collapsed.
+  In the collapsed state a `Settings2` icon button is also rendered as the
+  primary expand affordance because the narrow strip is too small to target
+  the edge-strip reliably.
+
+### Width Tokens
+
+| Token                | Value   | Usage                                                             |
+| -------------------- | ------- | ----------------------------------------------------------------- |
+| `--rail-w`           | 18rem   | Standard options rail width (OptionsRail, OptionsPanel)           |
+| `--rail-w-wide`      | 24rem   | Wide analytical panel (ReactiveSinglePage right accordion column) |
+| `--rail-w-collapsed` | 2.75rem | Collapsed-state width for any rail-like aside                     |
 
 ### StatusBar (`src/lib/components/shell/status-bar.svelte`)
 
