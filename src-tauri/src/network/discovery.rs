@@ -1468,6 +1468,7 @@ fn parse_upnp_device_xml(xml: &str, location: &str) -> Option<super::types::Ssdp
     let mut model_name = None;
     let mut model_number = None;
     let mut device_type = None;
+    let mut udn = None;
     let mut current_tag = String::new();
     // Only capture fields from the first (root) <device> block
     let mut device_depth: u32 = 0;
@@ -1478,6 +1479,7 @@ fn parse_upnp_device_xml(xml: &str, location: &str) -> Option<super::types::Ssdp
         "modelName" => model_name = Some(text),
         "modelNumber" => model_number = Some(text),
         "deviceType" => device_type = Some(text),
+        "UDN" => udn = Some(text),
         _ => {}
     };
 
@@ -1525,6 +1527,7 @@ fn parse_upnp_device_xml(xml: &str, location: &str) -> Option<super::types::Ssdp
         || manufacturer.is_some()
         || model_name.is_some()
         || device_type.is_some()
+        || udn.is_some()
     {
         Some(super::types::SsdpDeviceInfo {
             friendly_name,
@@ -1534,6 +1537,7 @@ fn parse_upnp_device_xml(xml: &str, location: &str) -> Option<super::types::Ssdp
             device_type,
             location: Some(location.to_string()),
             server: None,
+            udn,
         })
     } else {
         None
@@ -2133,6 +2137,57 @@ mod tests {
             assert_eq!(info.manufacturer.as_deref(), Some("OnlyManufacturer"));
             assert!(info.friendly_name.is_none());
             assert!(info.model_name.is_none());
+        }
+
+        #[test]
+        fn test_extracts_udn() {
+            let xml = r#"<?xml version="1.0"?>
+<root xmlns="urn:schemas-upnp-org:device-1-0">
+  <device>
+    <friendlyName>My Router</friendlyName>
+    <UDN>uuid:8b8bcfe9-7b66-4d96-bb1e-9c9b1c5e8c3a</UDN>
+  </device>
+</root>"#;
+            let result = parse_upnp_device_xml(xml, "http://192.168.1.1/desc.xml");
+            assert!(result.is_some());
+            let info = result.unwrap();
+            assert_eq!(
+                info.udn.as_deref(),
+                Some("uuid:8b8bcfe9-7b66-4d96-bb1e-9c9b1c5e8c3a")
+            );
+        }
+
+        #[test]
+        fn test_missing_udn_returns_none() {
+            let xml = r#"<?xml version="1.0"?>
+<root xmlns="urn:schemas-upnp-org:device-1-0">
+  <device>
+    <friendlyName>My Router</friendlyName>
+  </device>
+</root>"#;
+            let result = parse_upnp_device_xml(xml, "http://192.168.1.1/desc.xml");
+            assert!(result.is_some());
+            let info = result.unwrap();
+            assert!(info.udn.is_none());
+        }
+
+        #[test]
+        fn test_udn_alone_triggers_some() {
+            // Even without other fields, a UDN-only document should still
+            // produce SsdpDeviceInfo because UDN is a useful identity signal.
+            let xml = r#"<?xml version="1.0"?>
+<root xmlns="urn:schemas-upnp-org:device-1-0">
+  <device>
+    <UDN>uuid:11111111-2222-3333-4444-555555555555</UDN>
+  </device>
+</root>"#;
+            let result = parse_upnp_device_xml(xml, "http://192.168.1.1/desc.xml");
+            assert!(result.is_some());
+            let info = result.unwrap();
+            assert_eq!(
+                info.udn.as_deref(),
+                Some("uuid:11111111-2222-3333-4444-555555555555")
+            );
         }
     }
 

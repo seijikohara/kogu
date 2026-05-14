@@ -309,6 +309,8 @@ export interface SsdpDeviceInfo {
 	readonly location?: string;
 	/** SERVER header value from SSDP response */
 	readonly server?: string;
+	/** UPnP UDN — globally-unique device ID (urn:uuid:...) */
+	readonly udn?: string;
 }
 
 /** WS-Discovery device information */
@@ -319,6 +321,8 @@ export interface WsDiscoveryInfo {
 	readonly xaddrs: readonly string[];
 	/** Scopes - URIs describing device capabilities */
 	readonly scopes: readonly string[];
+	/** WS-Discovery EndpointReference — globally-unique device ID */
+	readonly endpointReference?: string;
 }
 
 /** SNMP device information (sysName, sysDescr, etc.) */
@@ -815,6 +819,10 @@ interface IpObservation {
 	readonly ip: string;
 	readonly hostnames: { value: string; source: string | null }[];
 	readonly macs: string[];
+	/** UPnP UDN values observed for this IP (SSDP identity signal). */
+	readonly udns: string[];
+	/** WS-Discovery EndpointReference values observed for this IP. */
+	readonly eprs: string[];
 	readonly metadatas: HostMetadata[];
 	readonly discoveries: DiscoveryResult[];
 	readonly ports: PortInfo[];
@@ -831,6 +839,8 @@ const getOrCreateObservation = (
 		ip,
 		hostnames: [],
 		macs: [],
+		udns: [],
+		eprs: [],
 		metadatas: [],
 		discoveries: [],
 		ports: [],
@@ -860,6 +870,29 @@ const recordMac = (observation: IpObservation, mac: string | null | undefined): 
 	const normalized = normalizeMac(mac);
 	if (!normalized) return;
 	if (!observation.macs.includes(normalized)) observation.macs.push(normalized);
+};
+
+/**
+ * Record a UPnP UDN signal on an observation. The value is stored as-is
+ * (typically `uuid:XXXXX`) — UDN strings are case-sensitive identifiers in
+ * the UPnP spec, so we do not lowercase them.
+ */
+const recordUdn = (observation: IpObservation, udn: string | null | undefined): void => {
+	if (!udn) return;
+	const trimmed = udn.trim();
+	if (!trimmed) return;
+	if (!observation.udns.includes(trimmed)) observation.udns.push(trimmed);
+};
+
+/**
+ * Record a WS-Discovery EndpointReference signal on an observation. EPR
+ * values are URIs (typically `urn:uuid:...`) and are stored as-is.
+ */
+const recordEpr = (observation: IpObservation, epr: string | null | undefined): void => {
+	if (!epr) return;
+	const trimmed = epr.trim();
+	if (!trimmed) return;
+	if (!observation.eprs.includes(trimmed)) observation.eprs.push(trimmed);
 };
 
 /** Add an mDNS service to a host if not already present */
@@ -909,6 +942,7 @@ const mergeSsdpDevice = (host: UnifiedHost, ssdpDevice: SsdpDeviceInfo): void =>
 		deviceType: host.ssdpDevice.deviceType ?? ssdpDevice.deviceType,
 		location: host.ssdpDevice.location ?? ssdpDevice.location,
 		server: host.ssdpDevice.server ?? ssdpDevice.server,
+		udn: host.ssdpDevice.udn ?? ssdpDevice.udn,
 	};
 };
 
@@ -980,6 +1014,11 @@ const collectObservations = (
 				// it participates in hostname-based union-find merging.
 				recordHostname(observation, metadata.snmpInfo?.sysName, 'snmp');
 				recordMac(observation, metadata.macAddress);
+				// UPnP UDN and WS-Discovery EPR are globally-unique device IDs.
+				// They unify hostname-less devices (smart TVs, cameras, printers)
+				// that advertise on both IPv4 and IPv6 without showing up in ARP.
+				recordUdn(observation, metadata.ssdpDevice?.udn);
+				recordEpr(observation, metadata.wsDiscovery?.endpointReference);
 			}
 		}
 	}
@@ -1016,6 +1055,8 @@ const buildDisjointSet = (observations: ReadonlyMap<string, IpObservation>): Dis
 			const normalized = normalizeHostname(entry.value);
 			if (normalized) linkSignal(`hostname:${normalized}`, ip);
 		}
+		for (const udn of observation.udns) linkSignal(`udn:${udn}`, ip);
+		for (const epr of observation.eprs) linkSignal(`epr:${epr}`, ip);
 	}
 
 	return dsu;
