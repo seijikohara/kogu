@@ -74,6 +74,21 @@ fn extract_string(value: &Value<'_>) -> Option<String> {
 /// Returns SnmpDeviceInfo if the device responds to any query.
 #[allow(clippy::large_stack_frames)]
 pub fn query_snmp_device_info(ip: IpAddr, timeout: Duration) -> Option<SnmpDeviceInfo> {
+    query_snmp_device_info_with_community(ip, DEFAULT_COMMUNITY, timeout)
+}
+
+/// Query SNMP system information using a caller-supplied community string.
+///
+/// Returns `Some(info)` when at least one MIB-2 system OID resolves; `None`
+/// when the host fails to open a session or returns no usable varbinds. Used
+/// by discovery to try alternative communities (e.g. `private`) when `public`
+/// is rejected.
+#[allow(clippy::large_stack_frames)]
+pub fn query_snmp_device_info_with_community(
+    ip: IpAddr,
+    community: &[u8],
+    timeout: Duration,
+) -> Option<SnmpDeviceInfo> {
     let addr = format!("{ip}:{SNMP_PORT}");
 
     let sys_name_oid = Oid::from(&SYS_NAME_OID).ok()?;
@@ -81,7 +96,7 @@ pub fn query_snmp_device_info(ip: IpAddr, timeout: Duration) -> Option<SnmpDevic
     let sys_location_oid = Oid::from(&SYS_LOCATION_OID).ok()?;
     let sys_contact_oid = Oid::from(&SYS_CONTACT_OID).ok()?;
 
-    let mut session = SyncSession::new_v2c(&addr, DEFAULT_COMMUNITY, Some(timeout), 0).ok()?;
+    let mut session = SyncSession::new_v2c(&addr, community, Some(timeout), 0).ok()?;
 
     let mut info = SnmpDeviceInfo::default();
 

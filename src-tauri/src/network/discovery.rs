@@ -41,6 +41,10 @@ pub enum DiscoveryMethod {
     WsDiscovery,
     /// ARP cache reading (no privileges needed)
     ArpCache,
+    /// SNMP sysName broadcast across the target range
+    Snmp,
+    /// LLMNR multicast PTR queries across the target range
+    Llmnr,
     /// Skip host discovery, scan all targets
     None,
 }
@@ -54,6 +58,8 @@ impl std::fmt::Display for DiscoveryMethod {
             Self::UdpScan => "udp_scan",
             Self::WsDiscovery => "ws_discovery",
             Self::ArpCache => "arp_cache",
+            Self::Snmp => "snmp",
+            Self::Llmnr => "llmnr",
             Self::None => "none",
         };
         write!(f, "{name}")
@@ -94,6 +100,9 @@ pub struct HostMetadata {
     /// TLS certificate Subject Alternative Names (dNSName)
     #[serde(skip_serializing_if = "Vec::is_empty")]
     pub tls_names: Vec<String>,
+    /// Service banners collected via TCP banner-grab
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    pub banners: Vec<super::banner::ServiceBanner>,
 }
 
 /// mDNS service information for a host
@@ -367,6 +376,8 @@ async fn execute_discovery_method(
         DiscoveryMethod::UdpScan => udp_scan_discovery(targets, options).await,
         DiscoveryMethod::WsDiscovery => ws_discovery_method(options).await,
         DiscoveryMethod::ArpCache => arp_cache_discovery(targets),
+        DiscoveryMethod::Snmp => snmp_discovery(targets, options).await,
+        DiscoveryMethod::Llmnr => llmnr_discovery(targets, options).await,
         DiscoveryMethod::None => DiscoveryResult {
             method: "none".to_string(),
             hosts: targets.iter().map(ToString::to_string).collect(),
@@ -907,6 +918,10 @@ async fn mdns_discovery(options: &DiscoveryOptions) -> DiscoveryResult {
 // =============================================================================
 
 /// Discover hosts using TCP connect scan (no privileges needed)
+///
+/// After the first successful connect to any probe port, attempts a banner-grab
+/// against the recognised banner ports already in the candidate list and
+/// attaches the resulting [`ServiceBanner`]s to the host metadata.
 async fn tcp_connect_discovery(targets: &[IpAddr], options: &DiscoveryOptions) -> DiscoveryResult {
     let start = std::time::Instant::now();
     let timeout_duration = Duration::from_millis(u64::from(options.timeout_ms));
@@ -918,43 +933,38 @@ async fn tcp_connect_discovery(targets: &[IpAddr], options: &DiscoveryOptions) -
         .as_ref()
         .map_or(CONNECT_DISCOVERY_PORTS, Vec::as_slice);
 
+    let handles: Vec<_> = targets
+        .iter()
+        .copied()
+        .map(|target| {
+            let sem = Arc::clone(&semaphore);
+            let ports = ports.to_vec();
+            tokio::spawn(async move {
+                let _permit = sem.acquire().await;
+                probe_target(target, &ports, timeout_duration).await
+            })
+        })
+        .collect();
+
     let mut hosts = Vec::new();
     let mut unreachable = Vec::new();
+    let mut host_metadata: std::collections::HashMap<String, HostMetadata> =
+        std::collections::HashMap::new();
 
-    let mut handles = Vec::with_capacity(targets.len());
-
-    for &target in targets {
-        let sem = Arc::clone(&semaphore);
-        let ports = ports.to_vec();
-
-        let handle = tokio::spawn(async move {
-            let _permit = sem.acquire().await;
-
-            // Try connecting to any of the common ports
-            for port in &ports {
-                let addr = std::net::SocketAddr::new(target, *port);
-                if let Ok(result) =
-                    timeout(timeout_duration, tokio::net::TcpStream::connect(addr)).await
-                {
-                    if result.is_ok() {
-                        return (target, true);
-                    }
-                }
-            }
-
-            (target, false)
-        });
-
-        handles.push(handle);
-    }
-
-    // Collect results
     for handle in handles {
-        if let Ok((target, reachable)) = handle.await {
-            if reachable {
-                hosts.push(target.to_string());
+        if let Ok(probe) = handle.await {
+            let ip_str = probe.target.to_string();
+            if probe.reachable {
+                hosts.push(ip_str.clone());
+                if !probe.banners.is_empty() {
+                    host_metadata
+                        .entry(ip_str)
+                        .or_default()
+                        .banners
+                        .extend(probe.banners);
+                }
             } else {
-                unreachable.push(target.to_string());
+                unreachable.push(ip_str);
             }
         }
     }
@@ -963,11 +973,58 @@ async fn tcp_connect_discovery(targets: &[IpAddr], options: &DiscoveryOptions) -
         method: "tcp_connect".to_string(),
         hosts,
         hostnames: std::collections::HashMap::new(),
-        host_metadata: std::collections::HashMap::new(),
+        host_metadata,
         unreachable,
         duration_ms: start.elapsed().as_millis() as u64,
         error: None,
         requires_privileges: false,
+    }
+}
+
+/// Result of probing a single target during TCP connect discovery.
+struct TcpProbeOutcome {
+    target: IpAddr,
+    reachable: bool,
+    banners: Vec<super::banner::ServiceBanner>,
+}
+
+/// Ports for which we know how to parse a banner. Limits banner-grab cost.
+const BANNER_GRAB_PORTS: &[u16] = &[21, 22, 23, 25, 80, 443, 587, 6379, 8080, 8443, 11211];
+
+/// Connect to each probe port and gather banners from supported services.
+async fn probe_target(
+    target: IpAddr,
+    ports: &[u16],
+    timeout_duration: Duration,
+) -> TcpProbeOutcome {
+    let mut reachable = false;
+    let mut banners = Vec::new();
+
+    for port in ports {
+        let addr = SocketAddr::new(target, *port);
+        let connect = timeout(timeout_duration, tokio::net::TcpStream::connect(addr)).await;
+        let stream = match connect {
+            Ok(Ok(stream)) => stream,
+            _ => continue,
+        };
+        reachable = true;
+
+        if BANNER_GRAB_PORTS.contains(port) {
+            if let Some(banner) = super::banner::grab_banner(stream, *port).await {
+                if !banners
+                    .iter()
+                    .any(|existing: &super::banner::ServiceBanner| existing == &banner)
+                {
+                    banners.push(banner);
+                }
+            }
+        }
+    }
+
+    TcpProbeOutcome {
+        target,
+        reachable,
+        banners,
     }
 }
 
@@ -994,6 +1051,8 @@ pub fn get_available_methods() -> Vec<(DiscoveryMethod, bool)> {
         (DiscoveryMethod::UdpScan, true),
         (DiscoveryMethod::WsDiscovery, true),
         (DiscoveryMethod::ArpCache, true),
+        (DiscoveryMethod::Snmp, true),
+        (DiscoveryMethod::Llmnr, true),
         (DiscoveryMethod::None, true),
     ]
 }
@@ -1699,6 +1758,159 @@ async fn ws_discovery_method(options: &DiscoveryOptions) -> DiscoveryResult {
         hostnames: std::collections::HashMap::new(),
         host_metadata,
         unreachable: vec![],
+        duration_ms: start.elapsed().as_millis() as u64,
+        error: None,
+        requires_privileges: false,
+    }
+}
+
+// =============================================================================
+// SNMP Discovery (broadcast sysName query)
+// =============================================================================
+
+/// Maximum concurrent SNMP probes
+const SNMP_DISCOVERY_CONCURRENCY: usize = 64;
+
+/// Per-host SNMP query timeout
+const SNMP_DISCOVERY_TIMEOUT: Duration = Duration::from_secs(1);
+
+/// SNMP communities to try, in order
+const SNMP_DISCOVERY_COMMUNITIES: &[&str] = &["public", "private"];
+
+/// Discover hosts via SNMP sysName GetRequest across the target range.
+///
+/// For each target, sends an SNMPv2c `sysName.0` query in a blocking task,
+/// trying each community in [`SNMP_DISCOVERY_COMMUNITIES`]. Successful
+/// responses are recorded as reachable hosts with populated `snmp_info`.
+async fn snmp_discovery(targets: &[IpAddr], _options: &DiscoveryOptions) -> DiscoveryResult {
+    let start = std::time::Instant::now();
+    let semaphore = Arc::new(Semaphore::new(SNMP_DISCOVERY_CONCURRENCY));
+
+    let handles: Vec<_> = targets
+        .iter()
+        .copied()
+        .map(|target| {
+            let sem = Arc::clone(&semaphore);
+            tokio::spawn(async move {
+                let _permit = sem.acquire().await.ok()?;
+                let info = tokio::task::spawn_blocking(move || {
+                    SNMP_DISCOVERY_COMMUNITIES.iter().find_map(|community| {
+                        super::snmp::query_snmp_device_info_with_community(
+                            target,
+                            community.as_bytes(),
+                            SNMP_DISCOVERY_TIMEOUT,
+                        )
+                    })
+                })
+                .await
+                .ok()
+                .flatten()?;
+                Some((target, info))
+            })
+        })
+        .collect();
+
+    let mut hosts = Vec::new();
+    let mut host_metadata: std::collections::HashMap<String, HostMetadata> =
+        std::collections::HashMap::new();
+    let mut unreachable: Vec<String> = targets.iter().map(ToString::to_string).collect();
+
+    for handle in handles {
+        if let Ok(Some((target, info))) = handle.await {
+            let ip_str = target.to_string();
+            unreachable.retain(|ip| ip != &ip_str);
+            hosts.push(ip_str.clone());
+
+            let hostname = info.sys_name.clone();
+            host_metadata.insert(
+                ip_str,
+                HostMetadata {
+                    hostname: hostname.clone(),
+                    hostname_source: hostname.as_ref().map(|_| "snmp".to_string()),
+                    snmp_info: Some(info),
+                    ..Default::default()
+                },
+            );
+        }
+    }
+
+    DiscoveryResult {
+        method: "snmp".to_string(),
+        hosts,
+        hostnames: std::collections::HashMap::new(),
+        host_metadata,
+        unreachable,
+        duration_ms: start.elapsed().as_millis() as u64,
+        error: None,
+        requires_privileges: false,
+    }
+}
+
+// =============================================================================
+// LLMNR Discovery (multicast reverse PTR queries)
+// =============================================================================
+
+/// Total time budget for LLMNR collection
+const LLMNR_DISCOVERY_TIMEOUT: Duration = Duration::from_secs(2);
+
+/// Maximum concurrent LLMNR queries
+const LLMNR_DISCOVERY_CONCURRENCY: usize = 64;
+
+/// Discover hosts via LLMNR multicast PTR resolution of every target IP.
+///
+/// LLMNR has no wildcard concept, so we follow Windows' own approach: issue
+/// reverse PTR queries (`x.in-addr.arpa` for IPv4) toward the LLMNR multicast
+/// group and treat any responding host as alive with the resolved hostname.
+/// The whole batch runs concurrently; the function returns once every spawned
+/// probe finishes or its per-query timeout elapses, capped by
+/// [`LLMNR_DISCOVERY_TIMEOUT`].
+async fn llmnr_discovery(targets: &[IpAddr], _options: &DiscoveryOptions) -> DiscoveryResult {
+    let start = std::time::Instant::now();
+    let semaphore = Arc::new(Semaphore::new(LLMNR_DISCOVERY_CONCURRENCY));
+
+    let handles: Vec<_> = targets
+        .iter()
+        .copied()
+        .map(|target| {
+            let sem = Arc::clone(&semaphore);
+            tokio::spawn(async move {
+                let _permit = sem.acquire().await.ok()?;
+                let ip_str = target.to_string();
+                let name = super::llmnr::resolve_hostname(&ip_str, LLMNR_DISCOVERY_TIMEOUT).await?;
+                Some((target, name))
+            })
+        })
+        .collect();
+
+    let mut hostnames = std::collections::HashMap::new();
+    let mut host_metadata: std::collections::HashMap<String, HostMetadata> =
+        std::collections::HashMap::new();
+    let mut hosts = Vec::new();
+    let mut unreachable: Vec<String> = targets.iter().map(ToString::to_string).collect();
+
+    for handle in handles {
+        if let Ok(Some((target, name))) = handle.await {
+            let ip_str = target.to_string();
+            unreachable.retain(|ip| ip != &ip_str);
+            hosts.push(ip_str.clone());
+            hostnames.insert(ip_str.clone(), name.clone());
+            host_metadata.insert(
+                ip_str,
+                HostMetadata {
+                    hostname: Some(name),
+                    hostname_source: Some("llmnr".to_string()),
+                    ..Default::default()
+                },
+            );
+        }
+    }
+
+    DiscoveryResult {
+        method: "llmnr".to_string(),
+        hosts,
+        hostnames,
+        host_metadata,
+        unreachable,
         duration_ms: start.elapsed().as_millis() as u64,
         error: None,
         requires_privileges: false,
