@@ -3,7 +3,7 @@
 /**
  * Build and copy sidecar binaries for Tauri
  *
- * This script builds the worker and net-scanner binaries and copies them to the
+ * This script builds the worker binary and copies it to the
  * src-tauri/binaries directory with the correct target triple suffix.
  *
  * The build process creates a placeholder file first to satisfy Tauri's
@@ -15,7 +15,7 @@ import { join } from 'node:path';
 import { $ } from 'bun';
 
 // Constants
-const SIDECAR_NAMES = ['worker', 'net-scanner'] as const;
+const SIDECAR_NAMES = ['worker'] as const;
 const BINARIES_DIR = join('src-tauri', 'binaries');
 
 // Pure functions
