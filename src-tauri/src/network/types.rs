@@ -228,6 +228,11 @@ pub struct SsdpDeviceInfo {
     /// SERVER header value from SSDP response
     #[serde(skip_serializing_if = "Option::is_none")]
     pub server: Option<String>,
+    /// UPnP device Unique Device Name (urn:uuid:...).
+    /// Globally unique per the UPnP spec — usable as a strong merge signal
+    /// across IPv4 / IPv6 / hostname-less hosts.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub udn: Option<String>,
 }
 
 /// Scan mode determining port range to scan

@@ -321,6 +321,99 @@ describe('mergeHosts', () => {
 		expect(result[0]?.serviceBanners).toHaveLength(1);
 	});
 
+	it('merges hosts sharing SSDP UDN across v4 and v6', () => {
+		const sharedUdn = 'uuid:abcd1234-5678-90ab-cdef-1234567890ab';
+		const ssdpV4 = buildDiscoveryResult({
+			method: 'ssdp',
+			hosts: ['192.168.1.110'],
+			hostMetadata: {
+				'192.168.1.110': buildMetadata({
+					ssdpDevice: { udn: sharedUdn },
+				}),
+			},
+		});
+		const ssdpV6 = buildDiscoveryResult({
+			method: 'ssdp',
+			hosts: ['fe80::dead'],
+			hostMetadata: {
+				'fe80::dead': buildMetadata({
+					ssdpDevice: { udn: sharedUdn },
+				}),
+			},
+		});
+
+		const result = mergeHosts([ssdpV4, ssdpV6], []);
+
+		expect(result).toHaveLength(1);
+		expect(result[0]?.ips.sort()).toEqual(['192.168.1.110', 'fe80::dead']);
+		expect(result[0]?.ssdpDevice?.udn).toBe(sharedUdn);
+	});
+
+	it('merges hosts sharing WS-D EndpointReference across v4 and v6', () => {
+		const sharedEpr = 'urn:uuid:11112222-3333-4444-5555-666677778888';
+		const wsdV4 = buildDiscoveryResult({
+			method: 'ws_discovery',
+			hosts: ['192.168.1.120'],
+			hostMetadata: {
+				'192.168.1.120': buildMetadata({
+					wsDiscovery: {
+						deviceTypes: ['wsdp:Device'],
+						xaddrs: [],
+						scopes: [],
+						endpointReference: sharedEpr,
+					},
+				}),
+			},
+		});
+		const wsdV6 = buildDiscoveryResult({
+			method: 'ws_discovery',
+			hosts: ['fe80::beef'],
+			hostMetadata: {
+				'fe80::beef': buildMetadata({
+					wsDiscovery: {
+						deviceTypes: ['wsdp:Device'],
+						xaddrs: [],
+						scopes: [],
+						endpointReference: sharedEpr,
+					},
+				}),
+			},
+		});
+
+		const result = mergeHosts([wsdV4, wsdV6], []);
+
+		expect(result).toHaveLength(1);
+		expect(result[0]?.ips.sort()).toEqual(['192.168.1.120', 'fe80::beef']);
+		expect(result[0]?.wsDiscovery?.endpointReference).toBe(sharedEpr);
+	});
+
+	it('keeps hosts with different UDNs separate', () => {
+		const a = buildDiscoveryResult({
+			method: 'ssdp',
+			hosts: ['192.168.1.130'],
+			hostMetadata: {
+				'192.168.1.130': buildMetadata({
+					ssdpDevice: { udn: 'uuid:11111111-1111-1111-1111-111111111111' },
+				}),
+			},
+		});
+		const b = buildDiscoveryResult({
+			method: 'ssdp',
+			hosts: ['192.168.1.131'],
+			hostMetadata: {
+				'192.168.1.131': buildMetadata({
+					ssdpDevice: { udn: 'uuid:22222222-2222-2222-2222-222222222222' },
+				}),
+			},
+		});
+
+		const result = mergeHosts([a, b], []);
+
+		expect(result).toHaveLength(2);
+		const ips = result.map((host) => host.ips[0]);
+		expect(ips).toEqual(['192.168.1.130', '192.168.1.131']);
+	});
+
 	it('merges v4 mDNS with v6 SNMP via shared sysName signal', () => {
 		const mdns = buildDiscoveryResult({
 			method: 'mdns',

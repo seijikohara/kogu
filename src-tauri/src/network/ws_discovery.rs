@@ -28,6 +28,11 @@ pub struct WsDiscoveryInfo {
     pub xaddrs: Vec<String>,
     /// Scopes - URIs describing device capabilities
     pub scopes: Vec<String>,
+    /// WS-Discovery Endpoint Reference - globally-unique device ID
+    /// from <wsa:Address> inside <wsa:EndpointReference>.
+    /// Format: urn:uuid:XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub endpoint_reference: Option<String>,
 }
 
 /// Run WS-Discovery probe and collect responses
@@ -121,8 +126,12 @@ fn parse_probe_match(xml: &str) -> Option<WsDiscoveryInfo> {
     let mut device_types = Vec::new();
     let mut xaddrs = Vec::new();
     let mut scopes = Vec::new();
+    let mut endpoint_reference: Option<String> = None;
     let mut current_tag = String::new();
     let mut in_probe_match = false;
+    // Track depth into <wsa:EndpointReference> so we extract its child
+    // <wsa:Address> rather than the unrelated <wsa:To> in the SOAP header.
+    let mut endpoint_reference_depth: u32 = 0;
 
     loop {
         match reader.read_event_into(&mut buf) {
@@ -130,6 +139,9 @@ fn parse_probe_match(xml: &str) -> Option<WsDiscoveryInfo> {
                 let tag = String::from_utf8_lossy(e.local_name().as_ref()).to_string();
                 if tag == "ProbeMatch" || tag == "ProbeMatches" {
                     in_probe_match = true;
+                }
+                if tag == "EndpointReference" {
+                    endpoint_reference_depth = endpoint_reference_depth.saturating_add(1);
                 }
                 current_tag = tag;
             }
@@ -147,6 +159,12 @@ fn parse_probe_match(xml: &str) -> Option<WsDiscoveryInfo> {
                             "Scopes" => {
                                 scopes.extend(text.split_whitespace().map(String::from));
                             }
+                            "Address" if endpoint_reference_depth > 0 => {
+                                // First EPR Address wins; ignore later duplicates.
+                                if endpoint_reference.is_none() {
+                                    endpoint_reference = Some(text);
+                                }
+                            }
                             _ => {}
                         }
                     }
@@ -157,6 +175,9 @@ fn parse_probe_match(xml: &str) -> Option<WsDiscoveryInfo> {
                 if tag == "ProbeMatch" || tag == "ProbeMatches" {
                     in_probe_match = false;
                 }
+                if tag == "EndpointReference" {
+                    endpoint_reference_depth = endpoint_reference_depth.saturating_sub(1);
+                }
                 current_tag.clear();
             }
             Ok(Event::Eof) => break,
@@ -166,7 +187,11 @@ fn parse_probe_match(xml: &str) -> Option<WsDiscoveryInfo> {
         buf.clear();
     }
 
-    if device_types.is_empty() && xaddrs.is_empty() && scopes.is_empty() {
+    if device_types.is_empty()
+        && xaddrs.is_empty()
+        && scopes.is_empty()
+        && endpoint_reference.is_none()
+    {
         return None;
     }
 
@@ -174,6 +199,7 @@ fn parse_probe_match(xml: &str) -> Option<WsDiscoveryInfo> {
         device_types,
         xaddrs,
         scopes,
+        endpoint_reference,
     })
 }
 
@@ -245,5 +271,86 @@ mod tests {
     fn test_parse_probe_match_invalid_xml() {
         let result = parse_probe_match("not xml at all");
         assert!(result.is_none());
+    }
+
+    #[test]
+    fn test_parse_probe_match_extracts_endpoint_reference() {
+        let xml = r#"<?xml version="1.0" encoding="utf-8"?>
+<soap:Envelope xmlns:soap="http://www.w3.org/2003/05/soap-envelope"
+  xmlns:wsa="http://schemas.xmlsoap.org/ws/2004/08/addressing"
+  xmlns:wsd="http://schemas.xmlsoap.org/ws/2005/04/discovery">
+  <soap:Body>
+    <wsd:ProbeMatches>
+      <wsd:ProbeMatch>
+        <wsa:EndpointReference>
+          <wsa:Address>urn:uuid:abcd1234-5678-90ab-cdef-1234567890ab</wsa:Address>
+        </wsa:EndpointReference>
+        <wsd:Types>wsdp:Device</wsd:Types>
+        <wsd:XAddrs>http://192.168.1.100:8080/ws</wsd:XAddrs>
+      </wsd:ProbeMatch>
+    </wsd:ProbeMatches>
+  </soap:Body>
+</soap:Envelope>"#;
+
+        let result = parse_probe_match(xml);
+        assert!(result.is_some());
+        let info = result.unwrap();
+        assert_eq!(
+            info.endpoint_reference.as_deref(),
+            Some("urn:uuid:abcd1234-5678-90ab-cdef-1234567890ab")
+        );
+    }
+
+    #[test]
+    fn test_parse_probe_match_without_epr_returns_none_for_epr() {
+        let xml = r#"<soap:Envelope xmlns:soap="http://www.w3.org/2003/05/soap-envelope">
+  <soap:Body>
+    <ProbeMatches>
+      <ProbeMatch>
+        <Types>wsdp:Device</Types>
+        <XAddrs>http://10.0.0.1/ws</XAddrs>
+      </ProbeMatch>
+    </ProbeMatches>
+  </soap:Body>
+</soap:Envelope>"#;
+
+        let result = parse_probe_match(xml);
+        assert!(result.is_some());
+        let info = result.unwrap();
+        assert!(info.endpoint_reference.is_none());
+    }
+
+    #[test]
+    fn test_parse_probe_match_prefers_epr_address_over_wsa_to() {
+        // <wsa:To> in the SOAP header must NOT be treated as the EPR. Only
+        // <wsa:Address> nested inside <wsa:EndpointReference> qualifies.
+        let xml = r#"<?xml version="1.0" encoding="utf-8"?>
+<soap:Envelope xmlns:soap="http://www.w3.org/2003/05/soap-envelope"
+  xmlns:wsa="http://schemas.xmlsoap.org/ws/2004/08/addressing"
+  xmlns:wsd="http://schemas.xmlsoap.org/ws/2005/04/discovery">
+  <soap:Header>
+    <wsa:To>urn:schemas-xmlsoap-org:ws:2005:04:discovery</wsa:To>
+    <wsa:Action>http://schemas.xmlsoap.org/ws/2005/04/discovery/ProbeMatches</wsa:Action>
+  </soap:Header>
+  <soap:Body>
+    <wsd:ProbeMatches>
+      <wsd:ProbeMatch>
+        <wsa:EndpointReference>
+          <wsa:Address>urn:uuid:11112222-3333-4444-5555-666677778888</wsa:Address>
+        </wsa:EndpointReference>
+        <wsd:Types>wsdp:Device</wsd:Types>
+        <wsd:XAddrs>http://10.0.0.50/ws</wsd:XAddrs>
+      </wsd:ProbeMatch>
+    </wsd:ProbeMatches>
+  </soap:Body>
+</soap:Envelope>"#;
+
+        let result = parse_probe_match(xml);
+        assert!(result.is_some());
+        let info = result.unwrap();
+        assert_eq!(
+            info.endpoint_reference.as_deref(),
+            Some("urn:uuid:11112222-3333-4444-5555-666677778888")
+        );
     }
 }
