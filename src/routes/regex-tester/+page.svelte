@@ -427,8 +427,14 @@
 				</Card.Root>
 			</div>
 
-			<!-- Right column: accordion -->
-			<div class="w-96 shrink-0 overflow-auto border-l bg-surface-2 p-4">
+			<!--
+				Right column: analytical accordion.
+				Width uses `--rail-w-wide` (24rem) rather than `--rail-w` (18rem) because
+				this panel hosts multiple stacked accordion sections (Matches, Explain,
+				...) whose content density needs more horizontal room than a standard
+				options rail of flat option groups.
+			-->
+			<div class="w-[var(--rail-w-wide)] shrink-0 overflow-auto border-l bg-surface-2 p-4">
 				<Accordion.Root type="multiple" value={['matches', 'explain']} class="w-full">
 					<Accordion.Item value="matches">
 						<Accordion.Trigger>
