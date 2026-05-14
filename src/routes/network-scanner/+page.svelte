@@ -655,13 +655,15 @@
 			{#if networkInfo && networkInfo.interfaces.length > 0}
 				<div class="mt-2 space-y-1">
 					<p class="text-xs font-medium text-muted-foreground">Available interfaces:</p>
-					<div class="max-h-24 space-y-1 overflow-y-auto">
+					<div class="max-h-32 space-y-1 overflow-y-auto">
 						{#each networkInfo.interfaces.filter((i) => !i.isLoopback && i.suggestedCidr) as iface (iface.ip)}
 							<ListItemButton variant="card" size="sm" onclick={() => handleSelectInterface(iface)}>
-								<span class="font-medium">{iface.name}</span>
-								{#snippet trailing()}
-									<span class="text-muted-foreground">{iface.suggestedCidr}</span>
-								{/snippet}
+								<span class="flex min-w-0 flex-col items-start gap-0.5">
+									<span class="font-medium">{iface.name}</span>
+									<span class="break-all font-mono text-2xs text-muted-foreground">
+										{iface.suggestedCidr}
+									</span>
+								</span>
 							</ListItemButton>
 						{/each}
 					</div>
