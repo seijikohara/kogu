@@ -103,7 +103,7 @@
 	<div class="min-w-0 flex-1">
 		<!-- Primary IP + IPv6 badge + status dot + badges -->
 		<div class="flex items-center gap-2">
-			<span class="font-mono text-sm font-medium">{primaryIp}</span>
+			<span class="font-mono text-sm font-medium tabular-nums">{primaryIp}</span>
 			{#if ipv6Count > 0}
 				<span
 					class="rounded bg-muted px-1.5 py-0.5 text-xs text-muted-foreground"
@@ -124,7 +124,7 @@
 			<div class="flex items-center gap-1">
 				{#if openPortCount > 0}
 					<span
-						class="flex items-center gap-0.5 rounded bg-success/10 px-1.5 py-0.5 text-xs font-medium text-success"
+						class="flex items-center gap-0.5 rounded bg-success/10 px-1.5 py-0.5 text-xs font-medium tabular-nums text-success"
 						title="{openPortCount} open ports"
 					>
 						<CheckCircle2 class="h-2.5 w-2.5" />
@@ -133,7 +133,7 @@
 				{/if}
 				{#if discoveryMethodCount > 1}
 					<span
-						class="flex items-center gap-0.5 rounded bg-primary/10 px-1.5 py-0.5 text-xs font-medium text-primary"
+						class="flex items-center gap-0.5 rounded bg-primary/10 px-1.5 py-0.5 text-xs font-medium tabular-nums text-primary"
 						title="{discoveryMethodCount} discovery methods"
 					>
 						<Radar class="h-2.5 w-2.5" />
@@ -142,7 +142,7 @@
 				{/if}
 				{#if mdnsServiceCount > 0}
 					<span
-						class="flex items-center gap-0.5 rounded bg-info/10 px-1.5 py-0.5 text-xs font-medium text-info"
+						class="flex items-center gap-0.5 rounded bg-info/10 px-1.5 py-0.5 text-xs font-medium tabular-nums text-info"
 						title="{mdnsServiceCount} mDNS services"
 					>
 						<Radio class="h-2.5 w-2.5" />
@@ -183,7 +183,7 @@
 			<div class="mt-0.5 flex flex-wrap gap-1">
 				{#each additionalIpv4s as ip (ip)}
 					<span
-						class="rounded bg-muted px-1.5 py-0.5 font-mono text-xs text-muted-foreground"
+						class="rounded bg-muted px-1.5 py-0.5 font-mono text-xs tabular-nums text-muted-foreground"
 						title={ip}
 					>
 						{ip}

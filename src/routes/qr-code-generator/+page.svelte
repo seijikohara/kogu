@@ -5,7 +5,6 @@
 		Contact,
 		Download,
 		Globe,
-		Image as ImageIcon,
 		Mail,
 		MapPin,
 		MessageSquare,
@@ -31,7 +30,7 @@
 	import * as Card from '$lib/components/ui/card';
 	import { SectionHeader } from '$lib/components/layout';
 	import { ToolShell } from '$lib/components/shell';
-	import { StatItem } from '$lib/components/status';
+	import { EmbeddedEmptyState, StatItem } from '$lib/components/status';
 	import {
 		CONTENT_KINDS,
 		CORNER_DOT_TYPES,
@@ -622,11 +621,12 @@
 
 				{#if !valid}
 					<Card.Root density="compact" class="border-warning/40 bg-warning/5">
-						<Card.Content class="flex items-start gap-3 py-4">
-							<ImageIcon class="mt-0.5 h-4 w-4 text-warning" />
-							<div class="text-sm text-muted-foreground">
-								Fill in the required fields above to render the QR code.
-							</div>
+						<Card.Content class="py-6">
+							<EmbeddedEmptyState
+								icon={QrCode}
+								title="Fill in content to render"
+								description="Complete the required fields on the left to generate the QR code."
+							/>
 						</Card.Content>
 					</Card.Root>
 				{/if}

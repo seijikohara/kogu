@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { FileText } from '@lucide/svelte';
 	import * as yaml from 'yaml';
 	import type { ContextMenuItem } from '$lib/components/editor';
 	import { CodeEditor } from '$lib/components/editor';
@@ -10,9 +11,10 @@
 		FormSection,
 		FormSelect,
 	} from '$lib/components/form';
-	import { SplitPane } from '$lib/components/layout';
+	import { SectionHeader, SplitPane } from '$lib/components/layout';
 	import { OptionsPanel } from '$lib/components/panel';
 	import { SAMPLE_YAML, sortKeysDeep, validateYaml } from '$lib/services/formatters';
+	import { EmbeddedEmptyState } from '$lib/components/status';
 
 	interface Props {
 		input: string;
@@ -319,14 +321,28 @@
 			/>
 		{/snippet}
 		{#snippet right()}
-			<CodeEditor
-				title="Output"
-				value={output}
-				mode="readonly"
-				editorMode="yaml"
-				placeholder="Formatted output..."
-				oncopy={handleCopy}
-			/>
+			{#if !input.trim()}
+				<div class="flex h-full flex-col overflow-hidden">
+					<SectionHeader title="Output" />
+					<div class="flex-1">
+						<EmbeddedEmptyState
+							icon={FileText}
+							title="Enter YAML to format"
+							description="The formatted (or minified) document will appear here."
+							fillHeight
+						/>
+					</div>
+				</div>
+			{:else}
+				<CodeEditor
+					title="Output"
+					value={output}
+					mode="readonly"
+					editorMode="yaml"
+					placeholder="Formatted output..."
+					oncopy={handleCopy}
+				/>
+			{/if}
 		{/snippet}
 	</SplitPane>
 </div>

@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { Code2 } from '@lucide/svelte';
 	import { CodeEditor } from '$lib/components/editor';
 	import {
 		FormCheckbox,
@@ -8,9 +9,9 @@
 		FormSection,
 		FormSelect,
 	} from '$lib/components/form';
-	import { SplitPane } from '$lib/components/layout';
+	import { SectionHeader, SplitPane } from '$lib/components/layout';
 	import { ToolShell } from '$lib/components/shell';
-	import { StatItem } from '$lib/components/status';
+	import { EmbeddedEmptyState, StatItem } from '$lib/components/status';
 	import {
 		BASE64_MIME_TYPES,
 		type Base64DecodeOptions,
@@ -259,15 +260,31 @@
 			/>
 		{/snippet}
 		{#snippet right()}
-			<CodeEditor
-				title={mode === 'encode' ? 'Base64 Output' : 'Decoded Text'}
-				value={output}
-				mode="readonly"
-				editorMode="plain"
-				placeholder={mode === 'encode' ? 'Encoded output...' : 'Decoded output...'}
-				oncopy={handleCopy}
-				showViewToggle={false}
-			/>
+			{#if !input.trim()}
+				<div class="flex h-full flex-col overflow-hidden">
+					<SectionHeader title={mode === 'encode' ? 'Base64 Output' : 'Decoded Text'} />
+					<div class="flex-1">
+						<EmbeddedEmptyState
+							icon={Code2}
+							title={mode === 'encode' ? 'Enter text to encode' : 'Paste Base64 to decode'}
+							description={mode === 'encode'
+								? 'The Base64-encoded result will appear here.'
+								: 'The decoded plain text will appear here.'}
+							fillHeight
+						/>
+					</div>
+				</div>
+			{:else}
+				<CodeEditor
+					title={mode === 'encode' ? 'Base64 Output' : 'Decoded Text'}
+					value={output}
+					mode="readonly"
+					editorMode="plain"
+					placeholder={mode === 'encode' ? 'Encoded output...' : 'Decoded output...'}
+					oncopy={handleCopy}
+					showViewToggle={false}
+				/>
+			{/if}
 		{/snippet}
 	</SplitPane>
 </ToolShell>

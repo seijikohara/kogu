@@ -795,7 +795,7 @@
 									class="flex items-center justify-between bg-background px-2 py-1"
 									title={WELL_KNOWN_SERVICES[port] ?? `Port ${port}`}
 								>
-									<span class="font-mono text-xs font-medium">{port}</span>
+									<span class="font-mono text-xs font-medium tabular-nums">{port}</span>
 									<span class="truncate text-xs text-muted-foreground">
 										{WELL_KNOWN_SERVICES[port] ?? ''}
 									</span>
@@ -840,7 +840,7 @@
 											class="flex items-center justify-between bg-background px-2 py-1"
 											title={WELL_KNOWN_SERVICES[port] ?? `Port ${port}`}
 										>
-											<span class="font-mono text-xs font-medium">{port}</span>
+											<span class="font-mono text-xs font-medium tabular-nums">{port}</span>
 											<span class="truncate text-xs text-muted-foreground">
 												{WELL_KNOWN_SERVICES[port] ?? ''}
 											</span>
@@ -864,7 +864,7 @@
 											class="flex items-center justify-between bg-background px-2 py-1"
 											title={WELL_KNOWN_SERVICES[port] ?? `Port ${port}`}
 										>
-											<span class="font-mono text-xs font-medium">{port}</span>
+											<span class="font-mono text-xs font-medium tabular-nums">{port}</span>
 											<span class="truncate text-xs text-muted-foreground">
 												{WELL_KNOWN_SERVICES[port] ?? ''}
 											</span>
@@ -1021,7 +1021,9 @@
 											: 0}%"
 								></div>
 							</div>
-							<div class="flex items-center justify-between text-xs text-muted-foreground">
+							<div
+								class="flex items-center justify-between text-xs tabular-nums text-muted-foreground"
+							>
 								{#if progress?.hostsFound !== undefined && progress.hostsFound > 0}
 									<span class="text-success">{progress.hostsFound} hosts</span>
 								{:else}
@@ -1045,7 +1047,9 @@
 						<span class="text-xs text-muted-foreground">{progressText}</span>
 					</div>
 					<div class="flex items-center gap-3">
-						<span class="text-sm font-medium text-primary">{progressPercentage.toFixed(0)}%</span>
+						<span class="text-sm font-medium tabular-nums text-primary"
+							>{progressPercentage.toFixed(0)}%</span
+						>
 						<ActionButton
 							label="Cancel"
 							variant="ghost"
@@ -1209,7 +1213,7 @@
 		<!-- Summary Footer -->
 		{#if results}
 			<div class="shrink-0 border-t bg-surface-3 px-4 py-2">
-				<div class="flex items-center justify-between text-xs text-muted-foreground">
+				<div class="flex items-center justify-between text-xs tabular-nums text-muted-foreground">
 					<div class="flex items-center gap-4">
 						<span class="flex items-center gap-1">
 							<Server class="h-3 w-3" />

@@ -12,7 +12,7 @@
 	} from '$lib/components/form';
 	import { SectionHeader } from '$lib/components/layout';
 	import { ToolShell } from '$lib/components/shell';
-	import { EmptyState, StatItem } from '$lib/components/status';
+	import { EmbeddedEmptyState, StatItem } from '$lib/components/status';
 	import * as Card from '$lib/components/ui/card';
 	import {
 		CASE_DEFINITIONS,
@@ -200,7 +200,12 @@
 						{/each}
 					</div>
 				{:else}
-					<EmptyState icon={CaseSensitive} title="Enter text to see case conversions" />
+					<EmbeddedEmptyState
+						icon={CaseSensitive}
+						title="Enter text to convert"
+						description="Type or paste text above to see all case format conversions."
+						fillHeight
+					/>
 				{/if}
 			</div>
 		</div>

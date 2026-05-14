@@ -9,6 +9,7 @@
 		FormTextarea,
 	} from '$lib/components/form';
 	import { SectionHeader } from '$lib/components/layout';
+	import { EmbeddedEmptyState } from '$lib/components/status';
 	import { Badge } from '$lib/components/ui/badge';
 	import { Button } from '$lib/components/ui/button';
 	import * as Card from '$lib/components/ui/card';
@@ -338,10 +339,20 @@
 						<Terminal class="h-4 w-4 text-muted-foreground" />
 						<Card.Title class="text-sm font-medium">Generated command</Card.Title>
 					</div>
-					<CopyButton text={command} toastLabel="Command" size="sm" />
+					{#if isValid}
+						<CopyButton text={command} toastLabel="Command" size="sm" />
+					{/if}
 				</Card.Header>
 				<Card.Content>
-					<pre class="overflow-auto rounded-md bg-muted p-3 font-mono text-sm">{command}</pre>
+					{#if isValid}
+						<pre class="overflow-auto rounded-md bg-muted p-3 font-mono text-sm">{command}</pre>
+					{:else}
+						<EmbeddedEmptyState
+							icon={Terminal}
+							title="Enter a URL to build the command"
+							description="The generated cURL command will appear here once a request URL is set."
+						/>
+					{/if}
 				</Card.Content>
 			</Card.Root>
 		</div>
