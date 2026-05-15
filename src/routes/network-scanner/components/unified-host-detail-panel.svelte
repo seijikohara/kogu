@@ -40,6 +40,7 @@
 	import { Badge } from '$lib/components/ui/badge';
 	import { Button } from '$lib/components/ui/button';
 	import * as Select from '$lib/components/ui/select';
+	import { SkeletonRow } from '$lib/components/ui/skeleton';
 	import * as Tabs from '$lib/components/ui/tabs';
 	import * as Tooltip from '$lib/components/ui/tooltip';
 	import {
@@ -882,7 +883,17 @@
 					</div>
 				{/if}
 
-				{#if ports.length === 0}
+				{#if ports.length === 0 && scanDisabled && scanProgress}
+					<!--
+						Scan is running but the first port result has not arrived yet.
+						Render skeleton rows so the tab does not look empty.
+					-->
+					<div class="space-y-1.5" aria-busy="true" aria-label="Loading ports">
+						{#each Array(5) as _, i (i)}
+							<SkeletonRow delay={i * 30} labelWidth="w-24" trailing />
+						{/each}
+					</div>
+				{:else if ports.length === 0}
 					<EmbeddedEmptyState
 						icon={Network}
 						title="No Port Scan Data"
