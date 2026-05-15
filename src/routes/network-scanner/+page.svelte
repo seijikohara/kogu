@@ -32,6 +32,7 @@
 	import * as Card from '$lib/components/ui/card';
 	import { ListItemButton } from '$lib/components/ui/list-item-button';
 	import * as Resizable from '$lib/components/ui/resizable';
+	import { SkeletonRow } from '$lib/components/ui/skeleton';
 	import { Channel } from '@tauri-apps/api/core';
 	import {
 		cancelDiscovery,
@@ -1101,7 +1102,17 @@
 
 		<!-- Main Content -->
 		<div class="flex-1 overflow-hidden">
-			{#if unifiedHosts.length > 0}
+			{#if (isDiscovering || isScanning) && unifiedHosts.length === 0 && !error}
+				<!--
+					Discovery / scan is running but the first host has not arrived yet.
+					Render a stack of skeleton rows so the panel does not look frozen.
+				-->
+				<div class="space-y-1.5 p-2" aria-busy="true" aria-label="Loading hosts">
+					{#each Array(6) as _, i (i)}
+						<SkeletonRow delay={i * 30} labelWidth="w-32" trailing />
+					{/each}
+				</div>
+			{:else if unifiedHosts.length > 0}
 				<!-- Unified 2-Pane Layout: Host List + Detail -->
 				<Resizable.PaneGroup direction="horizontal" class="h-full">
 					<!-- Left Pane: Host List -->

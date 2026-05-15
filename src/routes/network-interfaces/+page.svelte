@@ -23,6 +23,7 @@
 	import { Button } from '$lib/components/ui/button';
 	import { ListItemButton } from '$lib/components/ui/list-item-button';
 	import * as Resizable from '$lib/components/ui/resizable';
+	import { SkeletonRow } from '$lib/components/ui/skeleton';
 	import { cn } from '$lib/utils';
 	import {
 		type DetailedNetworkInterface,
@@ -641,7 +642,15 @@
 					</Resizable.Pane>
 				</Resizable.PaneGroup>
 			{:else if loading}
-				<EmptyState icon={RefreshCw} title="Loading network interfaces..." />
+				<!--
+					Initial fetch of interfaces is async (Tauri command).
+					Render skeleton rows in place of a single loading label.
+				-->
+				<div class="space-y-1.5 p-2" aria-busy="true" aria-label="Loading network interfaces">
+					{#each Array(5) as _, i (i)}
+						<SkeletonRow delay={i * 30} labelWidth="w-28" trailing />
+					{/each}
+				</div>
 			{:else if error}
 				<EmptyState icon={Circle} title="Failed to load interfaces" description={error} />
 			{:else}
