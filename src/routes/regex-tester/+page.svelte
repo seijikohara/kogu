@@ -1,5 +1,15 @@
 <script lang="ts">
-	import { Eye, FlaskConical, GitBranch, Info, Search, Sparkles, Workflow } from '@lucide/svelte';
+	import {
+		Check,
+		Eye,
+		FlaskConical,
+		GitBranch,
+		Info,
+		Search,
+		Sparkles,
+		Workflow,
+		X,
+	} from '@lucide/svelte';
 	import { CopyButton } from '$lib/components/action';
 	import { FormError, FormInfo, FormSection, FormTextarea } from '$lib/components/form';
 	import { PatternEditor, RailroadView } from '$lib/components/regex';
@@ -306,15 +316,24 @@
 					</ToggleGroup.Root>
 				</div>
 				<div class="flex flex-wrap items-center gap-2 text-xs">
-					{#if validity === 'empty'}
-						<Badge variant="outline" class="text-muted-foreground">empty</Badge>
-					{:else if compiled.ok}
-						<Badge variant="outline" class="bg-success/10 text-success">✓ valid</Badge>
-					{:else}
-						<Badge variant="outline" class="bg-destructive/10 text-destructive">
-							✕ {compiled.error}
-						</Badge>
-					{/if}
+					<!--
+						aria-live announces pattern validity transitions (valid <-> invalid)
+						without forcing focus. Reads the badge label and error message.
+					-->
+					<output aria-live="polite" aria-atomic="true" class="contents">
+						{#if validity === 'empty'}
+							<Badge variant="outline" class="text-muted-foreground">empty</Badge>
+						{:else if compiled.ok}
+							<Badge variant="outline" class="bg-success/10 text-success">
+								<Check class="mr-1 h-3 w-3" aria-hidden="true" /> valid
+							</Badge>
+						{:else}
+							<Badge variant="outline" class="bg-destructive/10 text-destructive">
+								<X class="mr-1 h-3 w-3" aria-hidden="true" />
+								{compiled.error}
+							</Badge>
+						{/if}
+					</output>
 					<Badge variant="outline"
 						>{captureGroupCount} capture group{captureGroupCount === 1 ? '' : 's'}</Badge
 					>
@@ -373,9 +392,16 @@
 						<div class="flex items-center gap-2">
 							<Eye class="h-4 w-4 text-muted-foreground" />
 							<Card.Title class="text-sm font-medium">Test text</Card.Title>
-							<Badge variant="outline" class="font-mono text-2xs">
-								{matches.length} match{matches.length === 1 ? '' : 'es'}
-							</Badge>
+							<!--
+								aria-live announces the running match count to assistive tech as
+								the user edits the pattern or test text. `polite` is intentional —
+								this is an informational update, not a critical alert.
+							-->
+							<output aria-live="polite" aria-atomic="true" class="contents">
+								<Badge variant="outline" class="font-mono text-2xs">
+									{matches.length} match{matches.length === 1 ? '' : 'es'}
+								</Badge>
+							</output>
 						</div>
 					</Card.Header>
 					<Card.Content class="space-y-3">

@@ -210,7 +210,17 @@
 		<div class="flex flex-1 flex-col overflow-hidden">
 			<SectionHeader title="Decoded Token" />
 			{#if decoded}
-				<div class="flex-1 space-y-4 overflow-auto p-4">
+				<!--
+					aria-live announces newly decoded payloads / validity transitions as
+					the user pastes or edits a JWT. `aria-atomic="false"` keeps re-reads
+					focused on the changed region rather than the whole panel.
+				-->
+				<div
+					class="flex-1 space-y-4 overflow-auto p-4"
+					role="status"
+					aria-live="polite"
+					aria-atomic="false"
+				>
 					<!-- Expiration banner -->
 					{#if decoded.isExpired}
 						<div

@@ -123,7 +123,8 @@
 						</div>
 						<CopyButton text={expression} toastLabel="Expression" size="sm" />
 					</Card.Header>
-					<Card.Content>
+					<!-- aria-live announces the rebuilt expression as fields change. -->
+					<Card.Content role="status" aria-live="polite" aria-atomic="true">
 						<code class="block break-all rounded-md bg-muted p-3 font-mono text-base tabular-nums">
 							{expression}
 						</code>
@@ -137,7 +138,8 @@
 							<Card.Title class="text-sm font-medium">Description</Card.Title>
 						</div>
 					</Card.Header>
-					<Card.Content>
+					<!-- aria-live mirrors the description region in parse-tab. -->
+					<Card.Content role="status" aria-live="polite" aria-atomic="true">
 						{#if description.ok}
 							<p class="text-sm">{description.value}</p>
 						{:else}
@@ -154,7 +156,11 @@
 						<Card.Title class="text-sm font-medium">Next 8 executions</Card.Title>
 					</div>
 				</Card.Header>
-				<Card.Content>
+				<!--
+					aria-live announces next-execution preview refreshes. Non-atomic so
+					only changed rows are re-read by screen readers.
+				-->
+				<Card.Content role="status" aria-live="polite" aria-atomic="false">
 					{#if nextRuns.ok}
 						{#if nextRuns.value.length > 0}
 							<ul class="space-y-1.5">

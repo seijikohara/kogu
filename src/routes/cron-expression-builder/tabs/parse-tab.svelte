@@ -125,7 +125,11 @@
 							<Card.Title class="text-sm font-medium">Description</Card.Title>
 						</div>
 					</Card.Header>
-					<Card.Content>
+					<!--
+						aria-live announces the human-readable description as the user
+						edits the expression.
+					-->
+					<Card.Content role="status" aria-live="polite" aria-atomic="true">
 						{#if description.ok}
 							<p class="text-sm">{description.value}</p>
 						{:else}
@@ -141,7 +145,12 @@
 							<Card.Title class="text-sm font-medium">Next 8 executions</Card.Title>
 						</div>
 					</Card.Header>
-					<Card.Content>
+					<!--
+						aria-live announces refreshed next-execution previews. `false`
+						atomicity keeps screen readers focused on the changed rows rather
+						than re-reading the whole list.
+					-->
+					<Card.Content role="status" aria-live="polite" aria-atomic="false">
 						{#if nextRuns.ok}
 							{#if nextRuns.value.length > 0}
 								<ul class="space-y-1.5">

@@ -1055,7 +1055,16 @@
 				</div>
 			</div>
 		{:else if isScanning}
-			<div class="shrink-0 border-b bg-surface-2 px-4 py-3">
+			<!--
+				aria-live broadcasts scan progress (hosts found, ports open, current
+				percent) to assistive tech without interrupting the user.
+			-->
+			<div
+				class="shrink-0 border-b bg-surface-2 px-4 py-3"
+				role="status"
+				aria-live="polite"
+				aria-atomic="false"
+			>
 				<!-- Main progress info -->
 				<div class="mb-2 flex items-center justify-between">
 					<div class="flex items-center gap-2">
@@ -1133,9 +1142,16 @@
 					<!-- Left Pane: Host List -->
 					<Resizable.Pane defaultSize={35} minSize={20} maxSize={50}>
 						<div class="flex h-full flex-col border-r">
-							<!-- Host List Header -->
+							<!--
+								aria-live announces newly discovered hosts and open-port totals
+								to assistive tech while the scan is running. `polite` so the
+								announcement does not interrupt mid-task.
+							-->
 							<div
 								class="flex h-9 shrink-0 items-center justify-between border-b bg-surface-3 px-3"
+								role="status"
+								aria-live="polite"
+								aria-atomic="true"
 							>
 								<span class="text-xs font-medium text-muted-foreground">
 									Hosts ({unifiedHosts.length})
@@ -1147,11 +1163,16 @@
 								{/if}
 							</div>
 							<!-- Host List -->
+							<!--
+								outline-none + focus-visible ring keeps the keyboard focus
+								indicator visible on the listbox container.
+							-->
 							<!-- svelte-ignore a11y_no_noninteractive_tabindex -->
 							<div
-								class="flex-1 overflow-auto"
+								class="flex-1 overflow-auto outline-none focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:ring-inset"
 								role="listbox"
 								tabindex="0"
+								aria-label="Discovered hosts"
 								onkeydown={handleHostListKeydown}
 							>
 								{#each unifiedHosts as host (host.id)}
