@@ -24,3 +24,10 @@ runs:
       with:
         components: ${{ inputs.components }}
         cache-workspaces: src-tauri -> src-tauri/target
+        # Swatinem/rust-cache#341: on the macos-latest runner image rolled out
+        # 2026-05-13, restoring `~/.cargo/bin/` with cache-bin enabled clobbers
+        # the cargo/rustc rustup proxies (they become broken links to
+        # rustup-init), causing later `cargo build` invocations to be dispatched
+        # to rustup-init and fail with "unexpected argument 'build' found".
+        # Disabling cache-bin keeps the rustup-installed proxies intact.
+        cache-bin: 'false'
