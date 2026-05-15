@@ -11,6 +11,11 @@ runs:
 
     - name: Cache Bun dependencies
       uses: actions/cache@v5
+      # actions/cache#1754: the Windows runner image rolled out in May 2026
+      # randomly exits the cache step with no error output, killing the job.
+      # `continue-on-error: true` lets `bun install` fall back to a fresh
+      # network fetch when this happens, instead of failing the whole build.
+      continue-on-error: true
       with:
         path: ~/.bun/install/cache
         key: ${{ runner.os }}-bun-${{ hashFiles('**/bun.lock') }}
