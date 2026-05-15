@@ -27,6 +27,7 @@
 	import { Button } from '$lib/components/ui/button/index.js';
 	import * as Card from '$lib/components/ui/card';
 	import { Input } from '$lib/components/ui/input/index.js';
+	import * as Tooltip from '$lib/components/ui/tooltip/index.js';
 	import {
 		buildUrl,
 		decodeUrlWithOptions,
@@ -563,9 +564,22 @@
 									oninput={(e) => updateQueryParam(index, 'value', e.currentTarget.value)}
 									class="flex-1 font-mono text-sm"
 								/>
-								<Button variant="ghost" size="icon" onclick={() => removeQueryParam(index)}>
-									<Trash2 class="h-4 w-4" />
-								</Button>
+								<Tooltip.Root>
+									<Tooltip.Trigger>
+										{#snippet child({ props })}
+											<Button
+												{...props}
+												variant="ghost"
+												size="icon"
+												onclick={() => removeQueryParam(index)}
+											>
+												<Trash2 class="h-4 w-4" />
+												<span class="sr-only">Remove parameter</span>
+											</Button>
+										{/snippet}
+									</Tooltip.Trigger>
+									<Tooltip.Content>Remove parameter</Tooltip.Content>
+								</Tooltip.Root>
 							</div>
 						{/each}
 					</div>

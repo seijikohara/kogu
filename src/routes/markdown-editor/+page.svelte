@@ -41,6 +41,7 @@
 	import * as ContextMenu from '$lib/components/ui/context-menu';
 	import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
 	import { ListItemButton } from '$lib/components/ui/list-item-button';
+	import * as Tooltip from '$lib/components/ui/tooltip';
 	import {
 		applyFormat,
 		exportAsHtml,
@@ -552,15 +553,23 @@ ${tocToMarkdown(toc)}
 		<div class="flex h-9 shrink-0 items-center gap-0.5 border-b bg-surface-3 px-2">
 			<!-- Text Formatting -->
 			{#each textFormatButtons as btn}
-				<Button
-					variant="ghost"
-					size="sm"
-					class="h-7 w-7 p-0"
-					title={btn.label}
-					onclick={() => handleFormat(btn.action)}
-				>
-					<btn.icon class="h-3.5 w-3.5" />
-				</Button>
+				<Tooltip.Root>
+					<Tooltip.Trigger>
+						{#snippet child({ props })}
+							<Button
+								{...props}
+								variant="ghost"
+								size="sm"
+								class="h-7 w-7 p-0"
+								onclick={() => handleFormat(btn.action)}
+							>
+								<btn.icon class="h-3.5 w-3.5" />
+								<span class="sr-only">{btn.label}</span>
+							</Button>
+						{/snippet}
+					</Tooltip.Trigger>
+					<Tooltip.Content>{btn.label}</Tooltip.Content>
+				</Tooltip.Root>
 			{/each}
 
 			<div class="mx-1 h-4 w-px bg-border"></div>
@@ -587,44 +596,68 @@ ${tocToMarkdown(toc)}
 
 			<!-- Lists -->
 			{#each listButtons as btn}
-				<Button
-					variant="ghost"
-					size="sm"
-					class="h-7 w-7 p-0"
-					title={btn.label}
-					onclick={() => handleFormat(btn.action)}
-				>
-					<btn.icon class="h-3.5 w-3.5" />
-				</Button>
+				<Tooltip.Root>
+					<Tooltip.Trigger>
+						{#snippet child({ props })}
+							<Button
+								{...props}
+								variant="ghost"
+								size="sm"
+								class="h-7 w-7 p-0"
+								onclick={() => handleFormat(btn.action)}
+							>
+								<btn.icon class="h-3.5 w-3.5" />
+								<span class="sr-only">{btn.label}</span>
+							</Button>
+						{/snippet}
+					</Tooltip.Trigger>
+					<Tooltip.Content>{btn.label}</Tooltip.Content>
+				</Tooltip.Root>
 			{/each}
 
 			<div class="mx-1 h-4 w-px bg-border"></div>
 
 			<!-- Insert Elements -->
 			{#each insertButtons as btn}
-				<Button
-					variant="ghost"
-					size="sm"
-					class="h-7 w-7 p-0"
-					title={btn.label}
-					onclick={() => handleFormat(btn.action)}
-				>
-					<btn.icon class="h-3.5 w-3.5" />
-				</Button>
+				<Tooltip.Root>
+					<Tooltip.Trigger>
+						{#snippet child({ props })}
+							<Button
+								{...props}
+								variant="ghost"
+								size="sm"
+								class="h-7 w-7 p-0"
+								onclick={() => handleFormat(btn.action)}
+							>
+								<btn.icon class="h-3.5 w-3.5" />
+								<span class="sr-only">{btn.label}</span>
+							</Button>
+						{/snippet}
+					</Tooltip.Trigger>
+					<Tooltip.Content>{btn.label}</Tooltip.Content>
+				</Tooltip.Root>
 			{/each}
 
 			<div class="mx-1 h-4 w-px bg-border"></div>
 
 			<!-- Clear Formatting -->
-			<Button
-				variant="ghost"
-				size="sm"
-				class="h-7 w-7 p-0"
-				title="Clear Formatting"
-				onclick={() => handleFormat('clearFormat')}
-			>
-				<Eraser class="h-3.5 w-3.5" />
-			</Button>
+			<Tooltip.Root>
+				<Tooltip.Trigger>
+					{#snippet child({ props })}
+						<Button
+							{...props}
+							variant="ghost"
+							size="sm"
+							class="h-7 w-7 p-0"
+							onclick={() => handleFormat('clearFormat')}
+						>
+							<Eraser class="h-3.5 w-3.5" />
+							<span class="sr-only">Clear Formatting</span>
+						</Button>
+					{/snippet}
+				</Tooltip.Trigger>
+				<Tooltip.Content>Clear Formatting</Tooltip.Content>
+			</Tooltip.Root>
 		</div>
 
 		<!-- Content Area -->

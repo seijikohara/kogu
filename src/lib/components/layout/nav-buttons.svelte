@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { ChevronLeft, ChevronRight } from '@lucide/svelte';
 	import { Button } from '$lib/components/ui/button/index.js';
+	import * as Tooltip from '$lib/components/ui/tooltip/index.js';
 	import {
 		getCanGoBack,
 		getCanGoForward,
@@ -22,24 +23,40 @@
 </script>
 
 <div class="flex items-center gap-0.5">
-	<Button
-		variant="ghost"
-		size="icon-sm"
-		disabled={!canGoBack}
-		onclick={handleBack}
-		aria-label="Go back"
-		class="h-7 w-7"
-	>
-		<ChevronLeft class="h-4 w-4" />
-	</Button>
-	<Button
-		variant="ghost"
-		size="icon-sm"
-		disabled={!canGoForward}
-		onclick={handleForward}
-		aria-label="Go forward"
-		class="h-7 w-7"
-	>
-		<ChevronRight class="h-4 w-4" />
-	</Button>
+	<Tooltip.Root>
+		<Tooltip.Trigger>
+			{#snippet child({ props })}
+				<Button
+					{...props}
+					variant="ghost"
+					size="icon-sm"
+					disabled={!canGoBack}
+					onclick={handleBack}
+					class="h-7 w-7"
+				>
+					<ChevronLeft class="h-4 w-4" />
+					<span class="sr-only">Go back</span>
+				</Button>
+			{/snippet}
+		</Tooltip.Trigger>
+		<Tooltip.Content>Go back</Tooltip.Content>
+	</Tooltip.Root>
+	<Tooltip.Root>
+		<Tooltip.Trigger>
+			{#snippet child({ props })}
+				<Button
+					{...props}
+					variant="ghost"
+					size="icon-sm"
+					disabled={!canGoForward}
+					onclick={handleForward}
+					class="h-7 w-7"
+				>
+					<ChevronRight class="h-4 w-4" />
+					<span class="sr-only">Go forward</span>
+				</Button>
+			{/snippet}
+		</Tooltip.Trigger>
+		<Tooltip.Content>Go forward</Tooltip.Content>
+	</Tooltip.Root>
 </div>

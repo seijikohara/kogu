@@ -3,6 +3,7 @@
 	import type { Snippet } from 'svelte';
 	import { Button } from '$lib/components/ui/button/index.js';
 	import * as ScrollArea from '$lib/components/ui/scroll-area/index.js';
+	import * as Tooltip from '$lib/components/ui/tooltip/index.js';
 	import { cn } from '$lib/utils.js';
 
 	interface Props {
@@ -78,16 +79,23 @@
 			</div>
 		</ScrollArea.Root>
 	{:else}
-		<Button
-			variant="ghost"
-			size="icon"
-			class="m-1.5 h-8 w-8"
-			onclick={handleToggle}
-			aria-label="Show {title}"
-			title="Show {title}"
-		>
-			<Settings2 class="h-4 w-4" />
-		</Button>
+		<Tooltip.Root>
+			<Tooltip.Trigger>
+				{#snippet child({ props })}
+					<Button
+						{...props}
+						variant="ghost"
+						size="icon"
+						class="m-1.5 h-8 w-8"
+						onclick={handleToggle}
+					>
+						<Settings2 class="h-4 w-4" />
+						<span class="sr-only">Show {title}</span>
+					</Button>
+				{/snippet}
+			</Tooltip.Trigger>
+			<Tooltip.Content>Show {title}</Tooltip.Content>
+		</Tooltip.Root>
 	{/if}
 
 	<button

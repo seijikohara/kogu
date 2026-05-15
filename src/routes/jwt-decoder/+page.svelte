@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { AlertTriangle, CheckCircle, Clock, KeyRound } from '@lucide/svelte';
+	import { AlertTriangle, CheckCircle, Clock, Info, KeyRound } from '@lucide/svelte';
 	import { CopyButton } from '$lib/components/action';
 	import { CodeEditor } from '$lib/components/editor';
 	import { FormInfo, FormSection } from '$lib/components/form';
@@ -7,6 +7,7 @@
 	import { ToolShell } from '$lib/components/shell';
 	import { EmptyState } from '$lib/components/status';
 	import * as Card from '$lib/components/ui/card';
+	import * as Tooltip from '$lib/components/ui/tooltip';
 	import {
 		decodeJwt,
 		JWT_STANDARD_CLAIMS,
@@ -99,6 +100,31 @@
 	const getClaimDescription = (claim: string): string | undefined => {
 		return JWT_STANDARD_CLAIMS.find((c) => c.claim === claim)?.name;
 	};
+
+	// JWT signing-algorithm descriptions. Returns null for unknown alg values
+	// so the UI can omit the hint icon rather than display the raw string.
+	const ALG_DESCRIPTIONS: Readonly<Record<string, string>> = {
+		HS256: 'HMAC + SHA-256 (symmetric)',
+		HS384: 'HMAC + SHA-384 (symmetric)',
+		HS512: 'HMAC + SHA-512 (symmetric)',
+		RS256: 'RSA + SHA-256 (asymmetric)',
+		RS384: 'RSA + SHA-384 (asymmetric)',
+		RS512: 'RSA + SHA-512 (asymmetric)',
+		ES256: 'ECDSA + SHA-256 over P-256 (asymmetric)',
+		ES384: 'ECDSA + SHA-384 over P-384 (asymmetric)',
+		ES512: 'ECDSA + SHA-512 over P-521 (asymmetric)',
+		PS256: 'RSASSA-PSS + SHA-256',
+		none: 'No signature — INSECURE',
+	};
+
+	const getAlgDescription = (alg: string): string | null => ALG_DESCRIPTIONS[alg] ?? null;
+
+	const headerAlg = $derived.by((): string | null => {
+		const alg = decoded?.header.alg;
+		return typeof alg === 'string' ? alg : null;
+	});
+
+	const algDescription = $derived(headerAlg ? getAlgDescription(headerAlg) : null);
 </script>
 
 <svelte:head>
@@ -211,6 +237,29 @@
 							/>
 						</Card.Header>
 						<Card.Content>
+							{#if headerAlg}
+								<div class="mb-2 flex items-center gap-2 text-xs">
+									<span class="font-mono font-medium text-muted-foreground">alg:</span>
+									<code class="rounded bg-muted px-1.5 py-0.5 font-mono">{headerAlg}</code>
+									{#if algDescription}
+										<Tooltip.Root>
+											<Tooltip.Trigger>
+												{#snippet child({ props })}
+													<button
+														{...props}
+														type="button"
+														class="inline-flex h-4 w-4 items-center justify-center rounded text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+													>
+														<Info class="h-3.5 w-3.5" />
+														<span class="sr-only">Algorithm details</span>
+													</button>
+												{/snippet}
+											</Tooltip.Trigger>
+											<Tooltip.Content>{algDescription}</Tooltip.Content>
+										</Tooltip.Root>
+									{/if}
+								</div>
+							{/if}
 							<pre class="overflow-auto rounded bg-muted p-3 font-mono text-xs">{formatJson(
 									decoded.header
 								)}</pre>
