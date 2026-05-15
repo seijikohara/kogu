@@ -35,6 +35,9 @@
 	let isGenerating = $state(false);
 	let isCancelled = $state(false);
 	let error = $state<string | null>(null);
+	// Increments on each successful key pair so the result block can re-mount and
+	// replay the flash-success animation.
+	let flashCounter = $state(0);
 
 	let cliAvailability = $state<CliAvailability | null>(null);
 
@@ -120,6 +123,7 @@
 			});
 			if (!isCancelled) {
 				keyResult = result;
+				flashCounter += 1;
 				toast.success('SSH key pair generated successfully');
 			}
 		} catch (e) {
@@ -294,102 +298,106 @@
 
 		<div class="flex-1 overflow-auto p-4">
 			{#if keyResult}
-				<div class="space-y-4">
-					{#if showFingerprint}
-						<Card.Root density="compact">
-							<Card.Header class="flex flex-row items-center justify-between space-y-0 pb-3">
-								<Card.Title class="text-sm font-medium">Fingerprint (SHA-256)</Card.Title>
-								<CopyButton
-									text={keyResult.fingerprint}
-									toastLabel="Fingerprint"
-									size="sm"
-									showLabel
-									class="h-7"
-								/>
-							</Card.Header>
-							<Card.Content>
-								<code class="block rounded bg-muted p-2 font-mono text-sm">
-									{keyResult.fingerprint}
-								</code>
-							</Card.Content>
-						</Card.Root>
-					{/if}
+				{#key flashCounter}
+					<div class="space-y-4 rounded-md animate-flash-success">
+						{#if showFingerprint}
+							<Card.Root density="compact">
+								<Card.Header class="flex flex-row items-center justify-between space-y-0 pb-3">
+									<Card.Title class="text-sm font-medium">Fingerprint (SHA-256)</Card.Title>
+									<CopyButton
+										text={keyResult.fingerprint}
+										toastLabel="Fingerprint"
+										size="sm"
+										showLabel
+										class="h-7"
+									/>
+								</Card.Header>
+								<Card.Content>
+									<code class="block rounded bg-muted p-2 font-mono text-sm">
+										{keyResult.fingerprint}
+									</code>
+								</Card.Content>
+							</Card.Root>
+						{/if}
 
-					<Card.Root density="compact">
-						<Card.Header class="flex flex-row items-center justify-between space-y-0 pb-3">
-							<div class="flex items-center gap-2">
-								<Unlock class="h-4 w-4 text-success" />
-								<Card.Title class="text-sm font-medium">Public Key</Card.Title>
-							</div>
-							<CopyButton
-								text={keyResult.public_key}
-								toastLabel="Public key"
-								size="sm"
-								showLabel
-								class="h-7"
-							/>
-						</Card.Header>
-						<Card.Content>
-							<pre
-								class="max-h-32 overflow-auto whitespace-pre-wrap break-all rounded bg-muted p-2 font-mono text-xs">{keyResult.public_key}</pre>
-							<p class="mt-2 text-xs text-muted-foreground">
-								Add this to <code>~/.ssh/authorized_keys</code> on remote servers
-							</p>
-						</Card.Content>
-					</Card.Root>
-
-					<!-- Private Key -->
-					<div class="rounded-lg border border-warning/30 bg-warning/5 p-4">
-						<div class="mb-2 flex items-center justify-between">
-							<div class="flex items-center gap-2">
-								<Lock class="h-4 w-4 text-warning" />
-								<span class="text-sm font-medium">Private Key</span>
-								<span class="text-xs text-warning">(Keep Secret!)</span>
-							</div>
-							<CopyButton
-								text={keyResult.private_key}
-								toastLabel="Private key"
-								size="sm"
-								showLabel
-								class="h-7"
-							/>
-						</div>
-						<pre
-							class="max-h-48 overflow-auto whitespace-pre-wrap break-all rounded bg-muted p-2 font-mono text-xs">{keyResult.private_key}</pre>
-						<p class="mt-2 text-xs text-warning">
-							Save this to <code
-								>~/.ssh/{algorithm === 'ed25519'
-									? 'id_ed25519'
-									: algorithm.startsWith('ecdsa')
-										? 'id_ecdsa'
-										: 'id_rsa'}</code
-							> with permissions 600
-						</p>
-					</div>
-
-					{#if showEquivalentCommand}
 						<Card.Root density="compact">
 							<Card.Header class="flex flex-row items-center justify-between space-y-0 pb-3">
 								<div class="flex items-center gap-2">
-									<Terminal class="h-4 w-4" />
-									<Card.Title class="text-sm font-medium">Equivalent ssh-keygen Command</Card.Title>
+									<Unlock class="h-4 w-4 text-success" />
+									<Card.Title class="text-sm font-medium">Public Key</Card.Title>
 								</div>
 								<CopyButton
-									text={keyResult.ssh_keygen_command}
-									toastLabel="Command"
+									text={keyResult.public_key}
+									toastLabel="Public key"
 									size="sm"
 									showLabel
 									class="h-7"
 								/>
 							</Card.Header>
 							<Card.Content>
-								<code class="block rounded bg-muted p-2 font-mono text-xs">
-									{keyResult.ssh_keygen_command}
-								</code>
+								<pre
+									class="max-h-32 overflow-auto whitespace-pre-wrap break-all rounded bg-muted p-2 font-mono text-xs">{keyResult.public_key}</pre>
+								<p class="mt-2 text-xs text-muted-foreground">
+									Add this to <code>~/.ssh/authorized_keys</code> on remote servers
+								</p>
 							</Card.Content>
 						</Card.Root>
-					{/if}
-				</div>
+
+						<!-- Private Key -->
+						<div class="rounded-lg border border-warning/30 bg-warning/5 p-4">
+							<div class="mb-2 flex items-center justify-between">
+								<div class="flex items-center gap-2">
+									<Lock class="h-4 w-4 text-warning" />
+									<span class="text-sm font-medium">Private Key</span>
+									<span class="text-xs text-warning">(Keep Secret!)</span>
+								</div>
+								<CopyButton
+									text={keyResult.private_key}
+									toastLabel="Private key"
+									size="sm"
+									showLabel
+									class="h-7"
+								/>
+							</div>
+							<pre
+								class="max-h-48 overflow-auto whitespace-pre-wrap break-all rounded bg-muted p-2 font-mono text-xs">{keyResult.private_key}</pre>
+							<p class="mt-2 text-xs text-warning">
+								Save this to <code
+									>~/.ssh/{algorithm === 'ed25519'
+										? 'id_ed25519'
+										: algorithm.startsWith('ecdsa')
+											? 'id_ecdsa'
+											: 'id_rsa'}</code
+								> with permissions 600
+							</p>
+						</div>
+
+						{#if showEquivalentCommand}
+							<Card.Root density="compact">
+								<Card.Header class="flex flex-row items-center justify-between space-y-0 pb-3">
+									<div class="flex items-center gap-2">
+										<Terminal class="h-4 w-4" />
+										<Card.Title class="text-sm font-medium"
+											>Equivalent ssh-keygen Command</Card.Title
+										>
+									</div>
+									<CopyButton
+										text={keyResult.ssh_keygen_command}
+										toastLabel="Command"
+										size="sm"
+										showLabel
+										class="h-7"
+									/>
+								</Card.Header>
+								<Card.Content>
+									<code class="block rounded bg-muted p-2 font-mono text-xs">
+										{keyResult.ssh_keygen_command}
+									</code>
+								</Card.Content>
+							</Card.Root>
+						{/if}
+					</div>
+				{/key}
 			{:else if error}
 				<ErrorDisplay variant="centered" message={error} />
 			{:else}

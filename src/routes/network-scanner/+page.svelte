@@ -19,6 +19,7 @@
 	import {
 		FormCheckbox,
 		FormCheckboxGroup,
+		FormError,
 		FormInfo,
 		FormInput,
 		FormMode,
@@ -640,7 +641,7 @@
 					placeholder="192.168.1.1 or 192.168.1.0/24"
 				/>
 				{#if target && !isValidTarget(target)}
-					<p class="text-xs text-destructive">Invalid target format</p>
+					<FormError message="Invalid target format" />
 				{/if}
 				<ActionButton
 					label="Detect Local Network"
@@ -882,7 +883,7 @@
 								onblur={() => (portRangeTouched = true)}
 							/>
 							{#if portRangeTouched && portRange && !isValidPortRange(portRange)}
-								<p class="mt-1 text-xs text-destructive">Invalid port range format</p>
+								<FormError class="mt-1" message="Invalid port range format" />
 							{:else}
 								<p class="mt-1 text-xs text-muted-foreground">
 									Examples: 80,443,8080 or 1-1024 or 22,80-100,443

@@ -8,6 +8,7 @@
 		Plus,
 		Trash2,
 	} from '@lucide/svelte';
+	import { toast } from 'svelte-sonner';
 	import { CopyButton } from '$lib/components/action';
 	import { CodeEditor } from '$lib/components/editor';
 	import {
@@ -185,8 +186,9 @@
 	const handleCopy = async () => {
 		try {
 			await navigator.clipboard.writeText(output);
+			toast.success('Copied to clipboard');
 		} catch {
-			// Clipboard access denied
+			toast.error('Failed to copy to clipboard');
 		}
 	};
 

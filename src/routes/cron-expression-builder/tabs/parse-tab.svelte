@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { Calendar, Clock, FlaskConical, Sparkles } from '@lucide/svelte';
 	import { CopyButton } from '$lib/components/action';
-	import { FormInput } from '$lib/components/form';
+	import { FormError, FormInput } from '$lib/components/form';
 	import { SectionHeader } from '$lib/components/layout';
 	import { EmbeddedEmptyState } from '$lib/components/status';
 	import { Badge } from '$lib/components/ui/badge';
@@ -113,7 +113,7 @@
 								{/each}
 							</div>
 						{:else}
-							<p class="text-sm text-destructive">{parsed.error}</p>
+							<FormError message={parsed.error} class="text-sm" />
 						{/if}
 					</Card.Content>
 				</Card.Root>

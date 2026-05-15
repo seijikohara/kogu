@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { Code2 } from '@lucide/svelte';
+	import { toast } from 'svelte-sonner';
 	import { CodeEditor } from '$lib/components/editor';
 	import {
 		FormCheckbox,
@@ -124,8 +125,9 @@
 	const handleCopy = async () => {
 		try {
 			await navigator.clipboard.writeText(output);
+			toast.success('Copied to clipboard');
 		} catch {
-			// Clipboard access denied
+			toast.error('Failed to copy to clipboard');
 		}
 	};
 

@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { FileText } from '@lucide/svelte';
+	import { toast } from 'svelte-sonner';
 	import * as yaml from 'yaml';
 	import type { ContextMenuItem } from '$lib/components/editor';
 	import { CodeEditor } from '$lib/components/editor';
@@ -149,8 +150,9 @@
 	const handleCopy = async () => {
 		try {
 			await navigator.clipboard.writeText(output);
+			toast.success('Copied to clipboard');
 		} catch {
-			// Clipboard access denied
+			toast.error('Failed to copy to clipboard');
 		}
 	};
 
