@@ -10,6 +10,7 @@
 	import { Sonner } from '$lib/components/ui/sonner/index.js';
 	import * as Tooltip from '$lib/components/ui/tooltip/index.js';
 	import { goBack, goForward } from '$lib/services/navigation-history.svelte.js';
+	import { persisted } from '$lib/services/persisted.svelte.js';
 	import {
 		applyAllSettings,
 		getSettings,
@@ -22,6 +23,9 @@
 
 	let titleBarCommand = $state<{ focusInput: () => void } | null>(null);
 	let shortcutsHelpOpen = $state(false);
+
+	// Sidebar collapse state survives app restarts via localStorage.
+	const sidebarOpen = persisted('sidebar:open', true);
 
 	const handleGlobalKeydown = (e: KeyboardEvent) => {
 		// Cmd+K → focus inline command palette in title bar
@@ -124,6 +128,7 @@
 	<div class="flex h-screen flex-col">
 		<TitleBar bind:commandRef={titleBarCommand} />
 		<Sidebar.Provider
+			bind:open={sidebarOpen.current}
 			class="flex-1 !min-h-0 [&_[data-slot=sidebar-container]]:top-8 [&_[data-slot=sidebar-container]]:h-[calc(100svh-2rem)]"
 		>
 			<div class="flex h-full w-full overflow-hidden">

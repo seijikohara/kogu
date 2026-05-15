@@ -29,6 +29,12 @@ export type FormatterTabType = (typeof FORMATTER_TABS)[number];
 export interface UseFormatterPageConfig<TStats> {
 	/** Function to calculate live stats from input */
 	readonly calculateStats: (input: string) => TStats | null;
+	/**
+	 * Optional `persisted` key for the active tab. When provided, the last
+	 * active tab is restored after an app restart if the URL does not specify
+	 * one. Typically the tool slug (`json-formatter`, `xml-formatter`, ...).
+	 */
+	readonly persistKey?: string;
 }
 
 /**
@@ -76,12 +82,13 @@ export interface UseFormatterPageReturn<TStats> {
 export const useFormatterPage = <TStats>(
 	config: UseFormatterPageConfig<TStats>
 ): UseFormatterPageReturn<TStats> => {
-	const { calculateStats } = config;
+	const { calculateStats, persistKey } = config;
 
-	// Tab sync with URL
+	// Tab sync with URL (and optional localStorage fallback for restart survival).
 	const tabSync = useTabSync({
 		tabs: FORMATTER_TABS,
 		defaultTab: 'format',
+		persistKey,
 	});
 
 	// Type-safe tab change handler

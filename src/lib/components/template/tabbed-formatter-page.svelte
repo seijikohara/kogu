@@ -44,17 +44,32 @@
 		readonly title: string;
 		/** Function to calculate stats from input */
 		readonly calculateStats: (input: string) => TStats | null;
+		/**
+		 * Optional `persisted` key for the active tab. Pass the tool slug
+		 * (e.g. `xml-formatter`) so each tool tracks its tab independently.
+		 */
+		readonly persistKey?: string;
 		/** Status bar content snippet - receives liveStats */
 		readonly renderStatusContent?: Snippet<[TStats | null]>;
 		/** Tab content snippet - receives tab props */
 		readonly renderTabContent: Snippet<[TabContentProps]>;
 	}
 
-	let { title, calculateStats, renderStatusContent, renderTabContent }: Props<unknown> = $props();
+	let { title, calculateStats, persistKey, renderStatusContent, renderTabContent }: Props<unknown> =
+		$props();
 
-	// Wrap calculateStats to avoid state_referenced_locally warning
+	// Wrap calculateStats to avoid the `state_referenced_locally` warning.
+	// `persistKey` is read through a getter for the same reason: the prop is
+	// treated as immutable by `useTabSync`, but capturing it as a plain local
+	// would trip the lint rule. Returning the current prop on demand keeps the
+	// rule satisfied without changing observable behaviour.
 	const statsCalculator = (input: string) => calculateStats(input);
-	const page = useFormatterPage({ calculateStats: statsCalculator });
+	const page = useFormatterPage({
+		calculateStats: statsCalculator,
+		get persistKey() {
+			return persistKey;
+		},
+	});
 
 	// Type-safe tab change handler for ToolShell
 	const handleTabChange = (tab: string) => {

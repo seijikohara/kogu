@@ -38,6 +38,7 @@
 	// Use formatter page hook with JSON-specific stats calculation
 	const page = useFormatterPage<JsonStats>({
 		calculateStats: (input) => calculateJsonStats(input, inputFormat),
+		persistKey: 'json-formatter',
 	});
 
 	// Type-safe tab change handler

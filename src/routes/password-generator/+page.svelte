@@ -25,16 +25,27 @@
 		MIN_LENGTH,
 		type PasswordOptions,
 	} from '$lib/services/password.js';
+	import { persisted } from '$lib/services/persisted.svelte.js';
 
-	// State
-	let options = $state<PasswordOptions>({ ...DEFAULT_PASSWORD_OPTIONS });
-	let count = $state<number>(DEFAULT_COUNT);
+	// State — option preferences (character classes, exclusions, length, count)
+	// survive across restarts. Generated passwords are intentionally never
+	// persisted (sensitive content).
+	const optionsStore = persisted<PasswordOptions>('password-generator:options', {
+		...DEFAULT_PASSWORD_OPTIONS,
+	});
+	const countStore = persisted<number>('password-generator:count', DEFAULT_COUNT);
 	let results = $state<readonly string[]>([]);
 	let error = $state<string | null>(null);
 	let showOptions = $state(true);
 	// Increments on each successful generation so the result wrapper can re-mount
 	// and replay the flash-success animation.
 	let flashCounter = $state(0);
+
+	// Reactive aliases keep the template legible. `optionsStore.current` is a
+	// deeply-reactive `$state` proxy so nested mutations via `bind:` propagate
+	// back through the persisted store.
+	const options = $derived(optionsStore.current);
+	const count = $derived(countStore.current);
 
 	// Derived
 	const pool = $derived(buildCharacterPool(options));
@@ -101,7 +112,7 @@
 		<FormSection title="Length">
 			<FormSlider
 				label="Length"
-				bind:value={options.length}
+				bind:value={optionsStore.current.length}
 				min={MIN_LENGTH}
 				max={MAX_LENGTH}
 				step={1}
@@ -111,10 +122,10 @@
 
 		<FormSection title="Character Classes">
 			<FormCheckboxGroup>
-				<FormCheckbox label="Lowercase (a-z)" bind:checked={options.lowercase} />
-				<FormCheckbox label="Uppercase (A-Z)" bind:checked={options.uppercase} />
-				<FormCheckbox label="Numbers (0-9)" bind:checked={options.numbers} />
-				<FormCheckbox label="Symbols (!@#$...)" bind:checked={options.symbols} />
+				<FormCheckbox label="Lowercase (a-z)" bind:checked={optionsStore.current.lowercase} />
+				<FormCheckbox label="Uppercase (A-Z)" bind:checked={optionsStore.current.uppercase} />
+				<FormCheckbox label="Numbers (0-9)" bind:checked={optionsStore.current.numbers} />
+				<FormCheckbox label="Symbols (!@#$...)" bind:checked={optionsStore.current.symbols} />
 			</FormCheckboxGroup>
 		</FormSection>
 
@@ -123,12 +134,12 @@
 				<FormCheckbox
 					label="Exclude similar characters"
 					hint="0/O, 1/l/I, |"
-					bind:checked={options.excludeSimilar}
+					bind:checked={optionsStore.current.excludeSimilar}
 				/>
 				<FormCheckbox
 					label="Exclude ambiguous symbols"
 					hint="Brackets, quotes, slashes"
-					bind:checked={options.excludeAmbiguous}
+					bind:checked={optionsStore.current.excludeAmbiguous}
 				/>
 			</FormCheckboxGroup>
 		</FormSection>
@@ -136,7 +147,7 @@
 		<FormSection title="Quantity">
 			<FormSlider
 				label="Count"
-				bind:value={count}
+				bind:value={countStore.current}
 				min={MIN_COUNT}
 				max={MAX_COUNT}
 				step={1}

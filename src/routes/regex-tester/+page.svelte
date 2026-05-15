@@ -12,6 +12,7 @@
 	import * as ToggleGroup from '$lib/components/ui/toggle-group';
 	import * as Tooltip from '$lib/components/ui/tooltip';
 	import { cn } from '$lib/utils';
+	import { persisted } from '$lib/services/persisted.svelte.js';
 	import { groupColor, matchBackdropColor } from '$lib/services/regex-design.js';
 	import {
 		compileRegex,
@@ -32,11 +33,15 @@
 
 	// State
 	let pattern = $state<string>('');
-	let flags = $state<RegexFlags>({ ...DEFAULT_FLAGS });
+	// Flag set persists between sessions; pattern, test text, and replacement
+	// are intentionally not persisted to keep ephemeral content out of storage.
+	const flagsStore = persisted<RegexFlags>('regex-tester:flags', { ...DEFAULT_FLAGS });
 	let testText = $state<string>('');
 	let replaceEnabled = $state<boolean>(false);
 	let replacement = $state<string>('');
 	let showOptions = $state<boolean>(true);
+
+	const flags = $derived(flagsStore.current);
 
 	const loadSample = () => {
 		pattern = SAMPLE_PATTERN;
@@ -174,7 +179,7 @@
 	const activeFlagIds = $derived(FLAG_INFO.filter((info) => flags[info.id]).map((info) => info.id));
 
 	const handleFlagsChange = (selected: string[]) => {
-		flags = {
+		flagsStore.current = {
 			global: selected.includes('global'),
 			ignoreCase: selected.includes('ignoreCase'),
 			multiline: selected.includes('multiline'),
