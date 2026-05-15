@@ -252,10 +252,28 @@
 	--color-border-subtle: var(--border-subtle);
 	--color-border-strong: var(--border-strong);
 	--color-accent-brand: var(--accent-brand);
-	--animate-fade-in: fade-in 150ms ease-out;
-	--animate-slide-in: slide-in 150ms ease-out;
-	--animate-slide-up: slide-up 180ms var(--ease-standard);
-	--animate-scale-in: scale-in 150ms var(--ease-standard);
+	--animate-fade-in: fade-in var(--duration-base) ease-out;
+	--animate-slide-in: slide-in var(--duration-base) ease-out;
+	--animate-slide-up: slide-up var(--duration-slow) var(--ease-standard);
+	--animate-scale-in: scale-in var(--duration-base) var(--ease-standard);
+	/*
+	 * Motion duration tokens exposed as Tailwind utilities (`duration-fast`,
+	 * `duration-base`, `duration-slow`). Tailwind v4 reads from the
+	 * `--transition-duration-*` namespace when resolving the `duration-<name>`
+	 * utility, so the project tokens on `:root` are forwarded here. The
+	 * underlying `--duration-*` variables remain the source of truth and can be
+	 * overridden at runtime.
+	 */
+	--transition-duration-fast: var(--duration-fast);
+	--transition-duration-base: var(--duration-base);
+	--transition-duration-slow: var(--duration-slow);
+	/*
+	 * Accordion height animations. `tw-animate-css` ships these keyframes at a
+	 * fixed 200ms, but we want the project motion token to drive the duration
+	 * so accordion expand/collapse stays consistent with other transitions.
+	 */
+	--animate-accordion-down: accordion-down var(--duration-base) ease-out;
+	--animate-accordion-up: accordion-up var(--duration-base) ease-out;
 }
 
 /*
@@ -372,11 +390,36 @@
 	}
 }
 
+/*
+ * Accordion height keyframes. The CSS variable on the `to`/`from` side is
+ * populated by bits-ui at runtime (`--bits-accordion-content-height`), which
+ * is what allows the height animation to animate to the natural content size.
+ */
+@keyframes accordion-down {
+	from {
+		height: 0;
+	}
+	to {
+		height: var(--bits-accordion-content-height);
+	}
+}
+
+@keyframes accordion-up {
+	from {
+		height: var(--bits-accordion-content-height);
+	}
+	to {
+		height: 0;
+	}
+}
+
 @media (prefers-reduced-motion: reduce) {
 	.animate-fade-in,
 	.animate-slide-in,
 	.animate-slide-up,
-	.animate-scale-in {
+	.animate-scale-in,
+	[data-state='open'].animate-accordion-down,
+	[data-state='closed'].animate-accordion-up {
 		animation: none;
 	}
 }
@@ -407,6 +450,12 @@
 
 .animate-highlight-new {
 	animation: highlight-new 1.5s ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.animate-highlight-new {
+		animation: none;
+	}
 }
 
 /* Subtle flash applied to a result block on a discrete generation event. */

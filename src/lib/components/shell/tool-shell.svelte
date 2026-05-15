@@ -132,7 +132,7 @@
 								{@const TabIcon = tab.icon}
 								<Tabs.Trigger
 									value={tab.id}
-									class="data-[state=active]:bg-surface-0 data-[state=active]:text-foreground data-[state=active]:shadow-sm text-muted-foreground hover:bg-interactive-hover hover:text-foreground inline-flex flex-none items-center gap-1.5 rounded-md border-0 px-3.5 py-2 text-sm font-medium transition-all duration-150"
+									class="data-[state=active]:bg-surface-0 data-[state=active]:text-foreground data-[state=active]:shadow-sm text-muted-foreground hover:bg-interactive-hover hover:text-foreground inline-flex flex-none items-center gap-1.5 rounded-md border-0 px-3.5 py-2 text-sm font-medium transition-all duration-base"
 								>
 									<TabIcon class="h-4 w-4" />
 									{tab.label}
