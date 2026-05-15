@@ -38,6 +38,9 @@
 	let results = $state<readonly string[]>([]);
 	let error = $state<string | null>(null);
 	let showOptions = $state(true);
+	// Increments on each successful generation so the result wrapper can re-mount
+	// and replay the flash-success animation.
+	let flashCounter = $state(0);
 
 	// Derived
 	const needsNamespace = $derived(requiresNamespace(version));
@@ -74,6 +77,7 @@
 				name: needsNamespace ? nameInput : undefined,
 				format,
 			});
+			flashCounter += 1;
 			toast.success(`Generated ${results.length} UUID${results.length > 1 ? 's' : ''}`);
 		} catch (e) {
 			const message = e instanceof Error ? e.message : String(e);
@@ -208,14 +212,16 @@
 
 		<div class="flex-1 overflow-auto p-4">
 			{#if results.length > 0}
-				<div class="space-y-2">
-					{#each results as uuid, idx (`${idx}-${uuid}`)}
-						<div class="flex items-center gap-2 rounded-lg border bg-card p-3">
-							<code class="flex-1 break-all font-mono text-sm">{uuid}</code>
-							<CopyButton text={uuid} toastLabel="UUID" size="sm" showLabel={false} />
-						</div>
-					{/each}
-				</div>
+				{#key flashCounter}
+					<div class="space-y-2 rounded-md animate-flash-success">
+						{#each results as uuid, idx (`${idx}-${uuid}`)}
+							<div class="flex items-center gap-2 rounded-lg border bg-card p-3">
+								<code class="flex-1 break-all font-mono text-sm">{uuid}</code>
+								<CopyButton text={uuid} toastLabel="UUID" size="sm" showLabel={false} />
+							</div>
+						{/each}
+					</div>
+				{/key}
 			{:else}
 				<EmbeddedEmptyState
 					icon={Fingerprint}

@@ -32,6 +32,9 @@
 	let results = $state<readonly string[]>([]);
 	let error = $state<string | null>(null);
 	let showOptions = $state(true);
+	// Increments on each successful generation so the result wrapper can re-mount
+	// and replay the flash-success animation.
+	let flashCounter = $state(0);
 
 	// Derived
 	const pool = $derived(buildCharacterPool(options));
@@ -61,6 +64,7 @@
 		error = null;
 		try {
 			results = generatePasswords(options, count);
+			flashCounter += 1;
 			toast.success(`Generated ${results.length} password${results.length > 1 ? 's' : ''}`);
 		} catch (e) {
 			const message = e instanceof Error ? e.message : String(e);
@@ -214,14 +218,16 @@
 
 		<div class="flex-1 overflow-auto p-4">
 			{#if results.length > 0}
-				<div class="space-y-2">
-					{#each results as password, idx (`${idx}-${password}`)}
-						<div class="flex items-center gap-2 rounded-lg border bg-card p-3">
-							<code class="flex-1 break-all font-mono text-sm">{password}</code>
-							<CopyButton text={password} toastLabel="Password" size="sm" showLabel={false} />
-						</div>
-					{/each}
-				</div>
+				{#key flashCounter}
+					<div class="space-y-2 rounded-md animate-flash-success">
+						{#each results as password, idx (`${idx}-${password}`)}
+							<div class="flex items-center gap-2 rounded-lg border bg-card p-3">
+								<code class="flex-1 break-all font-mono text-sm">{password}</code>
+								<CopyButton text={password} toastLabel="Password" size="sm" showLabel={false} />
+							</div>
+						{/each}
+					</div>
+				{/key}
 			{:else}
 				<EmbeddedEmptyState
 					icon={Lock}

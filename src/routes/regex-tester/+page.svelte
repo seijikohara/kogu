@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { Eye, FlaskConical, GitBranch, Info, Search, Sparkles, Workflow } from '@lucide/svelte';
 	import { CopyButton } from '$lib/components/action';
-	import { FormInfo, FormSection, FormTextarea } from '$lib/components/form';
+	import { FormError, FormInfo, FormSection, FormTextarea } from '$lib/components/form';
 	import { PatternEditor, RailroadView } from '$lib/components/regex';
 	import { ToolShell } from '$lib/components/shell';
 	import { EmbeddedEmptyState, StatItem } from '$lib/components/status';
@@ -330,7 +330,7 @@
 						{:else if visualization.ok}
 							<RailroadView node={visualization.value} />
 						{:else}
-							<p class="text-sm text-destructive">{visualization.error}</p>
+							<FormError message={visualization.error} class="text-sm" />
 						{/if}
 					</Card.Content>
 				</Card.Root>

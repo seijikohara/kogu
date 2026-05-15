@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { Calendar, Check, Clock, Sparkles, X } from '@lucide/svelte';
 	import { CopyButton } from '$lib/components/action';
-	import { FormInput } from '$lib/components/form';
+	import { FormError, FormInput } from '$lib/components/form';
 	import { SectionHeader } from '$lib/components/layout';
 	import { EmbeddedEmptyState } from '$lib/components/status';
 	import { Badge } from '$lib/components/ui/badge';
@@ -141,7 +141,7 @@
 						{#if description.ok}
 							<p class="text-sm">{description.value}</p>
 						{:else}
-							<p class="text-sm text-destructive">{description.error}</p>
+							<FormError message={description.error} class="text-sm" />
 						{/if}
 					</Card.Content>
 				</Card.Root>

@@ -5,6 +5,7 @@
 	import {
 		FormCheckbox,
 		FormCheckboxGroup,
+		FormError,
 		FormInfo,
 		FormInput,
 		FormSection,
@@ -38,6 +39,9 @@
 	let keyResult = $state<GpgKeyResult | null>(null);
 	let isGenerating = $state(false);
 	let isCancelled = $state(false);
+	// Increments on each successful key pair so the result block can re-mount and
+	// replay the flash-success animation.
+	let flashCounter = $state(0);
 	let error = $state<string | null>(null);
 
 	let cliAvailability = $state<CliAvailability | null>(null);
@@ -109,6 +113,7 @@
 			});
 			if (!isCancelled) {
 				keyResult = result;
+				flashCounter += 1;
 				toast.success('GPG key pair generated successfully');
 			}
 		} catch (e) {
@@ -159,7 +164,7 @@
 				/>
 				<FormInput label="Email *" type="email" bind:value={email} placeholder="john@example.com" />
 				{#if email && !isValidEmail(email)}
-					<p class="text-xs text-destructive">Please enter a valid email address</p>
+					<FormError message="Please enter a valid email address" />
 				{/if}
 				<FormInput label="Comment (optional)" bind:value={comment} placeholder="Work key" />
 			</div>
@@ -312,127 +317,129 @@
 
 		<div class="flex-1 overflow-auto p-4">
 			{#if keyResult}
-				<div class="space-y-4">
-					{#if showKeyInfo}
-						<Card.Root density="compact">
-							<Card.Header class="pb-3">
-								<div class="flex items-center gap-2">
-									<User class="h-4 w-4" />
-									<Card.Title class="text-sm font-medium">Key Information</Card.Title>
-								</div>
-							</Card.Header>
-							<Card.Content>
-								<div class="space-y-2">
-									<div class="flex items-start justify-between">
-										<span class="text-xs text-muted-foreground">User ID</span>
-										<code class="text-xs">{keyResult.user_id}</code>
+				{#key flashCounter}
+					<div class="space-y-4 rounded-md animate-flash-success">
+						{#if showKeyInfo}
+							<Card.Root density="compact">
+								<Card.Header class="pb-3">
+									<div class="flex items-center gap-2">
+										<User class="h-4 w-4" />
+										<Card.Title class="text-sm font-medium">Key Information</Card.Title>
 									</div>
-									<div class="flex items-start justify-between">
-										<span class="text-xs text-muted-foreground">Fingerprint</span>
-										<div class="flex items-center gap-2">
-											<code class="text-xs">{keyResult.fingerprint}</code>
-											<CopyButton
-												text={keyResult.fingerprint}
-												toastLabel="Fingerprint"
-												size="icon"
-												class="h-6 w-6"
-											/>
+								</Card.Header>
+								<Card.Content>
+									<div class="space-y-2">
+										<div class="flex items-start justify-between">
+											<span class="text-xs text-muted-foreground">User ID</span>
+											<code class="text-xs">{keyResult.user_id}</code>
+										</div>
+										<div class="flex items-start justify-between">
+											<span class="text-xs text-muted-foreground">Fingerprint</span>
+											<div class="flex items-center gap-2">
+												<code class="text-xs">{keyResult.fingerprint}</code>
+												<CopyButton
+													text={keyResult.fingerprint}
+													toastLabel="Fingerprint"
+													size="icon"
+													class="h-6 w-6"
+												/>
+											</div>
 										</div>
 									</div>
+								</Card.Content>
+							</Card.Root>
+						{/if}
+
+						<Card.Root density="compact">
+							<Card.Header class="flex flex-row items-center justify-between space-y-0 pb-3">
+								<div class="flex items-center gap-2">
+									<Unlock class="h-4 w-4 text-success" />
+									<Card.Title class="text-sm font-medium">Public Key (PGP Armor)</Card.Title>
 								</div>
+								<CopyButton
+									text={keyResult.public_key}
+									toastLabel="Public key"
+									size="sm"
+									showLabel
+									class="h-7"
+								/>
+							</Card.Header>
+							<Card.Content>
+								<pre
+									class="max-h-48 overflow-auto whitespace-pre-wrap break-all rounded bg-muted p-2 font-mono text-xs">{keyResult.public_key}</pre>
+								<p class="mt-2 text-xs text-muted-foreground">
+									Share this key with others so they can encrypt messages to you
+								</p>
 							</Card.Content>
 						</Card.Root>
-					{/if}
 
-					<Card.Root density="compact">
-						<Card.Header class="flex flex-row items-center justify-between space-y-0 pb-3">
-							<div class="flex items-center gap-2">
-								<Unlock class="h-4 w-4 text-success" />
-								<Card.Title class="text-sm font-medium">Public Key (PGP Armor)</Card.Title>
+						<!-- Private Key -->
+						<div class="rounded-lg border border-warning/30 bg-warning/5 p-4">
+							<div class="mb-2 flex items-center justify-between">
+								<div class="flex items-center gap-2">
+									<Lock class="h-4 w-4 text-warning" />
+									<span class="text-sm font-medium">Private Key (PGP Armor)</span>
+									<span class="text-xs text-warning">(Keep Secret!)</span>
+								</div>
+								<CopyButton
+									text={keyResult.private_key}
+									toastLabel="Private key"
+									size="sm"
+									showLabel
+									class="h-7"
+								/>
 							</div>
-							<CopyButton
-								text={keyResult.public_key}
-								toastLabel="Public key"
-								size="sm"
-								showLabel
-								class="h-7"
-							/>
-						</Card.Header>
-						<Card.Content>
 							<pre
-								class="max-h-48 overflow-auto whitespace-pre-wrap break-all rounded bg-muted p-2 font-mono text-xs">{keyResult.public_key}</pre>
-							<p class="mt-2 text-xs text-muted-foreground">
-								Share this key with others so they can encrypt messages to you
+								class="max-h-48 overflow-auto whitespace-pre-wrap break-all rounded bg-muted p-2 font-mono text-xs">{keyResult.private_key}</pre>
+							<p class="mt-2 text-xs text-warning">
+								Never share this key. Import with: <code>gpg --import private-key.asc</code>
 							</p>
-						</Card.Content>
-					</Card.Root>
-
-					<!-- Private Key -->
-					<div class="rounded-lg border border-warning/30 bg-warning/5 p-4">
-						<div class="mb-2 flex items-center justify-between">
-							<div class="flex items-center gap-2">
-								<Lock class="h-4 w-4 text-warning" />
-								<span class="text-sm font-medium">Private Key (PGP Armor)</span>
-								<span class="text-xs text-warning">(Keep Secret!)</span>
-							</div>
-							<CopyButton
-								text={keyResult.private_key}
-								toastLabel="Private key"
-								size="sm"
-								showLabel
-								class="h-7"
-							/>
 						</div>
-						<pre
-							class="max-h-48 overflow-auto whitespace-pre-wrap break-all rounded bg-muted p-2 font-mono text-xs">{keyResult.private_key}</pre>
-						<p class="mt-2 text-xs text-warning">
-							Never share this key. Import with: <code>gpg --import private-key.asc</code>
-						</p>
+
+						{#if showGpgCommands}
+							<Card.Root density="compact">
+								<Card.Header class="pb-3">
+									<div class="flex items-center gap-2">
+										<Terminal class="h-4 w-4" />
+										<Card.Title class="text-sm font-medium">Equivalent GPG Commands</Card.Title>
+									</div>
+								</Card.Header>
+								<Card.Content>
+									<div class="space-y-3">
+										<div>
+											<div class="mb-1 flex items-center justify-between">
+												<span class="text-xs text-muted-foreground">Interactive</span>
+												<CopyButton
+													text={keyResult.gpg_command_interactive}
+													toastLabel="Command"
+													size="icon"
+													class="h-6 w-6"
+												/>
+											</div>
+											<code class="block rounded bg-muted p-2 font-mono text-xs">
+												{keyResult.gpg_command_interactive}
+											</code>
+										</div>
+
+										<div>
+											<div class="mb-1 flex items-center justify-between">
+												<span class="text-xs text-muted-foreground">Batch Mode</span>
+												<CopyButton
+													text={keyResult.gpg_command_batch}
+													toastLabel="Command"
+													size="icon"
+													class="h-6 w-6"
+												/>
+											</div>
+											<pre
+												class="max-h-32 overflow-auto whitespace-pre-wrap rounded bg-muted p-2 font-mono text-xs">{keyResult.gpg_command_batch}</pre>
+										</div>
+									</div>
+								</Card.Content>
+							</Card.Root>
+						{/if}
 					</div>
-
-					{#if showGpgCommands}
-						<Card.Root density="compact">
-							<Card.Header class="pb-3">
-								<div class="flex items-center gap-2">
-									<Terminal class="h-4 w-4" />
-									<Card.Title class="text-sm font-medium">Equivalent GPG Commands</Card.Title>
-								</div>
-							</Card.Header>
-							<Card.Content>
-								<div class="space-y-3">
-									<div>
-										<div class="mb-1 flex items-center justify-between">
-											<span class="text-xs text-muted-foreground">Interactive</span>
-											<CopyButton
-												text={keyResult.gpg_command_interactive}
-												toastLabel="Command"
-												size="icon"
-												class="h-6 w-6"
-											/>
-										</div>
-										<code class="block rounded bg-muted p-2 font-mono text-xs">
-											{keyResult.gpg_command_interactive}
-										</code>
-									</div>
-
-									<div>
-										<div class="mb-1 flex items-center justify-between">
-											<span class="text-xs text-muted-foreground">Batch Mode</span>
-											<CopyButton
-												text={keyResult.gpg_command_batch}
-												toastLabel="Command"
-												size="icon"
-												class="h-6 w-6"
-											/>
-										</div>
-										<pre
-											class="max-h-32 overflow-auto whitespace-pre-wrap rounded bg-muted p-2 font-mono text-xs">{keyResult.gpg_command_batch}</pre>
-									</div>
-								</div>
-							</Card.Content>
-						</Card.Root>
-					{/if}
-				</div>
+				{/key}
 			{:else if error}
 				<ErrorDisplay variant="centered" message={error} />
 			{:else}

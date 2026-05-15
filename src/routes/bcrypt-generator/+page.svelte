@@ -40,6 +40,9 @@
 	let showOptions = $state(true);
 	let costInfo = $state<BcryptCostInfo | null>(null);
 	let activeTab = $state<'generate' | 'verify'>('generate');
+	// Increments on each successful hash so the result block can re-mount and
+	// replay the flash-success animation.
+	let flashCounter = $state(0);
 
 	// Elapsed time tracking
 	let elapsedMs = $state(0);
@@ -102,6 +105,7 @@
 			const result = await generateBcryptHash(password, cost);
 			if (!generateCancelled) {
 				hashResult = result;
+				flashCounter += 1;
 				toast.success('BCrypt hash generated successfully');
 			}
 		} catch (e) {
@@ -344,51 +348,53 @@
 		<div class="flex-1 overflow-auto p-4">
 			{#if activeTab === 'generate'}
 				{#if hashResult}
-					<div class="space-y-4">
-						<Card.Root density="compact">
-							<Card.Header class="flex flex-row items-center justify-between space-y-0 pb-3">
-								<Card.Title class="text-sm font-medium">BCrypt Hash</Card.Title>
-								<CopyButton
-									text={hashResult.hash}
-									toastLabel="Hash"
-									size="sm"
-									showLabel
-									class="h-7"
-								/>
-							</Card.Header>
-							<Card.Content>
-								<code class="block break-all rounded bg-muted p-3 font-mono text-sm">
-									{hashResult.hash}
-								</code>
-							</Card.Content>
-						</Card.Root>
+					{#key flashCounter}
+						<div class="space-y-4 rounded-md animate-flash-success">
+							<Card.Root density="compact">
+								<Card.Header class="flex flex-row items-center justify-between space-y-0 pb-3">
+									<Card.Title class="text-sm font-medium">BCrypt Hash</Card.Title>
+									<CopyButton
+										text={hashResult.hash}
+										toastLabel="Hash"
+										size="sm"
+										showLabel
+										class="h-7"
+									/>
+								</Card.Header>
+								<Card.Content>
+									<code class="block break-all rounded bg-muted p-3 font-mono text-sm">
+										{hashResult.hash}
+									</code>
+								</Card.Content>
+							</Card.Root>
 
-						<Card.Root density="compact">
-							<Card.Header class="pb-3">
-								<Card.Title class="text-sm font-medium">Hash Details</Card.Title>
-							</Card.Header>
-							<Card.Content>
-								<div class="space-y-2 text-sm">
-									<div class="flex justify-between">
-										<span class="text-muted-foreground">Algorithm</span>
-										<span class="font-mono">${hashResult.algorithm}$</span>
+							<Card.Root density="compact">
+								<Card.Header class="pb-3">
+									<Card.Title class="text-sm font-medium">Hash Details</Card.Title>
+								</Card.Header>
+								<Card.Content>
+									<div class="space-y-2 text-sm">
+										<div class="flex justify-between">
+											<span class="text-muted-foreground">Algorithm</span>
+											<span class="font-mono">${hashResult.algorithm}$</span>
+										</div>
+										<div class="flex justify-between">
+											<span class="text-muted-foreground">Cost Factor</span>
+											<span class="font-mono">{hashResult.cost}</span>
+										</div>
+										<div class="flex justify-between">
+											<span class="text-muted-foreground">Security Level</span>
+											<span>{costInfo?.security_level ?? 'Unknown'}</span>
+										</div>
+										<div class="flex justify-between">
+											<span class="text-muted-foreground">Hash Length</span>
+											<span class="font-mono">{hashResult.hash.length} chars</span>
+										</div>
 									</div>
-									<div class="flex justify-between">
-										<span class="text-muted-foreground">Cost Factor</span>
-										<span class="font-mono">{hashResult.cost}</span>
-									</div>
-									<div class="flex justify-between">
-										<span class="text-muted-foreground">Security Level</span>
-										<span>{costInfo?.security_level ?? 'Unknown'}</span>
-									</div>
-									<div class="flex justify-between">
-										<span class="text-muted-foreground">Hash Length</span>
-										<span class="font-mono">{hashResult.hash.length} chars</span>
-									</div>
-								</div>
-							</Card.Content>
-						</Card.Root>
-					</div>
+								</Card.Content>
+							</Card.Root>
+						</div>
+					{/key}
 				{:else if generateError}
 					<ErrorDisplay variant="centered" message={generateError} />
 				{:else}

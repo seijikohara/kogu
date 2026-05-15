@@ -409,6 +409,26 @@
 	animation: highlight-new 1.5s ease-out;
 }
 
+/* Subtle flash applied to a result block on a discrete generation event. */
+@keyframes flash-success {
+	0% {
+		background-color: oklch(from var(--success) l c h / 15%);
+	}
+	100% {
+		background-color: transparent;
+	}
+}
+
+.animate-flash-success {
+	animation: flash-success 600ms ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.animate-flash-success {
+		animation: none;
+	}
+}
+
 /* Unified focus ring utility */
 .focus-ring {
 	outline: none;
