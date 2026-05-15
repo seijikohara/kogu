@@ -19,6 +19,22 @@ runs:
       shell: bash
       working-directory: src-tauri
       run: |
+        # actions-rust-lang/setup-rust-toolchain skips prepending
+        # ~/.cargo/bin to $GITHUB_PATH when an existing rustup-init is
+        # detected on the runner image. On macOS-latest this means
+        # subsequent composite actions can see /opt/homebrew/bin/rustup-init
+        # before the real cargo proxy, causing `cargo build` to be
+        # interpreted as `rustup-init build` and exit with
+        # "unexpected argument 'build' found". Explicitly source the
+        # cargo env file (and/or prepend the cargo bin dir) to guarantee
+        # the proxy wins regardless of $GITHUB_PATH state.
+        if [ -f "$HOME/.cargo/env" ]; then
+          . "$HOME/.cargo/env"
+        fi
+        if [ -d "$HOME/.cargo/bin" ]; then
+          export PATH="$HOME/.cargo/bin:$PATH"
+        fi
+
         TARGET="${{ inputs.target }}"
         PROFILE="${{ inputs.profile }}"
 
