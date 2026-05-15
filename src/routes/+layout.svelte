@@ -8,6 +8,7 @@
 	import { AppSidebar, KeyboardShortcutsDialog, TitleBar } from '$lib/components/layout/index.js';
 	import * as Sidebar from '$lib/components/ui/sidebar/index.js';
 	import { Sonner } from '$lib/components/ui/sonner/index.js';
+	import * as Tooltip from '$lib/components/ui/tooltip/index.js';
 	import { goBack, goForward } from '$lib/services/navigation-history.svelte.js';
 	import {
 		applyAllSettings,
@@ -119,16 +120,18 @@
 <Sonner richColors />
 <KeyboardShortcutsDialog bind:open={shortcutsHelpOpen} />
 
-<div class="flex h-screen flex-col">
-	<TitleBar bind:commandRef={titleBarCommand} />
-	<Sidebar.Provider
-		class="flex-1 !min-h-0 [&_[data-slot=sidebar-container]]:top-8 [&_[data-slot=sidebar-container]]:h-[calc(100svh-2rem)]"
-	>
-		<div class="flex h-full w-full overflow-hidden">
-			<AppSidebar />
-			<Sidebar.Inset class="flex h-full flex-col overflow-hidden">
-				{@render children()}
-			</Sidebar.Inset>
-		</div>
-	</Sidebar.Provider>
-</div>
+<Tooltip.Provider delayDuration={150}>
+	<div class="flex h-screen flex-col">
+		<TitleBar bind:commandRef={titleBarCommand} />
+		<Sidebar.Provider
+			class="flex-1 !min-h-0 [&_[data-slot=sidebar-container]]:top-8 [&_[data-slot=sidebar-container]]:h-[calc(100svh-2rem)]"
+		>
+			<div class="flex h-full w-full overflow-hidden">
+				<AppSidebar />
+				<Sidebar.Inset class="flex h-full flex-col overflow-hidden">
+					{@render children()}
+				</Sidebar.Inset>
+			</div>
+		</Sidebar.Provider>
+	</div>
+</Tooltip.Provider>
