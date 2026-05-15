@@ -79,11 +79,13 @@
 		type UnifiedHost,
 	} from '$lib/services/network-scanner.js';
 	import { classifyHosts } from '$lib/services/device-classifier.js';
+	import { persisted } from '$lib/services/persisted.svelte.js';
 	import { UnifiedHostDetailPanel, UnifiedHostListItem } from './components/index.js';
 
-	// Form state
-	let target = $state('');
-	let scanMode = $state<ScanMode>('quick');
+	// Form state — preferences that survive an app restart. Scan results,
+	// in-flight progress, and host classifications are kept ephemeral.
+	const targetStore = persisted<string>('network-scanner:target', '');
+	const scanModeStore = persisted<ScanMode>('network-scanner:scanMode', 'quick');
 	let portPreset = $state<PortPreset>('well_known');
 	let portRange = $state('');
 	let concurrency = $state(DEFAULT_CONCURRENCY);
@@ -98,9 +100,22 @@
 	// Derived: any resolution enabled
 	const resolveHostname = $derived(resolveDns || resolveMdns || resolveNetbios);
 
+	// Reactive aliases let the existing template references (`target`,
+	// `scanMode`) keep their shape while the underlying value lives in the
+	// persisted store.
+	const target = $derived(targetStore.current);
+	const scanMode = $derived(scanModeStore.current);
+
 	// Discovery options (all remaining methods are userspace; SNMP is opt-in
 	// because broadcast SNMP queries can be noisy on some networks).
-	let discoveryMethods = $state<Set<DiscoveryMethod>>(new Set(DEFAULT_DISCOVERY_METHODS));
+	// Stored as a sorted array of strings because `Set` does not survive
+	// `JSON.stringify`; the in-memory representation stays a `Set` for fast
+	// membership checks.
+	const discoveryMethodsStore = persisted<readonly DiscoveryMethod[]>(
+		'network-scanner:discoveryMethods',
+		[...DEFAULT_DISCOVERY_METHODS]
+	);
+	const discoveryMethods = $derived(new Set<DiscoveryMethod>(discoveryMethodsStore.current));
 	let discoveryResults = $state<DiscoveryResult[]>([]);
 	let isDiscovering = $state(false);
 
@@ -380,7 +395,7 @@
 			// Auto-fill with primary IPv4 CIDR if available
 			const primary = networkInfo.primaryIpv4;
 			if (primary?.suggestedCidr) {
-				target = primary.suggestedCidr;
+				targetStore.current = primary.suggestedCidr;
 				toast.success('Target auto-filled', {
 					description: `Using ${primary.name} (${primary.ip})`,
 				});
@@ -388,7 +403,7 @@
 				// Find first non-loopback interface with suggested CIDR
 				const usable = networkInfo.interfaces.find((i) => !i.isLoopback && i.suggestedCidr);
 				if (usable?.suggestedCidr) {
-					target = usable.suggestedCidr;
+					targetStore.current = usable.suggestedCidr;
 					toast.success('Target auto-filled', {
 						description: `Using ${usable.name} (${usable.ip})`,
 					});
@@ -407,9 +422,9 @@
 
 	const handleSelectInterface = (iface: NetworkInterface) => {
 		if (iface.suggestedCidr) {
-			target = iface.suggestedCidr;
+			targetStore.current = iface.suggestedCidr;
 		} else {
-			target = iface.ip;
+			targetStore.current = iface.ip;
 		}
 	};
 
@@ -429,7 +444,7 @@
 		} else {
 			newSet.add(method);
 		}
-		discoveryMethods = newSet;
+		discoveryMethodsStore.current = [...newSet];
 	};
 
 	/** Replace discovery results for methods that have been resolved with hostname data */
@@ -609,8 +624,8 @@
 	};
 
 	const handleScanDiscoveredHost = (ip: string, mode: ScanMode) => {
-		target = ip;
-		scanMode = mode;
+		targetStore.current = ip;
+		scanModeStore.current = mode;
 		handleScan();
 	};
 </script>
@@ -638,7 +653,7 @@
 			<div class="space-y-2">
 				<FormInput
 					label="Host / IP / CIDR"
-					bind:value={target}
+					bind:value={targetStore.current}
 					placeholder="192.168.1.1 or 192.168.1.0/24"
 				/>
 				{#if target && !isValidTarget(target)}
@@ -778,7 +793,7 @@
 					label: m.label,
 					description: m.description,
 				}))}
-				onchange={(v) => (scanMode = v as ScanMode)}
+				onchange={(v) => (scanModeStore.current = v as ScanMode)}
 			/>
 
 			<!-- Quick Scan Port Details -->
@@ -1169,7 +1184,7 @@
 										variant="outline"
 										disabled={isScanning}
 										onclick={() => {
-											target = hostsWithoutScans.flatMap((h) => h.ips).join(',');
+											targetStore.current = hostsWithoutScans.flatMap((h) => h.ips).join(',');
 											handleScan();
 										}}
 									/>

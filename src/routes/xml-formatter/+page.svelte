@@ -13,7 +13,11 @@
 	} from './tabs/index.js';
 </script>
 
-<TabbedFormatterPage title="XML Formatter" calculateStats={calculateXmlStats}>
+<TabbedFormatterPage
+	title="XML Formatter"
+	calculateStats={calculateXmlStats}
+	persistKey="xml-formatter"
+>
 	{#snippet renderStatusContent(stats: unknown)}
 		{@const liveStats = stats as XmlStats | null}
 		{#if liveStats}

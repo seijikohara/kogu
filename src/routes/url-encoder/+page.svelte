@@ -63,10 +63,12 @@
 
 	const tabIds = tabs.map((t) => t.id);
 
-	// Tab sync with URL (keep as object reference to preserve reactivity)
+	// Tab sync with URL (keep as object reference to preserve reactivity).
+	// `persistKey` survives the last-active tab across app restarts.
 	const tabSync = useTabSync({
 		tabs: tabIds,
 		defaultTab: 'encode',
+		persistKey: 'url-encoder',
 	});
 
 	// Type-safe tab change handler for ToolShell

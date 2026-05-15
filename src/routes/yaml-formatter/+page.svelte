@@ -13,7 +13,11 @@
 	} from './tabs/index.js';
 </script>
 
-<TabbedFormatterPage title="YAML Formatter" calculateStats={calculateYamlStats}>
+<TabbedFormatterPage
+	title="YAML Formatter"
+	calculateStats={calculateYamlStats}
+	persistKey="yaml-formatter"
+>
 	{#snippet renderStatusContent(stats: unknown)}
 		{@const liveStats = stats as YamlStats | null}
 		{#if liveStats}

@@ -3,6 +3,7 @@
 	import { FormInfo, FormSection } from '$lib/components/form';
 	import { ToolShell } from '$lib/components/shell';
 	import { StatItem } from '$lib/components/status';
+	import { persisted } from '$lib/services/persisted.svelte.js';
 	import { BuildTab, ParseTab } from './tabs/index.js';
 
 	type CronTab = 'build' | 'parse';
@@ -12,7 +13,8 @@
 		{ id: 'parse' as const, label: 'Parse', icon: Search },
 	] as const;
 
-	let activeTab = $state<CronTab>('build');
+	// Persist the active tab so restarts open the panel the user last used.
+	const activeTab = persisted<CronTab>('tab:cron-expression-builder', 'build');
 	let buildStats = $state<{ expression: string; valid: boolean }>({
 		expression: '* * * * *',
 		valid: true,
@@ -22,10 +24,10 @@
 		valid: true,
 	});
 
-	const currentStats = $derived(activeTab === 'build' ? buildStats : parseStats);
+	const currentStats = $derived(activeTab.current === 'build' ? buildStats : parseStats);
 
 	const handleTabChange = (tab: string) => {
-		if (tab === 'build' || tab === 'parse') activeTab = tab;
+		if (tab === 'build' || tab === 'parse') activeTab.current = tab;
 	};
 </script>
 
@@ -36,7 +38,7 @@
 <ToolShell
 	layout="tabbed"
 	tabs={TABS}
-	{activeTab}
+	activeTab={activeTab.current}
 	ontabchange={handleTabChange}
 	valid={currentStats.valid}
 >

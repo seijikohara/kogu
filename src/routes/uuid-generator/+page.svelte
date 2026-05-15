@@ -14,6 +14,7 @@
 	import { SectionHeader } from '$lib/components/layout';
 	import { ToolShell } from '$lib/components/shell';
 	import { EmbeddedEmptyState, StatItem } from '$lib/components/status';
+	import { persisted } from '$lib/services/persisted.svelte.js';
 	import {
 		DEFAULT_COUNT,
 		DEFAULT_FORMAT_OPTIONS,
@@ -29,15 +30,22 @@
 		type UuidVersion,
 	} from '$lib/services/uuid.js';
 
-	// State
-	let version = $state<UuidVersion>('v7');
-	let count = $state<number>(DEFAULT_COUNT);
+	// State — version, count, and format options persist between sessions.
+	// Generated UUIDs are never persisted (one-shot output).
+	const versionStore = persisted<UuidVersion>('uuid-generator:version', 'v7');
+	const countStore = persisted<number>('uuid-generator:count', DEFAULT_COUNT);
+	const formatStore = persisted<UuidFormatOptions>('uuid-generator:format', {
+		...DEFAULT_FORMAT_OPTIONS,
+	});
 	let namespace = $state<string>(NAMESPACE_DNS);
 	let nameInput = $state<string>('');
-	let format = $state<UuidFormatOptions>({ ...DEFAULT_FORMAT_OPTIONS });
 	let results = $state<readonly string[]>([]);
 	let error = $state<string | null>(null);
 	let showOptions = $state(true);
+
+	const version = $derived(versionStore.current);
+	const count = $derived(countStore.current);
+	const format = $derived(formatStore.current);
 	// Increments on each successful generation so the result wrapper can re-mount
 	// and replay the flash-success animation.
 	let flashCounter = $state(0);
@@ -60,7 +68,7 @@
 
 	// Handlers
 	const handleVersionChange = (value: string) => {
-		if (isUuidVersion(value)) version = value;
+		if (isUuidVersion(value)) versionStore.current = value;
 	};
 
 	const handleNamespaceChange = (value: string) => {
@@ -145,7 +153,7 @@
 		<FormSection title="Quantity">
 			<FormSlider
 				label="Count"
-				bind:value={count}
+				bind:value={countStore.current}
 				min={MIN_COUNT}
 				max={MAX_COUNT}
 				step={1}
@@ -155,9 +163,9 @@
 
 		<FormSection title="Format">
 			<FormCheckboxGroup>
-				<FormCheckbox label="Uppercase" bind:checked={format.uppercase} />
-				<FormCheckbox label="Hyphens" bind:checked={format.hyphens} />
-				<FormCheckbox label="Wrap in braces" bind:checked={format.braces} />
+				<FormCheckbox label="Uppercase" bind:checked={formatStore.current.uppercase} />
+				<FormCheckbox label="Hyphens" bind:checked={formatStore.current.hyphens} />
+				<FormCheckbox label="Wrap in braces" bind:checked={formatStore.current.braces} />
 			</FormCheckboxGroup>
 		</FormSection>
 
