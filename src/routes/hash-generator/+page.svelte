@@ -5,7 +5,7 @@
 	import { FormInfo, FormSection } from '$lib/components/form';
 	import { SectionHeader } from '$lib/components/layout';
 	import { ToolShell } from '$lib/components/shell';
-	import { EmptyState, StatItem } from '$lib/components/status';
+	import { EmbeddedEmptyState, StatItem } from '$lib/components/status';
 	import { Badge } from '$lib/components/ui/badge';
 	import * as Card from '$lib/components/ui/card';
 	import {
@@ -132,7 +132,9 @@
 								<Card.Header class="flex flex-row items-center justify-between space-y-0 pb-3">
 									<div class="flex items-center gap-2">
 										<Card.Title class="font-mono text-sm">{result.algorithm}</Card.Title>
-										<span class="text-xs text-muted-foreground">({result.bits} bits)</span>
+										<span class="text-xs tabular-nums text-muted-foreground"
+											>({result.bits} bits)</span
+										>
 										{#if getSecurityBadge(result.algorithm)}
 											<Badge variant="outline" class="gap-1 bg-success/10 text-success">
 												<ShieldCheck class="h-3 w-3" />
@@ -162,7 +164,12 @@
 						{/each}
 					</div>
 				{:else}
-					<EmptyState icon={Hash} title="Enter text to generate hashes" />
+					<EmbeddedEmptyState
+						icon={Hash}
+						title="Enter text to hash"
+						description="Type or paste content above to compute MD5, SHA-1, SHA-256, and more."
+						fillHeight
+					/>
 				{/if}
 			</div>
 		</div>

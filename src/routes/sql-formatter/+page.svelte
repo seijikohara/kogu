@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { Database } from '@lucide/svelte';
 	import type { SqlLanguage } from 'sql-formatter';
 	import { CodeEditor } from '$lib/components/editor';
 	import {
@@ -8,9 +9,9 @@
 		FormSection,
 		FormSelect,
 	} from '$lib/components/form';
-	import { SplitPane } from '$lib/components/layout';
+	import { SectionHeader, SplitPane } from '$lib/components/layout';
 	import { ToolShell } from '$lib/components/shell';
-	import { StatItem } from '$lib/components/status';
+	import { EmbeddedEmptyState, StatItem } from '$lib/components/status';
 	import {
 		calculateSqlStats,
 		defaultSqlFormatOptions,
@@ -248,14 +249,28 @@
 			/>
 		{/snippet}
 		{#snippet right()}
-			<CodeEditor
-				title="Output"
-				value={output}
-				mode="readonly"
-				editorMode="sql"
-				placeholder="Formatted output..."
-				oncopy={handleCopy}
-			/>
+			{#if !input.trim()}
+				<div class="flex h-full flex-col overflow-hidden">
+					<SectionHeader title="Output" />
+					<div class="flex-1">
+						<EmbeddedEmptyState
+							icon={Database}
+							title="Enter SQL to format"
+							description="The formatted (or minified) statement will appear here."
+							fillHeight
+						/>
+					</div>
+				</div>
+			{:else}
+				<CodeEditor
+					title="Output"
+					value={output}
+					mode="readonly"
+					editorMode="sql"
+					placeholder="Formatted output..."
+					oncopy={handleCopy}
+				/>
+			{/if}
 		{/snippet}
 	</SplitPane>
 </ToolShell>

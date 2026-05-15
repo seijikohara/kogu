@@ -13,7 +13,7 @@
 	} from '$lib/components/form';
 	import { SectionHeader } from '$lib/components/layout';
 	import { ToolShell } from '$lib/components/shell';
-	import { EmptyState, StatItem } from '$lib/components/status';
+	import { EmbeddedEmptyState, StatItem } from '$lib/components/status';
 	import {
 		DEFAULT_COUNT,
 		DEFAULT_FORMAT_OPTIONS,
@@ -217,7 +217,12 @@
 					{/each}
 				</div>
 			{:else}
-				<EmptyState icon={Fingerprint} title="Click Generate to create UUIDs" />
+				<EmbeddedEmptyState
+					icon={Fingerprint}
+					title="Generate UUIDs"
+					description="Pick a version on the left and click Generate to create unique identifiers."
+					fillHeight
+				/>
 			{/if}
 		</div>
 	</div>

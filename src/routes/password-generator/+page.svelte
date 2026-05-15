@@ -11,7 +11,7 @@
 	} from '$lib/components/form';
 	import { SectionHeader } from '$lib/components/layout';
 	import { ToolShell } from '$lib/components/shell';
-	import { EmptyState, StatItem } from '$lib/components/status';
+	import { EmbeddedEmptyState, StatItem } from '$lib/components/status';
 	import {
 		buildCharacterPool,
 		calculateEntropy,
@@ -223,7 +223,12 @@
 					{/each}
 				</div>
 			{:else}
-				<EmptyState icon={Lock} title="Click Generate to create passwords" />
+				<EmbeddedEmptyState
+					icon={Lock}
+					title="Generate passwords"
+					description="Adjust the options on the left and click Generate to create secure passwords."
+					fillHeight
+				/>
 			{/if}
 		</div>
 	</div>

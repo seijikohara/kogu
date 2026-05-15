@@ -3,6 +3,7 @@
 	import { CopyButton } from '$lib/components/action';
 	import { FormInput } from '$lib/components/form';
 	import { SectionHeader } from '$lib/components/layout';
+	import { EmbeddedEmptyState } from '$lib/components/status';
 	import { Badge } from '$lib/components/ui/badge';
 	import { Button } from '$lib/components/ui/button';
 	import * as Card from '$lib/components/ui/card';
@@ -175,7 +176,11 @@
 								{/each}
 							</ul>
 						{:else}
-							<p class="text-sm text-muted-foreground">No upcoming executions.</p>
+							<EmbeddedEmptyState
+								icon={Calendar}
+								title="No upcoming executions"
+								description="The current expression does not match any future time within the lookahead window."
+							/>
 						{/if}
 					{:else}
 						<p class="text-sm text-destructive">{nextRuns.error}</p>

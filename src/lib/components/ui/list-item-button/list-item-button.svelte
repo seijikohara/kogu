@@ -4,8 +4,11 @@
 	import { tv, type VariantProps } from 'tailwind-variants';
 	import { cn, type WithElementRef } from '$lib/utils.js';
 
+	// Divergence from registry: cursor-pointer / cursor-not-allowed are added on the base so
+	// every list row shows a proper click affordance (Tailwind v4 Preflight resets the native
+	// <button> cursor to default).
 	export const listItemButtonVariants = tv({
-		base: "focus-visible:border-ring focus-visible:ring-ring/50 inline-flex w-full shrink-0 items-center gap-2 text-left outline-none transition-colors focus-visible:ring-[3px] disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg:not([class*='size-'])]:size-4 [&_svg]:pointer-events-none [&_svg]:shrink-0",
+		base: "focus-visible:border-ring focus-visible:ring-ring/50 inline-flex w-full shrink-0 cursor-pointer items-center gap-2 text-left outline-none transition-colors focus-visible:ring-[3px] disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:cursor-not-allowed aria-disabled:opacity-50 [&_svg:not([class*='size-'])]:size-4 [&_svg]:pointer-events-none [&_svg]:shrink-0",
 		variants: {
 			variant: {
 				default:

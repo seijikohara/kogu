@@ -364,7 +364,7 @@
 							</Button>
 						</div>
 						<div class="flex items-center gap-2">
-							<span class="font-mono text-sm text-muted-foreground">{primaryIp}</span>
+							<span class="font-mono text-sm tabular-nums text-muted-foreground">{primaryIp}</span>
 							<Button
 								variant="ghost"
 								size="icon-sm"
@@ -378,7 +378,7 @@
 						</div>
 					{:else}
 						<div class="flex items-center gap-2">
-							<h2 class="font-mono text-lg font-semibold">{primaryIp}</h2>
+							<h2 class="font-mono text-lg font-semibold tabular-nums">{primaryIp}</h2>
 							<Button
 								variant="ghost"
 								size="icon-sm"
@@ -468,7 +468,7 @@
 					<TabIcon />
 					{tab.label}
 					{#if tab.count !== null}
-						<Badge variant="outline" class="font-mono text-2xs">{tab.count}</Badge>
+						<Badge variant="outline" class="font-mono text-2xs tabular-nums">{tab.count}</Badge>
 					{/if}
 				</Tabs.Trigger>
 			{/each}
@@ -951,7 +951,9 @@
 												</div>
 												<div class="min-w-0 flex-1">
 													<div class="flex items-center gap-2">
-														<span class="font-mono text-base font-semibold">{port.port}</span>
+														<span class="font-mono text-base font-semibold tabular-nums"
+															>{port.port}</span
+														>
 														{#if serviceName}
 															<span class="rounded bg-muted px-1.5 py-0.5 text-xs font-medium">
 																{serviceName}
