@@ -486,3 +486,26 @@
 	outline: 2px solid oklch(from var(--primary) l c h / 30%);
 	outline-offset: 2px;
 }
+
+/*
+ * Thin themed scrollbars for a native-app feel.
+ *
+ * Applied to all scrollable elements that fall back to the platform default
+ * (page-level scrolls, dropdown overflow, code-editor scrollbars, etc.).
+ * The shadcn `ScrollArea` component ships its own scrollbar treatment, so
+ * these rules only affect the OS-default scrollbar surfaces.
+ */
+*::-webkit-scrollbar {
+	width: 8px;
+	height: 8px;
+}
+*::-webkit-scrollbar-track {
+	background: transparent;
+}
+*::-webkit-scrollbar-thumb {
+	background: var(--border);
+	border-radius: 9999px;
+}
+*::-webkit-scrollbar-thumb:hover {
+	background: oklch(from var(--muted-foreground) l c h / 40%);
+}
