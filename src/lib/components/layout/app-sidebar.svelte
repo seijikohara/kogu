@@ -56,7 +56,7 @@
 								>{category.label}</span
 							>
 							<ChevronRight
-								class="size-4 transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90"
+								class="size-4 transition-transform duration-base group-data-[state=open]/collapsible:rotate-90"
 							/>
 						</Collapsible.Trigger>
 					</Sidebar.GroupLabel>
@@ -116,7 +116,7 @@
 			<Sidebar.MenuItem>
 				<Sidebar.MenuButton onclick={sidebar.toggle} tooltipContent="Toggle sidebar">
 					<ChevronLeft
-						class="size-4 transition-transform duration-200 group-data-[state=collapsed]:rotate-180"
+						class="size-4 transition-transform duration-base group-data-[state=collapsed]:rotate-180"
 					/>
 					<span>Collapse</span>
 				</Sidebar.MenuButton>
