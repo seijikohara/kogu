@@ -935,23 +935,27 @@
 						description="Select a scan mode and run a port scan to detect open services."
 					/>
 				{:else}
-					<!-- Port Summary Bar -->
+					<!--
+						Port Summary Bar — replaces bare color dots with icon prefixes so
+						the open/filtered/closed split remains distinguishable for
+						colorblind users.
+					-->
 					<div class="mb-4 rounded-lg border bg-card p-3">
 						<div class="flex items-center justify-between text-sm">
 							<span class="font-medium">Port Summary</span>
 							<span class="text-xs text-muted-foreground">{ports.length} scanned</span>
 						</div>
 						<div class="mt-2 flex gap-4 text-xs">
-							<span class="flex items-center gap-1.5">
-								<span class="h-2 w-2 rounded-full bg-success"></span>
+							<span class="flex items-center gap-1.5 text-success">
+								<CheckCircle2 class="h-3 w-3" aria-hidden="true" />
 								{openPorts.length} open
 							</span>
-							<span class="flex items-center gap-1.5">
-								<span class="h-2 w-2 rounded-full bg-warning"></span>
+							<span class="flex items-center gap-1.5 text-warning">
+								<Shield class="h-3 w-3" aria-hidden="true" />
 								{filteredPorts.length} filtered
 							</span>
-							<span class="flex items-center gap-1.5">
-								<span class="h-2 w-2 rounded-full bg-destructive"></span>
+							<span class="flex items-center gap-1.5 text-destructive">
+								<XCircle class="h-3 w-3" aria-hidden="true" />
 								{closedPorts.length} closed
 							</span>
 						</div>

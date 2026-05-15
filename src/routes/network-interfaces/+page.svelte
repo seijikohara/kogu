@@ -292,8 +292,13 @@
 					<Resizable.Pane defaultSize={35} minSize={20} maxSize={50}>
 						<div class="flex h-full flex-col border-r">
 							<SectionHeader title="Interfaces" count={filteredInterfaces.length} />
+							<!--
+								outline-none + focus-visible ring restores the keyboard focus
+								indicator that the default `outline: 0` rule would suppress on
+								the listbox container.
+							-->
 							<div
-								class="flex-1 overflow-auto"
+								class="flex-1 overflow-auto outline-none focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:ring-inset"
 								role="listbox"
 								tabindex="0"
 								aria-label="Network interfaces"

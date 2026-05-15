@@ -124,7 +124,12 @@
 		<!-- Hash Results -->
 		<div class="flex flex-1 flex-col overflow-hidden">
 			<SectionHeader title="Hash Results" />
-			<div class="flex-1 overflow-auto p-4">
+			<!--
+				aria-live announces when hashes are recomputed after the user types in
+				the input editor. `polite` so the announcement does not interrupt the
+				user mid-keystroke.
+			-->
+			<div class="flex-1 overflow-auto p-4" role="status" aria-live="polite" aria-atomic="false">
 				{#if textHashes.length > 0}
 					<div class="space-y-3">
 						{#each textHashes as result}
