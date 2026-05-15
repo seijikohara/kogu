@@ -26,6 +26,7 @@
 	import { toast } from 'svelte-sonner';
 	import { Button } from '$lib/components/ui/button/index.js';
 	import { ListItemButton } from '$lib/components/ui/list-item-button/index.js';
+	import * as Tooltip from '$lib/components/ui/tooltip/index.js';
 	import type { AstNode, AstNodeType } from '$lib/services/ast/index.js';
 	import TreeView from './tree-view.svelte';
 
@@ -412,24 +413,33 @@
 	style:padding-left="calc(var(--tree-depth) * 16px)"
 >
 	{#if hasChildren}
+		{@const chevronLabel = expanded ? 'Collapse' : 'Expand'}
 		<!-- Chevron (absolute-positioned to avoid nesting <button>) -->
-		<Button
-			variant="ghost"
-			size="icon-sm"
-			class="hover:bg-muted-foreground/20 absolute left-[calc(var(--tree-depth)*16px+4px)] top-1/2 z-10 h-5 w-5 -translate-y-1/2 rounded transition-all"
-			aria-label={expanded ? 'Collapse' : 'Expand'}
-			tabindex={-1}
-			onclick={(e) => {
-				e.stopPropagation();
-				expanded = !expanded;
-			}}
-		>
-			<ChevronRight
-				class="h-3.5 w-3.5 text-muted-foreground transition-transform duration-200 {expanded
-					? 'rotate-90'
-					: ''}"
-			/>
-		</Button>
+		<Tooltip.Root>
+			<Tooltip.Trigger>
+				{#snippet child({ props })}
+					<Button
+						{...props}
+						variant="ghost"
+						size="icon-sm"
+						class="hover:bg-muted-foreground/20 absolute left-[calc(var(--tree-depth)*16px+4px)] top-1/2 z-10 h-5 w-5 -translate-y-1/2 rounded transition-all"
+						tabindex={-1}
+						onclick={(e) => {
+							e.stopPropagation();
+							expanded = !expanded;
+						}}
+					>
+						<ChevronRight
+							class="h-3.5 w-3.5 text-muted-foreground transition-transform duration-200 {expanded
+								? 'rotate-90'
+								: ''}"
+						/>
+						<span class="sr-only">{chevronLabel}</span>
+					</Button>
+				{/snippet}
+			</Tooltip.Trigger>
+			<Tooltip.Content>{chevronLabel}</Tooltip.Content>
+		</Tooltip.Root>
 	{/if}
 
 	<ListItemButton
@@ -488,32 +498,46 @@
 	<div
 		class="absolute right-1 top-1/2 flex -translate-y-1/2 items-center gap-0.5 opacity-0 transition-opacity group-hover/tree:opacity-100"
 	>
-		<Button
-			variant="ghost"
-			size="icon-sm"
-			class="hover:bg-muted hover:text-foreground h-5 w-5 text-muted-foreground"
-			aria-label="Copy path"
-			title="Copy path"
-			tabindex={-1}
-			onclick={handleCopyPath}
-		>
-			<span class="text-xs font-mono">$</span>
-		</Button>
-		<Button
-			variant="ghost"
-			size="icon-sm"
-			class="hover:bg-muted hover:text-foreground h-5 w-5 text-muted-foreground"
-			aria-label="Copy value"
-			title="Copy value"
-			tabindex={-1}
-			onclick={handleCopyValue}
-		>
-			{#if justCopied === node.path}
-				<Check class="h-3 w-3 text-success" />
-			{:else}
-				<Copy class="h-3 w-3" />
-			{/if}
-		</Button>
+		<Tooltip.Root>
+			<Tooltip.Trigger>
+				{#snippet child({ props })}
+					<Button
+						{...props}
+						variant="ghost"
+						size="icon-sm"
+						class="hover:bg-muted hover:text-foreground h-5 w-5 text-muted-foreground"
+						tabindex={-1}
+						onclick={handleCopyPath}
+					>
+						<span class="text-xs font-mono">$</span>
+						<span class="sr-only">Copy path</span>
+					</Button>
+				{/snippet}
+			</Tooltip.Trigger>
+			<Tooltip.Content>Copy path</Tooltip.Content>
+		</Tooltip.Root>
+		<Tooltip.Root>
+			<Tooltip.Trigger>
+				{#snippet child({ props })}
+					<Button
+						{...props}
+						variant="ghost"
+						size="icon-sm"
+						class="hover:bg-muted hover:text-foreground h-5 w-5 text-muted-foreground"
+						tabindex={-1}
+						onclick={handleCopyValue}
+					>
+						{#if justCopied === node.path}
+							<Check class="h-3 w-3 text-success" />
+						{:else}
+							<Copy class="h-3 w-3" />
+						{/if}
+						<span class="sr-only">Copy value</span>
+					</Button>
+				{/snippet}
+			</Tooltip.Trigger>
+			<Tooltip.Content>Copy value</Tooltip.Content>
+		</Tooltip.Root>
 	</div>
 </div>
 

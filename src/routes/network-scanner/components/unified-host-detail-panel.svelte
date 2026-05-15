@@ -353,43 +353,64 @@
 									{displaySource.toUpperCase()}
 								</span>
 							{/if}
-							<Button
-								variant="ghost"
-								size="icon-sm"
-								class="hover:bg-muted hover:text-foreground h-7 w-7 text-muted-foreground"
-								aria-label="Copy hostname"
-								title="Copy hostname"
-								onclick={() => copyToClipboard(displayName ?? '', 'Hostname')}
-							>
-								<Copy class="h-3.5 w-3.5" />
-							</Button>
+							<Tooltip.Root>
+								<Tooltip.Trigger>
+									{#snippet child({ props })}
+										<Button
+											{...props}
+											variant="ghost"
+											size="icon-sm"
+											class="hover:bg-muted hover:text-foreground h-7 w-7 text-muted-foreground"
+											onclick={() => copyToClipboard(displayName ?? '', 'Hostname')}
+										>
+											<Copy class="h-3.5 w-3.5" />
+											<span class="sr-only">Copy hostname</span>
+										</Button>
+									{/snippet}
+								</Tooltip.Trigger>
+								<Tooltip.Content>Copy hostname</Tooltip.Content>
+							</Tooltip.Root>
 						</div>
 						<div class="flex items-center gap-2">
 							<span class="font-mono text-sm tabular-nums text-muted-foreground">{primaryIp}</span>
-							<Button
-								variant="ghost"
-								size="icon-sm"
-								class="hover:bg-muted hover:text-foreground h-5 w-5 text-muted-foreground"
-								aria-label="Copy IP"
-								title="Copy IP"
-								onclick={() => copyToClipboard(primaryIp, 'IP address')}
-							>
-								<Copy class="h-3 w-3" />
-							</Button>
+							<Tooltip.Root>
+								<Tooltip.Trigger>
+									{#snippet child({ props })}
+										<Button
+											{...props}
+											variant="ghost"
+											size="icon-sm"
+											class="hover:bg-muted hover:text-foreground h-5 w-5 text-muted-foreground"
+											onclick={() => copyToClipboard(primaryIp, 'IP address')}
+										>
+											<Copy class="h-3 w-3" />
+											<span class="sr-only">Copy IP</span>
+										</Button>
+									{/snippet}
+								</Tooltip.Trigger>
+								<Tooltip.Content>Copy IP</Tooltip.Content>
+							</Tooltip.Root>
 						</div>
 					{:else}
 						<div class="flex items-center gap-2">
 							<h2 class="font-mono text-lg font-semibold tabular-nums">{primaryIp}</h2>
-							<Button
-								variant="ghost"
-								size="icon-sm"
-								class="hover:bg-muted hover:text-foreground h-7 w-7 text-muted-foreground"
-								aria-label="Copy IP"
-								title="Copy IP"
-								onclick={() => copyToClipboard(primaryIp, 'IP address')}
-							>
-								<Copy class="h-3.5 w-3.5" />
-							</Button>
+							<Tooltip.Root>
+								<Tooltip.Trigger>
+									{#snippet child({ props })}
+										<Button
+											{...props}
+											variant="ghost"
+											size="icon-sm"
+											class="hover:bg-muted hover:text-foreground h-7 w-7 text-muted-foreground"
+											onclick={() => copyToClipboard(primaryIp, 'IP address')}
+										>
+											<Copy class="h-3.5 w-3.5" />
+											<span class="sr-only">Copy IP</span>
+										</Button>
+									{/snippet}
+								</Tooltip.Trigger>
+								<Tooltip.Content>Copy IP</Tooltip.Content>
+							</Tooltip.Root>
 						</div>
 						<p class="text-xs text-muted-foreground">Hostname not resolved</p>
 					{/if}
@@ -608,16 +629,23 @@
 									<div class="text-xs text-muted-foreground">NetBIOS Name</div>
 									<div class="mt-0.5 flex items-center gap-1.5 font-mono text-sm font-medium">
 										{netbiosName}
-										<Button
-											variant="ghost"
-											size="icon-sm"
-											class="hover:bg-muted hover:text-foreground h-5 w-5 text-muted-foreground"
-											aria-label="Copy NetBIOS name"
-											title="Copy NetBIOS name"
-											onclick={() => copyToClipboard(netbiosName ?? '', 'NetBIOS name')}
-										>
-											<Copy class="h-3 w-3" />
-										</Button>
+										<Tooltip.Root>
+											<Tooltip.Trigger>
+												{#snippet child({ props })}
+													<Button
+														{...props}
+														variant="ghost"
+														size="icon-sm"
+														class="hover:bg-muted hover:text-foreground h-5 w-5 text-muted-foreground"
+														onclick={() => copyToClipboard(netbiosName ?? '', 'NetBIOS name')}
+													>
+														<Copy class="h-3 w-3" />
+														<span class="sr-only">Copy NetBIOS name</span>
+													</Button>
+												{/snippet}
+											</Tooltip.Trigger>
+											<Tooltip.Content>Copy NetBIOS name</Tooltip.Content>
+										</Tooltip.Root>
 									</div>
 								</div>
 							{/if}
@@ -626,16 +654,23 @@
 									<div class="text-xs text-muted-foreground">MAC Address</div>
 									<div class="mt-0.5 flex items-center gap-1.5 font-mono text-sm font-medium">
 										{macAddress}
-										<Button
-											variant="ghost"
-											size="icon-sm"
-											class="hover:bg-muted hover:text-foreground h-5 w-5 text-muted-foreground"
-											aria-label="Copy MAC address"
-											title="Copy MAC address"
-											onclick={() => copyToClipboard(macAddress ?? '', 'MAC address')}
-										>
-											<Copy class="h-3 w-3" />
-										</Button>
+										<Tooltip.Root>
+											<Tooltip.Trigger>
+												{#snippet child({ props })}
+													<Button
+														{...props}
+														variant="ghost"
+														size="icon-sm"
+														class="hover:bg-muted hover:text-foreground h-5 w-5 text-muted-foreground"
+														onclick={() => copyToClipboard(macAddress ?? '', 'MAC address')}
+													>
+														<Copy class="h-3 w-3" />
+														<span class="sr-only">Copy MAC address</span>
+													</Button>
+												{/snippet}
+											</Tooltip.Trigger>
+											<Tooltip.Content>Copy MAC address</Tooltip.Content>
+										</Tooltip.Root>
 									</div>
 								</div>
 							{/if}
@@ -1044,16 +1079,23 @@
 													{/if}
 												</div>
 											</div>
-											<Button
-												variant="ghost"
-												size="icon-sm"
-												class="hover:bg-muted hover:text-foreground h-6 w-6 text-muted-foreground"
-												aria-label="Copy port"
-												title="Copy port"
-												onclick={() => copyToClipboard(String(port.port), 'Port number')}
-											>
-												<Copy class="h-3 w-3" />
-											</Button>
+											<Tooltip.Root>
+												<Tooltip.Trigger>
+													{#snippet child({ props })}
+														<Button
+															{...props}
+															variant="ghost"
+															size="icon-sm"
+															class="hover:bg-muted hover:text-foreground h-6 w-6 text-muted-foreground"
+															onclick={() => copyToClipboard(String(port.port), 'Port number')}
+														>
+															<Copy class="h-3 w-3" />
+															<span class="sr-only">Copy port</span>
+														</Button>
+													{/snippet}
+												</Tooltip.Trigger>
+												<Tooltip.Content>Copy port</Tooltip.Content>
+											</Tooltip.Root>
 										</div>
 									</div>
 								{/each}
@@ -1209,20 +1251,27 @@
 											</details>
 										{/if}
 									</div>
-									<Button
-										variant="ghost"
-										size="icon-sm"
-										class="hover:bg-muted hover:text-foreground h-6 w-6 shrink-0 text-muted-foreground"
-										aria-label="Copy service info"
-										title="Copy service info"
-										onclick={() =>
-											copyToClipboard(
-												`${service.instanceName} (${service.serviceType}:${service.port})`,
-												'Service info'
-											)}
-									>
-										<Copy class="h-3 w-3" />
-									</Button>
+									<Tooltip.Root>
+										<Tooltip.Trigger>
+											{#snippet child({ props })}
+												<Button
+													{...props}
+													variant="ghost"
+													size="icon-sm"
+													class="hover:bg-muted hover:text-foreground h-6 w-6 shrink-0 text-muted-foreground"
+													onclick={() =>
+														copyToClipboard(
+															`${service.instanceName} (${service.serviceType}:${service.port})`,
+															'Service info'
+														)}
+												>
+													<Copy class="h-3 w-3" />
+													<span class="sr-only">Copy service info</span>
+												</Button>
+											{/snippet}
+										</Tooltip.Trigger>
+										<Tooltip.Content>Copy service info</Tooltip.Content>
+									</Tooltip.Root>
 								</div>
 							</div>
 						{/each}

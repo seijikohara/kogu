@@ -3,6 +3,7 @@
 	import { Button } from '$lib/components/ui/button/index.js';
 	import { Input } from '$lib/components/ui/input/index.js';
 	import { Label } from '$lib/components/ui/label/index.js';
+	import * as Tooltip from '$lib/components/ui/tooltip/index.js';
 	import { cn } from '$lib/utils.js';
 
 	interface Props {
@@ -69,19 +70,28 @@
 			class={inputClass}
 		/>
 		{#if showToggle && type === 'password'}
-			<Button
-				variant="ghost"
-				size="icon-sm"
-				class="absolute right-1 top-1/2 h-7 w-7 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-				aria-label={showValue ? 'Hide password' : 'Show password'}
-				onclick={() => (showValue = !showValue)}
-			>
-				{#if showValue}
-					<EyeOff class="h-3.5 w-3.5" />
-				{:else}
-					<Eye class="h-3.5 w-3.5" />
-				{/if}
-			</Button>
+			{@const toggleLabel = showValue ? 'Hide password' : 'Show password'}
+			<Tooltip.Root>
+				<Tooltip.Trigger>
+					{#snippet child({ props })}
+						<Button
+							{...props}
+							variant="ghost"
+							size="icon-sm"
+							class="absolute right-1 top-1/2 h-7 w-7 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+							onclick={() => (showValue = !showValue)}
+						>
+							{#if showValue}
+								<EyeOff class="h-3.5 w-3.5" />
+							{:else}
+								<Eye class="h-3.5 w-3.5" />
+							{/if}
+							<span class="sr-only">{toggleLabel}</span>
+						</Button>
+					{/snippet}
+				</Tooltip.Trigger>
+				<Tooltip.Content>{toggleLabel}</Tooltip.Content>
+			</Tooltip.Root>
 		{/if}
 	</div>
 	{#if hint}

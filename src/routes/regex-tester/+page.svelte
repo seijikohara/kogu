@@ -10,6 +10,7 @@
 	import { Button } from '$lib/components/ui/button';
 	import * as Card from '$lib/components/ui/card';
 	import * as ToggleGroup from '$lib/components/ui/toggle-group';
+	import * as Tooltip from '$lib/components/ui/tooltip';
 	import { cn } from '$lib/utils';
 	import { groupColor, matchBackdropColor } from '$lib/services/regex-design.js';
 	import {
@@ -157,6 +158,19 @@
 		unknown: { label: 'Unknown', className: 'bg-destructive/10 text-destructive' },
 	};
 
+	// Tooltip copy for each regex flag, keyed by single-letter flag character.
+	// Kept inline rather than in the regex service so the strings stay close to
+	// the only consumer (the flag ToggleGroup) and can be tuned for UX without
+	// rippling through code-generation utilities.
+	const FLAG_TOOLTIPS: Readonly<Record<string, string>> = {
+		g: 'Global: find all matches',
+		i: 'Case insensitive',
+		m: 'Multiline: ^ and $ match line breaks',
+		s: 'Dotall: . matches newlines',
+		u: 'Unicode: enable full Unicode matching',
+		y: 'Sticky: match from lastIndex',
+	};
+
 	const activeFlagIds = $derived(FLAG_INFO.filter((info) => flags[info.id]).map((info) => info.id));
 
 	const handleFlagsChange = (selected: string[]) => {
@@ -267,14 +281,22 @@
 						onValueChange={handleFlagsChange}
 					>
 						{#each FLAG_INFO as info (info.id)}
-							<ToggleGroup.Item
-								value={info.id}
-								aria-label={info.label}
-								title={`${info.label} — ${info.description}`}
-								class="h-9 w-9 font-mono data-[state=on]:border-primary data-[state=on]:bg-primary data-[state=on]:text-primary-foreground"
-							>
-								{info.char}
-							</ToggleGroup.Item>
+							{@const flagTooltip = FLAG_TOOLTIPS[info.char] ?? info.label}
+							<Tooltip.Root>
+								<Tooltip.Trigger>
+									{#snippet child({ props })}
+										<ToggleGroup.Item
+											{...props}
+											value={info.id}
+											aria-label={info.label}
+											class="h-9 w-9 font-mono data-[state=on]:border-primary data-[state=on]:bg-primary data-[state=on]:text-primary-foreground"
+										>
+											{info.char}
+										</ToggleGroup.Item>
+									{/snippet}
+								</Tooltip.Trigger>
+								<Tooltip.Content>{flagTooltip}</Tooltip.Content>
+							</Tooltip.Root>
 						{/each}
 					</ToggleGroup.Root>
 				</div>
