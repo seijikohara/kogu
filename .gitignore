@@ -24,3 +24,4 @@ docs/superpowers/
 
 # Swift build artifacts
 src-tauri/swift/**/.build/
+.svelte-kit/
