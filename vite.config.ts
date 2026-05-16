@@ -4,9 +4,9 @@ import { TanStackRouterVite } from '@tanstack/router-vite-plugin';
 import tailwindcss from '@tailwindcss/vite';
 import path from 'node:path';
 
-const TAURI_DEV_HOST = process.env.TAURI_DEV_HOST;
+const TAURI_DEV_HOST = process.env['TAURI_DEV_HOST'];
 
-export default defineConfig(async () => ({
+export default defineConfig({
 	plugins: [
 		TanStackRouterVite({
 			routesDirectory: './src/routes',
@@ -40,8 +40,8 @@ export default defineConfig(async () => ({
 	},
 	envPrefix: ['VITE_', 'TAURI_ENV_*'],
 	build: {
-		target: process.env.TAURI_ENV_PLATFORM === 'windows' ? 'chrome105' : 'safari13',
-		minify: !process.env.TAURI_ENV_DEBUG ? 'esbuild' : false,
-		sourcemap: !!process.env.TAURI_ENV_DEBUG,
+		target: process.env['TAURI_ENV_PLATFORM'] === 'windows' ? 'chrome105' : 'safari13',
+		minify: !process.env['TAURI_ENV_DEBUG'] ? 'esbuild' : false,
+		sourcemap: !!process.env['TAURI_ENV_DEBUG'],
 	},
-}));
+});

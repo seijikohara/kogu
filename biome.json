@@ -107,6 +107,12 @@
 			"linter": {
 				"enabled": false
 			}
+		},
+		{
+			"includes": ["src/route-tree.gen.ts"],
+			"linter": {
+				"enabled": false
+			}
 		}
 	]
 }
