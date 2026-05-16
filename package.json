@@ -40,7 +40,7 @@
 		"deps:check": "bunx taze",
 		"deps:check:backend": "cargo install cargo-edit -q && cd src-tauri && cargo upgrade --dry-run",
 		"deps:update": "bunx taze major -r -w && bun install",
-		"deps:update:backend": "cargo install cargo-edit -q && cd src-tauri && cargo upgrade --incompatible --exclude ipnetwork --exclude rand --exclude snmp2 && cargo update",
+		"deps:update:backend": "cargo install cargo-edit -q && cd src-tauri && cargo upgrade --incompatible && cargo update",
 		"deps:update:all": "bun run deps:update && bun run deps:update:backend"
 	},
 	"license": "MIT",

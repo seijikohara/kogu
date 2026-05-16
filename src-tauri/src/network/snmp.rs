@@ -3,22 +3,18 @@
 //! Queries network devices for their SNMPv2c sysName using the public community string.
 //! This is effective for routers, switches, NAS devices, and other SNMP-enabled equipment.
 
-use std::net::IpAddr;
+use std::net::{IpAddr, SocketAddr};
 use std::time::Duration;
 
+use csnmp::{ObjectIdentifier, ObjectValue, Snmp2cClient};
 use serde::Serialize;
-use snmp2::{Oid, SyncSession, Value};
 
-/// SNMP MIB-2 system group OIDs
-const SYS_NAME_OID: [u64; 9] = [1, 3, 6, 1, 2, 1, 1, 5, 0];
-const SYS_DESCR_OID: [u64; 9] = [1, 3, 6, 1, 2, 1, 1, 1, 0];
-const SYS_LOCATION_OID: [u64; 9] = [1, 3, 6, 1, 2, 1, 1, 6, 0];
-const SYS_CONTACT_OID: [u64; 9] = [1, 3, 6, 1, 2, 1, 1, 4, 0];
+const SYS_NAME_OID: [u32; 9] = [1, 3, 6, 1, 2, 1, 1, 5, 0];
+const SYS_DESCR_OID: [u32; 9] = [1, 3, 6, 1, 2, 1, 1, 1, 0];
+const SYS_LOCATION_OID: [u32; 9] = [1, 3, 6, 1, 2, 1, 1, 6, 0];
+const SYS_CONTACT_OID: [u32; 9] = [1, 3, 6, 1, 2, 1, 1, 4, 0];
 
-/// Default SNMP community string
 const DEFAULT_COMMUNITY: &[u8] = b"public";
-
-/// Default SNMP port
 const SNMP_PORT: u16 = 161;
 
 /// SNMP device information
@@ -52,29 +48,25 @@ impl SnmpDeviceInfo {
     }
 }
 
-/// Extract string value from SNMP Value
-fn extract_string(value: &Value<'_>) -> Option<String> {
+/// Extract a UTF-8 string from an SNMP `OctetString` value, trimming whitespace.
+/// Returns `None` for empty values or non-string variants.
+fn extract_string(value: &ObjectValue) -> Option<String> {
     match value {
-        Value::OctetString(bytes) => {
-            // Try to parse as UTF-8, fall back to lossy conversion
-            let s = String::from_utf8_lossy(bytes).to_string();
+        ObjectValue::String(bytes) => {
+            let s = String::from_utf8_lossy(bytes).trim().to_string();
             if s.is_empty() {
                 None
             } else {
-                Some(s.trim().to_string())
+                Some(s)
             }
         }
         _ => None,
     }
 }
 
-/// Query SNMP system information for a single IP address
-///
-/// Queries sysName, sysDescr, sysLocation, and sysContact.
-/// Returns SnmpDeviceInfo if the device responds to any query.
-#[allow(clippy::large_stack_frames)]
-pub fn query_snmp_device_info(ip: IpAddr, timeout: Duration) -> Option<SnmpDeviceInfo> {
-    query_snmp_device_info_with_community(ip, DEFAULT_COMMUNITY, timeout)
+/// Query SNMP system information for a single IP address using the default community.
+pub async fn query_snmp_device_info(ip: IpAddr, timeout: Duration) -> Option<SnmpDeviceInfo> {
+    query_snmp_device_info_with_community(ip, DEFAULT_COMMUNITY, timeout).await
 }
 
 /// Query SNMP system information using a caller-supplied community string.
@@ -83,46 +75,35 @@ pub fn query_snmp_device_info(ip: IpAddr, timeout: Duration) -> Option<SnmpDevic
 /// when the host fails to open a session or returns no usable varbinds. Used
 /// by discovery to try alternative communities (e.g. `private`) when `public`
 /// is rejected.
-#[allow(clippy::large_stack_frames)]
-pub fn query_snmp_device_info_with_community(
+pub async fn query_snmp_device_info_with_community(
     ip: IpAddr,
     community: &[u8],
     timeout: Duration,
 ) -> Option<SnmpDeviceInfo> {
-    let addr = format!("{ip}:{SNMP_PORT}");
+    let target = SocketAddr::new(ip, SNMP_PORT);
 
-    let sys_name_oid = Oid::from(&SYS_NAME_OID).ok()?;
-    let sys_descr_oid = Oid::from(&SYS_DESCR_OID).ok()?;
-    let sys_location_oid = Oid::from(&SYS_LOCATION_OID).ok()?;
-    let sys_contact_oid = Oid::from(&SYS_CONTACT_OID).ok()?;
+    let sys_name_oid = ObjectIdentifier::try_from(SYS_NAME_OID.as_slice()).ok()?;
+    let sys_descr_oid = ObjectIdentifier::try_from(SYS_DESCR_OID.as_slice()).ok()?;
+    let sys_location_oid = ObjectIdentifier::try_from(SYS_LOCATION_OID.as_slice()).ok()?;
+    let sys_contact_oid = ObjectIdentifier::try_from(SYS_CONTACT_OID.as_slice()).ok()?;
 
-    let mut session = SyncSession::new_v2c(&addr, community, Some(timeout), 0).ok()?;
+    let client = Snmp2cClient::new(target, community.to_vec(), None, Some(timeout), 0)
+        .await
+        .ok()?;
 
     let mut info = SnmpDeviceInfo::default();
 
-    // Query each OID individually (some devices may not support all OIDs)
-    if let Ok(response) = session.get(&sys_name_oid) {
-        for (_oid, value) in response.varbinds {
-            info.sys_name = extract_string(&value);
-        }
+    if let Ok(value) = client.get(sys_name_oid).await {
+        info.sys_name = extract_string(&value);
     }
-
-    if let Ok(response) = session.get(&sys_descr_oid) {
-        for (_oid, value) in response.varbinds {
-            info.sys_descr = extract_string(&value);
-        }
+    if let Ok(value) = client.get(sys_descr_oid).await {
+        info.sys_descr = extract_string(&value);
     }
-
-    if let Ok(response) = session.get(&sys_location_oid) {
-        for (_oid, value) in response.varbinds {
-            info.sys_location = extract_string(&value);
-        }
+    if let Ok(value) = client.get(sys_location_oid).await {
+        info.sys_location = extract_string(&value);
     }
-
-    if let Ok(response) = session.get(&sys_contact_oid) {
-        for (_oid, value) in response.varbinds {
-            info.sys_contact = extract_string(&value);
-        }
+    if let Ok(value) = client.get(sys_contact_oid).await {
+        info.sys_contact = extract_string(&value);
     }
 
     if info.is_populated() {
@@ -163,32 +144,31 @@ mod tests {
         assert!(json.contains("sysName"));
         assert!(json.contains("router1"));
         assert!(json.contains("sysDescr"));
-        // sys_location and sys_contact should be skipped
         assert!(!json.contains("sysLocation"));
         assert!(!json.contains("sysContact"));
     }
 
     #[test]
     fn test_extract_string_octet_string() {
-        let value = Value::OctetString(b"test");
+        let value = ObjectValue::String(b"test".to_vec());
         assert_eq!(extract_string(&value), Some("test".to_string()));
     }
 
     #[test]
     fn test_extract_string_empty() {
-        let value = Value::OctetString(b"");
+        let value = ObjectValue::String(Vec::new());
         assert_eq!(extract_string(&value), None);
     }
 
     #[test]
     fn test_extract_string_with_whitespace() {
-        let value = Value::OctetString(b"  router1  ");
+        let value = ObjectValue::String(b"  router1  ".to_vec());
         assert_eq!(extract_string(&value), Some("router1".to_string()));
     }
 
     #[test]
     fn test_extract_string_non_string_value() {
-        let value = Value::Integer(42);
+        let value = ObjectValue::Integer(42);
         assert_eq!(extract_string(&value), None);
     }
 }

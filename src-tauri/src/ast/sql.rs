@@ -167,16 +167,16 @@ fn insert_to_ast(insert: &sqlparser::ast::Insert, path: &str) -> AstNode {
     .with_children(children)
 }
 
-fn columns_to_ast(columns: &[sqlparser::ast::Ident], path: &str) -> AstNode {
+fn columns_to_ast(columns: &[sqlparser::ast::ObjectName], path: &str) -> AstNode {
     let children: Vec<_> = columns
         .iter()
         .enumerate()
         .map(|(i, col)| {
-            let col_range = span_to_range(col.span);
+            let col_range = span_to_range(col.span());
             AstNode::new(
                 AstNodeType::Identifier,
                 format!("{path}.columns[{i}]"),
-                col.value.clone(),
+                col.to_string(),
                 col_range,
             )
         })
@@ -185,8 +185,8 @@ fn columns_to_ast(columns: &[sqlparser::ast::Ident], path: &str) -> AstNode {
     // Use span of first and last column for the columns clause
     let range = if let (Some(first), Some(last)) = (columns.first(), columns.last()) {
         AstRange::new(
-            span_to_range(first.span).start,
-            span_to_range(last.span).end,
+            span_to_range(first.span()).start,
+            span_to_range(last.span()).end,
         )
     } else {
         AstRange::new(AstPosition::new(1, 1, 0), AstPosition::new(1, 1, 0))
@@ -404,6 +404,7 @@ const fn object_type_label(object_type: sqlparser::ast::ObjectType) -> &'static 
         ObjectType::Role => "ROLE",
         ObjectType::User => "USER",
         ObjectType::Stream => "STREAM",
+        ObjectType::Collation => "COLLATION",
     }
 }
 
@@ -649,6 +650,14 @@ fn projection_to_ast(projection: &[SelectItem], path: &str) -> AstNode {
             let label = match item {
                 SelectItem::UnnamedExpr(expr) => expr.to_string(),
                 SelectItem::ExprWithAlias { expr, alias } => format!("{expr} AS {alias}"),
+                SelectItem::ExprWithAliases { expr, aliases } => {
+                    let alias_str = aliases
+                        .iter()
+                        .map(ToString::to_string)
+                        .collect::<Vec<_>>()
+                        .join(", ");
+                    format!("{expr} AS ({alias_str})")
+                }
                 SelectItem::QualifiedWildcard(name, _) => format!("{name}.*"),
                 SelectItem::Wildcard(_) => "*".to_string(),
             };
@@ -806,6 +815,9 @@ const fn join_operator_label(op: &sqlparser::ast::JoinOperator) -> &'static str 
         JoinOperator::OuterApply => "OUTER APPLY",
         JoinOperator::AsOf { .. } => "AS OF JOIN",
         JoinOperator::StraightJoin(_) => "STRAIGHT_JOIN",
+        JoinOperator::ArrayJoin => "ARRAY JOIN",
+        JoinOperator::LeftArrayJoin => "LEFT ARRAY JOIN",
+        JoinOperator::InnerArrayJoin => "INNER ARRAY JOIN",
     }
 }
 

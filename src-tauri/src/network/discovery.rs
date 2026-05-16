@@ -499,16 +499,8 @@ async fn resolve_hostnames_for_results(
 
         snmp_handles.push(tokio::spawn(async move {
             let _permit = sem.acquire().await.ok()?;
-
-            // SNMP is blocking, run in a blocking task
-            let result = tokio::task::spawn_blocking(move || {
-                super::snmp::query_snmp_device_info(ip, timeout)
-            })
-            .await
-            .ok()
-            .flatten();
-
-            result.map(|info| (ip.to_string(), info))
+            let info = super::snmp::query_snmp_device_info(ip, timeout).await?;
+            Some((ip.to_string(), info))
         }));
     }
 
@@ -1494,7 +1486,11 @@ fn parse_upnp_device_xml(xml: &str, location: &str) -> Option<super::types::Ssdp
             }
             Ok(Event::Text(ref e)) => {
                 if device_depth == 1 {
-                    let text = e.xml_content().unwrap_or_default().trim().to_string();
+                    let text = e
+                        .xml_content(quick_xml::XmlVersion::Implicit1_0)
+                        .unwrap_or_default()
+                        .trim()
+                        .to_string();
                     if !text.is_empty() {
                         assign_field(&current_tag, text);
                     }
@@ -1797,19 +1793,20 @@ async fn snmp_discovery(targets: &[IpAddr], _options: &DiscoveryOptions) -> Disc
             let sem = Arc::clone(&semaphore);
             tokio::spawn(async move {
                 let _permit = sem.acquire().await.ok()?;
-                let info = tokio::task::spawn_blocking(move || {
-                    SNMP_DISCOVERY_COMMUNITIES.iter().find_map(|community| {
-                        super::snmp::query_snmp_device_info_with_community(
-                            target,
-                            community.as_bytes(),
-                            SNMP_DISCOVERY_TIMEOUT,
-                        )
-                    })
-                })
-                .await
-                .ok()
-                .flatten()?;
-                Some((target, info))
+                let mut found = None;
+                for community in SNMP_DISCOVERY_COMMUNITIES {
+                    if let Some(info) = super::snmp::query_snmp_device_info_with_community(
+                        target,
+                        community.as_bytes(),
+                        SNMP_DISCOVERY_TIMEOUT,
+                    )
+                    .await
+                    {
+                        found = Some(info);
+                        break;
+                    }
+                }
+                found.map(|info| (target, info))
             })
         })
         .collect();
