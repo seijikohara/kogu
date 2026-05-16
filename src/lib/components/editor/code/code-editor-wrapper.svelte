@@ -150,7 +150,7 @@
 		if (yamlConfigured) return;
 		configureMonacoYaml(monaco, {
 			validate: true,
-			format: true,
+			format: { enable: true },
 		});
 		yamlConfigured = true;
 	};
