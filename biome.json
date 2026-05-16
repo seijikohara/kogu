@@ -6,7 +6,7 @@
 		"useIgnoreFile": true
 	},
 	"files": {
-		"includes": ["src/**/*.ts", "src/**/*.svelte", "scripts/**/*.ts", "vite.config.js"]
+		"includes": ["src/**/*.ts", "src/**/*.tsx", "scripts/**/*.ts", "vite.config.ts"]
 	},
 	"formatter": {
 		"enabled": false
@@ -71,12 +71,9 @@
 			}
 		}
 	},
-	"javascript": {
-		"globals": ["$$Generic"]
-	},
 	"overrides": [
 		{
-			"includes": ["**/*.test.ts", "**/*.spec.ts"],
+			"includes": ["**/*.test.ts", "**/*.spec.ts", "**/*.test.tsx", "**/*.spec.tsx"],
 			"linter": {
 				"rules": {
 					"suspicious": {
@@ -96,23 +93,7 @@
 			}
 		},
 		{
-			"includes": ["**/*.svelte"],
-			"linter": {
-				"rules": {
-					"correctness": {
-						"noUnusedVariables": "off",
-						"noUnusedImports": "off",
-						"noUnusedFunctionParameters": "off"
-					},
-					"style": {
-						"useConst": "off",
-						"useImportType": "off"
-					}
-				}
-			}
-		},
-		{
-			"includes": ["vite.config.js"],
+			"includes": ["vite.config.ts"],
 			"linter": {
 				"rules": {
 					"complexity": {
@@ -122,7 +103,7 @@
 			}
 		},
 		{
-			"includes": ["src/lib/components/ui/**/*.svelte", "src/lib/components/ui/**/*.ts"],
+			"includes": ["src/lib/components/ui/**/*.tsx", "src/lib/components/ui/**/*.ts"],
 			"linter": {
 				"enabled": false
 			}
