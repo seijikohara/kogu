@@ -7,8 +7,6 @@ use super::worker::{self, SshKeyRequest, SshKeyResponse, WorkerProcessState};
 use super::{GenerationMethod, GeneratorError};
 
 #[cfg(test)]
-use rand::rngs::OsRng;
-#[cfg(test)]
 use ssh_key::{
     private::{EcdsaKeypair, Ed25519Keypair, RsaKeypair},
     HashAlg, LineEnding, PrivateKey,
@@ -224,7 +222,7 @@ fn generate_with_library(options: SshKeyOptions) -> Result<SshKeyResult, Generat
         method: _,
     } = options;
 
-    let mut rng = OsRng;
+    let mut rng = rand_core::OsRng;
     let comment_str = comment.as_deref().unwrap_or("");
 
     let private_key: PrivateKey = match algorithm {

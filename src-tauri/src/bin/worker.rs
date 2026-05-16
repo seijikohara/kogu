@@ -445,7 +445,7 @@ fn handle_gpg_keygen(req: GpgRequest) -> String {
         _ => format!("{} <{}>", req.name, req.email),
     };
 
-    let rng = rand::rngs::OsRng;
+    let rng = rand_core::OsRng;
 
     let key_type = match req.algorithm {
         GpgKeyAlgorithm::Rsa2048 => KeyType::Rsa(2048),
