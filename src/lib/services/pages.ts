@@ -20,10 +20,10 @@ import {
 	GitCompare,
 	Hash,
 	House,
-	type Icon,
 	Key,
 	KeyRound,
 	Link,
+	type LucideIcon,
 	Lock,
 	Network,
 	Pencil,
@@ -37,7 +37,7 @@ import {
 	ShieldCheck,
 	Sparkles,
 	Terminal,
-} from '@lucide/svelte';
+} from 'lucide-react';
 
 /**
  * Page categories for sidebar grouping.
@@ -47,14 +47,14 @@ export type PageCategory = 'formatters' | 'encoders' | 'generators' | 'text' | '
 export interface PageTab {
 	readonly id: string;
 	readonly label: string;
-	readonly icon: typeof Icon;
+	readonly icon: LucideIcon;
 }
 
 export interface PageDefinition {
 	readonly id: string;
 	readonly title: string;
 	readonly url: string;
-	readonly icon: typeof Icon;
+	readonly icon: LucideIcon;
 	readonly description: string;
 	readonly color?: string;
 	readonly category?: PageCategory;
@@ -346,7 +346,7 @@ export const getPagesByCategory = (category: PageCategory): readonly PageDefinit
 export interface CategoryInfo {
 	readonly id: PageCategory;
 	readonly label: string;
-	readonly icon: typeof Icon;
+	readonly icon: LucideIcon;
 	readonly defaultOpen: boolean;
 	readonly borderClass: string;
 	readonly iconClass: string;
@@ -408,7 +408,7 @@ export interface SearchResult {
 	readonly url: string;
 	readonly title: string;
 	readonly description: string;
-	readonly icon: typeof Icon;
+	readonly icon: LucideIcon;
 }
 
 /**

@@ -101,7 +101,6 @@
 	"devDependencies": {
 		"@biomejs/biome": "^2.4.15",
 		"@internationalized/date": "^3.12.1",
-		"@lucide/svelte": "^1.16.0",
 		"@tanstack/react-router": "^1.170.1",
 		"@tanstack/router-vite-plugin": "^1.167.2",
 		"@tauri-apps/cli": "^2.11.1",
