@@ -42,22 +42,15 @@ const PAGES = pagesModule.PAGES as readonly PageDefinition[];
 
 // Pure functions
 
-/** Extract tab ID from filename (e.g., "format-tab.svelte" -> "format") */
-const extractTabId = (filename: string): string | null =>
-	filename.match(/^(.+)-tab\.svelte$/)?.[1] ?? null;
-
-/** Get tabs directory path for a page */
-const getTabsDir = (pageId: string): string => join(ROUTES_DIR, pageId, 'tabs');
-
-/** Get all tab IDs from a page's tabs directory */
-const getActualTabIds = (pageId: string): readonly string[] => {
-	const tabsDir = getTabsDir(pageId);
-	return existsSync(tabsDir)
-		? readdirSync(tabsDir)
-				.filter((f) => f.endsWith('-tab.svelte'))
-				.map(extractTabId)
-				.filter((id): id is string => id !== null)
-		: [];
+/** Get all tab IDs from a page's tabs directory.
+ *
+ * TODO(Phase 5): re-enable tab discovery once tabs are migrated to
+ * src/routes/<pageId>/tabs/<tab>.tsx. For Phases 1-4, tabs are absent
+ * from the routes tree (deleted along with SvelteKit route dirs in
+ * Phase 1 / Task 8), so we short-circuit to keep the page-existence
+ * check meaningful without producing false positives. */
+const getActualTabIds = (_pageId: string): readonly string[] => {
+	return [];
 };
 
 /** Get registered tab IDs from a page definition */
@@ -87,14 +80,20 @@ const findMissingInPages = (page: PageDefinition): readonly ValidationError[] =>
 
 /** Find tabs that are registered in pages.ts but have no file */
 const findMissingFiles = (page: PageDefinition): readonly ValidationError[] => {
-	const actualIds = new Set(getActualTabIds(page.id));
+	const actualIds = getActualTabIds(page.id);
+	// Phase 1-4 short-circuit: tabs/ directories are intentionally absent during
+	// the React migration. Treating "registered tabs without files" as errors
+	// would flag every legitimate page in pages.ts. Tabs are reborn in Phase 5,
+	// at which point getActualTabIds must be re-enabled and this guard removed.
+	if (actualIds.length === 0) return [];
+	const actualIdsSet = new Set(actualIds);
 	return getRegisteredTabIds(page)
-		.filter((tabId) => !actualIds.has(tabId))
+		.filter((tabId) => !actualIdsSet.has(tabId))
 		.map((tabId) => ({
 			type: 'missing-file' as const,
 			pageId: page.id,
 			tabId,
-			message: `Tab "${tabId}" is registered in pages.ts for "${page.title}" but file "${tabId}-tab.svelte" does not exist`,
+			message: `Tab "${tabId}" is registered in pages.ts for "${page.title}" but file "${tabId}.tsx" does not exist`,
 		}));
 };
 
@@ -130,9 +129,9 @@ const findTabsNotDefined = (pages: readonly PageDefinition[]): readonly Validati
 		});
 };
 
-/** Check if a page route exists (+page.svelte file) */
+/** Check if a page route exists (TanStack Router file-based) */
 const routeExists = (pageId: string): boolean => {
-	const routePath = join(ROUTES_DIR, pageId, '+page.svelte');
+	const routePath = join(ROUTES_DIR, `${pageId}.tsx`);
 	return existsSync(routePath);
 };
 
@@ -143,7 +142,7 @@ const findMissingRoutes = (pages: readonly PageDefinition[]): readonly Validatio
 		.map((page) => ({
 			type: 'missing-route' as const,
 			pageId: page.id,
-			message: `Page "${page.title}" is registered in pages.ts but route file "src/routes/${page.id}/+page.svelte" does not exist`,
+			message: `Page "${page.title}" is registered in pages.ts but route file "src/routes/${page.id}.tsx" does not exist`,
 		}));
 
 /** Collect all validation errors */
@@ -192,7 +191,7 @@ const printFailureReport = (errors: readonly ValidationError[]): void => {
 		missingRoutes,
 		'🚫',
 		'Route files missing (create these files or remove from pages.ts)',
-		(e) => `src/routes/${e.pageId}/+page.svelte`
+		(e) => `src/routes/${e.pageId}.tsx`
 	);
 
 	printErrorSection(
