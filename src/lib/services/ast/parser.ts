@@ -3,7 +3,6 @@
  * or TypeScript parser (for Markdown)
  */
 
-import { browser } from '$app/environment';
 import { parseMarkdownToAst } from './markdown.js';
 import type {
 	AstLanguage,
@@ -19,8 +18,7 @@ import type {
  * Only works in browser environment with Tauri (for non-Markdown)
  */
 export const parseToAst = async (text: string, language: AstLanguage): Promise<AstParseResult> => {
-	// Skip parsing on server-side
-	if (!browser) {
+	if (typeof window === 'undefined') {
 		return { ast: null, errors: [] };
 	}
 

@@ -5,5 +5,5 @@ export {
 	type TabStats,
 	type UseFormatterPageConfig,
 	type UseFormatterPageReturn,
-} from './use-formatter-page.svelte.js';
+} from './use-formatter-page';
 export { IsMobile } from './is-mobile.svelte.js';

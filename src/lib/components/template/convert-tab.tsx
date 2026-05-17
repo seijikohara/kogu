@@ -27,14 +27,10 @@ interface ConvertTabProps {
 	readonly convert: (input: string) => { output: string; error: string };
 	/** Stats change callback - receives base stats plus any extra from validate */
 	readonly onStatsChange?: (stats: StatsResult) => void;
-	/** Download filename */
-	readonly downloadFilename?: string;
 	/** Copy to clipboard function */
 	readonly copyToClipboard: (text: string) => void;
 	/** Paste from clipboard function */
 	readonly pasteFromClipboard: () => Promise<string | null>;
-	/** Download text file function */
-	readonly downloadTextFile: (content: string, filename: string) => void;
 	/** Output title (e.g., "Output (YAML)") */
 	readonly outputTitle?: string;
 	/** Render prop for format selection options */
@@ -52,10 +48,8 @@ export function ConvertTab({
 	validate,
 	convert,
 	onStatsChange,
-	downloadFilename = 'converted.txt',
 	copyToClipboard,
 	pasteFromClipboard,
-	downloadTextFile,
 	outputTitle = 'Output',
 	renderFormatSection,
 	renderOptions,
@@ -102,10 +96,6 @@ export function ConvertTab({
 
 	const handleCopyOutput = () => copyToClipboard(output);
 
-	const handleDownload = () => {
-		downloadTextFile(output, downloadFilename);
-	};
-
 	return (
 		<div className="flex flex-1 overflow-hidden">
 			<OptionsPanel
@@ -139,7 +129,6 @@ export function ConvertTab({
 						editorMode={outputEditorMode}
 						placeholder="Converted output..."
 						onCopy={handleCopyOutput}
-						onDownload={handleDownload}
 					/>
 				}
 			/>

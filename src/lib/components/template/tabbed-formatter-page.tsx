@@ -6,7 +6,7 @@ import {
 	useFormatterPage,
 	type FormatterTabType,
 	type TabStats,
-} from '@/lib/hooks/use-formatter-page.svelte';
+} from '@/lib/hooks/use-formatter-page';
 
 /**
  * Tab content props passed to renderTabContent.
