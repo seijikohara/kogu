@@ -1,3 +1,8 @@
-export { default as CompareTab } from './compare-tab.svelte';
-export { default as ConvertTab } from './convert-tab.svelte';
-export { default as TabbedFormatterPage } from './tabbed-formatter-page.svelte';
+export { CompareTab } from './compare-tab';
+export type { CompareTabProps } from './compare-tab';
+
+export { ConvertTab } from './convert-tab';
+export type { ConvertTabProps } from './convert-tab';
+
+export { TabbedFormatterPage } from './tabbed-formatter-page';
+export type { TabbedFormatterPageProps, TabContentProps } from './tabbed-formatter-page';
