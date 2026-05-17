@@ -1,2 +1,2 @@
-// Code editor (CodeMirror based)
-export * from './code/index.js';
+// Code editor (Monaco based)
+export * from './code';
