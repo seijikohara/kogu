@@ -1,2 +1,2 @@
-export { default as PatternEditor } from './pattern-editor.svelte';
-export { default as RailroadView } from './railroad-view.svelte';
+export { PatternEditor, type PatternEditorProps } from './pattern-editor';
+export { RailroadView, type RailroadViewProps } from './railroad-view';
