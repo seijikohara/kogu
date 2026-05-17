@@ -1,8 +1,23 @@
-export { default as DetectedInfo } from './detected-info.svelte';
-export { default as EmbeddedEmptyState } from './embedded-empty-state.svelte';
-export { default as EmptyState } from './empty-state.svelte';
-export { default as ErrorDisplay } from './error-display.svelte';
-export { default as LoadingOverlay } from './loading-overlay.svelte';
-export { default as StatItem } from './stat-item.svelte';
-export { default as StatusBadge } from './status-badge.svelte';
-export { default as ValidityBadge } from './validity-badge.svelte';
+export { DetectedInfo } from './detected-info';
+export type { DetectedInfoProps, DetectedItem } from './detected-info';
+
+export { EmbeddedEmptyState } from './embedded-empty-state';
+export type { EmbeddedEmptyStateProps } from './embedded-empty-state';
+
+export { EmptyState } from './empty-state';
+export type { EmptyStateProps } from './empty-state';
+
+export { ErrorDisplay } from './error-display';
+export type { ErrorDisplayProps } from './error-display';
+
+export { LoadingOverlay } from './loading-overlay';
+export type { LoadingOverlayProps } from './loading-overlay';
+
+export { StatItem } from './stat-item';
+export type { StatItemProps } from './stat-item';
+
+export { StatusBadge } from './status-badge';
+export type { StatusBadgeProps, StatusBadgeStatus } from './status-badge';
+
+export { ValidityBadge } from './validity-badge';
+export type { ValidityBadgeProps } from './validity-badge';
