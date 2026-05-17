@@ -1,7 +1,15 @@
-export { default as AppSidebar } from './app-sidebar.svelte';
-export { default as KeyboardShortcutsDialog } from './keyboard-shortcuts-dialog.svelte';
-export { default as NavButtons } from './nav-buttons.svelte';
-export { default as SectionHeader } from './section-header.svelte';
-export { default as SectionLabel } from './section-label.svelte';
-export { default as SplitPane } from './split-pane.svelte';
-export { default as TitleBar } from './title-bar.svelte';
+export { AppSidebar, type AppSidebarProps } from './app-sidebar';
+export {
+	KeyboardShortcutsDialog,
+	type KeyboardShortcutsDialogProps,
+} from './keyboard-shortcuts-dialog';
+export { NavButtons, type NavButtonsProps } from './nav-buttons';
+export { SectionHeader, type SectionHeaderProps } from './section-header';
+export { SectionLabel, type SectionLabelProps } from './section-label';
+export { SplitPane, type SplitPaneProps } from './split-pane';
+export { TitleBar, type TitleBarProps } from './title-bar';
+export {
+	TitleBarCommand,
+	type TitleBarCommandHandle,
+	type TitleBarCommandProps,
+} from './title-bar-command';
