@@ -6,4 +6,4 @@ export {
 	type UseFormatterPageConfig,
 	type UseFormatterPageReturn,
 } from './use-formatter-page';
-export { IsMobile } from './is-mobile.svelte.js';
+export { useIsMobile } from './use-mobile';
