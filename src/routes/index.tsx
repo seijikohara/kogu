@@ -31,6 +31,10 @@ const TOOLS = [
 ] as const;
 
 function HomePage() {
+	// import.meta.env.DEV is replaced at build time by Vite, so the link tree-shakes out of
+	// production bundles. The route file itself stays in the tree until Phase 6 cleanup.
+	const isDev = import.meta.env.DEV;
+
 	return (
 		<div className="mx-auto max-w-3xl space-y-4">
 			<h2 className="text-xl font-medium">Tools</h2>
@@ -43,6 +47,13 @@ function HomePage() {
 					</li>
 				))}
 			</ul>
+			{isDev ? (
+				<div className="pt-2 text-xs text-muted-foreground">
+					<Link to="/primitives" className="underline-offset-4 hover:underline">
+						→ Primitive gallery (dev)
+					</Link>
+				</div>
+			) : null}
 		</div>
 	);
 }

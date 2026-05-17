@@ -19,6 +19,7 @@ import { Route as SqlFormatterRouteImport } from './routes/sql-formatter';
 import { Route as SettingsRouteImport } from './routes/settings';
 import { Route as RegexTesterRouteImport } from './routes/regex-tester';
 import { Route as QrCodeGeneratorRouteImport } from './routes/qr-code-generator';
+import { Route as PrimitivesRouteImport } from './routes/primitives';
 import { Route as PasswordGeneratorRouteImport } from './routes/password-generator';
 import { Route as NetworkScannerRouteImport } from './routes/network-scanner';
 import { Route as NetworkInterfacesRouteImport } from './routes/network-interfaces';
@@ -82,6 +83,11 @@ const RegexTesterRoute = RegexTesterRouteImport.update({
 const QrCodeGeneratorRoute = QrCodeGeneratorRouteImport.update({
 	id: '/qr-code-generator',
 	path: '/qr-code-generator',
+	getParentRoute: () => rootRouteImport,
+} as any);
+const PrimitivesRoute = PrimitivesRouteImport.update({
+	id: '/primitives',
+	path: '/primitives',
 	getParentRoute: () => rootRouteImport,
 } as any);
 const PasswordGeneratorRoute = PasswordGeneratorRouteImport.update({
@@ -170,6 +176,7 @@ export interface FileRoutesByFullPath {
 	'/network-interfaces': typeof NetworkInterfacesRoute;
 	'/network-scanner': typeof NetworkScannerRoute;
 	'/password-generator': typeof PasswordGeneratorRoute;
+	'/primitives': typeof PrimitivesRoute;
 	'/qr-code-generator': typeof QrCodeGeneratorRoute;
 	'/regex-tester': typeof RegexTesterRoute;
 	'/settings': typeof SettingsRoute;
@@ -196,6 +203,7 @@ export interface FileRoutesByTo {
 	'/network-interfaces': typeof NetworkInterfacesRoute;
 	'/network-scanner': typeof NetworkScannerRoute;
 	'/password-generator': typeof PasswordGeneratorRoute;
+	'/primitives': typeof PrimitivesRoute;
 	'/qr-code-generator': typeof QrCodeGeneratorRoute;
 	'/regex-tester': typeof RegexTesterRoute;
 	'/settings': typeof SettingsRoute;
@@ -223,6 +231,7 @@ export interface FileRoutesById {
 	'/network-interfaces': typeof NetworkInterfacesRoute;
 	'/network-scanner': typeof NetworkScannerRoute;
 	'/password-generator': typeof PasswordGeneratorRoute;
+	'/primitives': typeof PrimitivesRoute;
 	'/qr-code-generator': typeof QrCodeGeneratorRoute;
 	'/regex-tester': typeof RegexTesterRoute;
 	'/settings': typeof SettingsRoute;
@@ -251,6 +260,7 @@ export interface FileRouteTypes {
 		| '/network-interfaces'
 		| '/network-scanner'
 		| '/password-generator'
+		| '/primitives'
 		| '/qr-code-generator'
 		| '/regex-tester'
 		| '/settings'
@@ -277,6 +287,7 @@ export interface FileRouteTypes {
 		| '/network-interfaces'
 		| '/network-scanner'
 		| '/password-generator'
+		| '/primitives'
 		| '/qr-code-generator'
 		| '/regex-tester'
 		| '/settings'
@@ -303,6 +314,7 @@ export interface FileRouteTypes {
 		| '/network-interfaces'
 		| '/network-scanner'
 		| '/password-generator'
+		| '/primitives'
 		| '/qr-code-generator'
 		| '/regex-tester'
 		| '/settings'
@@ -330,6 +342,7 @@ export interface RootRouteChildren {
 	NetworkInterfacesRoute: typeof NetworkInterfacesRoute;
 	NetworkScannerRoute: typeof NetworkScannerRoute;
 	PasswordGeneratorRoute: typeof PasswordGeneratorRoute;
+	PrimitivesRoute: typeof PrimitivesRoute;
 	QrCodeGeneratorRoute: typeof QrCodeGeneratorRoute;
 	RegexTesterRoute: typeof RegexTesterRoute;
 	SettingsRoute: typeof SettingsRoute;
@@ -412,6 +425,13 @@ declare module '@tanstack/react-router' {
 			path: '/qr-code-generator';
 			fullPath: '/qr-code-generator';
 			preLoaderRoute: typeof QrCodeGeneratorRouteImport;
+			parentRoute: typeof rootRouteImport;
+		};
+		'/primitives': {
+			id: '/primitives';
+			path: '/primitives';
+			fullPath: '/primitives';
+			preLoaderRoute: typeof PrimitivesRouteImport;
 			parentRoute: typeof rootRouteImport;
 		};
 		'/password-generator': {
@@ -530,6 +550,7 @@ const rootRouteChildren: RootRouteChildren = {
 	NetworkInterfacesRoute: NetworkInterfacesRoute,
 	NetworkScannerRoute: NetworkScannerRoute,
 	PasswordGeneratorRoute: PasswordGeneratorRoute,
+	PrimitivesRoute: PrimitivesRoute,
 	QrCodeGeneratorRoute: QrCodeGeneratorRoute,
 	RegexTesterRoute: RegexTesterRoute,
 	SettingsRoute: SettingsRoute,
