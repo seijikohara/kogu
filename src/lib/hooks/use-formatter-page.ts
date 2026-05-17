@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate } from '@tanstack/react-router';
 
+import { useActiveTab, useTabStore } from '@/lib/stores';
+
 export interface TabStats {
 	readonly input: string;
 	readonly valid: boolean | null;
@@ -37,31 +39,27 @@ export interface UseFormatterPageReturn<TStats> {
 }
 
 const DEFAULT_TAB: FormatterTabType = 'format';
-const PERSIST_PREFIX = 'kogu:tab:';
+const LEGACY_PERSIST_PREFIX = 'kogu:tab:';
 
 const isValidTab = (candidate: string | null | undefined): candidate is FormatterTabType =>
 	candidate !== null &&
 	candidate !== undefined &&
 	(FORMATTER_TABS as readonly string[]).includes(candidate);
 
-const readPersistedTab = (persistKey: string | undefined): FormatterTabType | null => {
+/**
+ * Read the legacy `kogu:tab:<persistKey>` localStorage entry so users who
+ * previously chose a non-default tab keep that choice on first load after
+ * the Zustand migration. Returns null when no usable legacy value exists.
+ */
+const readLegacyPersistedTab = (persistKey: string | undefined): FormatterTabType | null => {
 	if (!persistKey || typeof window === 'undefined') return null;
 	try {
-		const raw = window.localStorage.getItem(`${PERSIST_PREFIX}${persistKey}`);
+		const raw = window.localStorage.getItem(`${LEGACY_PERSIST_PREFIX}${persistKey}`);
 		if (raw === null) return null;
 		const parsed = JSON.parse(raw) as unknown;
 		return typeof parsed === 'string' && isValidTab(parsed) ? parsed : null;
 	} catch {
 		return null;
-	}
-};
-
-const writePersistedTab = (persistKey: string | undefined, tab: FormatterTabType): void => {
-	if (!persistKey || typeof window === 'undefined') return;
-	try {
-		window.localStorage.setItem(`${PERSIST_PREFIX}${persistKey}`, JSON.stringify(tab));
-	} catch {
-		// Quota exceeded or storage disabled; ignore so navigation still works.
 	}
 };
 
@@ -83,17 +81,21 @@ export const useFormatterPage = <TStats>(
 	const searchStr = useLocation({ select: (loc) => loc.searchStr });
 	const navigate = useNavigate();
 
+	const storedTab = useActiveTab(persistKey ?? '');
+	const setStoredTab = useTabStore((s) => s.setActive);
+
 	const activeTab = useMemo<FormatterTabType>(() => {
 		const params = new URLSearchParams(searchStr);
 		const candidate = params.get('tab');
 		if (isValidTab(candidate)) return candidate;
-		const stored = readPersistedTab(persistKey);
-		return stored ?? DEFAULT_TAB;
-	}, [searchStr, persistKey]);
+		if (isValidTab(storedTab)) return storedTab;
+		const legacy = readLegacyPersistedTab(persistKey);
+		return legacy ?? DEFAULT_TAB;
+	}, [searchStr, storedTab, persistKey]);
 
 	const setActiveTab = useCallback(
 		(tab: FormatterTabType): void => {
-			writePersistedTab(persistKey, tab);
+			if (persistKey) setStoredTab(persistKey, tab);
 			navigate({
 				to: pathname,
 				search: (prev: Record<string, unknown>) => {
@@ -109,7 +111,7 @@ export const useFormatterPage = <TStats>(
 				resetScroll: false,
 			});
 		},
-		[pathname, navigate, persistKey]
+		[pathname, navigate, persistKey, setStoredTab]
 	);
 
 	const isActive = useCallback((tab: FormatterTabType): boolean => activeTab === tab, [activeTab]);
@@ -139,8 +141,8 @@ export const useFormatterPage = <TStats>(
 	}, [sharedInput, calculateStats]);
 
 	useEffect(() => {
-		writePersistedTab(persistKey, activeTab);
-	}, [persistKey, activeTab]);
+		if (persistKey) setStoredTab(persistKey, activeTab);
+	}, [persistKey, activeTab, setStoredTab]);
 
 	const tabSync = useMemo(
 		() => ({
