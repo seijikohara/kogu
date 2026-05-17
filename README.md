@@ -1,6 +1,6 @@
 # Kogu
 
-A collection of developer tools built with Tauri, SvelteKit, and TypeScript.
+A collection of developer tools built with Tauri, React 19, and TypeScript.
 
 ## Download
 
@@ -111,18 +111,19 @@ bun run tauri build
 
 ### Commands
 
-| Command               | Description             |
-| --------------------- | ----------------------- |
-| `bun run dev`         | Start Vite dev server   |
-| `bun run tauri dev`   | Start Tauri dev mode    |
-| `bun run build`       | Build frontend          |
-| `bun run tauri build` | Build desktop app       |
-| `bun run check`       | TypeScript/Svelte check |
-| `bun run format`      | Format with Prettier    |
+| Command               | Description                                       |
+| --------------------- | ------------------------------------------------- |
+| `bun run dev`         | Start Vite dev server                             |
+| `bun run tauri dev`   | Start Tauri dev mode                              |
+| `bun run build`       | Build frontend                                    |
+| `bun run tauri build` | Build desktop app                                 |
+| `bun run check`       | TypeScript check + page validation + design audit |
+| `bun run lint`        | Biome lint                                        |
+| `bun run format`      | Format with Prettier                              |
 
 ## Recommended IDE Setup
 
-[VS Code](https://code.visualstudio.com/) + [Svelte](https://marketplace.visualstudio.com/items?itemName=svelte.svelte-vscode) + [Tauri](https://marketplace.visualstudio.com/items?itemName=tauri-apps.tauri-vscode) + [rust-analyzer](https://marketplace.visualstudio.com/items?itemName=rust-lang.rust-analyzer)
+[VS Code](https://code.visualstudio.com/) + [Biome](https://marketplace.visualstudio.com/items?itemName=biomejs.biome) + [Tauri](https://marketplace.visualstudio.com/items?itemName=tauri-apps.tauri-vscode) + [rust-analyzer](https://marketplace.visualstudio.com/items?itemName=rust-lang.rust-analyzer)
 
 ## License
 
