@@ -1,10 +1,8 @@
-export { default as FormCheckbox } from './form-checkbox.svelte';
-export { default as FormCheckboxGroup } from './form-checkbox-group.svelte';
-export { default as FormError } from './form-error.svelte';
-export { default as FormInfo } from './form-info.svelte';
-export { default as FormInput } from './form-input.svelte';
-export { default as FormMode } from './form-mode.svelte';
-export { default as FormSection } from './form-section.svelte';
-export { default as FormSelect } from './form-select.svelte';
-export { default as FormSlider } from './form-slider.svelte';
-export { default as FormTextarea } from './form-textarea.svelte';
+export { FormError } from './form-error';
+export type { FormErrorProps } from './form-error';
+
+export { FormInfo } from './form-info';
+export type { FormInfoProps } from './form-info';
+
+export { FormSection } from './form-section';
+export type { FormSectionProps } from './form-section';
