@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { Link, useRouterState } from '@tanstack/react-router';
 import { useTheme } from 'next-themes';
 import { ChevronLeft, ChevronRight, Monitor, Moon, Settings, Sun } from 'lucide-react';
@@ -23,6 +22,7 @@ import {
 	useSidebar,
 } from '@/lib/components/ui/sidebar';
 import { CATEGORIES, getPagesByCategory } from '@/lib/services/pages';
+import { useSidebarStore } from '@/lib/stores';
 import { cn } from '@/lib/utils';
 
 type ThemeName = 'light' | 'dark' | 'system';
@@ -37,10 +37,8 @@ const isThemeName = (value: string | undefined): value is ThemeName =>
 	value === 'light' || value === 'dark' || value === 'system';
 
 export function AppSidebar(_: AppSidebarProps = {}) {
-	// TODO(Phase 4): wire to Zustand persisted store
-	const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(() =>
-		Object.fromEntries(CATEGORIES.map((c) => [c.id, c.defaultOpen]))
-	);
+	const openGroups = useSidebarStore((s) => s.openGroups);
+	const setGroupOpen = useSidebarStore((s) => s.setGroupOpen);
 
 	const pathname = useRouterState({ select: (state) => state.location.pathname });
 	const sidebar = useSidebar();
@@ -77,12 +75,12 @@ export function AppSidebar(_: AppSidebarProps = {}) {
 				{CATEGORIES.map((category) => {
 					const CategoryIcon = category.icon;
 					const categoryPages = getPagesByCategory(category.id);
-					const isOpen = openGroups[category.id] ?? false;
+					const isOpen = openGroups[category.id] ?? category.defaultOpen;
 					return (
 						<Collapsible
 							key={category.id}
 							open={isOpen}
-							onOpenChange={(open) => setOpenGroups((prev) => ({ ...prev, [category.id]: open }))}
+							onOpenChange={(open) => setGroupOpen(category.id, open)}
 							className="group/collapsible"
 						>
 							<SidebarGroup>
