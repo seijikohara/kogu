@@ -1,4 +1,4 @@
-import type { EditorMode } from '$lib/components/editor';
+import type { EditorMode } from '@/lib/components/editor';
 
 export type { EditorMode };
 
