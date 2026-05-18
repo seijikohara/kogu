@@ -248,7 +248,7 @@ function NetworkInterfacesPage() {
 				<div className="flex-1 overflow-hidden">
 					{filteredInterfaces.length > 0 ? (
 						<ResizablePanelGroup orientation="horizontal" className="h-full">
-							<ResizablePanel defaultSize={35} minSize={20} maxSize={50}>
+							<ResizablePanel defaultSize={42} minSize={20} maxSize={60}>
 								<div className="flex h-full flex-col border-r">
 									<SectionHeader title="Interfaces" count={filteredInterfaces.length} />
 									<div
@@ -350,7 +350,7 @@ function NetworkInterfacesPage() {
 
 							<ResizableHandle withHandle />
 
-							<ResizablePanel defaultSize={65} minSize={40}>
+							<ResizablePanel defaultSize={58} minSize={40}>
 								{selectedInterface ? (
 									(() => {
 										const iface = selectedInterface;

@@ -699,6 +699,7 @@ function NetworkScannerPage() {
 									key={iface.ip}
 									variant="card"
 									size="sm"
+									wrap
 									onClick={() => handleSelectInterface(iface)}
 								>
 									<span className="flex min-w-0 flex-col items-start gap-0.5">
@@ -1212,7 +1213,7 @@ function NetworkScannerPage() {
 					) : unifiedHosts.length > 0 ? (
 						<ResizablePanelGroup orientation="horizontal" className="h-full">
 							{/* Left Pane: Host List */}
-							<ResizablePanel defaultSize={35} minSize={20} maxSize={50}>
+							<ResizablePanel defaultSize={42} minSize={20} maxSize={60}>
 								<div className="flex h-full flex-col border-r">
 									<div
 										className="flex h-9 shrink-0 items-center justify-between border-b bg-surface-3 px-3"
@@ -1280,7 +1281,7 @@ function NetworkScannerPage() {
 							<ResizableHandle withHandle />
 
 							{/* Right Pane: Host Detail */}
-							<ResizablePanel defaultSize={65} minSize={40}>
+							<ResizablePanel defaultSize={58} minSize={40}>
 								{selectedHost ? (
 									<UnifiedHostDetailPanel
 										ips={selectedHost.ips}

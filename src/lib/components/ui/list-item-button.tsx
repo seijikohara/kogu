@@ -41,6 +41,9 @@ interface ListItemButtonProps
 	readonly depth?: number;
 	readonly leading?: React.ReactNode;
 	readonly trailing?: React.ReactNode;
+	// When true, the content span omits `truncate` so multi-line children
+	// (e.g. stacked flex-col contents) render without being clipped.
+	readonly wrap?: boolean;
 }
 
 export function ListItemButton({
@@ -51,6 +54,7 @@ export function ListItemButton({
 	depth = 0,
 	leading,
 	trailing,
+	wrap = false,
 	type = 'button',
 	role,
 	children,
@@ -75,7 +79,7 @@ export function ListItemButton({
 			{...rest}
 		>
 			{leading ? <span className="flex shrink-0 items-center">{leading}</span> : null}
-			<span className="min-w-0 flex-1 truncate">{children}</span>
+			<span className={cn('min-w-0 flex-1', wrap ? '' : 'truncate')}>{children}</span>
 			{trailing ? <span className="ml-auto flex shrink-0 items-center">{trailing}</span> : null}
 		</button>
 	);

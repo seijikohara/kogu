@@ -30,6 +30,12 @@ export function FormTextarea({
 			? 'text-xs uppercase tracking-wide text-muted-foreground'
 			: 'text-sm font-medium';
 
+	const textareaClass = cn(
+		'bg-background',
+		size === 'compact' ? 'min-h-16 text-xs' : 'text-sm',
+		className
+	);
+
 	const handleChange = (e: ChangeEvent<HTMLTextAreaElement>) => {
 		onValueChange?.(e.target.value);
 	};
@@ -42,7 +48,7 @@ export function FormTextarea({
 				rows={rows}
 				value={value}
 				onChange={handleChange}
-				className={cn(className)}
+				className={textareaClass}
 			/>
 			{hint ? <p className="text-xs text-muted-foreground">{hint}</p> : null}
 		</div>
