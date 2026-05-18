@@ -1,5 +1,5 @@
 import * as yaml from 'yaml';
-import type { GenericDiffItem } from '$lib/constants/diff.js';
+import type { GenericDiffItem } from '@/lib/constants/diff';
 import {
 	compareArrays as compareArraysBase,
 	compareObjects as compareObjectsBase,
