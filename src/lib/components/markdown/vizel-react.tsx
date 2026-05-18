@@ -13,9 +13,15 @@ import { EditorContent } from '@tiptap/react';
 import {
 	createVizelEditorInstance,
 	type Editor as VizelEditor,
+	initVizelIconRenderer,
 	type VizelError,
 	type VizelFeatureOptions,
 } from '@vizel/core';
+
+// Wire Vizel's default icon renderer at module load. Without this call,
+// Vizel internals warn "Icon renderer not set" and emit empty placeholders
+// for menu / drag-handle / list-item icons.
+initVizelIconRenderer();
 
 // A no-op slash menu renderer satisfies the required factory parameter.
 // We rely on the toolbar / context menu for command discovery instead of

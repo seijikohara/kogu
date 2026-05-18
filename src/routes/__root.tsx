@@ -114,10 +114,12 @@ function RootLayout() {
 		};
 		window.addEventListener('reset-all-settings', handleResetFromPalette);
 
-		// "Reset All Settings" from the macOS native menu.
+		// "Reset All Settings" from the macOS native menu. Swallow the rejection
+		// path so HMR-driven re-mounts (where Tauri internals are momentarily
+		// undefined) do not surface as unhandled errors.
 		const unlistenMenuResetPromise = listen('menu-reset-settings', () => {
 			handleResetAllSettings().catch(() => {});
-		});
+		}).catch(() => null);
 
 		// Capture-phase suppression of the native context menu, except inside the
 		// code editor wrapper where the system menu (copy / paste) is desirable.
@@ -132,7 +134,7 @@ function RootLayout() {
 		return () => {
 			window.removeEventListener('open-shortcuts-help', handleOpenShortcutsHelp);
 			window.removeEventListener('reset-all-settings', handleResetFromPalette);
-			unlistenMenuResetPromise.then((unlisten) => unlisten()).catch(() => {});
+			unlistenMenuResetPromise.then((unlisten) => unlisten?.()).catch(() => {});
 			document.removeEventListener('contextmenu', handleContextMenu, { capture: true });
 		};
 	}, [handleResetAllSettings]);
