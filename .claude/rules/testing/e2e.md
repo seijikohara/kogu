@@ -111,23 +111,19 @@ test.describe('JSON Formatter', () => {
 
 Add test IDs to components for reliable selection:
 
-```svelte
-<script lang="ts">
-	interface Props {
-		'data-testid'?: string;
-	}
+```tsx
+interface Props {
+	readonly 'data-testid'?: string;
+}
 
-	let { 'data-testid': testId }: Props = $props();
-</script>
-
-<div data-testid={testId}>
-	<!-- content -->
-</div>
+export function Surface({ 'data-testid': testId }: Props) {
+	return <div data-testid={testId}>{/* content */}</div>;
+}
 ```
 
 Usage:
 
-```svelte
+```tsx
 <JsonInput data-testid="json-input" />
 <JsonOutput data-testid="json-output" />
 ```

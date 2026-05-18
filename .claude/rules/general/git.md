@@ -46,7 +46,7 @@ fix(ui): correct button alignment in sidebar
 
 refactor: convert loops to method chaining
 
-chore(deps): update svelte to 5.45.10
+chore(deps): update react to 19.2.0
 
 docs: update README with build instructions
 ```

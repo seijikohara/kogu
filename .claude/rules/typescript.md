@@ -1,5 +1,5 @@
 ---
-paths: src/**/*.{ts,svelte}
+paths: src/**/*.{ts,tsx}
 ---
 
 # TypeScript Guidelines
