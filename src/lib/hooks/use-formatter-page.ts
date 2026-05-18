@@ -122,12 +122,23 @@ export const useFormatterPage = <TStats>(
 
 	const currentStats = tabStats[activeTab];
 
-	const handleStatsChange = useCallback(
-		(tab: FormatterTabType) =>
-			(stats: TabStats): void => {
-				setTabStats((prev) => ({ ...prev, [tab]: stats }));
-			},
+	// Per-tab handlers must be referentially stable across renders. Returning a fresh
+	// inner arrow on every call would re-trigger child useEffect(deps: [..., onStatsChange])
+	// loops on every parent render, exceeding React's update-depth guard.
+	const tabStatsHandlers = useMemo<Record<FormatterTabType, (stats: TabStats) => void>>(
+		() =>
+			Object.fromEntries(
+				FORMATTER_TABS.map((tab) => [
+					tab,
+					(stats: TabStats) => setTabStats((prev) => ({ ...prev, [tab]: stats })),
+				])
+			) as Record<FormatterTabType, (stats: TabStats) => void>,
 		[]
+	);
+
+	const handleStatsChange = useCallback(
+		(tab: FormatterTabType) => tabStatsHandlers[tab],
+		[tabStatsHandlers]
 	);
 
 	const liveStats = useMemo<TStats | null>(() => {
