@@ -37,5 +37,5 @@
 		}
 	},
 	"include": ["src/**/*.tsx", "src/route-tree.gen.ts", "vite.config.ts"],
-	"exclude": ["node_modules", "src-tauri/target", "dist", ".svelte-kit"]
+	"exclude": ["node_modules", "src-tauri/target", "dist"]
 }
