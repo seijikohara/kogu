@@ -822,11 +822,11 @@ export const CodeEditor = forwardRef<CodeEditorHandle, CodeEditorProps>(function
 					</div>
 				) : viewMode === 'split' && canShowTree ? (
 					<ResizablePanelGroup orientation="horizontal" className="h-full">
-						<ResizablePanel defaultSize={50} minSize={20}>
+						<ResizablePanel defaultSize="50" minSize="20">
 							{renderEditor()}
 						</ResizablePanel>
 						<ResizableHandle withHandle />
-						<ResizablePanel defaultSize={50} minSize={20}>
+						<ResizablePanel defaultSize="50" minSize="20">
 							<div
 								className="h-full overflow-auto border-l bg-muted/10 p-3"
 								role="tree"
