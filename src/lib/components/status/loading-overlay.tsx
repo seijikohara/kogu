@@ -1,6 +1,7 @@
 import { Loader2, X } from 'lucide-react';
 
 import { Button } from '@/lib/components/ui/button';
+import { Card, CardContent } from '@/lib/components/ui/card';
 
 interface LoadingOverlayProps {
 	readonly show: boolean;
@@ -37,47 +38,49 @@ export function LoadingOverlay({
 			aria-modal="true"
 			aria-labelledby="loading-title"
 		>
-			<div className="flex flex-col items-center gap-4 rounded-lg border bg-card p-8 shadow-lg">
-				<Loader2 className="h-10 w-10 animate-spin text-primary" />
+			<Card density="compact" className="shadow-lg">
+				<CardContent className="flex flex-col items-center gap-4 px-8 py-4">
+					<Loader2 className="h-10 w-10 animate-spin text-primary" />
 
-				<div className="text-center">
-					<h3 id="loading-title" className="text-lg font-semibold">
-						{title}
-					</h3>
-					{message ? <p className="mt-1 text-sm text-muted-foreground">{message}</p> : null}
-				</div>
-
-				{showProgress ? (
-					<div className="h-1.5 w-48 overflow-hidden rounded-full bg-muted">
-						<div
-							className="h-full rounded-full bg-primary transition-all duration-300"
-							style={{ width: `${clampedProgress}%` }}
-						/>
+					<div className="text-center">
+						<h3 id="loading-title" className="text-lg font-semibold">
+							{title}
+						</h3>
+						{message ? <p className="mt-1 text-sm text-muted-foreground">{message}</p> : null}
 					</div>
-				) : null}
 
-				{showTimes ? (
-					<div className="flex flex-col items-center gap-1 text-xs text-muted-foreground">
-						{elapsedTime ? (
-							<span>
-								Elapsed: <strong className="text-foreground">{elapsedTime}</strong>
-							</span>
-						) : null}
-						{estimatedTime ? (
-							<span>
-								Estimated: <strong className="text-foreground">{estimatedTime}</strong>
-							</span>
-						) : null}
-					</div>
-				) : null}
+					{showProgress ? (
+						<div className="h-1.5 w-48 overflow-hidden rounded-full bg-muted">
+							<div
+								className="h-full rounded-full bg-primary transition-all duration-300"
+								style={{ width: `${clampedProgress}%` }}
+							/>
+						</div>
+					) : null}
 
-				{showCancel ? (
-					<Button variant="outline" size="sm" onClick={onCancel}>
-						<X className="mr-1.5 h-4 w-4" />
-						Cancel
-					</Button>
-				) : null}
-			</div>
+					{showTimes ? (
+						<div className="flex flex-col items-center gap-1 text-xs text-muted-foreground">
+							{elapsedTime ? (
+								<span>
+									Elapsed: <strong className="text-foreground">{elapsedTime}</strong>
+								</span>
+							) : null}
+							{estimatedTime ? (
+								<span>
+									Estimated: <strong className="text-foreground">{estimatedTime}</strong>
+								</span>
+							) : null}
+						</div>
+					) : null}
+
+					{showCancel ? (
+						<Button variant="outline" size="sm" onClick={onCancel}>
+							<X className="mr-1.5 h-4 w-4" />
+							Cancel
+						</Button>
+					) : null}
+				</CardContent>
+			</Card>
 		</div>
 	);
 }

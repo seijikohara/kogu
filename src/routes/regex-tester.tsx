@@ -151,27 +151,31 @@ interface RenderNodeProps {
 function RenderNode({ node, depth }: RenderNodeProps) {
 	const meta = KIND_BADGE[node.kind];
 	return (
-		<div className={cn('flex flex-col gap-1.5 rounded-md border bg-card p-2', depth > 0 && 'ml-3')}>
-			<div className="flex items-center gap-2">
-				<Badge className={cn('font-mono text-2xs', meta.className)}>{meta.label}</Badge>
-				<code className="break-all font-mono text-xs">{node.label}</code>
-				{node.detail ? <span className="text-2xs text-muted-foreground">{node.detail}</span> : null}
-			</div>
-			{node.children.length > 0 ? (
-				<div
-					className={cn(
-						'flex flex-col gap-1.5 border-l-2 border-border pl-2',
-						node.kind === 'alternation' && 'border-warning/50',
-						node.kind === 'sequence' && 'border-info/40'
-					)}
-				>
-					{node.children.map((child, idx) => (
-						// biome-ignore lint/suspicious/noArrayIndexKey: viz tree is immutable
-						<RenderNode key={idx} node={child} depth={depth + 1} />
-					))}
+		<Card density="compact" className={cn(depth > 0 && 'ml-3')}>
+			<CardContent className="flex flex-col gap-1.5">
+				<div className="flex items-center gap-2">
+					<Badge className={cn('font-mono text-2xs', meta.className)}>{meta.label}</Badge>
+					<code className="break-all font-mono text-xs">{node.label}</code>
+					{node.detail ? (
+						<span className="text-2xs text-muted-foreground">{node.detail}</span>
+					) : null}
 				</div>
-			) : null}
-		</div>
+				{node.children.length > 0 ? (
+					<div
+						className={cn(
+							'flex flex-col gap-1.5 border-l-2 border-border pl-2',
+							node.kind === 'alternation' && 'border-warning/50',
+							node.kind === 'sequence' && 'border-info/40'
+						)}
+					>
+						{node.children.map((child, idx) => (
+							// biome-ignore lint/suspicious/noArrayIndexKey: viz tree is immutable
+							<RenderNode key={idx} node={child} depth={depth + 1} />
+						))}
+					</div>
+				) : null}
+			</CardContent>
+		</Card>
 	);
 }
 
@@ -524,66 +528,68 @@ function RegexTesterPage() {
 										<div className="space-y-2">
 											{matches.map((match, mIdx) => (
 												// biome-ignore lint/suspicious/noArrayIndexKey: matches in stable order
-												<div key={mIdx} className="rounded-md border bg-card p-2">
-													<div className="flex items-center gap-2">
-														<Badge variant="outline" className="font-mono text-2xs">
-															@{match.index}
-														</Badge>
-														<code className="break-all font-mono text-xs">{match.fullMatch}</code>
-													</div>
-													{match.groups.length > 0 ? (
-														<div className="mt-1.5 space-y-1">
-															{match.groups.map((group, gIdx) => {
-																const color = groupColor(gIdx + 1);
-																return (
-																	<div
-																		// biome-ignore lint/suspicious/noArrayIndexKey: groups in stable order
-																		key={gIdx}
-																		className="flex items-baseline gap-2 text-2xs"
-																	>
-																		<Badge
-																			className={cn(
-																				'font-mono',
-																				color.bgSoft,
-																				color.text,
-																				color.border
-																			)}
-																		>
-																			${gIdx + 1}
-																		</Badge>
-																		<code className="break-all font-mono text-muted-foreground">
-																			{group.value || '∅'}
-																		</code>
-																	</div>
-																);
-															})}
+												<Card key={mIdx} density="compact">
+													<CardContent>
+														<div className="flex items-center gap-2">
+															<Badge variant="outline" className="font-mono text-2xs">
+																@{match.index}
+															</Badge>
+															<code className="break-all font-mono text-xs">{match.fullMatch}</code>
 														</div>
-													) : null}
-													{Object.keys(match.namedGroups).length > 0 ? (
-														<div className="mt-1.5 space-y-1">
-															{Object.entries(match.namedGroups).map(([name, group], nIdx) => {
-																const color = groupColor(nIdx + 1);
-																return (
-																	<div key={name} className="flex items-baseline gap-2 text-2xs">
-																		<Badge
-																			className={cn(
-																				'font-mono',
-																				color.bgSoft,
-																				color.text,
-																				color.border
-																			)}
+														{match.groups.length > 0 ? (
+															<div className="mt-1.5 space-y-1">
+																{match.groups.map((group, gIdx) => {
+																	const color = groupColor(gIdx + 1);
+																	return (
+																		<div
+																			// biome-ignore lint/suspicious/noArrayIndexKey: groups in stable order
+																			key={gIdx}
+																			className="flex items-baseline gap-2 text-2xs"
 																		>
-																			{name}
-																		</Badge>
-																		<code className="break-all font-mono text-muted-foreground">
-																			{group.value || '∅'}
-																		</code>
-																	</div>
-																);
-															})}
-														</div>
-													) : null}
-												</div>
+																			<Badge
+																				className={cn(
+																					'font-mono',
+																					color.bgSoft,
+																					color.text,
+																					color.border
+																				)}
+																			>
+																				${gIdx + 1}
+																			</Badge>
+																			<code className="break-all font-mono text-muted-foreground">
+																				{group.value || '∅'}
+																			</code>
+																		</div>
+																	);
+																})}
+															</div>
+														) : null}
+														{Object.keys(match.namedGroups).length > 0 ? (
+															<div className="mt-1.5 space-y-1">
+																{Object.entries(match.namedGroups).map(([name, group], nIdx) => {
+																	const color = groupColor(nIdx + 1);
+																	return (
+																		<div key={name} className="flex items-baseline gap-2 text-2xs">
+																			<Badge
+																				className={cn(
+																					'font-mono',
+																					color.bgSoft,
+																					color.text,
+																					color.border
+																				)}
+																			>
+																				{name}
+																			</Badge>
+																			<code className="break-all font-mono text-muted-foreground">
+																				{group.value || '∅'}
+																			</code>
+																		</div>
+																	);
+																})}
+															</div>
+														) : null}
+													</CardContent>
+												</Card>
 											))}
 										</div>
 									) : (
@@ -625,50 +631,59 @@ function RegexTesterPage() {
 								</AccordionTrigger>
 								<AccordionContent>
 									<div className="space-y-3">
-										<div className="rounded-md border bg-card p-2">
-											<div className="text-2xs font-medium uppercase tracking-wide text-muted-foreground">
-												Active flags
-											</div>
-											<div className="mt-1 flex flex-wrap gap-1">
-												{FLAG_INFO.filter((info) => flags[info.id]).map((info) => (
-													<Badge key={info.id} variant="outline" className="font-mono text-2xs">
-														{info.char} {info.label}
-													</Badge>
-												))}
-												{flagString === '' ? (
-													<span className="text-2xs text-muted-foreground">None enabled</span>
-												) : null}
-											</div>
-										</div>
-										<div className="rounded-md border bg-card p-2">
-											<div className="flex items-center justify-between">
-												<span className="text-2xs font-medium uppercase tracking-wide text-muted-foreground">
-													Capture groups
-												</span>
-												<Badge variant="outline" className="font-mono text-2xs">
-													{captureGroupCount}
-												</Badge>
-											</div>
-										</div>
-										<div className="rounded-md border bg-card p-2">
-											<div className="text-2xs font-medium uppercase tracking-wide text-muted-foreground">
-												Detected features
-											</div>
-											{features.length > 0 ? (
-												<ul className="mt-1.5 space-y-1">
-													{features.map((feature) => (
-														<li key={feature.token} className="flex items-baseline gap-2 text-2xs">
-															<code className="rounded bg-muted px-1 py-0.5 font-mono">
-																{feature.token}
-															</code>
-															<span className="text-muted-foreground">{feature.description}</span>
-														</li>
+										<Card density="compact">
+											<CardContent>
+												<div className="text-2xs font-medium uppercase tracking-wide text-muted-foreground">
+													Active flags
+												</div>
+												<div className="mt-1 flex flex-wrap gap-1">
+													{FLAG_INFO.filter((info) => flags[info.id]).map((info) => (
+														<Badge key={info.id} variant="outline" className="font-mono text-2xs">
+															{info.char} {info.label}
+														</Badge>
 													))}
-												</ul>
-											) : (
-												<p className="mt-1 text-2xs text-muted-foreground">Plain text pattern.</p>
-											)}
-										</div>
+													{flagString === '' ? (
+														<span className="text-2xs text-muted-foreground">None enabled</span>
+													) : null}
+												</div>
+											</CardContent>
+										</Card>
+										<Card density="compact">
+											<CardContent>
+												<div className="flex items-center justify-between">
+													<span className="text-2xs font-medium uppercase tracking-wide text-muted-foreground">
+														Capture groups
+													</span>
+													<Badge variant="outline" className="font-mono text-2xs">
+														{captureGroupCount}
+													</Badge>
+												</div>
+											</CardContent>
+										</Card>
+										<Card density="compact">
+											<CardContent>
+												<div className="text-2xs font-medium uppercase tracking-wide text-muted-foreground">
+													Detected features
+												</div>
+												{features.length > 0 ? (
+													<ul className="mt-1.5 space-y-1">
+														{features.map((feature) => (
+															<li
+																key={feature.token}
+																className="flex items-baseline gap-2 text-2xs"
+															>
+																<code className="rounded bg-muted px-1 py-0.5 font-mono">
+																	{feature.token}
+																</code>
+																<span className="text-muted-foreground">{feature.description}</span>
+															</li>
+														))}
+													</ul>
+												) : (
+													<p className="mt-1 text-2xs text-muted-foreground">Plain text pattern.</p>
+												)}
+											</CardContent>
+										</Card>
 									</div>
 								</AccordionContent>
 							</AccordionItem>

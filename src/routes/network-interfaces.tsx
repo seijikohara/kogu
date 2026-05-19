@@ -23,6 +23,7 @@ import { ToolShell } from '@/lib/components/shell';
 import { EmptyState, StatItem } from '@/lib/components/status';
 import { Badge } from '@/lib/components/ui/badge';
 import { Button } from '@/lib/components/ui/button';
+import { Card, CardContent } from '@/lib/components/ui/card';
 import { ListItemButton } from '@/lib/components/ui/list-item-button';
 import {
 	ResizableHandle,
@@ -410,172 +411,181 @@ function NetworkInterfacesPage() {
 												<div className="flex-1 space-y-4 overflow-auto p-4">
 													<div>
 														<SectionLabel icon={Globe}>Addresses</SectionLabel>
-														<div className="space-y-2 rounded-lg border bg-card p-3">
-															{iface.macAddress ? (
-																<div className="flex items-center gap-2">
-																	<span className="w-10 shrink-0 text-xs text-muted-foreground">
-																		MAC
-																	</span>
-																	<code className="font-mono text-xs">{iface.macAddress}</code>
-																	<CopyButton
-																		text={iface.macAddress}
-																		toastLabel="MAC address"
-																		size="icon"
-																		showLabel={false}
-																		className="h-5 w-5"
-																	/>
-																</div>
-															) : null}
-
-															{iface.ipv4Addresses.map((addr) => (
-																<div key={`v4-${addr.address}`} className="flex items-center gap-2">
-																	<span className="w-10 shrink-0 rounded bg-info/10 px-1.5 py-0.5 text-center text-xs font-medium text-info">
-																		IPv4
-																	</span>
-																	<code className="font-mono text-xs">
-																		{addr.address}/{addr.prefixLen}
-																	</code>
-																	<CopyButton
-																		text={addr.address}
-																		toastLabel="IPv4 address"
-																		size="icon"
-																		showLabel={false}
-																		className="h-5 w-5"
-																	/>
-																	<span className="font-mono text-xs text-muted-foreground">
-																		{addr.network}
-																	</span>
-																</div>
-															))}
-
-															{iface.ipv6Addresses.map((addr) => {
-																const addrType = classifyIpv6Address(addr.address);
-																const scopeName =
-																	addr.scopeId !== 0 ? scopeIdMap.get(addr.scopeId) : null;
-																return (
-																	<div
-																		key={`v6-${addr.address}-${addr.scopeId}`}
-																		className="flex items-center gap-2"
-																	>
-																		<span className="w-10 shrink-0 rounded bg-warning/10 px-1.5 py-0.5 text-center text-xs font-medium text-warning">
-																			IPv6
+														<Card density="compact">
+															<CardContent className="space-y-2">
+																{iface.macAddress ? (
+																	<div className="flex items-center gap-2">
+																		<span className="w-10 shrink-0 text-xs text-muted-foreground">
+																			MAC
 																		</span>
-																		<code className="font-mono text-xs">
-																			{addr.address}/{addr.prefixLen}
-																		</code>
-																		{addr.scopeId !== 0 ? (
-																			<span
-																				className="font-mono text-xs text-muted-foreground"
-																				title={`Scope ID: ${addr.scopeId}`}
-																			>
-																				%{scopeName ?? addr.scopeId}
-																			</span>
-																		) : null}
+																		<code className="font-mono text-xs">{iface.macAddress}</code>
 																		<CopyButton
-																			text={addr.address}
-																			toastLabel="IPv6 address"
+																			text={iface.macAddress}
+																			toastLabel="MAC address"
 																			size="icon"
 																			showLabel={false}
 																			className="h-5 w-5"
 																		/>
-																		<span className={cn('text-xs', getIpv6TypeClass(addrType))}>
-																			{addrType}
+																	</div>
+																) : null}
+
+																{iface.ipv4Addresses.map((addr) => (
+																	<div
+																		key={`v4-${addr.address}`}
+																		className="flex items-center gap-2"
+																	>
+																		<span className="w-10 shrink-0 rounded bg-info/10 px-1.5 py-0.5 text-center text-xs font-medium text-info">
+																			IPv4
+																		</span>
+																		<code className="font-mono text-xs">
+																			{addr.address}/{addr.prefixLen}
+																		</code>
+																		<CopyButton
+																			text={addr.address}
+																			toastLabel="IPv4 address"
+																			size="icon"
+																			showLabel={false}
+																			className="h-5 w-5"
+																		/>
+																		<span className="font-mono text-xs text-muted-foreground">
+																			{addr.network}
 																		</span>
 																	</div>
-																);
-															})}
+																))}
 
-															{!iface.macAddress &&
-															iface.ipv4Addresses.length === 0 &&
-															iface.ipv6Addresses.length === 0 ? (
-																<span className="text-xs text-muted-foreground/60">
-																	No addresses
-																</span>
-															) : null}
-														</div>
+																{iface.ipv6Addresses.map((addr) => {
+																	const addrType = classifyIpv6Address(addr.address);
+																	const scopeName =
+																		addr.scopeId !== 0 ? scopeIdMap.get(addr.scopeId) : null;
+																	return (
+																		<div
+																			key={`v6-${addr.address}-${addr.scopeId}`}
+																			className="flex items-center gap-2"
+																		>
+																			<span className="w-10 shrink-0 rounded bg-warning/10 px-1.5 py-0.5 text-center text-xs font-medium text-warning">
+																				IPv6
+																			</span>
+																			<code className="font-mono text-xs">
+																				{addr.address}/{addr.prefixLen}
+																			</code>
+																			{addr.scopeId !== 0 ? (
+																				<span
+																					className="font-mono text-xs text-muted-foreground"
+																					title={`Scope ID: ${addr.scopeId}`}
+																				>
+																					%{scopeName ?? addr.scopeId}
+																				</span>
+																			) : null}
+																			<CopyButton
+																				text={addr.address}
+																				toastLabel="IPv6 address"
+																				size="icon"
+																				showLabel={false}
+																				className="h-5 w-5"
+																			/>
+																			<span className={cn('text-xs', getIpv6TypeClass(addrType))}>
+																				{addrType}
+																			</span>
+																		</div>
+																	);
+																})}
+
+																{!iface.macAddress &&
+																iface.ipv4Addresses.length === 0 &&
+																iface.ipv6Addresses.length === 0 ? (
+																	<span className="text-xs text-muted-foreground/60">
+																		No addresses
+																	</span>
+																) : null}
+															</CardContent>
+														</Card>
 													</div>
 
 													{hasNetworkInfo(iface) ? (
 														<div>
 															<SectionLabel icon={Network}>Network</SectionLabel>
-															<div className="rounded-lg border bg-card p-3">
-																<div className="grid grid-cols-2 gap-x-6 gap-y-2 text-xs">
-																	{iface.mtu !== null ? (
-																		<div className="flex justify-between">
-																			<span className="text-muted-foreground">MTU</span>
-																			<span className="font-mono">{iface.mtu}</span>
-																		</div>
-																	) : null}
-																	{iface.transmitSpeedBps !== null &&
-																	iface.receiveSpeedBps !== null &&
-																	iface.transmitSpeedBps === iface.receiveSpeedBps ? (
-																		<div className="flex justify-between">
-																			<span className="text-muted-foreground">Link Speed</span>
-																			<span className="font-mono">
-																				{formatSpeed(iface.transmitSpeedBps)}
-																			</span>
-																		</div>
-																	) : (
-																		<>
-																			{iface.transmitSpeedBps !== null ? (
-																				<div className="flex justify-between">
-																					<span className="text-muted-foreground">TX Speed</span>
-																					<span className="font-mono">
-																						{formatSpeed(iface.transmitSpeedBps)}
-																					</span>
-																				</div>
-																			) : null}
-																			{iface.receiveSpeedBps !== null ? (
-																				<div className="flex justify-between">
-																					<span className="text-muted-foreground">RX Speed</span>
-																					<span className="font-mono">
-																						{formatSpeed(iface.receiveSpeedBps)}
-																					</span>
-																				</div>
-																			) : null}
-																		</>
-																	)}
-																	{iface.gateway ? (
-																		<>
-																			{iface.gateway.ipv4Addresses.map((gw) => (
-																				<div key={`gw4-${gw}`} className="flex justify-between">
-																					<span className="text-muted-foreground">Gateway</span>
-																					<span className="font-mono">{gw}</span>
-																				</div>
-																			))}
-																			{iface.gateway.ipv6Addresses.map((gw) => (
-																				<div key={`gw6-${gw}`} className="flex justify-between">
-																					<span className="text-muted-foreground">
-																						Gateway (v6)
-																					</span>
-																					<span className="font-mono text-xs">{gw}</span>
-																				</div>
-																			))}
-																			{iface.gateway.macAddress ? (
-																				<div className="flex justify-between">
-																					<span className="text-muted-foreground">Gateway MAC</span>
-																					<span className="font-mono text-xs">
-																						{iface.gateway.macAddress}
-																					</span>
-																				</div>
-																			) : null}
-																		</>
-																	) : null}
-																	{iface.dnsServers.length > 0 ? (
-																		<div className="col-span-2 flex flex-wrap items-center gap-1.5">
-																			<span className="text-muted-foreground">DNS</span>
-																			{iface.dnsServers.map((dns) => (
-																				<span
-																					key={dns}
-																					className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs"
-																				>
-																					{dns}
+															<Card density="compact">
+																<CardContent>
+																	<div className="grid grid-cols-2 gap-x-6 gap-y-2 text-xs">
+																		{iface.mtu !== null ? (
+																			<div className="flex justify-between">
+																				<span className="text-muted-foreground">MTU</span>
+																				<span className="font-mono">{iface.mtu}</span>
+																			</div>
+																		) : null}
+																		{iface.transmitSpeedBps !== null &&
+																		iface.receiveSpeedBps !== null &&
+																		iface.transmitSpeedBps === iface.receiveSpeedBps ? (
+																			<div className="flex justify-between">
+																				<span className="text-muted-foreground">Link Speed</span>
+																				<span className="font-mono">
+																					{formatSpeed(iface.transmitSpeedBps)}
 																				</span>
-																			))}
-																		</div>
-																	) : null}
-																</div>
-															</div>
+																			</div>
+																		) : (
+																			<>
+																				{iface.transmitSpeedBps !== null ? (
+																					<div className="flex justify-between">
+																						<span className="text-muted-foreground">TX Speed</span>
+																						<span className="font-mono">
+																							{formatSpeed(iface.transmitSpeedBps)}
+																						</span>
+																					</div>
+																				) : null}
+																				{iface.receiveSpeedBps !== null ? (
+																					<div className="flex justify-between">
+																						<span className="text-muted-foreground">RX Speed</span>
+																						<span className="font-mono">
+																							{formatSpeed(iface.receiveSpeedBps)}
+																						</span>
+																					</div>
+																				) : null}
+																			</>
+																		)}
+																		{iface.gateway ? (
+																			<>
+																				{iface.gateway.ipv4Addresses.map((gw) => (
+																					<div key={`gw4-${gw}`} className="flex justify-between">
+																						<span className="text-muted-foreground">Gateway</span>
+																						<span className="font-mono">{gw}</span>
+																					</div>
+																				))}
+																				{iface.gateway.ipv6Addresses.map((gw) => (
+																					<div key={`gw6-${gw}`} className="flex justify-between">
+																						<span className="text-muted-foreground">
+																							Gateway (v6)
+																						</span>
+																						<span className="font-mono text-xs">{gw}</span>
+																					</div>
+																				))}
+																				{iface.gateway.macAddress ? (
+																					<div className="flex justify-between">
+																						<span className="text-muted-foreground">
+																							Gateway MAC
+																						</span>
+																						<span className="font-mono text-xs">
+																							{iface.gateway.macAddress}
+																						</span>
+																					</div>
+																				) : null}
+																			</>
+																		) : null}
+																		{iface.dnsServers.length > 0 ? (
+																			<div className="col-span-2 flex flex-wrap items-center gap-1.5">
+																				<span className="text-muted-foreground">DNS</span>
+																				{iface.dnsServers.map((dns) => (
+																					<span
+																						key={dns}
+																						className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs"
+																					>
+																						{dns}
+																					</span>
+																				))}
+																			</div>
+																		) : null}
+																	</div>
+																</CardContent>
+															</Card>
 														</div>
 													) : null}
 
@@ -584,26 +594,30 @@ function NetworkInterfacesPage() {
 															<SectionLabel icon={Activity}>Traffic</SectionLabel>
 															<div className="flex gap-3">
 																{iface.rxBytes !== null ? (
-																	<div className="flex-1 rounded-lg border bg-card p-3">
-																		<div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-																			<ArrowDown className="h-3.5 w-3.5 text-success" />
-																			RX (Received)
-																		</div>
-																		<div className="mt-1 font-mono text-lg font-semibold">
-																			{formatBytes(iface.rxBytes)}
-																		</div>
-																	</div>
+																	<Card density="compact" className="flex-1">
+																		<CardContent>
+																			<div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+																				<ArrowDown className="h-3.5 w-3.5 text-success" />
+																				RX (Received)
+																			</div>
+																			<div className="mt-1 font-mono text-lg font-semibold">
+																				{formatBytes(iface.rxBytes)}
+																			</div>
+																		</CardContent>
+																	</Card>
 																) : null}
 																{iface.txBytes !== null ? (
-																	<div className="flex-1 rounded-lg border bg-card p-3">
-																		<div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-																			<ArrowUp className="h-3.5 w-3.5 text-info" />
-																			TX (Transmitted)
-																		</div>
-																		<div className="mt-1 font-mono text-lg font-semibold">
-																			{formatBytes(iface.txBytes)}
-																		</div>
-																	</div>
+																	<Card density="compact" className="flex-1">
+																		<CardContent>
+																			<div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+																				<ArrowUp className="h-3.5 w-3.5 text-info" />
+																				TX (Transmitted)
+																			</div>
+																			<div className="mt-1 font-mono text-lg font-semibold">
+																				{formatBytes(iface.txBytes)}
+																			</div>
+																		</CardContent>
+																	</Card>
 																) : null}
 															</div>
 														</div>

@@ -40,6 +40,7 @@ import { SectionLabel } from '@/lib/components/layout';
 import { EmbeddedEmptyState } from '@/lib/components/status';
 import { Badge } from '@/lib/components/ui/badge';
 import { Button } from '@/lib/components/ui/button';
+import { Card, CardContent } from '@/lib/components/ui/card';
 import {
 	Select,
 	SelectContent,
@@ -494,40 +495,48 @@ export function UnifiedHostDetailPanel({
 					<TabsContent value="overview" className="mt-0 animate-fade-in outline-none">
 						{/* Summary Stats */}
 						<div className="mb-4 grid grid-cols-2 gap-2">
-							<div className="rounded-lg border bg-card p-2.5">
-								<div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-									<Hash className="h-3 w-3" />
-									IPs
-								</div>
-								<div className="mt-0.5 text-base font-semibold tabular-nums">{ips.length}</div>
-							</div>
-							<div className="rounded-lg border bg-card p-2.5">
-								<div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-									<CheckCircle2 className="h-3 w-3 text-success" />
-									Open Ports
-								</div>
-								<div className="mt-0.5 text-base font-semibold tabular-nums">
-									{openPorts.length}
-								</div>
-							</div>
-							<div className="rounded-lg border bg-card p-2.5">
-								<div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-									<Radar className="h-3 w-3 text-primary" />
-									Discovery
-								</div>
-								<div className="mt-0.5 text-base font-semibold tabular-nums">
-									{discoveries.length}
-								</div>
-							</div>
-							<div className="rounded-lg border bg-card p-2.5">
-								<div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-									<Radio className="h-3 w-3 text-info" />
-									Services
-								</div>
-								<div className="mt-0.5 text-base font-semibold tabular-nums">
-									{mdnsServices.length}
-								</div>
-							</div>
+							<Card density="compact">
+								<CardContent>
+									<div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+										<Hash className="h-3 w-3" />
+										IPs
+									</div>
+									<div className="mt-0.5 text-base font-semibold tabular-nums">{ips.length}</div>
+								</CardContent>
+							</Card>
+							<Card density="compact">
+								<CardContent>
+									<div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+										<CheckCircle2 className="h-3 w-3 text-success" />
+										Open Ports
+									</div>
+									<div className="mt-0.5 text-base font-semibold tabular-nums">
+										{openPorts.length}
+									</div>
+								</CardContent>
+							</Card>
+							<Card density="compact">
+								<CardContent>
+									<div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+										<Radar className="h-3 w-3 text-primary" />
+										Discovery
+									</div>
+									<div className="mt-0.5 text-base font-semibold tabular-nums">
+										{discoveries.length}
+									</div>
+								</CardContent>
+							</Card>
+							<Card density="compact">
+								<CardContent>
+									<div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+										<Radio className="h-3 w-3 text-info" />
+										Services
+									</div>
+									<div className="mt-0.5 text-base font-semibold tabular-nums">
+										{mdnsServices.length}
+									</div>
+								</CardContent>
+							</Card>
 						</div>
 
 						{/* IP Addresses Section */}
@@ -536,48 +545,52 @@ export function UnifiedHostDetailPanel({
 								<SectionLabel icon={Hash} title="IP Addresses" />
 								<div className="space-y-2">
 									{ipv4Addresses.length > 0 ? (
-										<div className="rounded-lg border bg-card p-3">
-											<div className="mb-1.5 text-xs font-medium text-muted-foreground">IPv4</div>
-											<div className="flex flex-wrap gap-2">
-												{ipv4Addresses.map((ip) => (
-													<Button
-														key={ip}
-														variant="ghost"
-														size="sm"
-														className="h-auto gap-1.5 rounded bg-muted px-2 py-1 font-mono text-xs hover:bg-muted/80"
-														title={`Copy ${ip}`}
-														onClick={() => {
-															copyToClipboard(ip, 'IP address').catch(() => {});
-														}}
-													>
-														{ip}
-														<Copy className="h-3 w-3 text-muted-foreground" />
-													</Button>
-												))}
-											</div>
-										</div>
+										<Card density="compact">
+											<CardContent>
+												<div className="mb-1.5 text-xs font-medium text-muted-foreground">IPv4</div>
+												<div className="flex flex-wrap gap-2">
+													{ipv4Addresses.map((ip) => (
+														<Button
+															key={ip}
+															variant="ghost"
+															size="sm"
+															className="h-auto gap-1.5 rounded bg-muted px-2 py-1 font-mono text-xs hover:bg-muted/80"
+															title={`Copy ${ip}`}
+															onClick={() => {
+																copyToClipboard(ip, 'IP address').catch(() => {});
+															}}
+														>
+															{ip}
+															<Copy className="h-3 w-3 text-muted-foreground" />
+														</Button>
+													))}
+												</div>
+											</CardContent>
+										</Card>
 									) : null}
 									{ipv6Addresses.length > 0 ? (
-										<div className="rounded-lg border bg-card p-3">
-											<div className="mb-1.5 text-xs font-medium text-muted-foreground">IPv6</div>
-											<div className="space-y-1">
-												{ipv6Addresses.map((ip) => (
-													<Button
-														key={ip}
-														variant="ghost"
-														size="sm"
-														className="h-auto w-full justify-between gap-2 rounded bg-muted px-2 py-1 font-mono text-xs hover:bg-muted/80"
-														title={`Copy ${ip}`}
-														onClick={() => {
-															copyToClipboard(ip, 'IP address').catch(() => {});
-														}}
-													>
-														<span className="truncate">{ip}</span>
-														<Copy className="h-3 w-3 shrink-0 text-muted-foreground" />
-													</Button>
-												))}
-											</div>
-										</div>
+										<Card density="compact">
+											<CardContent>
+												<div className="mb-1.5 text-xs font-medium text-muted-foreground">IPv6</div>
+												<div className="space-y-1">
+													{ipv6Addresses.map((ip) => (
+														<Button
+															key={ip}
+															variant="ghost"
+															size="sm"
+															className="h-auto w-full justify-between gap-2 rounded bg-muted px-2 py-1 font-mono text-xs hover:bg-muted/80"
+															title={`Copy ${ip}`}
+															onClick={() => {
+																copyToClipboard(ip, 'IP address').catch(() => {});
+															}}
+														>
+															<span className="truncate">{ip}</span>
+															<Copy className="h-3 w-3 shrink-0 text-muted-foreground" />
+														</Button>
+													))}
+												</div>
+											</CardContent>
+										</Card>
 									) : null}
 								</div>
 							</div>
@@ -587,43 +600,45 @@ export function UnifiedHostDetailPanel({
 						{classification && classification.category !== 'unknown' ? (
 							<div className="mb-4">
 								<SectionLabel icon={HeaderIcon} title="Device Type" />
-								<div className="rounded-lg border bg-card p-3">
-									<div className="flex items-center justify-between">
-										<div className="flex items-center gap-2">
-											<span className="text-sm font-medium">
-												{DEVICE_CATEGORIES[classification.category].label}
-											</span>
-											{confidenceLabel ? (
-												<span
-													className={cn(
-														'rounded bg-muted px-1.5 py-0.5 text-xs font-medium',
-														confidenceColor
-													)}
-												>
-													{confidenceLabel}
+								<Card density="compact">
+									<CardContent>
+										<div className="flex items-center justify-between">
+											<div className="flex items-center gap-2">
+												<span className="text-sm font-medium">
+													{DEVICE_CATEGORIES[classification.category].label}
 												</span>
-											) : null}
-										</div>
-										<span className="text-xs text-muted-foreground">
-											{(classification.confidence * 100).toFixed(0)}%
-										</span>
-									</div>
-									<p className="mt-1 text-xs text-muted-foreground">
-										{DEVICE_CATEGORIES[classification.category].description}
-									</p>
-									{classification.evidence.length > 0 ? (
-										<div className="mt-2 border-t pt-2">
-											<div className="text-xs text-muted-foreground">
-												{classification.evidence.map((evidence) => (
-													<div key={evidence} className="flex items-center gap-1">
-														<span className="text-[8px]">-</span>
-														<span>{evidence}</span>
-													</div>
-												))}
+												{confidenceLabel ? (
+													<span
+														className={cn(
+															'rounded bg-muted px-1.5 py-0.5 text-xs font-medium',
+															confidenceColor
+														)}
+													>
+														{confidenceLabel}
+													</span>
+												) : null}
 											</div>
+											<span className="text-xs text-muted-foreground">
+												{(classification.confidence * 100).toFixed(0)}%
+											</span>
 										</div>
-									) : null}
-								</div>
+										<p className="mt-1 text-xs text-muted-foreground">
+											{DEVICE_CATEGORIES[classification.category].description}
+										</p>
+										{classification.evidence.length > 0 ? (
+											<div className="mt-2 border-t pt-2">
+												<div className="text-xs text-muted-foreground">
+													{classification.evidence.map((evidence) => (
+														<div key={evidence} className="flex items-center gap-1">
+															<span className="text-[8px]">-</span>
+															<span>{evidence}</span>
+														</div>
+													))}
+												</div>
+											</div>
+										) : null}
+									</CardContent>
+								</Card>
 							</div>
 						) : null}
 
@@ -633,63 +648,67 @@ export function UnifiedHostDetailPanel({
 								<SectionLabel icon={Cpu} title="Device Info" />
 								<div className="grid grid-cols-2 gap-2">
 									{netbiosName ? (
-										<div className="rounded-lg border bg-card p-2.5">
-											<div className="text-xs text-muted-foreground">NetBIOS Name</div>
-											<div className="mt-0.5 flex items-center gap-1.5 font-mono text-sm font-medium">
-												{netbiosName}
-												<Tooltip>
-													<TooltipTrigger asChild>
-														<Button
-															variant="ghost"
-															size="icon-sm"
-															className="h-5 w-5 text-muted-foreground hover:bg-muted hover:text-foreground"
-															onClick={() => {
-																copyToClipboard(netbiosName, 'NetBIOS name').catch(() => {});
-															}}
-														>
-															<Copy className="h-3 w-3" />
-															<span className="sr-only">Copy NetBIOS name</span>
-														</Button>
-													</TooltipTrigger>
-													<TooltipContent>Copy NetBIOS name</TooltipContent>
-												</Tooltip>
-											</div>
-										</div>
+										<Card density="compact">
+											<CardContent>
+												<div className="text-xs text-muted-foreground">NetBIOS Name</div>
+												<div className="mt-0.5 flex items-center gap-1.5 font-mono text-sm font-medium">
+													{netbiosName}
+													<Tooltip>
+														<TooltipTrigger asChild>
+															<Button
+																variant="ghost"
+																size="icon-sm"
+																className="h-5 w-5 text-muted-foreground hover:bg-muted hover:text-foreground"
+																onClick={() => {
+																	copyToClipboard(netbiosName, 'NetBIOS name').catch(() => {});
+																}}
+															>
+																<Copy className="h-3 w-3" />
+																<span className="sr-only">Copy NetBIOS name</span>
+															</Button>
+														</TooltipTrigger>
+														<TooltipContent>Copy NetBIOS name</TooltipContent>
+													</Tooltip>
+												</div>
+											</CardContent>
+										</Card>
 									) : null}
 									{macAddress ? (
-										<div className="rounded-lg border bg-card p-2.5">
-											<div className="text-xs text-muted-foreground">MAC Address</div>
-											<div className="mt-0.5 flex items-center gap-1.5 font-mono text-sm font-medium">
-												{macAddress}
-												<Tooltip>
-													<TooltipTrigger asChild>
-														<Button
-															variant="ghost"
-															size="icon-sm"
-															className="h-5 w-5 text-muted-foreground hover:bg-muted hover:text-foreground"
-															onClick={() => {
-																copyToClipboard(macAddress, 'MAC address').catch(() => {});
-															}}
-														>
-															<Copy className="h-3 w-3" />
-															<span className="sr-only">Copy MAC address</span>
-														</Button>
-													</TooltipTrigger>
-													<TooltipContent>Copy MAC address</TooltipContent>
-												</Tooltip>
-											</div>
-										</div>
+										<Card density="compact">
+											<CardContent>
+												<div className="text-xs text-muted-foreground">MAC Address</div>
+												<div className="mt-0.5 flex items-center gap-1.5 font-mono text-sm font-medium">
+													{macAddress}
+													<Tooltip>
+														<TooltipTrigger asChild>
+															<Button
+																variant="ghost"
+																size="icon-sm"
+																className="h-5 w-5 text-muted-foreground hover:bg-muted hover:text-foreground"
+																onClick={() => {
+																	copyToClipboard(macAddress, 'MAC address').catch(() => {});
+																}}
+															>
+																<Copy className="h-3 w-3" />
+																<span className="sr-only">Copy MAC address</span>
+															</Button>
+														</TooltipTrigger>
+														<TooltipContent>Copy MAC address</TooltipContent>
+													</Tooltip>
+												</div>
+											</CardContent>
+										</Card>
 									) : null}
 									{vendor ? (
-										<div
-											className={cn(
-												'rounded-lg border bg-card p-2.5',
-												netbiosName && macAddress && 'col-span-2'
-											)}
+										<Card
+											density="compact"
+											className={cn(netbiosName && macAddress && 'col-span-2')}
 										>
-											<div className="text-xs text-muted-foreground">Vendor</div>
-											<div className="mt-0.5 text-sm">{vendor}</div>
-										</div>
+											<CardContent>
+												<div className="text-xs text-muted-foreground">Vendor</div>
+												<div className="mt-0.5 text-sm">{vendor}</div>
+											</CardContent>
+										</Card>
 									) : null}
 								</div>
 							</div>
@@ -699,53 +718,62 @@ export function UnifiedHostDetailPanel({
 						{hasSsdpInfo && ssdpDevice ? (
 							<div className="mb-4">
 								<SectionLabel icon={Wifi} title="SSDP/UPnP Device" />
-								<div className="rounded-lg border bg-card p-3">
-									{ssdpDevice.friendlyName ? (
-										<div>
-											<div className="text-xs font-medium text-muted-foreground">Friendly Name</div>
-											<div className="text-sm font-medium">{ssdpDevice.friendlyName}</div>
-										</div>
-									) : null}
-									{ssdpDevice.manufacturer || ssdpDevice.modelName ? (
-										<div className={ssdpDevice.friendlyName ? 'mt-2 border-t pt-2' : ''}>
-											<div className="text-xs font-medium text-muted-foreground">
-												{ssdpDevice.manufacturer && ssdpDevice.modelName
-													? 'Manufacturer / Model'
-													: ssdpDevice.manufacturer
-														? 'Manufacturer'
-														: 'Model'}
+								<Card density="compact">
+									<CardContent>
+										{ssdpDevice.friendlyName ? (
+											<div>
+												<div className="text-xs font-medium text-muted-foreground">
+													Friendly Name
+												</div>
+												<div className="text-sm font-medium">{ssdpDevice.friendlyName}</div>
 											</div>
-											<div className="text-sm">
-												{[ssdpDevice.manufacturer, ssdpDevice.modelName].filter(Boolean).join(' ')}
-												{ssdpDevice.modelNumber ? (
-													<span className="text-muted-foreground"> ({ssdpDevice.modelNumber})</span>
-												) : null}
+										) : null}
+										{ssdpDevice.manufacturer || ssdpDevice.modelName ? (
+											<div className={ssdpDevice.friendlyName ? 'mt-2 border-t pt-2' : ''}>
+												<div className="text-xs font-medium text-muted-foreground">
+													{ssdpDevice.manufacturer && ssdpDevice.modelName
+														? 'Manufacturer / Model'
+														: ssdpDevice.manufacturer
+															? 'Manufacturer'
+															: 'Model'}
+												</div>
+												<div className="text-sm">
+													{[ssdpDevice.manufacturer, ssdpDevice.modelName]
+														.filter(Boolean)
+														.join(' ')}
+													{ssdpDevice.modelNumber ? (
+														<span className="text-muted-foreground">
+															{' '}
+															({ssdpDevice.modelNumber})
+														</span>
+													) : null}
+												</div>
 											</div>
-										</div>
-									) : null}
-									{ssdpDevice.deviceType ? (
-										<div
-											className={
-												ssdpDevice.friendlyName || ssdpDevice.manufacturer || ssdpDevice.modelName
-													? 'mt-2 border-t pt-2'
-													: ''
-											}
-										>
-											<div className="text-xs font-medium text-muted-foreground">Device Type</div>
-											<div className="font-mono text-xs text-muted-foreground">
-												{ssdpDevice.deviceType}
+										) : null}
+										{ssdpDevice.deviceType ? (
+											<div
+												className={
+													ssdpDevice.friendlyName || ssdpDevice.manufacturer || ssdpDevice.modelName
+														? 'mt-2 border-t pt-2'
+														: ''
+												}
+											>
+												<div className="text-xs font-medium text-muted-foreground">Device Type</div>
+												<div className="font-mono text-xs text-muted-foreground">
+													{ssdpDevice.deviceType}
+												</div>
 											</div>
-										</div>
-									) : null}
-									{ssdpDevice.server ? (
-										<div className="mt-2 border-t pt-2">
-											<div className="text-xs font-medium text-muted-foreground">Server</div>
-											<div className="font-mono text-xs text-muted-foreground">
-												{ssdpDevice.server}
+										) : null}
+										{ssdpDevice.server ? (
+											<div className="mt-2 border-t pt-2">
+												<div className="text-xs font-medium text-muted-foreground">Server</div>
+												<div className="font-mono text-xs text-muted-foreground">
+													{ssdpDevice.server}
+												</div>
 											</div>
-										</div>
-									) : null}
-								</div>
+										) : null}
+									</CardContent>
+								</Card>
 							</div>
 						) : null}
 
@@ -754,35 +782,41 @@ export function UnifiedHostDetailPanel({
 						(wsDiscovery.deviceTypes.length > 0 || wsDiscovery.scopes.length > 0) ? (
 							<div className="mb-4">
 								<SectionLabel icon={Globe} title="WS-Discovery" />
-								<div className="rounded-lg border bg-card p-3">
-									{wsDiscovery.deviceTypes.length > 0 ? (
-										<div>
-											<div className="text-xs font-medium text-muted-foreground">Device Types</div>
-											<div className="mt-1 space-y-0.5">
-												{wsDiscovery.deviceTypes.map((dtype) => (
-													<div key={dtype} className="font-mono text-xs text-muted-foreground">
-														{dtype}
-													</div>
-												))}
+								<Card density="compact">
+									<CardContent>
+										{wsDiscovery.deviceTypes.length > 0 ? (
+											<div>
+												<div className="text-xs font-medium text-muted-foreground">
+													Device Types
+												</div>
+												<div className="mt-1 space-y-0.5">
+													{wsDiscovery.deviceTypes.map((dtype) => (
+														<div key={dtype} className="font-mono text-xs text-muted-foreground">
+															{dtype}
+														</div>
+													))}
+												</div>
 											</div>
-										</div>
-									) : null}
-									{wsDiscovery.scopes.length > 0 ? (
-										<div className={wsDiscovery.deviceTypes.length > 0 ? 'mt-2 border-t pt-2' : ''}>
-											<div className="text-xs font-medium text-muted-foreground">Scopes</div>
-											<div className="mt-1 max-h-20 space-y-0.5 overflow-y-auto">
-												{wsDiscovery.scopes.map((scope) => (
-													<div
-														key={scope}
-														className="break-all font-mono text-xs text-muted-foreground"
-													>
-														{scope}
-													</div>
-												))}
+										) : null}
+										{wsDiscovery.scopes.length > 0 ? (
+											<div
+												className={wsDiscovery.deviceTypes.length > 0 ? 'mt-2 border-t pt-2' : ''}
+											>
+												<div className="text-xs font-medium text-muted-foreground">Scopes</div>
+												<div className="mt-1 max-h-20 space-y-0.5 overflow-y-auto">
+													{wsDiscovery.scopes.map((scope) => (
+														<div
+															key={scope}
+															className="break-all font-mono text-xs text-muted-foreground"
+														>
+															{scope}
+														</div>
+													))}
+												</div>
 											</div>
-										</div>
-									) : null}
-								</div>
+										) : null}
+									</CardContent>
+								</Card>
 							</div>
 						) : null}
 
@@ -794,34 +828,36 @@ export function UnifiedHostDetailPanel({
 							snmpInfo.sysContact) ? (
 							<div className="mb-4">
 								<SectionLabel icon={Server} title="SNMP" />
-								<div className="space-y-2 rounded-lg border bg-card p-3">
-									{snmpInfo.sysName ? (
-										<div>
-											<div className="text-xs font-medium text-muted-foreground">System Name</div>
-											<div className="text-sm">{snmpInfo.sysName}</div>
-										</div>
-									) : null}
-									{snmpInfo.sysDescr ? (
-										<div>
-											<div className="text-xs font-medium text-muted-foreground">Description</div>
-											<div className="break-words text-xs text-muted-foreground">
-												{snmpInfo.sysDescr}
+								<Card density="compact">
+									<CardContent className="space-y-2">
+										{snmpInfo.sysName ? (
+											<div>
+												<div className="text-xs font-medium text-muted-foreground">System Name</div>
+												<div className="text-sm">{snmpInfo.sysName}</div>
 											</div>
-										</div>
-									) : null}
-									{snmpInfo.sysLocation ? (
-										<div>
-											<div className="text-xs font-medium text-muted-foreground">Location</div>
-											<div className="text-sm">{snmpInfo.sysLocation}</div>
-										</div>
-									) : null}
-									{snmpInfo.sysContact ? (
-										<div>
-											<div className="text-xs font-medium text-muted-foreground">Contact</div>
-											<div className="text-sm">{snmpInfo.sysContact}</div>
-										</div>
-									) : null}
-								</div>
+										) : null}
+										{snmpInfo.sysDescr ? (
+											<div>
+												<div className="text-xs font-medium text-muted-foreground">Description</div>
+												<div className="break-words text-xs text-muted-foreground">
+													{snmpInfo.sysDescr}
+												</div>
+											</div>
+										) : null}
+										{snmpInfo.sysLocation ? (
+											<div>
+												<div className="text-xs font-medium text-muted-foreground">Location</div>
+												<div className="text-sm">{snmpInfo.sysLocation}</div>
+											</div>
+										) : null}
+										{snmpInfo.sysContact ? (
+											<div>
+												<div className="text-xs font-medium text-muted-foreground">Contact</div>
+												<div className="text-sm">{snmpInfo.sysContact}</div>
+											</div>
+										) : null}
+									</CardContent>
+								</Card>
 							</div>
 						) : null}
 
@@ -829,22 +865,24 @@ export function UnifiedHostDetailPanel({
 						{serviceBanners && serviceBanners.length > 0 ? (
 							<div className="mb-4">
 								<SectionLabel icon={Terminal} title="Service Banners" />
-								<div className="rounded-lg border bg-card p-3">
-									<div className="flex flex-wrap gap-1.5">
-										{serviceBanners.map((banner) => (
-											<span
-												key={`${banner.protocol}-${banner.version ?? ''}-${banner.raw}`}
-												className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs"
-												title={banner.raw}
-											>
-												<span className="font-medium text-foreground">{banner.protocol}</span>
-												{banner.version ? (
-													<span className="text-muted-foreground"> {banner.version}</span>
-												) : null}
-											</span>
-										))}
-									</div>
-								</div>
+								<Card density="compact">
+									<CardContent>
+										<div className="flex flex-wrap gap-1.5">
+											{serviceBanners.map((banner) => (
+												<span
+													key={`${banner.protocol}-${banner.version ?? ''}-${banner.raw}`}
+													className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs"
+													title={banner.raw}
+												>
+													<span className="font-medium text-foreground">{banner.protocol}</span>
+													{banner.version ? (
+														<span className="text-muted-foreground"> {banner.version}</span>
+													) : null}
+												</span>
+											))}
+										</div>
+									</CardContent>
+								</Card>
 							</div>
 						) : null}
 
@@ -852,18 +890,20 @@ export function UnifiedHostDetailPanel({
 						{tlsNames && tlsNames.length > 0 ? (
 							<div className="mb-4">
 								<SectionLabel icon={Shield} title="TLS Certificate" />
-								<div className="rounded-lg border bg-card p-3">
-									<div className="text-xs font-medium text-muted-foreground">
-										Subject Alternative Names
-									</div>
-									<div className="mt-1 space-y-0.5">
-										{tlsNames.map((name) => (
-											<div key={name} className="font-mono text-sm">
-												{name}
-											</div>
-										))}
-									</div>
-								</div>
+								<Card density="compact">
+									<CardContent>
+										<div className="text-xs font-medium text-muted-foreground">
+											Subject Alternative Names
+										</div>
+										<div className="mt-1 space-y-0.5">
+											{tlsNames.map((name) => (
+												<div key={name} className="font-mono text-sm">
+													{name}
+												</div>
+											))}
+										</div>
+									</CardContent>
+								</Card>
 							</div>
 						) : null}
 					</TabsContent>
@@ -871,81 +911,85 @@ export function UnifiedHostDetailPanel({
 					<TabsContent value="ports" className="mt-0 animate-fade-in outline-none">
 						{/* Scan controls / progress */}
 						{scanDisabled && scanProgress ? (
-							<div className="mb-4 rounded-lg border bg-card p-3">
-								<div className="mb-2 flex items-center justify-between">
-									<div className="flex items-center gap-2">
-										<Loader2 className="h-4 w-4 animate-spin text-primary" />
-										<span className="text-sm font-medium">Scanning Ports...</span>
+							<Card density="compact" className="mb-4">
+								<CardContent>
+									<div className="mb-2 flex items-center justify-between">
+										<div className="flex items-center gap-2">
+											<Loader2 className="h-4 w-4 animate-spin text-primary" />
+											<span className="text-sm font-medium">Scanning Ports...</span>
+										</div>
+										<div className="flex items-center gap-2">
+											<span className="text-sm font-medium text-primary">
+												{scanPercentage.toFixed(0)}%
+											</span>
+											{onCancel ? (
+												<Button
+													variant="ghost"
+													size="sm"
+													className="h-7 gap-1 px-2 text-xs text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+													onClick={onCancel}
+												>
+													<Square className="h-3 w-3" />
+													Cancel
+												</Button>
+											) : null}
+										</div>
 									</div>
-									<div className="flex items-center gap-2">
-										<span className="text-sm font-medium text-primary">
-											{scanPercentage.toFixed(0)}%
-										</span>
-										{onCancel ? (
-											<Button
-												variant="ghost"
-												size="sm"
-												className="h-7 gap-1 px-2 text-xs text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
-												onClick={onCancel}
-											>
-												<Square className="h-3 w-3" />
-												Cancel
-											</Button>
-										) : null}
+									<div className="mb-2 h-1.5 w-full overflow-hidden rounded-full bg-muted">
+										<div
+											className="h-full bg-primary transition-all duration-300"
+											style={{ width: `${scanPercentage}%` }}
+										/>
 									</div>
-								</div>
-								<div className="mb-2 h-1.5 w-full overflow-hidden rounded-full bg-muted">
-									<div
-										className="h-full bg-primary transition-all duration-300"
-										style={{ width: `${scanPercentage}%` }}
-									/>
-								</div>
-								<div className="flex items-center justify-between text-xs text-muted-foreground">
-									<span>{scanStatusText}</span>
-									<div className="flex items-center gap-3">
-										{scanCurrentIp ? <span className="font-mono">{scanCurrentIp}</span> : null}
-										{scanDiscoveredHosts > 0 ? (
-											<span className="text-success">{scanDiscoveredHosts} hosts</span>
-										) : null}
-										{scanDiscoveredPorts > 0 ? (
-											<span className="text-success">{scanDiscoveredPorts} ports</span>
-										) : null}
+									<div className="flex items-center justify-between text-xs text-muted-foreground">
+										<span>{scanStatusText}</span>
+										<div className="flex items-center gap-3">
+											{scanCurrentIp ? <span className="font-mono">{scanCurrentIp}</span> : null}
+											{scanDiscoveredHosts > 0 ? (
+												<span className="text-success">{scanDiscoveredHosts} hosts</span>
+											) : null}
+											{scanDiscoveredPorts > 0 ? (
+												<span className="text-success">{scanDiscoveredPorts} ports</span>
+											) : null}
+										</div>
 									</div>
-								</div>
-							</div>
+								</CardContent>
+							</Card>
 						) : onScan ? (
-							<div className="mb-4 rounded-lg border bg-card p-3">
-								<div className="flex items-center gap-2">
-									<Select
-										value={localScanMode}
-										onValueChange={(v) => setLocalScanMode(v as ScanMode)}
-									>
-										<SelectTrigger size="sm" className="flex-1">
-											<SelectValue />
-										</SelectTrigger>
-										<SelectContent>
-											{SCAN_MODES.map((mode) => (
-												<SelectItem key={mode.value} value={mode.value}>
-													{mode.label}
-												</SelectItem>
-											))}
-										</SelectContent>
-									</Select>
-									<Button
-										variant="default"
-										size="sm"
-										className="h-8 shrink-0 gap-1.5 px-3 text-xs"
-										disabled={scanDisabled}
-										onClick={() => onScan(primaryIp, localScanMode)}
-									>
-										<Play className="h-3.5 w-3.5" />
-										{ports.length > 0 ? 'Re-scan' : 'Scan'}
-									</Button>
-								</div>
-								<p className="mt-1.5 text-xs text-muted-foreground">
-									{SCAN_MODES.find((m) => m.value === localScanMode)?.description ?? ''}
-								</p>
-							</div>
+							<Card density="compact" className="mb-4">
+								<CardContent>
+									<div className="flex items-center gap-2">
+										<Select
+											value={localScanMode}
+											onValueChange={(v) => setLocalScanMode(v as ScanMode)}
+										>
+											<SelectTrigger size="sm" className="flex-1">
+												<SelectValue />
+											</SelectTrigger>
+											<SelectContent>
+												{SCAN_MODES.map((mode) => (
+													<SelectItem key={mode.value} value={mode.value}>
+														{mode.label}
+													</SelectItem>
+												))}
+											</SelectContent>
+										</Select>
+										<Button
+											variant="default"
+											size="sm"
+											className="h-8 shrink-0 gap-1.5 px-3 text-xs"
+											disabled={scanDisabled}
+											onClick={() => onScan(primaryIp, localScanMode)}
+										>
+											<Play className="h-3.5 w-3.5" />
+											{ports.length > 0 ? 'Re-scan' : 'Scan'}
+										</Button>
+									</div>
+									<p className="mt-1.5 text-xs text-muted-foreground">
+										{SCAN_MODES.find((m) => m.value === localScanMode)?.description ?? ''}
+									</p>
+								</CardContent>
+							</Card>
 						) : null}
 
 						{ports.length === 0 && scanDisabled && scanProgress ? (
@@ -971,46 +1015,48 @@ export function UnifiedHostDetailPanel({
 							/>
 						) : (
 							<>
-								<div className="mb-4 rounded-lg border bg-card p-3">
-									<div className="flex items-center justify-between text-sm">
-										<span className="font-medium">Port Summary</span>
-										<span className="text-xs text-muted-foreground">{ports.length} scanned</span>
-									</div>
-									<div className="mt-2 flex gap-4 text-xs">
-										<span className="flex items-center gap-1.5 text-success">
-											<CheckCircle2 className="h-3 w-3" aria-hidden="true" />
-											{openPorts.length} open
-										</span>
-										<span className="flex items-center gap-1.5 text-warning">
-											<Shield className="h-3 w-3" aria-hidden="true" />
-											{filteredPorts.length} filtered
-										</span>
-										<span className="flex items-center gap-1.5 text-destructive">
-											<XCircle className="h-3 w-3" aria-hidden="true" />
-											{closedPorts.length} closed
-										</span>
-									</div>
-									<div className="mt-2 flex h-1.5 overflow-hidden rounded-full bg-muted">
-										{openPorts.length > 0 ? (
-											<div
-												className="bg-success"
-												style={{ width: `${(openPorts.length / ports.length) * 100}%` }}
-											/>
-										) : null}
-										{filteredPorts.length > 0 ? (
-											<div
-												className="bg-warning"
-												style={{ width: `${(filteredPorts.length / ports.length) * 100}%` }}
-											/>
-										) : null}
-										{closedPorts.length > 0 ? (
-											<div
-												className="bg-destructive"
-												style={{ width: `${(closedPorts.length / ports.length) * 100}%` }}
-											/>
-										) : null}
-									</div>
-								</div>
+								<Card density="compact" className="mb-4">
+									<CardContent>
+										<div className="flex items-center justify-between text-sm">
+											<span className="font-medium">Port Summary</span>
+											<span className="text-xs text-muted-foreground">{ports.length} scanned</span>
+										</div>
+										<div className="mt-2 flex gap-4 text-xs">
+											<span className="flex items-center gap-1.5 text-success">
+												<CheckCircle2 className="h-3 w-3" aria-hidden="true" />
+												{openPorts.length} open
+											</span>
+											<span className="flex items-center gap-1.5 text-warning">
+												<Shield className="h-3 w-3" aria-hidden="true" />
+												{filteredPorts.length} filtered
+											</span>
+											<span className="flex items-center gap-1.5 text-destructive">
+												<XCircle className="h-3 w-3" aria-hidden="true" />
+												{closedPorts.length} closed
+											</span>
+										</div>
+										<div className="mt-2 flex h-1.5 overflow-hidden rounded-full bg-muted">
+											{openPorts.length > 0 ? (
+												<div
+													className="bg-success"
+													style={{ width: `${(openPorts.length / ports.length) * 100}%` }}
+												/>
+											) : null}
+											{filteredPorts.length > 0 ? (
+												<div
+													className="bg-warning"
+													style={{ width: `${(filteredPorts.length / ports.length) * 100}%` }}
+												/>
+											) : null}
+											{closedPorts.length > 0 ? (
+												<div
+													className="bg-destructive"
+													style={{ width: `${(closedPorts.length / ports.length) * 100}%` }}
+												/>
+											) : null}
+										</div>
+									</CardContent>
+								</Card>
 
 								{/* Open Ports */}
 								{openPorts.length > 0 ? (
@@ -1025,110 +1071,113 @@ export function UnifiedHostDetailPanel({
 												const PortIcon = getPortIcon(port.port);
 												const serviceName = getServiceName(port);
 												return (
-													<div
+													<Card
 														key={port.port}
-														className="rounded-lg border bg-card p-3 transition-colors hover:border-border/80"
+														density="compact"
+														className="transition-colors hover:border-border/80"
 													>
-														<div className="flex items-start justify-between">
-															<div className="flex items-start gap-3">
-																<div className="rounded bg-success/10 p-1.5">
-																	<PortIcon className="h-4 w-4 text-success" />
-																</div>
-																<div className="min-w-0 flex-1">
-																	<div className="flex items-center gap-2">
-																		<span className="font-mono text-base font-semibold tabular-nums">
-																			{port.port}
-																		</span>
-																		{serviceName ? (
-																			<span className="rounded bg-muted px-1.5 py-0.5 text-xs font-medium">
-																				{serviceName}
+														<CardContent>
+															<div className="flex items-start justify-between">
+																<div className="flex items-start gap-3">
+																	<div className="rounded bg-success/10 p-1.5">
+																		<PortIcon className="h-4 w-4 text-success" />
+																	</div>
+																	<div className="min-w-0 flex-1">
+																		<div className="flex items-center gap-2">
+																			<span className="font-mono text-base font-semibold tabular-nums">
+																				{port.port}
 																			</span>
+																			{serviceName ? (
+																				<span className="rounded bg-muted px-1.5 py-0.5 text-xs font-medium">
+																					{serviceName}
+																				</span>
+																			) : null}
+																		</div>
+																		{port.banner ? (
+																			<details className="mt-2">
+																				<summary className="flex cursor-pointer items-center gap-1 text-xs text-muted-foreground hover:text-foreground">
+																					<ChevronRight className="h-3 w-3 transition-transform [[open]>&]:rotate-90" />
+																					Banner / Version Info
+																				</summary>
+																				<div className="mt-1.5 rounded bg-muted/50 p-2 font-mono text-xs leading-relaxed text-muted-foreground">
+																					{port.banner}
+																				</div>
+																			</details>
+																		) : null}
+																		{port.tlsCert ? (
+																			<details className="mt-2">
+																				<summary className="flex cursor-pointer items-center gap-1 text-xs text-muted-foreground hover:text-foreground">
+																					<ChevronRight className="h-3 w-3 transition-transform [[open]>&]:rotate-90" />
+																					<Lock className="h-3 w-3" />
+																					TLS Certificate
+																					{port.tlsCert.isSelfSigned ? (
+																						<span className="rounded bg-warning/10 px-1.5 py-0.5 text-xs font-medium text-warning">
+																							Self-signed
+																						</span>
+																					) : null}
+																				</summary>
+																				<div className="mt-1.5 space-y-1.5 rounded bg-muted/50 p-2 text-xs">
+																					{port.tlsCert.commonName ? (
+																						<div className="flex gap-1">
+																							<span className="shrink-0 font-medium text-muted-foreground">
+																								CN:
+																							</span>
+																							<span className="break-all font-mono">
+																								{port.tlsCert.commonName}
+																							</span>
+																						</div>
+																					) : null}
+																					{port.tlsCert.issuer ? (
+																						<div className="flex gap-1">
+																							<span className="shrink-0 font-medium text-muted-foreground">
+																								Issuer:
+																							</span>
+																							<span className="break-all font-mono">
+																								{port.tlsCert.issuer}
+																							</span>
+																						</div>
+																					) : null}
+																					{port.tlsCert.subjectAltNames &&
+																					port.tlsCert.subjectAltNames.length > 0 ? (
+																						<div>
+																							<span className="font-medium text-muted-foreground">
+																								SAN:
+																							</span>
+																							<div className="ml-3 mt-0.5 space-y-0.5">
+																								{port.tlsCert.subjectAltNames.map((san) => (
+																									<div key={san} className="break-all font-mono">
+																										{san}
+																									</div>
+																								))}
+																							</div>
+																						</div>
+																					) : null}
+																				</div>
+																			</details>
 																		) : null}
 																	</div>
-																	{port.banner ? (
-																		<details className="mt-2">
-																			<summary className="flex cursor-pointer items-center gap-1 text-xs text-muted-foreground hover:text-foreground">
-																				<ChevronRight className="h-3 w-3 transition-transform [[open]>&]:rotate-90" />
-																				Banner / Version Info
-																			</summary>
-																			<div className="mt-1.5 rounded bg-muted/50 p-2 font-mono text-xs leading-relaxed text-muted-foreground">
-																				{port.banner}
-																			</div>
-																		</details>
-																	) : null}
-																	{port.tlsCert ? (
-																		<details className="mt-2">
-																			<summary className="flex cursor-pointer items-center gap-1 text-xs text-muted-foreground hover:text-foreground">
-																				<ChevronRight className="h-3 w-3 transition-transform [[open]>&]:rotate-90" />
-																				<Lock className="h-3 w-3" />
-																				TLS Certificate
-																				{port.tlsCert.isSelfSigned ? (
-																					<span className="rounded bg-warning/10 px-1.5 py-0.5 text-xs font-medium text-warning">
-																						Self-signed
-																					</span>
-																				) : null}
-																			</summary>
-																			<div className="mt-1.5 space-y-1.5 rounded bg-muted/50 p-2 text-xs">
-																				{port.tlsCert.commonName ? (
-																					<div className="flex gap-1">
-																						<span className="shrink-0 font-medium text-muted-foreground">
-																							CN:
-																						</span>
-																						<span className="break-all font-mono">
-																							{port.tlsCert.commonName}
-																						</span>
-																					</div>
-																				) : null}
-																				{port.tlsCert.issuer ? (
-																					<div className="flex gap-1">
-																						<span className="shrink-0 font-medium text-muted-foreground">
-																							Issuer:
-																						</span>
-																						<span className="break-all font-mono">
-																							{port.tlsCert.issuer}
-																						</span>
-																					</div>
-																				) : null}
-																				{port.tlsCert.subjectAltNames &&
-																				port.tlsCert.subjectAltNames.length > 0 ? (
-																					<div>
-																						<span className="font-medium text-muted-foreground">
-																							SAN:
-																						</span>
-																						<div className="ml-3 mt-0.5 space-y-0.5">
-																							{port.tlsCert.subjectAltNames.map((san) => (
-																								<div key={san} className="break-all font-mono">
-																									{san}
-																								</div>
-																							))}
-																						</div>
-																					</div>
-																				) : null}
-																			</div>
-																		</details>
-																	) : null}
 																</div>
+																<Tooltip>
+																	<TooltipTrigger asChild>
+																		<Button
+																			variant="ghost"
+																			size="icon-sm"
+																			className="h-6 w-6 text-muted-foreground hover:bg-muted hover:text-foreground"
+																			onClick={() => {
+																				copyToClipboard(String(port.port), 'Port number').catch(
+																					() => {}
+																				);
+																			}}
+																		>
+																			<Copy className="h-3 w-3" />
+																			<span className="sr-only">Copy port</span>
+																		</Button>
+																	</TooltipTrigger>
+																	<TooltipContent>Copy port</TooltipContent>
+																</Tooltip>
 															</div>
-															<Tooltip>
-																<TooltipTrigger asChild>
-																	<Button
-																		variant="ghost"
-																		size="icon-sm"
-																		className="h-6 w-6 text-muted-foreground hover:bg-muted hover:text-foreground"
-																		onClick={() => {
-																			copyToClipboard(String(port.port), 'Port number').catch(
-																				() => {}
-																			);
-																		}}
-																	>
-																		<Copy className="h-3 w-3" />
-																		<span className="sr-only">Copy port</span>
-																	</Button>
-																</TooltipTrigger>
-																<TooltipContent>Copy port</TooltipContent>
-															</Tooltip>
-														</div>
-													</div>
+														</CardContent>
+													</Card>
 												);
 											})}
 										</div>
@@ -1213,40 +1262,45 @@ export function UnifiedHostDetailPanel({
 						) : (
 							<div className="space-y-2">
 								{discoveries.map((discovery) => (
-									<div
+									<Card
 										key={discovery.method}
-										className="rounded-lg border bg-card p-3 transition-colors hover:border-border/80"
+										density="compact"
+										className="transition-colors hover:border-border/80"
 									>
-										<div className="flex items-center justify-between">
-											<div className="flex items-center gap-3">
-												<div
-													className={cn(
-														'rounded p-1.5',
-														discovery.error ? 'bg-destructive/10' : 'bg-success/10'
-													)}
-												>
-													{discovery.error ? (
-														<XCircle className="h-4 w-4 text-destructive" />
-													) : (
-														<CheckCircle2 className="h-4 w-4 text-success" />
-													)}
+										<CardContent>
+											<div className="flex items-center justify-between">
+												<div className="flex items-center gap-3">
+													<div
+														className={cn(
+															'rounded p-1.5',
+															discovery.error ? 'bg-destructive/10' : 'bg-success/10'
+														)}
+													>
+														{discovery.error ? (
+															<XCircle className="h-4 w-4 text-destructive" />
+														) : (
+															<CheckCircle2 className="h-4 w-4 text-success" />
+														)}
+													</div>
+													<div>
+														<span className="font-medium">
+															{formatMethodName(discovery.method)}
+														</span>
+														<p className="text-xs text-muted-foreground">
+															{getMethodDescription(discovery.method)}
+														</p>
+														{discovery.error ? (
+															<p className="mt-0.5 text-xs text-destructive">{discovery.error}</p>
+														) : null}
+													</div>
 												</div>
-												<div>
-													<span className="font-medium">{formatMethodName(discovery.method)}</span>
-													<p className="text-xs text-muted-foreground">
-														{getMethodDescription(discovery.method)}
-													</p>
-													{discovery.error ? (
-														<p className="mt-0.5 text-xs text-destructive">{discovery.error}</p>
-													) : null}
+												<div className="flex items-center gap-1 text-xs text-muted-foreground">
+													<Clock className="h-3 w-3" />
+													<span>{formatDuration(discovery.durationMs)}</span>
 												</div>
 											</div>
-											<div className="flex items-center gap-1 text-xs text-muted-foreground">
-												<Clock className="h-3 w-3" />
-												<span>{formatDuration(discovery.durationMs)}</span>
-											</div>
-										</div>
-									</div>
+										</CardContent>
+									</Card>
 								))}
 							</div>
 						)}
@@ -1263,59 +1317,68 @@ export function UnifiedHostDetailPanel({
 						) : (
 							<div className="space-y-2">
 								{mdnsServices.map((service) => (
-									<div
+									<Card
 										key={`${service.instanceName}-${service.serviceType}`}
-										className="rounded-lg border bg-card p-3 transition-colors hover:border-border/80"
+										density="compact"
+										className="transition-colors hover:border-border/80"
 									>
-										<div className="flex items-start justify-between">
-											<div className="min-w-0 flex-1">
-												<div className="flex items-center gap-2">
-													<span className="truncate font-medium">{service.instanceName}</span>
-													<span className="shrink-0 rounded bg-info/10 px-1.5 py-0.5 text-xs font-medium text-info">
-														{service.serviceType.replace(/\._tcp\.local\.$/, '').replace(/^_/, '')}
-													</span>
+										<CardContent>
+											<div className="flex items-start justify-between">
+												<div className="min-w-0 flex-1">
+													<div className="flex items-center gap-2">
+														<span className="truncate font-medium">{service.instanceName}</span>
+														<span className="shrink-0 rounded bg-info/10 px-1.5 py-0.5 text-xs font-medium text-info">
+															{service.serviceType
+																.replace(/\._tcp\.local\.$/, '')
+																.replace(/^_/, '')}
+														</span>
+													</div>
+													<div className="mt-1 flex items-center gap-2 text-xs text-muted-foreground">
+														<span className="font-mono">Port {service.port}</span>
+													</div>
+													{service.properties.length > 0 ? (
+														<details className="mt-2">
+															<summary className="flex cursor-pointer items-center gap-1 text-xs text-muted-foreground hover:text-foreground">
+																<ChevronRight className="h-3 w-3 transition-transform [[open]>&]:rotate-90" />
+																TXT Properties ({service.properties.length})
+															</summary>
+															<div className="mt-1.5 max-h-24 overflow-y-auto rounded bg-muted/50 p-2 text-xs">
+																{service.properties.map(([key, value]) => (
+																	<div key={`${key}-${value}`} className="flex gap-2">
+																		<span className="font-medium text-muted-foreground">
+																			{key}:
+																		</span>
+																		<span className="break-all font-mono">
+																			{value || '(empty)'}
+																		</span>
+																	</div>
+																))}
+															</div>
+														</details>
+													) : null}
 												</div>
-												<div className="mt-1 flex items-center gap-2 text-xs text-muted-foreground">
-													<span className="font-mono">Port {service.port}</span>
-												</div>
-												{service.properties.length > 0 ? (
-													<details className="mt-2">
-														<summary className="flex cursor-pointer items-center gap-1 text-xs text-muted-foreground hover:text-foreground">
-															<ChevronRight className="h-3 w-3 transition-transform [[open]>&]:rotate-90" />
-															TXT Properties ({service.properties.length})
-														</summary>
-														<div className="mt-1.5 max-h-24 overflow-y-auto rounded bg-muted/50 p-2 text-xs">
-															{service.properties.map(([key, value]) => (
-																<div key={`${key}-${value}`} className="flex gap-2">
-																	<span className="font-medium text-muted-foreground">{key}:</span>
-																	<span className="break-all font-mono">{value || '(empty)'}</span>
-																</div>
-															))}
-														</div>
-													</details>
-												) : null}
+												<Tooltip>
+													<TooltipTrigger asChild>
+														<Button
+															variant="ghost"
+															size="icon-sm"
+															className="h-6 w-6 shrink-0 text-muted-foreground hover:bg-muted hover:text-foreground"
+															onClick={() => {
+																copyToClipboard(
+																	`${service.instanceName} (${service.serviceType}:${service.port})`,
+																	'Service info'
+																).catch(() => {});
+															}}
+														>
+															<Copy className="h-3 w-3" />
+															<span className="sr-only">Copy service info</span>
+														</Button>
+													</TooltipTrigger>
+													<TooltipContent>Copy service info</TooltipContent>
+												</Tooltip>
 											</div>
-											<Tooltip>
-												<TooltipTrigger asChild>
-													<Button
-														variant="ghost"
-														size="icon-sm"
-														className="h-6 w-6 shrink-0 text-muted-foreground hover:bg-muted hover:text-foreground"
-														onClick={() => {
-															copyToClipboard(
-																`${service.instanceName} (${service.serviceType}:${service.port})`,
-																'Service info'
-															).catch(() => {});
-														}}
-													>
-														<Copy className="h-3 w-3" />
-														<span className="sr-only">Copy service info</span>
-													</Button>
-												</TooltipTrigger>
-												<TooltipContent>Copy service info</TooltipContent>
-											</Tooltip>
-										</div>
-									</div>
+										</CardContent>
+									</Card>
 								))}
 							</div>
 						)}

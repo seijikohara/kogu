@@ -16,6 +16,7 @@ import {
 import { SectionHeader } from '@/lib/components/layout';
 import { ToolShell } from '@/lib/components/shell';
 import { EmbeddedEmptyState, StatItem } from '@/lib/components/status';
+import { Card, CardContent } from '@/lib/components/ui/card';
 import { createToolOptionsStore } from '@/lib/stores';
 import {
 	DEFAULT_COUNT,
@@ -260,10 +261,12 @@ function UuidGeneratorPage() {
 					{results.length > 0 ? (
 						<div key={flashCounter} className="animate-flash-success space-y-2 rounded-md">
 							{results.map((uuid) => (
-								<div key={uuid} className="flex items-center gap-2 rounded-lg border bg-card p-3">
-									<code className="flex-1 break-all font-mono text-sm">{uuid}</code>
-									<CopyButton text={uuid} toastLabel="UUID" size="sm" showLabel={false} />
-								</div>
+								<Card key={uuid} density="compact">
+									<CardContent className="flex items-center gap-2">
+										<code className="flex-1 break-all font-mono text-sm">{uuid}</code>
+										<CopyButton text={uuid} toastLabel="UUID" size="sm" showLabel={false} />
+									</CardContent>
+								</Card>
 							))}
 						</div>
 					) : (

@@ -14,6 +14,7 @@ import {
 import { SectionHeader } from '@/lib/components/layout';
 import { ToolShell } from '@/lib/components/shell';
 import { EmbeddedEmptyState, StatItem } from '@/lib/components/status';
+import { Card, CardContent } from '@/lib/components/ui/card';
 import { createToolOptionsStore } from '@/lib/stores';
 import {
 	buildCharacterPool,
@@ -266,13 +267,12 @@ function PasswordGeneratorPage() {
 					{results.length > 0 ? (
 						<div key={flashCounter} className="animate-flash-success space-y-2 rounded-md">
 							{results.map((password) => (
-								<div
-									key={password}
-									className="flex items-center gap-2 rounded-lg border bg-card p-3"
-								>
-									<code className="flex-1 break-all font-mono text-sm">{password}</code>
-									<CopyButton text={password} toastLabel="Password" size="sm" showLabel={false} />
-								</div>
+								<Card key={password} density="compact">
+									<CardContent className="flex items-center gap-2">
+										<code className="flex-1 break-all font-mono text-sm">{password}</code>
+										<CopyButton text={password} toastLabel="Password" size="sm" showLabel={false} />
+									</CardContent>
+								</Card>
 							))}
 						</div>
 					) : (
