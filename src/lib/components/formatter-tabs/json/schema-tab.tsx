@@ -216,21 +216,25 @@ export function SchemaTab({ input, onInputChange, onStatsChange }: SchemaTabProp
 							label="Report all errors"
 							checked={schemaAllErrors}
 							onCheckedChange={setSchemaAllErrors}
+							size="compact"
 						/>
 						<FormCheckbox
 							label="Strict mode"
 							checked={schemaStrictMode}
 							onCheckedChange={setSchemaStrictMode}
+							size="compact"
 						/>
 						<FormCheckbox
 							label="Coerce types"
 							checked={schemaCoerceTypes}
 							onCheckedChange={setSchemaCoerceTypes}
+							size="compact"
 						/>
 						<FormCheckbox
 							label="Validate formats"
 							checked={schemaValidateFormats}
 							onCheckedChange={setSchemaValidateFormats}
+							size="compact"
 						/>
 					</FormCheckboxGroup>
 				</FormSection>
@@ -241,16 +245,19 @@ export function SchemaTab({ input, onInputChange, onStatsChange }: SchemaTabProp
 							label="Use defaults"
 							checked={schemaUseDefaults}
 							onCheckedChange={setSchemaUseDefaults}
+							size="compact"
 						/>
 						<FormCheckbox
 							label="Remove additional properties"
 							checked={schemaRemoveAdditional}
 							onCheckedChange={setSchemaRemoveAdditional}
+							size="compact"
 						/>
 						<FormCheckbox
 							label="Verbose errors"
 							checked={schemaVerboseErrors}
 							onCheckedChange={setSchemaVerboseErrors}
+							size="compact"
 						/>
 					</FormCheckboxGroup>
 				</FormSection>

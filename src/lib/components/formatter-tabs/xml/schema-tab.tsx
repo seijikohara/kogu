@@ -326,11 +326,13 @@ export function SchemaTab({ input, onInputChange, onStatsChange }: SchemaTabProp
 							label="Validate namespaces"
 							checked={validateNamespaces}
 							onCheckedChange={setValidateNamespaces}
+							size="compact"
 						/>
 						<FormCheckbox
 							label="Validate DTD (if present)"
 							checked={validateDtd}
 							onCheckedChange={setValidateDtd}
+							size="compact"
 						/>
 					</FormCheckboxGroup>
 				</FormSection>

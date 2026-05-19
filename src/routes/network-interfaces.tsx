@@ -219,16 +219,23 @@ function NetworkInterfacesPage() {
 				<>
 					<FormSection title="Filter">
 						<FormCheckboxGroup>
-							<FormCheckbox label="Active" checked={showActive} onCheckedChange={setShowActive} />
+							<FormCheckbox
+								label="Active"
+								checked={showActive}
+								onCheckedChange={setShowActive}
+								size="compact"
+							/>
 							<FormCheckbox
 								label="Inactive"
 								checked={showInactive}
 								onCheckedChange={setShowInactive}
+								size="compact"
 							/>
 							<FormCheckbox
 								label="Loopback"
 								checked={showLoopback}
 								onCheckedChange={setShowLoopback}
+								size="compact"
 							/>
 						</FormCheckboxGroup>
 					</FormSection>
@@ -239,6 +246,7 @@ function NetworkInterfacesPage() {
 							value={sortField}
 							onValueChange={(v) => setSortField(v as SortField)}
 							options={SORT_OPTIONS}
+							size="compact"
 						/>
 					</FormSection>
 				</>

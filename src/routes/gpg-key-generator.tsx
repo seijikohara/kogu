@@ -159,6 +159,7 @@ function GpgKeyGeneratorPage() {
 								onValueChange={setName}
 								placeholder="John Doe"
 								hint="Your real name or identity"
+								size="compact"
 							/>
 							<FormInput
 								label="Email *"
@@ -166,6 +167,7 @@ function GpgKeyGeneratorPage() {
 								value={email}
 								onValueChange={setEmail}
 								placeholder="john@example.com"
+								size="compact"
 							/>
 							{email && !isValidEmail(email) ? (
 								<FormError message="Please enter a valid email address" />
@@ -175,6 +177,7 @@ function GpgKeyGeneratorPage() {
 								value={comment}
 								onValueChange={setComment}
 								placeholder="Work key"
+								size="compact"
 							/>
 						</div>
 					</FormSection>
@@ -203,6 +206,7 @@ function GpgKeyGeneratorPage() {
 								label: a.recommended ? `${a.label} (Recommended)` : a.label,
 								description: a.description,
 							}))}
+							size="compact"
 						/>
 					</FormSection>
 
@@ -215,6 +219,7 @@ function GpgKeyGeneratorPage() {
 							onValueChange={setPassphrase}
 							placeholder="Enter passphrase..."
 							hint="Recommended for key protection"
+							size="compact"
 						/>
 					</FormSection>
 
@@ -236,6 +241,7 @@ function GpgKeyGeneratorPage() {
 									disabled: !gpgAvailable,
 								},
 							]}
+							size="compact"
 						/>
 						{cliAvailability?.gpg_version ? (
 							<p className="mt-1 text-xs text-muted-foreground">{cliAvailability.gpg_version}</p>
@@ -266,11 +272,13 @@ function GpgKeyGeneratorPage() {
 									label="Show key information"
 									checked={showKeyInfo}
 									onCheckedChange={setShowKeyInfo}
+									size="compact"
 								/>
 								<FormCheckbox
 									label="Show GPG commands"
 									checked={showGpgCommands}
 									onCheckedChange={setShowGpgCommands}
+									size="compact"
 								/>
 							</FormCheckboxGroup>
 						</div>

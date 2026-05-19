@@ -163,6 +163,7 @@ function SshKeyGeneratorPage() {
 								label: a.recommended ? `${a.label} (Recommended)` : a.label,
 								description: a.description,
 							}))}
+							size="compact"
 						/>
 						{algorithmDescription ? (
 							<p className="mt-1 text-xs text-muted-foreground">{algorithmDescription}</p>
@@ -177,6 +178,7 @@ function SshKeyGeneratorPage() {
 								onValueChange={setComment}
 								placeholder="user@hostname or email"
 								hint="Typically your email address or user@host"
+								size="compact"
 							/>
 							<FormInput
 								label="Passphrase (optional)"
@@ -186,6 +188,7 @@ function SshKeyGeneratorPage() {
 								onValueChange={setPassphrase}
 								placeholder="Enter passphrase..."
 								hint="Leave empty for no passphrase protection"
+								size="compact"
 							/>
 						</div>
 					</FormSection>
@@ -210,6 +213,7 @@ function SshKeyGeneratorPage() {
 									disabled: !sshKeygenAvailable,
 								},
 							]}
+							size="compact"
 						/>
 						{cliAvailability?.ssh_keygen_version ? (
 							<p className="mt-1 text-xs text-muted-foreground">
@@ -241,11 +245,13 @@ function SshKeyGeneratorPage() {
 									label="Show fingerprint"
 									checked={showFingerprint}
 									onCheckedChange={setShowFingerprint}
+									size="compact"
 								/>
 								<FormCheckbox
 									label="Show ssh-keygen command"
 									checked={showEquivalentCommand}
 									onCheckedChange={setShowEquivalentCommand}
+									size="compact"
 								/>
 							</FormCheckboxGroup>
 						</div>

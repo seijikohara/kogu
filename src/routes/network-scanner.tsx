@@ -676,6 +676,7 @@ function NetworkScannerPage() {
 						value={target}
 						onValueChange={setTarget}
 						placeholder="192.168.1.1 or 192.168.1.0/24"
+						size="compact"
 					/>
 					{target && !isValidTarget(target) ? <FormError message="Invalid target format" /> : null}
 					<ActionButton
@@ -731,6 +732,7 @@ function NetworkScannerPage() {
 								checked={isSelected}
 								disabled={isDisabled}
 								onCheckedChange={() => toggleDiscoveryMethod(method.value)}
+								size="compact"
 							/>
 						);
 					})}
@@ -748,16 +750,19 @@ function NetworkScannerPage() {
 									label="DNS PTR"
 									checked={resolveDns}
 									onCheckedChange={setResolveDns}
+									size="compact"
 								/>
 								<FormCheckbox
 									label="mDNS (.local)"
 									checked={resolveMdns}
 									onCheckedChange={setResolveMdns}
+									size="compact"
 								/>
 								<FormCheckbox
 									label="NetBIOS"
 									checked={resolveNetbios}
 									onCheckedChange={setResolveNetbios}
+									size="compact"
 								/>
 								{resolveHostname ? (
 									<div className="mt-2 border-t border-border pt-2">
@@ -769,6 +774,7 @@ function NetworkScannerPage() {
 											max={5000}
 											step={500}
 											hint={`${resolveTimeoutMs}ms`}
+											size="compact"
 										/>
 									</div>
 								) : null}
@@ -941,6 +947,7 @@ function NetworkScannerPage() {
 									onValueChange={setPortRange}
 									placeholder="80,443,8080 or 1-1024"
 									onBlur={() => setPortRangeTouched(true)}
+									size="compact"
 								/>
 								{portRangeTouched && portRange && !isValidPortRange(portRange) ? (
 									<FormError className="mt-1" message="Invalid port range format" />
@@ -967,6 +974,7 @@ function NetworkScannerPage() {
 						max={MAX_CONCURRENCY}
 						step={10}
 						hint={`${concurrency}`}
+						size="compact"
 					/>
 					<FormSlider
 						label="Timeout"
@@ -976,6 +984,7 @@ function NetworkScannerPage() {
 						max={MAX_TIMEOUT_MS}
 						step={100}
 						hint={`${timeoutMs}ms`}
+						size="compact"
 					/>
 				</div>
 

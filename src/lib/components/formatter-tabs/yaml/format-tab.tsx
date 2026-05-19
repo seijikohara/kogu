@@ -217,6 +217,7 @@ export function FormatTab({ input, onInputChange, onStatsChange }: FormatTabProp
 							value={indentSizeStr}
 							onValueChange={setIndentSizeStr}
 							options={['2', '4', '8']}
+							size="compact"
 						/>
 						<FormSelect
 							label="Line Width"
@@ -228,6 +229,7 @@ export function FormatTab({ input, onInputChange, onStatsChange }: FormatTabProp
 								{ value: '120', label: '120' },
 								{ value: '0', label: '∞' },
 							]}
+							size="compact"
 						/>
 					</div>
 					<FormSelect
@@ -245,11 +247,13 @@ export function FormatTab({ input, onInputChange, onStatsChange }: FormatTabProp
 							label="Indent sequences"
 							checked={indentSeq}
 							onCheckedChange={setIndentSeq}
+							size="compact"
 						/>
 						<FormCheckbox
 							label="Flow collection padding"
 							checked={flowCollectionPadding}
 							onCheckedChange={setFlowCollectionPadding}
+							size="compact"
 						/>
 					</FormCheckboxGroup>
 				</FormSection>
@@ -272,16 +276,19 @@ export function FormatTab({ input, onInputChange, onStatsChange }: FormatTabProp
 							label="Force quotes on all strings"
 							checked={forceQuotes}
 							onCheckedChange={setForceQuotes}
+							size="compact"
 						/>
 						<FormCheckbox
 							label="Prefer single quotes"
 							checked={singleQuote}
 							onCheckedChange={setSingleQuote}
+							size="compact"
 						/>
 						<FormCheckbox
 							label="Double-quoted as JSON style"
 							checked={doubleQuotedAsJSON}
 							onCheckedChange={setDoubleQuotedAsJSON}
+							size="compact"
 						/>
 					</FormCheckboxGroup>
 				</FormSection>
@@ -302,6 +309,7 @@ export function FormatTab({ input, onInputChange, onStatsChange }: FormatTabProp
 							label="Sort keys alphabetically"
 							checked={sortKeys}
 							onCheckedChange={setSortKeys}
+							size="compact"
 						/>
 					</FormCheckboxGroup>
 				</FormSection>
@@ -340,6 +348,7 @@ export function FormatTab({ input, onInputChange, onStatsChange }: FormatTabProp
 						label="Disable YAML references/aliases"
 						checked={noRefs}
 						onCheckedChange={setNoRefs}
+						size="compact"
 					/>
 				</FormSection>
 			</OptionsPanel>

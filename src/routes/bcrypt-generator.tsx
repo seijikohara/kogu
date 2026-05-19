@@ -235,6 +235,7 @@ function BcryptGeneratorPage() {
 									value={password}
 									onValueChange={setPassword}
 									placeholder="Enter password to hash..."
+									size="compact"
 								/>
 							</FormSection>
 
@@ -248,6 +249,7 @@ function BcryptGeneratorPage() {
 									step={1}
 									valueLabel={`${cost} (${costInfo?.security_level ?? '...'})`}
 									hint={`Estimated time: ${estimatedTime}`}
+									size="compact"
 								/>
 							</FormSection>
 
@@ -278,6 +280,7 @@ function BcryptGeneratorPage() {
 									value={verifyPassword}
 									onValueChange={setVerifyPassword}
 									placeholder="Enter password to verify..."
+									size="compact"
 								/>
 							</FormSection>
 
@@ -287,6 +290,7 @@ function BcryptGeneratorPage() {
 									value={verifyHash}
 									onValueChange={setVerifyHash}
 									placeholder="$2b$10$..."
+									size="compact"
 								/>
 							</FormSection>
 

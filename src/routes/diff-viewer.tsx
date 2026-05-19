@@ -298,6 +298,7 @@ function DiffViewerPage() {
 							label="Inline character diff"
 							checked={showInlineDiff}
 							onCheckedChange={setShowInlineDiff}
+							size="compact"
 						/>
 						<FormSlider
 							label="Context lines"
@@ -307,6 +308,7 @@ function DiffViewerPage() {
 							max={10}
 							step={1}
 							showValue
+							size="compact"
 						/>
 					</FormSection>
 
@@ -316,13 +318,20 @@ function DiffViewerPage() {
 								label="Ignore whitespace"
 								checked={ignoreWhitespace}
 								onCheckedChange={setIgnoreWhitespace}
+								size="compact"
 							/>
 							<FormCheckbox
 								label="Ignore case"
 								checked={ignoreCase}
 								onCheckedChange={setIgnoreCase}
+								size="compact"
 							/>
-							<FormCheckbox label="Trim lines" checked={trimLines} onCheckedChange={setTrimLines} />
+							<FormCheckbox
+								label="Trim lines"
+								checked={trimLines}
+								onCheckedChange={setTrimLines}
+								size="compact"
+							/>
 						</FormCheckboxGroup>
 					</FormSection>
 

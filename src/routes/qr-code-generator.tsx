@@ -243,6 +243,7 @@ function QrCodeGeneratorPage() {
 					onValueChange={(v) => setContent('text', { text: v })}
 					placeholder="https://example.com"
 					rows={3}
+					size="compact"
 				/>
 			);
 		}
@@ -255,6 +256,7 @@ function QrCodeGeneratorPage() {
 						value={c.ssid}
 						onValueChange={(v) => setContent('wifi', { ssid: v })}
 						placeholder="my-wifi"
+						size="compact"
 					/>
 					<FormSelect
 						label="Security"
@@ -263,6 +265,7 @@ function QrCodeGeneratorPage() {
 						onValueChange={(v) => {
 							if (isWifiSecurity(v)) setContent('wifi', { security: v });
 						}}
+						size="compact"
 					/>
 					{c.security !== 'nopass' ? (
 						<FormInput
@@ -271,12 +274,14 @@ function QrCodeGeneratorPage() {
 							showToggle
 							value={c.password}
 							onValueChange={(v) => setContent('wifi', { password: v })}
+							size="compact"
 						/>
 					) : null}
 					<FormCheckbox
 						label="Hidden network"
 						checked={c.hidden}
 						onCheckedChange={(v) => setContent('wifi', { hidden: v })}
+						size="compact"
 					/>
 				</>
 			);
@@ -289,33 +294,39 @@ function QrCodeGeneratorPage() {
 						label="First name"
 						value={c.firstName}
 						onValueChange={(v) => setContent('vcard', { firstName: v })}
+						size="compact"
 					/>
 					<FormInput
 						label="Last name"
 						value={c.lastName}
 						onValueChange={(v) => setContent('vcard', { lastName: v })}
+						size="compact"
 					/>
 					<FormInput
 						label="Phone"
 						value={c.phone}
 						onValueChange={(v) => setContent('vcard', { phone: v })}
 						placeholder="+1 555 0100"
+						size="compact"
 					/>
 					<FormInput
 						label="Email"
 						type="email"
 						value={c.email}
 						onValueChange={(v) => setContent('vcard', { email: v })}
+						size="compact"
 					/>
 					<FormInput
 						label="Organization"
 						value={c.org}
 						onValueChange={(v) => setContent('vcard', { org: v })}
+						size="compact"
 					/>
 					<FormInput
 						label="URL"
 						value={c.url}
 						onValueChange={(v) => setContent('vcard', { url: v })}
+						size="compact"
 					/>
 				</>
 			);
@@ -330,17 +341,20 @@ function QrCodeGeneratorPage() {
 						value={c.to}
 						onValueChange={(v) => setContent('email', { to: v })}
 						placeholder="hello@example.com"
+						size="compact"
 					/>
 					<FormInput
 						label="Subject"
 						value={c.subject}
 						onValueChange={(v) => setContent('email', { subject: v })}
+						size="compact"
 					/>
 					<FormTextarea
 						label="Body"
 						value={c.body}
 						onValueChange={(v) => setContent('email', { body: v })}
 						rows={3}
+						size="compact"
 					/>
 				</>
 			);
@@ -354,12 +368,14 @@ function QrCodeGeneratorPage() {
 						value={c.to}
 						onValueChange={(v) => setContent('sms', { to: v })}
 						placeholder="+1 555 0100"
+						size="compact"
 					/>
 					<FormTextarea
 						label="Message"
 						value={c.body}
 						onValueChange={(v) => setContent('sms', { body: v })}
 						rows={3}
+						size="compact"
 					/>
 				</>
 			);
@@ -372,6 +388,7 @@ function QrCodeGeneratorPage() {
 					value={c.number}
 					onValueChange={(v) => setContent('phone', { number: v })}
 					placeholder="+1 555 0100"
+					size="compact"
 				/>
 			);
 		}
@@ -385,6 +402,7 @@ function QrCodeGeneratorPage() {
 						onValueChange={(v) => setContent('geo', { latitude: v })}
 						placeholder="35.6762"
 						className="font-mono"
+						size="compact"
 					/>
 					<FormInput
 						label="Longitude"
@@ -392,6 +410,7 @@ function QrCodeGeneratorPage() {
 						onValueChange={(v) => setContent('geo', { longitude: v })}
 						placeholder="139.6503"
 						className="font-mono"
+						size="compact"
 					/>
 				</>
 			);
@@ -404,6 +423,7 @@ function QrCodeGeneratorPage() {
 						label="Title"
 						value={c.title}
 						onValueChange={(v) => setContent('calendar', { title: v })}
+						size="compact"
 					/>
 					<FormInput
 						label="Start (ISO)"
@@ -411,6 +431,7 @@ function QrCodeGeneratorPage() {
 						onValueChange={(v) => setContent('calendar', { start: v })}
 						placeholder="2026-06-01T09:00"
 						className="font-mono"
+						size="compact"
 					/>
 					<FormInput
 						label="End (ISO)"
@@ -418,17 +439,20 @@ function QrCodeGeneratorPage() {
 						onValueChange={(v) => setContent('calendar', { end: v })}
 						placeholder="2026-06-01T10:00"
 						className="font-mono"
+						size="compact"
 					/>
 					<FormInput
 						label="Location"
 						value={c.location}
 						onValueChange={(v) => setContent('calendar', { location: v })}
+						size="compact"
 					/>
 					<FormTextarea
 						label="Description"
 						value={c.description}
 						onValueChange={(v) => setContent('calendar', { description: v })}
 						rows={2}
+						size="compact"
 					/>
 				</>
 			);
@@ -443,6 +467,7 @@ function QrCodeGeneratorPage() {
 						onValueChange={(v) => setContent('bitcoin', { address: v })}
 						placeholder="bc1q..."
 						className="font-mono"
+						size="compact"
 					/>
 					<FormInput
 						label="Amount (BTC)"
@@ -450,11 +475,13 @@ function QrCodeGeneratorPage() {
 						onValueChange={(v) => setContent('bitcoin', { amount: v })}
 						placeholder="0.001"
 						className="font-mono"
+						size="compact"
 					/>
 					<FormInput
 						label="Label"
 						value={c.label}
 						onValueChange={(v) => setContent('bitcoin', { label: v })}
+						size="compact"
 					/>
 				</>
 			);
@@ -487,6 +514,7 @@ function QrCodeGeneratorPage() {
 							onValueChange={(v) => {
 								if (isQrContentKind(v)) setActiveKind(v);
 							}}
+							size="compact"
 						/>
 					</FormSection>
 
@@ -500,6 +528,7 @@ function QrCodeGeneratorPage() {
 							onValueChange={(v) => {
 								if (isDotType(v)) setStyle((prev) => ({ ...prev, dotType: v }));
 							}}
+							size="compact"
 						/>
 						<FormSelect
 							label="Corner square"
@@ -508,6 +537,7 @@ function QrCodeGeneratorPage() {
 							onValueChange={(v) => {
 								if (isCornerSquareType(v)) setStyle((prev) => ({ ...prev, cornerSquareType: v }));
 							}}
+							size="compact"
 						/>
 						<FormSelect
 							label="Corner dot"
@@ -516,6 +546,7 @@ function QrCodeGeneratorPage() {
 							onValueChange={(v) => {
 								if (isCornerDotType(v)) setStyle((prev) => ({ ...prev, cornerDotType: v }));
 							}}
+							size="compact"
 						/>
 					</FormSection>
 
@@ -540,6 +571,7 @@ function QrCodeGeneratorPage() {
 							label="Use gradient"
 							checked={style.useGradient}
 							onCheckedChange={(v) => setStyle((prev) => ({ ...prev, useGradient: v }))}
+							size="compact"
 						/>
 						{style.useGradient ? (
 							<FormInput
@@ -581,11 +613,13 @@ function QrCodeGeneratorPage() {
 									max={50}
 									step={1}
 									valueLabel={`${Math.round(style.logoSize * 100)}%`}
+									size="compact"
 								/>
 								<FormCheckbox
 									label="Hide background dots under logo"
 									checked={style.hideBackgroundDots}
 									onCheckedChange={(v) => setStyle((prev) => ({ ...prev, hideBackgroundDots: v }))}
+									size="compact"
 								/>
 								<FormInfo>
 									Use error correction level <strong>H</strong> for best logo readability.
@@ -603,6 +637,7 @@ function QrCodeGeneratorPage() {
 							max={MAX_WIDTH}
 							step={32}
 							valueLabel={`${style.width}px`}
+							size="compact"
 						/>
 						<FormSlider
 							label="Margin"
@@ -612,6 +647,7 @@ function QrCodeGeneratorPage() {
 							max={MAX_MARGIN}
 							step={1}
 							valueLabel={`${style.margin}`}
+							size="compact"
 						/>
 						<FormSelect
 							label="Error correction"
@@ -621,6 +657,7 @@ function QrCodeGeneratorPage() {
 								if (v === 'L' || v === 'M' || v === 'Q' || v === 'H')
 									setStyle((prev) => ({ ...prev, errorCorrectionLevel: v }));
 							}}
+							size="compact"
 						/>
 					</FormSection>
 				</>

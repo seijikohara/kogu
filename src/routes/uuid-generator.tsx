@@ -138,6 +138,7 @@ function UuidGeneratorPage() {
 							value={version}
 							options={versionOptions}
 							onValueChange={handleVersionChange}
+							size="compact"
 						/>
 					</FormSection>
 
@@ -148,6 +149,7 @@ function UuidGeneratorPage() {
 								value={namespace}
 								options={namespaceOptions}
 								onValueChange={setNamespace}
+								size="compact"
 							/>
 							<FormInput
 								label="Custom Namespace UUID"
@@ -175,6 +177,7 @@ function UuidGeneratorPage() {
 							max={MAX_COUNT}
 							step={1}
 							valueLabel={String(count)}
+							size="compact"
 						/>
 					</FormSection>
 
@@ -184,16 +187,19 @@ function UuidGeneratorPage() {
 								label="Uppercase"
 								checked={format.uppercase}
 								onCheckedChange={(v) => patch({ format: { ...format, uppercase: v } })}
+								size="compact"
 							/>
 							<FormCheckbox
 								label="Hyphens"
 								checked={format.hyphens}
 								onCheckedChange={(v) => patch({ format: { ...format, hyphens: v } })}
+								size="compact"
 							/>
 							<FormCheckbox
 								label="Wrap in braces"
 								checked={format.braces}
 								onCheckedChange={(v) => patch({ format: { ...format, braces: v } })}
+								size="compact"
 							/>
 						</FormCheckboxGroup>
 					</FormSection>

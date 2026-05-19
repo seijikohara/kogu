@@ -222,6 +222,7 @@ function UrlEncoderPage() {
 									{ value: 'path', label: 'Path segment' },
 									{ value: 'custom', label: 'Custom' },
 								]}
+								size="compact"
 							/>
 							<FormSelect
 								label="Space Encoding"
@@ -235,6 +236,7 @@ function UrlEncoderPage() {
 										description: 'Form data (application/x-www-form-urlencoded)',
 									},
 								]}
+								size="compact"
 							/>
 							<FormSelect
 								label="Hex Case"
@@ -244,6 +246,7 @@ function UrlEncoderPage() {
 									{ value: 'upper', label: 'Uppercase (%2F)' },
 									{ value: 'lower', label: 'Lowercase (%2f)' },
 								]}
+								size="compact"
 							/>
 							<FormSelect
 								label="Newline Handling"
@@ -255,12 +258,14 @@ function UrlEncoderPage() {
 									{ value: 'lf', label: 'Convert to LF' },
 									{ value: 'remove', label: 'Remove' },
 								]}
+								size="compact"
 							/>
 							<div className="pt-1">
 								<FormCheckbox
 									label="Encode non-ASCII characters"
 									checked={encodeNonAscii}
 									onCheckedChange={setEncodeNonAscii}
+									size="compact"
 								/>
 							</div>
 						</FormSection>
@@ -272,6 +277,7 @@ function UrlEncoderPage() {
 									value={preserveChars}
 									onValueChange={setPreserveChars}
 									placeholder="e.g., -_.~"
+									size="compact"
 								/>
 								<FormInfo>
 									<p>Characters listed here will not be encoded.</p>
@@ -306,6 +312,7 @@ function UrlEncoderPage() {
 								label="Treat + as space"
 								checked={plusAsSpace}
 								onCheckedChange={setPlusAsSpace}
+								size="compact"
 							/>
 							<FormSelect
 								label="Invalid Sequences"
@@ -316,11 +323,13 @@ function UrlEncoderPage() {
 									{ value: 'skip', label: 'Skip (remove)' },
 									{ value: 'keep', label: 'Keep as-is' },
 								]}
+								size="compact"
 							/>
 							<FormCheckbox
 								label="Decode multiple layers"
 								checked={decodeMultiple}
 								onCheckedChange={setDecodeMultiple}
+								size="compact"
 							/>
 							{decodeMultiple ? (
 								<div className="pt-1">
@@ -331,6 +340,7 @@ function UrlEncoderPage() {
 										min={1}
 										max={10}
 										step={1}
+										size="compact"
 									/>
 								</div>
 							) : null}

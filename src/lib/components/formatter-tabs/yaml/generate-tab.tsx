@@ -356,26 +356,31 @@ export function GenerateTab({ input, onInputChange, onStatsChange }: GenerateTab
 								label="Use interface (vs type)"
 								checked={tsUseInterface}
 								onCheckedChange={setTsUseInterface}
+								size="compact"
 							/>
 							<FormCheckbox
 								label="Export types"
 								checked={tsUseExport}
 								onCheckedChange={setTsUseExport}
+								size="compact"
 							/>
 							<FormCheckbox
 								label="Readonly properties"
 								checked={tsUseReadonly}
 								onCheckedChange={setTsUseReadonly}
+								size="compact"
 							/>
 							<FormCheckbox
 								label="Strict null checks"
 								checked={tsStrictNullChecks}
 								onCheckedChange={setTsStrictNullChecks}
+								size="compact"
 							/>
 							<FormCheckbox
 								label="Optional properties"
 								checked={tsOptionalProperties}
 								onCheckedChange={setTsOptionalProperties}
+								size="compact"
 							/>
 						</FormCheckboxGroup>
 					</FormSection>
@@ -395,27 +400,37 @@ export function GenerateTab({ input, onInputChange, onStatsChange }: GenerateTab
 								label="Use ES6 class"
 								checked={jsUseClass}
 								onCheckedChange={setJsUseClass}
+								size="compact"
 							/>
 							<FormCheckbox
 								label="Generate JSDoc"
 								checked={jsUseJSDoc}
 								onCheckedChange={setJsUseJSDoc}
+								size="compact"
 							/>
-							<FormCheckbox label="ES6 syntax" checked={jsUseES6} onCheckedChange={setJsUseES6} />
+							<FormCheckbox
+								label="ES6 syntax"
+								checked={jsUseES6}
+								onCheckedChange={setJsUseES6}
+								size="compact"
+							/>
 							<FormCheckbox
 								label="Generate factory function"
 								checked={jsGenerateFactory}
 								onCheckedChange={setJsGenerateFactory}
+								size="compact"
 							/>
 							<FormCheckbox
 								label="Generate validator"
 								checked={jsGenerateValidator}
 								onCheckedChange={setJsGenerateValidator}
+								size="compact"
 							/>
 							<FormCheckbox
 								label="Optional properties"
 								checked={jsOptionalProperties}
 								onCheckedChange={setJsOptionalProperties}
+								size="compact"
 							/>
 						</FormCheckboxGroup>
 					</FormSection>
@@ -435,21 +450,25 @@ export function GenerateTab({ input, onInputChange, onStatsChange }: GenerateTab
 								label="Use pointers for nested types"
 								checked={goUsePointers}
 								onCheckedChange={setGoUsePointers}
+								size="compact"
 							/>
 							<FormCheckbox
 								label="Add json tags"
 								checked={goUseJsonTag}
 								onCheckedChange={setGoUseJsonTag}
+								size="compact"
 							/>
 							<FormCheckbox
 								label="Add omitempty"
 								checked={goOmitEmpty}
 								onCheckedChange={setGoOmitEmpty}
+								size="compact"
 							/>
 							<FormCheckbox
 								label="Optional properties"
 								checked={goOptionalProperties}
 								onCheckedChange={setGoOptionalProperties}
+								size="compact"
 							/>
 						</FormCheckboxGroup>
 					</FormSection>
@@ -476,16 +495,19 @@ export function GenerateTab({ input, onInputChange, onStatsChange }: GenerateTab
 									label="Frozen (immutable)"
 									checked={pyUseFrozen}
 									onCheckedChange={setPyUseFrozen}
+									size="compact"
 								/>
 								<FormCheckbox
 									label="Use __slots__"
 									checked={pyUseSlots}
 									onCheckedChange={setPyUseSlots}
+									size="compact"
 								/>
 								<FormCheckbox
 									label="Keyword-only args"
 									checked={pyUseKwOnly}
 									onCheckedChange={setPyUseKwOnly}
+									size="compact"
 								/>
 							</FormCheckboxGroup>
 						) : (
@@ -494,6 +516,7 @@ export function GenerateTab({ input, onInputChange, onStatsChange }: GenerateTab
 									label="Total (all keys required)"
 									checked={pyUseTotal}
 									onCheckedChange={setPyUseTotal}
+									size="compact"
 								/>
 							</FormCheckboxGroup>
 						)}
@@ -501,6 +524,7 @@ export function GenerateTab({ input, onInputChange, onStatsChange }: GenerateTab
 							label="Optional properties"
 							checked={pyOptionalProperties}
 							onCheckedChange={setPyOptionalProperties}
+							size="compact"
 						/>
 					</FormSection>
 				) : null}
@@ -519,31 +543,37 @@ export function GenerateTab({ input, onInputChange, onStatsChange }: GenerateTab
 								label="Derive Serialize/Deserialize"
 								checked={rsDeriveSerde}
 								onCheckedChange={setRsDeriveSerde}
+								size="compact"
 							/>
 							<FormCheckbox
 								label="Derive Debug"
 								checked={rsDeriveDebug}
 								onCheckedChange={setRsDeriveDebug}
+								size="compact"
 							/>
 							<FormCheckbox
 								label="Derive Clone"
 								checked={rsDeriveClone}
 								onCheckedChange={setRsDeriveClone}
+								size="compact"
 							/>
 							<FormCheckbox
 								label="Derive Default"
 								checked={rsDeriveDefault}
 								onCheckedChange={setRsDeriveDefault}
+								size="compact"
 							/>
 							<FormCheckbox
 								label="Use Box for nested types"
 								checked={rsUseBox}
 								onCheckedChange={setRsUseBox}
+								size="compact"
 							/>
 							<FormCheckbox
 								label="Optional properties"
 								checked={rsOptionalProperties}
 								onCheckedChange={setRsOptionalProperties}
+								size="compact"
 							/>
 						</FormCheckboxGroup>
 					</FormSection>
@@ -588,12 +618,14 @@ export function GenerateTab({ input, onInputChange, onStatsChange }: GenerateTab
 								label="Bean validation"
 								checked={javaUseValidation}
 								onCheckedChange={setJavaUseValidation}
+								size="compact"
 							/>
 							{javaClassStyle === 'lombok' ? (
 								<FormCheckbox
 									label="Generate builder"
 									checked={javaGenerateBuilder}
 									onCheckedChange={setJavaGenerateBuilder}
+									size="compact"
 								/>
 							) : null}
 							{javaClassStyle === 'pojo' ? (
@@ -601,17 +633,20 @@ export function GenerateTab({ input, onInputChange, onStatsChange }: GenerateTab
 									label="Generate equals/hashCode"
 									checked={javaGenerateEquals}
 									onCheckedChange={setJavaGenerateEquals}
+									size="compact"
 								/>
 							) : null}
 							<FormCheckbox
 								label="Use Optional for nullable"
 								checked={javaUseOptional}
 								onCheckedChange={setJavaUseOptional}
+								size="compact"
 							/>
 							<FormCheckbox
 								label="Optional properties"
 								checked={javaOptionalProperties}
 								onCheckedChange={setJavaOptionalProperties}
+								size="compact"
 							/>
 						</FormCheckboxGroup>
 					</FormSection>
@@ -631,31 +666,37 @@ export function GenerateTab({ input, onInputChange, onStatsChange }: GenerateTab
 								label="Use records (vs class)"
 								checked={csUseRecords}
 								onCheckedChange={setCsUseRecords}
+								size="compact"
 							/>
 							<FormCheckbox
 								label="Nullable reference types"
 								checked={csUseNullableReferenceTypes}
 								onCheckedChange={setCsUseNullableReferenceTypes}
+								size="compact"
 							/>
 							<FormCheckbox
 								label="System.Text.Json attributes"
 								checked={csUseSystemTextJson}
 								onCheckedChange={setCsUseSystemTextJson}
+								size="compact"
 							/>
 							<FormCheckbox
 								label="Newtonsoft.Json attributes"
 								checked={csUseNewtonsoft}
 								onCheckedChange={setCsUseNewtonsoft}
+								size="compact"
 							/>
 							<FormCheckbox
 								label="DataContract attributes"
 								checked={csGenerateDataContract}
 								onCheckedChange={setCsGenerateDataContract}
+								size="compact"
 							/>
 							<FormCheckbox
 								label="Optional properties"
 								checked={csOptionalProperties}
 								onCheckedChange={setCsOptionalProperties}
+								size="compact"
 							/>
 						</FormCheckboxGroup>
 					</FormSection>
@@ -684,16 +725,19 @@ export function GenerateTab({ input, onInputChange, onStatsChange }: GenerateTab
 								label="Use data class"
 								checked={ktUseDataClass}
 								onCheckedChange={setKtUseDataClass}
+								size="compact"
 							/>
 							<FormCheckbox
 								label="Default values"
 								checked={ktUseDefaultValues}
 								onCheckedChange={setKtUseDefaultValues}
+								size="compact"
 							/>
 							<FormCheckbox
 								label="Optional properties"
 								checked={ktOptionalProperties}
 								onCheckedChange={setKtOptionalProperties}
+								size="compact"
 							/>
 						</FormCheckboxGroup>
 					</FormSection>
@@ -713,21 +757,25 @@ export function GenerateTab({ input, onInputChange, onStatsChange }: GenerateTab
 								label="Use struct (vs class)"
 								checked={swiftUseStruct}
 								onCheckedChange={setSwiftUseStruct}
+								size="compact"
 							/>
 							<FormCheckbox
 								label="Generate CodingKeys"
 								checked={swiftUseCodingKeys}
 								onCheckedChange={setSwiftUseCodingKeys}
+								size="compact"
 							/>
 							<FormCheckbox
 								label="Optional properties"
 								checked={swiftUseOptionalProperties}
 								onCheckedChange={setSwiftUseOptionalProperties}
+								size="compact"
 							/>
 							<FormCheckbox
 								label="All properties optional"
 								checked={swiftOptionalProperties}
 								onCheckedChange={setSwiftOptionalProperties}
+								size="compact"
 							/>
 						</FormCheckboxGroup>
 					</FormSection>
@@ -754,21 +802,25 @@ export function GenerateTab({ input, onInputChange, onStatsChange }: GenerateTab
 								label="Strict types"
 								checked={phpUseStrictTypes}
 								onCheckedChange={setPhpUseStrictTypes}
+								size="compact"
 							/>
 							<FormCheckbox
 								label="Constructor promotion"
 								checked={phpUseConstructorPromotion}
 								onCheckedChange={setPhpUseConstructorPromotion}
+								size="compact"
 							/>
 							<FormCheckbox
 								label="Readonly properties"
 								checked={phpUseReadonlyProperties}
 								onCheckedChange={setPhpUseReadonlyProperties}
+								size="compact"
 							/>
 							<FormCheckbox
 								label="Optional properties"
 								checked={phpOptionalProperties}
 								onCheckedChange={setPhpOptionalProperties}
+								size="compact"
 							/>
 						</FormCheckboxGroup>
 					</FormSection>

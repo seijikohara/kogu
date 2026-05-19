@@ -168,6 +168,7 @@ function SqlFormatterPage() {
 								value: opt.value,
 								label: opt.label,
 							}))}
+							size="compact"
 						/>
 					</FormSection>
 
@@ -178,6 +179,7 @@ function SqlFormatterPage() {
 								value={tabWidthStr}
 								onValueChange={setTabWidthStr}
 								options={['1', '2', '3', '4', '8']}
+								size="compact"
 							/>
 							<FormSelect
 								label="Style"
@@ -188,12 +190,14 @@ function SqlFormatterPage() {
 									label: opt.label,
 									description: opt.description,
 								}))}
+								size="compact"
 							/>
 						</div>
 						<FormCheckbox
 							label="Use tabs instead of spaces"
 							checked={useTabs}
 							onCheckedChange={setUseTabs}
+							size="compact"
 						/>
 					</FormSection>
 
@@ -206,6 +210,7 @@ function SqlFormatterPage() {
 								value: opt.value,
 								label: opt.label,
 							}))}
+							size="compact"
 						/>
 					</FormSection>
 
@@ -219,18 +224,21 @@ function SqlFormatterPage() {
 								label: opt.label,
 								description: opt.description,
 							}))}
+							size="compact"
 						/>
 						<FormSelect
 							label="Expression Width"
 							value={expressionWidthStr}
 							onValueChange={setExpressionWidthStr}
 							options={['20', '30', '40', '50', '60', '80', '100', '120']}
+							size="compact"
 						/>
 						<FormSelect
 							label="Lines Between Queries"
 							value={linesBetweenQueriesStr}
 							onValueChange={setLinesBetweenQueriesStr}
 							options={['0', '1', '2', '3', '4', '5']}
+							size="compact"
 						/>
 					</FormSection>
 
@@ -240,11 +248,13 @@ function SqlFormatterPage() {
 								label="Dense operators (no spaces)"
 								checked={denseOperators}
 								onCheckedChange={setDenseOperators}
+								size="compact"
 							/>
 							<FormCheckbox
 								label="Newline before semicolon"
 								checked={newlineBeforeSemicolon}
 								onCheckedChange={setNewlineBeforeSemicolon}
+								size="compact"
 							/>
 						</FormCheckboxGroup>
 					</FormSection>

@@ -245,6 +245,7 @@ export function FormatTab({ input, onInputChange, onStatsChange }: FormatTabProp
 							value={indentSizeStr}
 							onValueChange={setIndentSizeStr}
 							options={['1', '2', '3', '4', '8']}
+							size="compact"
 						/>
 						<FormSelect
 							label="Type"
@@ -254,6 +255,7 @@ export function FormatTab({ input, onInputChange, onStatsChange }: FormatTabProp
 								{ value: 'spaces', label: 'Spaces' },
 								{ value: 'tabs', label: 'Tabs' },
 							]}
+							size="compact"
 						/>
 					</div>
 				</FormSection>
@@ -268,6 +270,7 @@ export function FormatTab({ input, onInputChange, onStatsChange }: FormatTabProp
 								{ value: 'double', label: '"..."' },
 								{ value: 'single', label: "'...'" },
 							]}
+							size="compact"
 						/>
 						<FormSelect
 							label="Max Depth"
@@ -281,6 +284,7 @@ export function FormatTab({ input, onInputChange, onStatsChange }: FormatTabProp
 								{ value: '5', label: '5' },
 								{ value: '10', label: '10' },
 							]}
+							size="compact"
 						/>
 					</div>
 					<FormCheckboxGroup className="pt-1">
@@ -288,11 +292,13 @@ export function FormatTab({ input, onInputChange, onStatsChange }: FormatTabProp
 							label="Sort keys alphabetically"
 							checked={sortKeys}
 							onCheckedChange={setSortKeys}
+							size="compact"
 						/>
 						<FormCheckbox
 							label="Escape unicode characters"
 							checked={escapeUnicode}
 							onCheckedChange={setEscapeUnicode}
+							size="compact"
 						/>
 					</FormCheckboxGroup>
 				</FormSection>
@@ -303,26 +309,31 @@ export function FormatTab({ input, onInputChange, onStatsChange }: FormatTabProp
 							label="Space after colon"
 							checked={colonSpacing}
 							onCheckedChange={setColonSpacing}
+							size="compact"
 						/>
 						<FormCheckbox
 							label="Array bracket spacing"
 							checked={arrayBracketSpacing}
 							onCheckedChange={setArrayBracketSpacing}
+							size="compact"
 						/>
 						<FormCheckbox
 							label="Object bracket spacing"
 							checked={objectBracketSpacing}
 							onCheckedChange={setObjectBracketSpacing}
+							size="compact"
 						/>
 						<FormCheckbox
 							label="Trailing commas"
 							checked={trailingComma}
 							onCheckedChange={setTrailingComma}
+							size="compact"
 						/>
 						<FormCheckbox
 							label="Compact arrays"
 							checked={compactArrays}
 							onCheckedChange={setCompactArrays}
+							size="compact"
 						/>
 					</FormCheckboxGroup>
 				</FormSection>
@@ -333,21 +344,25 @@ export function FormatTab({ input, onInputChange, onStatsChange }: FormatTabProp
 							label="Remove null values"
 							checked={removeNulls}
 							onCheckedChange={setRemoveNulls}
+							size="compact"
 						/>
 						<FormCheckbox
 							label="Remove empty strings"
 							checked={removeEmptyStrings}
 							onCheckedChange={setRemoveEmptyStrings}
+							size="compact"
 						/>
 						<FormCheckbox
 							label="Remove empty arrays"
 							checked={removeEmptyArrays}
 							onCheckedChange={setRemoveEmptyArrays}
+							size="compact"
 						/>
 						<FormCheckbox
 							label="Remove empty objects"
 							checked={removeEmptyObjects}
 							onCheckedChange={setRemoveEmptyObjects}
+							size="compact"
 						/>
 					</FormCheckboxGroup>
 				</FormSection>

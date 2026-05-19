@@ -174,6 +174,7 @@ export function QueryTab({ input, onInputChange, onStatsChange }: QueryTabProps)
 								{ value: '50', label: '50' },
 								{ value: '100', label: '100' },
 							]}
+							size="compact"
 						/>
 					</div>
 					<FormCheckboxGroup className="pt-1">
@@ -181,21 +182,25 @@ export function QueryTab({ input, onInputChange, onStatsChange }: QueryTabProps)
 							label="First match only"
 							checked={queryFirstMatchOnly}
 							onCheckedChange={setQueryFirstMatchOnly}
+							size="compact"
 						/>
 						<FormCheckbox
 							label="Show paths in results"
 							checked={queryShowPaths}
 							onCheckedChange={setQueryShowPaths}
+							size="compact"
 						/>
 						<FormCheckbox
 							label="Flatten nested arrays"
 							checked={queryFlattenArrays}
 							onCheckedChange={setQueryFlattenArrays}
+							size="compact"
 						/>
 						<FormCheckbox
 							label="Wrap results in array"
 							checked={queryWrapResults}
 							onCheckedChange={setQueryWrapResults}
+							size="compact"
 						/>
 					</FormCheckboxGroup>
 				</FormSection>

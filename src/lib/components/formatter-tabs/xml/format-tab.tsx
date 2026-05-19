@@ -194,6 +194,7 @@ export function FormatTab({ input, onInputChange, onStatsChange }: FormatTabProp
 							value={indentSizeStr}
 							onValueChange={setIndentSizeStr}
 							options={['1', '2', '4', '8']}
+							size="compact"
 						/>
 						<FormSelect
 							label="Type"
@@ -203,6 +204,7 @@ export function FormatTab({ input, onInputChange, onStatsChange }: FormatTabProp
 								{ value: 'spaces', label: 'Spaces' },
 								{ value: 'tabs', label: 'Tabs' },
 							]}
+							size="compact"
 						/>
 					</div>
 				</FormSection>
@@ -212,11 +214,13 @@ export function FormatTab({ input, onInputChange, onStatsChange }: FormatTabProp
 						label="Space before self-closing />"
 						checked={whiteSpaceAtEndOfSelfclosingTag}
 						onCheckedChange={setWhiteSpaceAtEndOfSelfclosingTag}
+						size="compact"
 					/>
 					<FormCheckbox
 						label="Force self-closing empty tags"
 						checked={forceSelfClosingEmptyTag}
 						onCheckedChange={setForceSelfClosingEmptyTag}
+						size="compact"
 					/>
 				</FormSection>
 
@@ -226,16 +230,19 @@ export function FormatTab({ input, onInputChange, onStatsChange }: FormatTabProp
 							label="Collapse content on single line"
 							checked={collapseContent}
 							onCheckedChange={setCollapseContent}
+							size="compact"
 						/>
 						<FormCheckbox
 							label="Preserve whitespace"
 							checked={preserveWhitespace}
 							onCheckedChange={setPreserveWhitespace}
+							size="compact"
 						/>
 						<FormCheckbox
 							label="Remove comments"
 							checked={excludeComments}
 							onCheckedChange={setExcludeComments}
+							size="compact"
 						/>
 					</FormCheckboxGroup>
 				</FormSection>
@@ -245,6 +252,7 @@ export function FormatTab({ input, onInputChange, onStatsChange }: FormatTabProp
 						label="Sort attributes alphabetically"
 						checked={sortAttributes}
 						onCheckedChange={setSortAttributes}
+						size="compact"
 					/>
 				</FormSection>
 			</OptionsPanel>

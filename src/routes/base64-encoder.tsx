@@ -180,6 +180,7 @@ function Base64EncoderPage() {
 											description: 'Uses - and _ (RFC 4648 §5)',
 										},
 									]}
+									size="compact"
 								/>
 								<FormSelect
 									label="Line Break"
@@ -190,12 +191,14 @@ function Base64EncoderPage() {
 										{ value: '64', label: '64 chars', description: 'PEM convention' },
 										{ value: '76', label: '76 chars', description: 'MIME / RFC 2045' },
 									]}
+									size="compact"
 								/>
 								<div className="pt-1">
 									<FormCheckbox
 										label="Include padding (=)"
 										checked={padding}
 										onCheckedChange={setPadding}
+										size="compact"
 									/>
 								</div>
 							</FormSection>
@@ -205,6 +208,7 @@ function Base64EncoderPage() {
 									label="Output as Data URL"
 									checked={dataUrl}
 									onCheckedChange={setDataUrl}
+									size="compact"
 								/>
 								{dataUrl ? (
 									<div className="pt-1">
@@ -213,6 +217,7 @@ function Base64EncoderPage() {
 											value={mimeType}
 											onValueChange={setMimeType}
 											options={[...BASE64_MIME_TYPES]}
+											size="compact"
 										/>
 									</div>
 								) : null}
@@ -238,16 +243,19 @@ function Base64EncoderPage() {
 										label="Ignore whitespace"
 										checked={ignoreWhitespace}
 										onCheckedChange={setIgnoreWhitespace}
+										size="compact"
 									/>
 									<FormCheckbox
 										label="Ignore invalid characters"
 										checked={ignoreInvalidChars}
 										onCheckedChange={setIgnoreInvalidChars}
+										size="compact"
 									/>
 									<FormCheckbox
 										label="Auto-detect URL-safe variant"
 										checked={autoDetectVariant}
 										onCheckedChange={setAutoDetectVariant}
+										size="compact"
 									/>
 								</FormCheckboxGroup>
 							</FormSection>

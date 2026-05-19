@@ -95,27 +95,32 @@ function StringCaseConverterPage() {
 								{ value: 'asc', label: 'A → Z' },
 								{ value: 'desc', label: 'Z → A' },
 							]}
+							size="compact"
 						/>
 						<FormCheckboxGroup className="pt-1">
 							<FormCheckbox
 								label="Remove duplicate lines"
 								checked={removeDuplicates}
 								onCheckedChange={setRemoveDuplicates}
+								size="compact"
 							/>
 							<FormCheckbox
 								label="Trim whitespace"
 								checked={trimLines}
 								onCheckedChange={setTrimLines}
+								size="compact"
 							/>
 							<FormCheckbox
 								label="Remove empty lines"
 								checked={removeEmptyLines}
 								onCheckedChange={setRemoveEmptyLines}
+								size="compact"
 							/>
 							<FormCheckbox
 								label="Reverse line order"
 								checked={reverseLines}
 								onCheckedChange={setReverseLines}
+								size="compact"
 							/>
 						</FormCheckboxGroup>
 					</FormSection>

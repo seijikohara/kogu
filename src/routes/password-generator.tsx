@@ -122,6 +122,7 @@ function PasswordGeneratorPage() {
 							max={MAX_LENGTH}
 							step={1}
 							valueLabel={String(options.length)}
+							size="compact"
 						/>
 					</FormSection>
 
@@ -131,21 +132,25 @@ function PasswordGeneratorPage() {
 								label="Lowercase (a-z)"
 								checked={options.lowercase}
 								onCheckedChange={(v) => patchOptions({ lowercase: v })}
+								size="compact"
 							/>
 							<FormCheckbox
 								label="Uppercase (A-Z)"
 								checked={options.uppercase}
 								onCheckedChange={(v) => patchOptions({ uppercase: v })}
+								size="compact"
 							/>
 							<FormCheckbox
 								label="Numbers (0-9)"
 								checked={options.numbers}
 								onCheckedChange={(v) => patchOptions({ numbers: v })}
+								size="compact"
 							/>
 							<FormCheckbox
 								label="Symbols (!@#$...)"
 								checked={options.symbols}
 								onCheckedChange={(v) => patchOptions({ symbols: v })}
+								size="compact"
 							/>
 						</FormCheckboxGroup>
 					</FormSection>
@@ -157,12 +162,14 @@ function PasswordGeneratorPage() {
 								hint="0/O, 1/l/I, |"
 								checked={options.excludeSimilar}
 								onCheckedChange={(v) => patchOptions({ excludeSimilar: v })}
+								size="compact"
 							/>
 							<FormCheckbox
 								label="Exclude ambiguous symbols"
 								hint="Brackets, quotes, slashes"
 								checked={options.excludeAmbiguous}
 								onCheckedChange={(v) => patchOptions({ excludeAmbiguous: v })}
+								size="compact"
 							/>
 						</FormCheckboxGroup>
 					</FormSection>
@@ -176,6 +183,7 @@ function PasswordGeneratorPage() {
 							max={MAX_COUNT}
 							step={1}
 							valueLabel={String(count)}
+							size="compact"
 						/>
 					</FormSection>
 
