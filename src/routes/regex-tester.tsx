@@ -317,7 +317,7 @@ function RegexTesterPage() {
 												<ToggleGroupItem
 													value={info.id}
 													aria-label={info.label}
-													className="h-9 w-9 font-mono data-[state=on]:border-primary data-[state=on]:bg-primary data-[state=on]:text-primary-foreground"
+													className="h-9 w-9 font-mono aria-pressed:border-primary aria-pressed:bg-primary aria-pressed:text-primary-foreground"
 												>
 													{info.char}
 												</ToggleGroupItem>
