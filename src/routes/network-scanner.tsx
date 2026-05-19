@@ -1061,17 +1061,12 @@ function NetworkScannerPage() {
 								}}
 							/>
 						</div>
-						{/* Per-method progress */}
-						<div
-							className="grid gap-2"
-							style={{
-								gridTemplateColumns: `repeat(${Math.min(discoveryMethods.size, 5)}, 1fr)`,
-							}}
-						>
+						{/* Per-method progress — flex-wrap so labels flow onto multiple rows on narrow viewports */}
+						<div className="flex flex-wrap gap-2">
 							{[...discoveryMethods].map((method) => {
 								const methodProg = methodProgress.get(method);
 								return (
-									<div key={method} className="space-y-1">
+									<div key={method} className="min-w-32 flex-1 space-y-1">
 										<div className="flex items-center justify-between text-xs">
 											<span
 												className="truncate font-medium"
