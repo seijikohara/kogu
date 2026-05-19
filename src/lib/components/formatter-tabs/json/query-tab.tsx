@@ -11,7 +11,10 @@ import {
 import { SplitPane } from '@/lib/components/layout';
 import { OptionsPanel } from '@/lib/components/panel';
 import { executeJsonPath, validateJson } from '@/lib/services/formatters';
+import { useJsonFormatterOptions } from '@/lib/stores';
 import { copyToClipboard, pasteFromClipboard } from '@/lib/utils/file-operations';
+
+import { JsonFormatSection } from './json-format-section';
 
 type QueryOutputFormat = 'formatted' | 'compact';
 
@@ -55,6 +58,9 @@ const formatQueryResult = (result: unknown, opts: QueryOptions): string => {
 };
 
 export function QueryTab({ input, onInputChange, onStatsChange }: QueryTabProps) {
+	const { value: jsonOptions } = useJsonFormatterOptions();
+	const { inputFormat } = jsonOptions;
+
 	const [queryPath, setQueryPath] = useState<string>('$.');
 	const [showOptions, setShowOptions] = useState(true);
 
@@ -68,9 +74,9 @@ export function QueryTab({ input, onInputChange, onStatsChange }: QueryTabProps)
 
 	const inputValidation = useMemo<{ valid: boolean | null }>(() => {
 		if (!input.trim()) return { valid: null };
-		const result = validateJson(input);
+		const result = validateJson(input, inputFormat);
 		return { valid: result.valid };
-	}, [input]);
+	}, [input, inputFormat]);
 
 	const queryMaxResults = Number.parseInt(queryMaxResultsStr, 10) || 0;
 
@@ -79,7 +85,7 @@ export function QueryTab({ input, onInputChange, onStatsChange }: QueryTabProps)
 			return { result: '', error: '' };
 		}
 		try {
-			const rawResult = executeJsonPath(input, queryPath);
+			const rawResult = executeJsonPath(input, queryPath, inputFormat);
 			const opts: QueryOptions = {
 				flattenArrays: queryFlattenArrays,
 				firstMatchOnly: queryFirstMatchOnly,
@@ -130,6 +136,8 @@ export function QueryTab({ input, onInputChange, onStatsChange }: QueryTabProps)
 				onClose={() => setShowOptions(false)}
 				onOpen={() => setShowOptions(true)}
 			>
+				<JsonFormatSection showOutput={false} />
+
 				<FormSection title="JSONPath Query">
 					<FormInput
 						label="Path Expression"

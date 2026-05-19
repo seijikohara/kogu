@@ -16,7 +16,10 @@ import {
 	jsonToYaml,
 	validateJson,
 } from '@/lib/services/formatters';
+import { useJsonFormatterOptions } from '@/lib/stores';
 import { copyToClipboard, pasteFromClipboard } from '@/lib/utils/file-operations';
+
+import { JsonFormatSection } from './json-format-section';
 
 type ConvertFormat = 'yaml' | 'xml';
 type YamlStringType = 'PLAIN' | 'QUOTE_SINGLE' | 'QUOTE_DOUBLE' | 'BLOCK_LITERAL' | 'BLOCK_FOLDED';
@@ -38,6 +41,9 @@ interface ConvertTabProps {
 }
 
 export function ConvertTab({ input, onInputChange, onStatsChange }: ConvertTabProps) {
+	const { value: jsonOptions } = useJsonFormatterOptions();
+	const { inputFormat } = jsonOptions;
+
 	const [convertFormat, setConvertFormat] = useState<ConvertFormat>('yaml');
 
 	// YAML basic formatting options.
@@ -157,23 +163,28 @@ export function ConvertTab({ input, onInputChange, onStatsChange }: ConvertTabPr
 		headerComment: xmlHeaderComment || undefined,
 	};
 
-	const validate = useCallback((value: string): { valid: boolean | null } => {
-		if (!value.trim()) return { valid: null };
-		const result = validateJson(value);
-		return { valid: result.valid };
-	}, []);
+	const validate = useCallback(
+		(value: string): { valid: boolean | null } => {
+			if (!value.trim()) return { valid: null };
+			const result = validateJson(value, inputFormat);
+			return { valid: result.valid };
+		},
+		[inputFormat]
+	);
 
 	const convert = useCallback(
 		(value: string): { output: string; error: string } => {
 			try {
 				const result =
-					convertFormat === 'yaml' ? jsonToYaml(value, yamlOptions) : jsonToXml(value, xmlOptions);
+					convertFormat === 'yaml'
+						? jsonToYaml(value, yamlOptions, inputFormat)
+						: jsonToXml(value, xmlOptions, inputFormat);
 				return { output: result, error: '' };
 			} catch (e) {
 				return { output: '', error: e instanceof Error ? e.message : 'Conversion failed' };
 			}
 		},
-		[convertFormat, yamlOptions, xmlOptions]
+		[convertFormat, yamlOptions, xmlOptions, inputFormat]
 	);
 
 	const outputEditorMode = convertFormat === 'yaml' ? 'yaml' : 'xml';
@@ -198,6 +209,7 @@ export function ConvertTab({ input, onInputChange, onStatsChange }: ConvertTabPr
 			outputTitle={outputTitle}
 			copyToClipboard={handleCopyAdapter}
 			pasteFromClipboard={pasteFromClipboard}
+			renderFormatSection={() => <JsonFormatSection showOutput={false} />}
 			renderOptions={() => (
 				<>
 					<FormSection title="Output Format">

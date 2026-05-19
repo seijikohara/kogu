@@ -4,7 +4,10 @@ import { FormCheckbox, FormInput } from '@/lib/components/form';
 import { CompareTab as CompareTabTemplate } from '@/lib/components/template';
 import type { GenericDiffItem } from '@/lib/constants/diff';
 import { findJsonDifferences, type JsonDiffOptions, validateJson } from '@/lib/services/formatters';
+import { useJsonFormatterOptions } from '@/lib/stores';
 import { pasteFromClipboard } from '@/lib/utils/file-operations';
+
+import { JsonFormatSection } from './json-format-section';
 
 interface TabStats {
 	readonly input: string;
@@ -116,6 +119,9 @@ const findLineForPath = (jsonStr: string, targetPath: string): number | null => 
 };
 
 export function CompareTab({ input, onInputChange, onStatsChange }: CompareTabProps) {
+	const { value: jsonOptions } = useJsonFormatterOptions();
+	const { inputFormat } = jsonOptions;
+
 	const [compareIgnoreWhitespace, setCompareIgnoreWhitespace] = useState<boolean>(false);
 	const [compareIgnoreArrayOrder, setCompareIgnoreArrayOrder] = useState<boolean>(false);
 	const [compareIgnoreCase, setCompareIgnoreCase] = useState<boolean>(false);
@@ -139,16 +145,19 @@ export function CompareTab({ input, onInputChange, onStatsChange }: CompareTabPr
 		ignoreKeys: ignoredKeysList,
 	};
 
-	const validate = useCallback((value: string): { valid: boolean | null } => {
-		if (!value.trim()) return { valid: null };
-		const result = validateJson(value);
-		return { valid: result.valid };
-	}, []);
+	const validate = useCallback(
+		(value: string): { valid: boolean | null } => {
+			if (!value.trim()) return { valid: null };
+			const result = validateJson(value, inputFormat);
+			return { valid: result.valid };
+		},
+		[inputFormat]
+	);
 
 	const compare = useCallback(
 		(input1: string, input2: string): GenericDiffItem[] =>
-			findJsonDifferences(input1, input2, diffOptions),
-		[diffOptions]
+			findJsonDifferences(input1, input2, diffOptions, inputFormat),
+		[diffOptions, inputFormat]
 	);
 
 	return (
@@ -163,6 +172,7 @@ export function CompareTab({ input, onInputChange, onStatsChange }: CompareTabPr
 			onStatsChange={onStatsChange}
 			findLineForPath={findLineForPath}
 			pasteFromClipboard={pasteFromClipboard}
+			renderFormatSection={() => <JsonFormatSection showOutput={false} />}
 			renderComparisonOptions={() => (
 				<>
 					<FormCheckbox

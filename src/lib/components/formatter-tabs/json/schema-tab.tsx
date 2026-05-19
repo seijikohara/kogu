@@ -10,8 +10,11 @@ import { SplitPane } from '@/lib/components/layout';
 import { OptionsPanel } from '@/lib/components/panel';
 import { Button } from '@/lib/components/ui/button';
 import { inferJsonSchema, parseJson, validateJson } from '@/lib/services/formatters';
+import { useJsonFormatterOptions } from '@/lib/stores';
 import { cn } from '@/lib/utils';
 import { copyToClipboard, pasteFromClipboard } from '@/lib/utils/file-operations';
+
+import { JsonFormatSection } from './json-format-section';
 
 interface TabStats {
 	readonly input: string;
@@ -31,6 +34,9 @@ interface SchemaValidationResult {
 }
 
 export function SchemaTab({ input, onInputChange, onStatsChange }: SchemaTabProps) {
+	const { value: jsonOptions } = useJsonFormatterOptions();
+	const { inputFormat } = jsonOptions;
+
 	const [schemaDefinition, setSchemaDefinition] = useState<string>('');
 	const [schemaValidationResult, setSchemaValidationResult] =
 		useState<SchemaValidationResult | null>(null);
@@ -48,18 +54,18 @@ export function SchemaTab({ input, onInputChange, onStatsChange }: SchemaTabProp
 
 	const inputValidation = useMemo<{ valid: boolean | null }>(() => {
 		if (!input.trim()) return { valid: null };
-		const result = validateJson(input);
+		const result = validateJson(input, inputFormat);
 		return { valid: result.valid };
-	}, [input]);
+	}, [input, inputFormat]);
 
 	const inferredSchema = useMemo<string>(() => {
 		if (!input.trim() || input.trim() === '{}') return '';
 		try {
-			return JSON.stringify(inferJsonSchema(input), null, 2);
+			return JSON.stringify(inferJsonSchema(input, inputFormat), null, 2);
 		} catch {
 			return '';
 		}
-	}, [input]);
+	}, [input, inputFormat]);
 
 	const combinedError =
 		schemaError ||
@@ -81,7 +87,7 @@ export function SchemaTab({ input, onInputChange, onStatsChange }: SchemaTabProp
 			return;
 		}
 		try {
-			const data = parseJson(input);
+			const data = parseJson(input, inputFormat);
 			const schema = JSON.parse(schemaDefinition) as object;
 			const ajv = new Ajv({
 				allErrors: schemaAllErrors,
@@ -117,6 +123,7 @@ export function SchemaTab({ input, onInputChange, onStatsChange }: SchemaTabProp
 		}
 	}, [
 		input,
+		inputFormat,
 		schemaDefinition,
 		schemaAllErrors,
 		schemaStrictMode,
@@ -171,6 +178,8 @@ export function SchemaTab({ input, onInputChange, onStatsChange }: SchemaTabProp
 				onClose={() => setShowOptions(false)}
 				onOpen={() => setShowOptions(true)}
 			>
+				<JsonFormatSection showOutput={false} />
+
 				<FormSection title="Actions">
 					<div className="flex flex-col gap-1.5">
 						<Button

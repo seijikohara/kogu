@@ -20,6 +20,9 @@ import {
 	stringifyJson,
 	validateJson,
 } from '@/lib/services/formatters';
+import { useJsonFormatterOptions } from '@/lib/stores';
+
+import { JsonFormatSection } from './json-format-section';
 
 type FormatMode = 'format' | 'minify';
 type IndentType = 'spaces' | 'tabs';
@@ -38,6 +41,9 @@ interface FormatTabProps {
 }
 
 export function FormatTab({ input, onInputChange, onStatsChange }: FormatTabProps) {
+	const { value: jsonOptions } = useJsonFormatterOptions();
+	const { inputFormat, outputFormat } = jsonOptions;
+
 	const [formatMode, setFormatMode] = useState<FormatMode>('format');
 	const [showOptions, setShowOptions] = useState(true);
 
@@ -99,24 +105,24 @@ export function FormatTab({ input, onInputChange, onStatsChange }: FormatTabProp
 
 	const validation = useMemo<{ valid: boolean | null }>(() => {
 		if (!input.trim()) return { valid: null };
-		const result = validateJson(input);
+		const result = validateJson(input, inputFormat);
 		return { valid: result.valid };
-	}, [input]);
+	}, [input, inputFormat]);
 
 	const { output, error: formatError } = ((): { output: string; error: string } => {
 		if (!input.trim()) return { output: '', error: '' };
 
 		try {
-			const data = parseJson(input);
+			const data = parseJson(input, inputFormat);
 
 			// Apply filtering options (removeNulls, removeEmptyStrings, etc.).
 			const processedData = processJsonWithOptions(data, formatOptions);
 
 			if (formatMode === 'minify') {
-				return { output: stringifyJson(processedData, 'json', { indent: 0 }), error: '' };
+				return { output: stringifyJson(processedData, outputFormat, { indent: 0 }), error: '' };
 			}
 
-			let result = stringifyJson(processedData, 'json', {
+			let result = stringifyJson(processedData, outputFormat, {
 				indent: formatOptions.indentType === 'tabs' ? '\t' : formatOptions.indentSize,
 				sortKeys: formatOptions.sortKeys,
 				trailingComma: formatOptions.trailingComma,
@@ -191,7 +197,7 @@ export function FormatTab({ input, onInputChange, onStatsChange }: FormatTabProp
 
 	const handleFormatInput = () => {
 		try {
-			const data = parseJson(input);
+			const data = parseJson(input, inputFormat);
 			onInputChange(JSON.stringify(data, null, 2));
 		} catch {
 			// Invalid JSON.
@@ -200,7 +206,7 @@ export function FormatTab({ input, onInputChange, onStatsChange }: FormatTabProp
 
 	const handleMinifyInput = () => {
 		try {
-			const data = parseJson(input);
+			const data = parseJson(input, inputFormat);
 			onInputChange(JSON.stringify(data));
 		} catch {
 			// Invalid JSON.
@@ -227,6 +233,8 @@ export function FormatTab({ input, onInputChange, onStatsChange }: FormatTabProp
 				onClose={() => setShowOptions(false)}
 				onOpen={() => setShowOptions(true)}
 			>
+				<JsonFormatSection />
+
 				<FormSection title="Mode">
 					<FormMode
 						value={formatMode}

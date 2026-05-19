@@ -13,8 +13,8 @@ import { SplitPane } from '@/lib/components/layout';
 import { OptionsPanel } from '@/lib/components/panel';
 import {
 	type CSharpOptions,
-	generateCode,
 	type GoOptions,
+	generateCode,
 	JAVA_CLASS_STYLE_OPTIONS,
 	JAVA_SERIALIZATION_OPTIONS,
 	type JavaOptions,
@@ -32,7 +32,10 @@ import {
 	type TypeScriptOptions,
 } from '@/lib/services/code-generators';
 import { parseJson, validateJson } from '@/lib/services/formatters';
+import { useJsonFormatterOptions } from '@/lib/stores';
 import { copyToClipboard, pasteFromClipboard } from '@/lib/utils/file-operations';
+
+import { JsonFormatSection } from './json-format-section';
 
 type JavaClassStyle = 'record' | 'pojo' | 'lombok' | 'immutables';
 type JavaSerialization = 'none' | 'jackson' | 'gson' | 'moshi';
@@ -52,6 +55,9 @@ interface GenerateTabProps {
 }
 
 export function GenerateTab({ input, onInputChange, onStatsChange }: GenerateTabProps) {
+	const { value: jsonOptions } = useJsonFormatterOptions();
+	const { inputFormat } = jsonOptions;
+
 	const [generateLanguage, setGenerateLanguage] = useState<TargetLanguage>('typescript');
 	const [showOptions, setShowOptions] = useState(true);
 
@@ -142,9 +148,9 @@ export function GenerateTab({ input, onInputChange, onStatsChange }: GenerateTab
 
 	const inputValidation = useMemo<{ valid: boolean | null }>(() => {
 		if (!input.trim()) return { valid: null };
-		const result = validateJson(input);
+		const result = validateJson(input, inputFormat);
 		return { valid: result.valid };
-	}, [input]);
+	}, [input, inputFormat]);
 
 	const buildLanguageOptions = ():
 		| TypeScriptOptions
@@ -261,7 +267,7 @@ export function GenerateTab({ input, onInputChange, onStatsChange }: GenerateTab
 	} => {
 		if (!input.trim()) return { code: '', error: '' };
 		try {
-			const data = parseJson(input);
+			const data = parseJson(input, inputFormat);
 			const options = buildLanguageOptions();
 			// generateCode has multiple overloads keyed by language literal; branch
 			// per language to satisfy the discriminated overload set.
@@ -330,6 +336,8 @@ export function GenerateTab({ input, onInputChange, onStatsChange }: GenerateTab
 				onClose={() => setShowOptions(false)}
 				onOpen={() => setShowOptions(true)}
 			>
+				<JsonFormatSection showOutput={false} />
+
 				<FormSection title="Target Language">
 					<FormMode
 						value={generateLanguage}

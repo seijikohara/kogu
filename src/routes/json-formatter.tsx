@@ -10,21 +10,29 @@ import {
 } from '@/lib/components/formatter-tabs/json';
 import { StatItem } from '@/lib/components/status';
 import { TabbedFormatterPage } from '@/lib/components/template';
-import { calculateJsonStats, type JsonStats } from '@/lib/services/formatters';
+import { Badge } from '@/lib/components/ui/badge';
+import { calculateJsonStats, JSON_FORMAT_INFO, type JsonStats } from '@/lib/services/formatters';
+import { useJsonFormatterOptions } from '@/lib/stores';
 
 export const Route = createFileRoute('/json-formatter')({
 	component: JsonFormatterPage,
 });
 
 function JsonFormatterPage() {
+	const { value: jsonOptions } = useJsonFormatterOptions();
+	const { inputFormat, outputFormat } = jsonOptions;
+
 	return (
 		<TabbedFormatterPage<JsonStats>
 			title="JSON Formatter"
-			calculateStats={calculateJsonStats}
+			calculateStats={(input) => calculateJsonStats(input, inputFormat)}
 			persistKey="json-formatter"
 			renderStatusContent={(liveStats) =>
 				liveStats ? (
 					<>
+						<Badge variant="outline" className="font-mono text-2xs">
+							{JSON_FORMAT_INFO[inputFormat].label} → {JSON_FORMAT_INFO[outputFormat].label}
+						</Badge>
 						<StatItem label="Keys" value={liveStats.keys} />
 						<StatItem label="Values" value={liveStats.values} />
 						<StatItem label="Depth" value={liveStats.depth} />
