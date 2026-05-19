@@ -23,7 +23,7 @@ const Slider = React.forwardRef<
 			min={min}
 			max={max}
 			className={cn(
-				'relative flex w-full touch-none items-center select-none data-disabled:opacity-50 data-[orientation=vertical]:h-full data-[orientation=vertical]:min-h-40 data-[orientation=vertical]:w-auto data-[orientation=vertical]:flex-col',
+				'relative flex w-full touch-none items-center select-none data-disabled:opacity-50 data-vertical:h-full data-vertical:min-h-40 data-vertical:w-auto data-vertical:flex-col',
 				className
 			)}
 			{...props}
@@ -47,7 +47,7 @@ const SliderTrack = React.forwardRef<
 		ref={ref}
 		data-slot="slider-track"
 		className={cn(
-			'relative grow overflow-hidden rounded-full bg-muted data-[orientation=horizontal]:h-1 data-[orientation=horizontal]:w-full data-[orientation=vertical]:h-full data-[orientation=vertical]:w-1',
+			'relative grow overflow-hidden rounded-full bg-muted data-horizontal:h-1 data-horizontal:w-full data-vertical:h-full data-vertical:w-1',
 			className
 		)}
 		{...props}
@@ -63,7 +63,7 @@ const SliderRange = React.forwardRef<
 		ref={ref}
 		data-slot="slider-range"
 		className={cn(
-			'absolute bg-primary select-none data-[orientation=horizontal]:h-full data-[orientation=vertical]:w-full',
+			'absolute bg-primary select-none data-horizontal:h-full data-vertical:w-full',
 			className
 		)}
 		{...props}
