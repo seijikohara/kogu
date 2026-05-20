@@ -40,7 +40,10 @@ export default defineConfig({
 	},
 	envPrefix: ['VITE_', 'TAURI_ENV_*'],
 	build: {
-		target: process.env['TAURI_ENV_PLATFORM'] === 'windows' ? 'chrome105' : 'safari13',
+		// Tauri 2 ships modern WebView2 (Chromium evergreen) on Windows and WKWebView
+		// (Safari 15+) on macOS 12+. Monaco editor 0.55+ uses private class fields and
+		// other ES2022 features that esbuild cannot downlevel to safari13/chrome105.
+		target: process.env['TAURI_ENV_PLATFORM'] === 'windows' ? 'chrome120' : 'safari16',
 		minify: !process.env['TAURI_ENV_DEBUG'] ? 'esbuild' : false,
 		sourcemap: !!process.env['TAURI_ENV_DEBUG'],
 	},
