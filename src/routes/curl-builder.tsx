@@ -427,22 +427,26 @@ function CurlBuilderPage() {
 								hint="Wrap each argument onto its own line with backslash continuations."
 								checked={multiline}
 								onCheckedChange={setMultiline}
+								size="compact"
 							/>
 							<FormCheckbox
 								label="Follow redirects (-L)"
 								checked={request.followRedirects}
 								onCheckedChange={(v) => setRequest((prev) => ({ ...prev, followRedirects: v }))}
+								size="compact"
 							/>
 							<FormCheckbox
 								label="Allow insecure TLS (-k)"
 								hint="Disables certificate validation. Use only against trusted hosts."
 								checked={request.insecure}
 								onCheckedChange={(v) => setRequest((prev) => ({ ...prev, insecure: v }))}
+								size="compact"
 							/>
 							<FormCheckbox
 								label="Include response headers (-i)"
 								checked={request.includeHeaders}
 								onCheckedChange={(v) => setRequest((prev) => ({ ...prev, includeHeaders: v }))}
+								size="compact"
 							/>
 							<FormInput
 								label="Timeout (seconds)"
