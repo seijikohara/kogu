@@ -179,16 +179,19 @@ export function CompareTab({ input, onInputChange, onStatsChange }: CompareTabPr
 						label="Deep compare"
 						checked={compareDeepCompare}
 						onCheckedChange={setCompareDeepCompare}
+						size="compact"
 					/>
 					<FormCheckbox
 						label="Ignore whitespace"
 						checked={compareIgnoreWhitespace}
 						onCheckedChange={setCompareIgnoreWhitespace}
+						size="compact"
 					/>
 					<FormCheckbox
 						label="Ignore array order"
 						checked={compareIgnoreArrayOrder}
 						onCheckedChange={setCompareIgnoreArrayOrder}
+						size="compact"
 					/>
 				</>
 			)}
@@ -198,16 +201,19 @@ export function CompareTab({ input, onInputChange, onStatsChange }: CompareTabPr
 						label="Ignore case"
 						checked={compareIgnoreCase}
 						onCheckedChange={setCompareIgnoreCase}
+						size="compact"
 					/>
 					<FormCheckbox
 						label="Ignore numeric type"
 						checked={compareIgnoreNumericType}
 						onCheckedChange={setCompareIgnoreNumericType}
+						size="compact"
 					/>
 					<FormCheckbox
 						label="Ignore empty values"
 						checked={compareIgnoreEmpty}
 						onCheckedChange={setCompareIgnoreEmpty}
+						size="compact"
 					/>
 					<FormInput
 						label="Ignore Keys"

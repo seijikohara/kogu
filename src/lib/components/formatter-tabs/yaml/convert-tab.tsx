@@ -179,6 +179,7 @@ export function ConvertTab({ input, onInputChange, onStatsChange }: ConvertTabPr
 										{ value: '4', label: '4' },
 										{ value: '8', label: '8' },
 									]}
+									size="compact"
 								/>
 							</FormSection>
 
@@ -187,6 +188,7 @@ export function ConvertTab({ input, onInputChange, onStatsChange }: ConvertTabPr
 									label="Sort keys alphabetically"
 									checked={jsonSortKeys}
 									onCheckedChange={setJsonSortKeys}
+									size="compact"
 								/>
 							</FormSection>
 						</>
@@ -233,6 +235,7 @@ export function ConvertTab({ input, onInputChange, onStatsChange }: ConvertTabPr
 											{ value: '4', label: '4' },
 											{ value: '8', label: '8' },
 										]}
+										size="compact"
 									/>
 									<FormSelect
 										label="Indent Type"
@@ -242,6 +245,7 @@ export function ConvertTab({ input, onInputChange, onStatsChange }: ConvertTabPr
 											{ value: 'spaces', label: 'Spaces' },
 											{ value: 'tabs', label: 'Tabs' },
 										]}
+										size="compact"
 									/>
 								</div>
 								<FormSelect
@@ -252,12 +256,14 @@ export function ConvertTab({ input, onInputChange, onStatsChange }: ConvertTabPr
 										{ value: '\n', label: 'LF (Unix)' },
 										{ value: '\r\n', label: 'CRLF (Windows)' },
 									]}
+									size="compact"
 								/>
 								<FormCheckboxGroup className="pt-1">
 									<FormCheckbox
 										label="Collapse content on single line"
 										checked={xmlCollapseContent}
 										onCheckedChange={setXmlCollapseContent}
+										size="compact"
 									/>
 								</FormCheckboxGroup>
 							</FormSection>
@@ -267,6 +273,7 @@ export function ConvertTab({ input, onInputChange, onStatsChange }: ConvertTabPr
 									label="Include XML declaration"
 									checked={xmlDeclaration}
 									onCheckedChange={setXmlDeclaration}
+									size="compact"
 								/>
 								{xmlDeclaration ? (
 									<div className="grid grid-cols-2 gap-2 pt-1">
@@ -295,11 +302,13 @@ export function ConvertTab({ input, onInputChange, onStatsChange }: ConvertTabPr
 									label="Use self-closing tags"
 									checked={xmlSelfClosing}
 									onCheckedChange={setXmlSelfClosing}
+									size="compact"
 								/>
 								<FormCheckbox
 									label="Space before self-closing />"
 									checked={xmlWhiteSpaceAtEndOfSelfclosingTag}
 									onCheckedChange={setXmlWhiteSpaceAtEndOfSelfclosingTag}
+									size="compact"
 								/>
 							</FormSection>
 
@@ -308,6 +317,7 @@ export function ConvertTab({ input, onInputChange, onStatsChange }: ConvertTabPr
 									label="Wrap text in CDATA"
 									checked={xmlCdata}
 									onCheckedChange={setXmlCdata}
+									size="compact"
 								/>
 								{xmlCdata ? (
 									<div className="pt-1">
@@ -326,6 +336,7 @@ export function ConvertTab({ input, onInputChange, onStatsChange }: ConvertTabPr
 									label="Escape special characters"
 									checked={xmlEscapeText}
 									onCheckedChange={setXmlEscapeText}
+									size="compact"
 								/>
 							</FormSection>
 
@@ -335,11 +346,13 @@ export function ConvertTab({ input, onInputChange, onStatsChange }: ConvertTabPr
 										label="Sort element keys"
 										checked={xmlSortKeys}
 										onCheckedChange={setXmlSortKeys}
+										size="compact"
 									/>
 									<FormCheckbox
 										label="Sort attributes"
 										checked={xmlSortAttributes}
 										onCheckedChange={setXmlSortAttributes}
+										size="compact"
 									/>
 								</FormCheckboxGroup>
 							</FormSection>

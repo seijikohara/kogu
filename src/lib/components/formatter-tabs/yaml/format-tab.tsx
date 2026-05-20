@@ -241,6 +241,7 @@ export function FormatTab({ input, onInputChange, onStatsChange }: FormatTabProp
 							{ value: 'flow', label: 'Flow ({...})' },
 							{ value: 'any', label: 'Auto' },
 						]}
+						size="compact"
 					/>
 					<FormCheckboxGroup className="pt-1">
 						<FormCheckbox
@@ -270,6 +271,7 @@ export function FormatTab({ input, onInputChange, onStatsChange }: FormatTabProp
 							{ value: 'BLOCK_LITERAL', label: 'Block Literal (|)' },
 							{ value: 'BLOCK_FOLDED', label: 'Block Folded (>)' },
 						]}
+						size="compact"
 					/>
 					<FormCheckboxGroup className="pt-1">
 						<FormCheckbox
@@ -303,6 +305,7 @@ export function FormatTab({ input, onInputChange, onStatsChange }: FormatTabProp
 							{ value: 'QUOTE_SINGLE', label: "Single Quote (')" },
 							{ value: 'QUOTE_DOUBLE', label: 'Double Quote (")' },
 						]}
+						size="compact"
 					/>
 					<FormCheckboxGroup className="pt-1">
 						<FormCheckbox

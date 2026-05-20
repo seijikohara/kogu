@@ -66,11 +66,13 @@ export function CompareTab({ input, onInputChange, onStatsChange }: CompareTabPr
 						label="Ignore whitespace"
 						checked={compareIgnoreWhitespace}
 						onCheckedChange={setCompareIgnoreWhitespace}
+						size="compact"
 					/>
 					<FormCheckbox
 						label="Ignore comments"
 						checked={compareIgnoreComments}
 						onCheckedChange={setCompareIgnoreComments}
+						size="compact"
 					/>
 				</>
 			)}
@@ -80,11 +82,13 @@ export function CompareTab({ input, onInputChange, onStatsChange }: CompareTabPr
 						label="Ignore case"
 						checked={compareIgnoreCase}
 						onCheckedChange={setCompareIgnoreCase}
+						size="compact"
 					/>
 					<FormCheckbox
 						label="Ignore namespaces"
 						checked={compareIgnoreNamespaces}
 						onCheckedChange={setCompareIgnoreNamespaces}
+						size="compact"
 					/>
 					<FormInput
 						label="Ignore Attributes"

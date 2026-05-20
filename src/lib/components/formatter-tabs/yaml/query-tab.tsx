@@ -161,6 +161,7 @@ export function QueryTab({ input, onInputChange, onStatsChange }: QueryTabProps)
 								{ value: 'yaml', label: 'YAML' },
 								{ value: 'json', label: 'JSON' },
 							]}
+							size="compact"
 						/>
 						<FormSelect
 							label="Max Results"

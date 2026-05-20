@@ -461,6 +461,7 @@ function CurlBuilderPage() {
 								placeholder="0 = no timeout"
 								hint="Maps to --max-time"
 								className="font-mono"
+								size="compact"
 							/>
 						</CardContent>
 					</Card>

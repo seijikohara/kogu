@@ -490,6 +490,7 @@ export function GenerateTab({ input, onInputChange, onStatsChange }: GenerateTab
 							value={pyStyle}
 							onValueChange={(v) => setPyStyle(v as PythonStyle)}
 							options={PYTHON_STYLE_OPTIONS.map((o) => ({ value: o.value, label: o.label }))}
+							size="compact"
 						/>
 						{pyStyle === 'dataclass' ? (
 							<FormCheckboxGroup className="pt-1">
@@ -605,6 +606,7 @@ export function GenerateTab({ input, onInputChange, onStatsChange }: GenerateTab
 								value: o.value,
 								label: o.label,
 							}))}
+							size="compact"
 						/>
 						<FormSelect
 							label="Serialization"
@@ -614,6 +616,7 @@ export function GenerateTab({ input, onInputChange, onStatsChange }: GenerateTab
 								value: o.value,
 								label: o.label,
 							}))}
+							size="compact"
 						/>
 						<FormCheckboxGroup className="pt-1">
 							<FormCheckbox
@@ -721,6 +724,7 @@ export function GenerateTab({ input, onInputChange, onStatsChange }: GenerateTab
 								value: o.value,
 								label: o.label,
 							}))}
+							size="compact"
 						/>
 						<FormCheckboxGroup className="pt-1">
 							<FormCheckbox

@@ -232,6 +232,7 @@ export function ConvertTab({ input, onInputChange, onStatsChange }: ConvertTabPr
 										value={yamlIndentStr}
 										onValueChange={setYamlIndentStr}
 										options={['2', '4', '8']}
+										size="compact"
 									/>
 									<FormSelect
 										label="Line Width"
@@ -243,6 +244,7 @@ export function ConvertTab({ input, onInputChange, onStatsChange }: ConvertTabPr
 											{ value: '120', label: '120' },
 											{ value: '0', label: '∞' },
 										]}
+										size="compact"
 									/>
 								</div>
 								<FormSelect
@@ -254,17 +256,20 @@ export function ConvertTab({ input, onInputChange, onStatsChange }: ConvertTabPr
 										{ value: 'flow', label: 'Flow ({...})' },
 										{ value: 'any', label: 'Auto' },
 									]}
+									size="compact"
 								/>
 								<FormCheckboxGroup className="pt-1">
 									<FormCheckbox
 										label="Indent sequences"
 										checked={yamlIndentSeq}
 										onCheckedChange={setYamlIndentSeq}
+										size="compact"
 									/>
 									<FormCheckbox
 										label="Flow collection padding"
 										checked={yamlFlowCollectionPadding}
 										onCheckedChange={setYamlFlowCollectionPadding}
+										size="compact"
 									/>
 								</FormCheckboxGroup>
 							</FormSection>
@@ -281,22 +286,26 @@ export function ConvertTab({ input, onInputChange, onStatsChange }: ConvertTabPr
 										{ value: 'BLOCK_LITERAL', label: 'Block Literal (|)' },
 										{ value: 'BLOCK_FOLDED', label: 'Block Folded (>)' },
 									]}
+									size="compact"
 								/>
 								<FormCheckboxGroup className="pt-1">
 									<FormCheckbox
 										label="Force quotes on all strings"
 										checked={yamlForceQuotes}
 										onCheckedChange={setYamlForceQuotes}
+										size="compact"
 									/>
 									<FormCheckbox
 										label="Prefer single quotes"
 										checked={yamlSingleQuote}
 										onCheckedChange={setYamlSingleQuote}
+										size="compact"
 									/>
 									<FormCheckbox
 										label="Double-quoted as JSON style"
 										checked={yamlDoubleQuotedAsJSON}
 										onCheckedChange={setYamlDoubleQuotedAsJSON}
+										size="compact"
 									/>
 								</FormCheckboxGroup>
 							</FormSection>
@@ -311,12 +320,14 @@ export function ConvertTab({ input, onInputChange, onStatsChange }: ConvertTabPr
 										{ value: 'QUOTE_SINGLE', label: "Single Quote (')" },
 										{ value: 'QUOTE_DOUBLE', label: 'Double Quote (")' },
 									]}
+									size="compact"
 								/>
 								<FormCheckboxGroup className="pt-1">
 									<FormCheckbox
 										label="Sort keys alphabetically"
 										checked={yamlSortKeys}
 										onCheckedChange={setYamlSortKeys}
+										size="compact"
 									/>
 								</FormCheckboxGroup>
 							</FormSection>
@@ -355,6 +366,7 @@ export function ConvertTab({ input, onInputChange, onStatsChange }: ConvertTabPr
 									label="Disable YAML references/aliases"
 									checked={yamlNoRefs}
 									onCheckedChange={setYamlNoRefs}
+									size="compact"
 								/>
 							</FormSection>
 						</>
@@ -401,6 +413,7 @@ export function ConvertTab({ input, onInputChange, onStatsChange }: ConvertTabPr
 											{ value: '4', label: '4' },
 											{ value: '8', label: '8' },
 										]}
+										size="compact"
 									/>
 									<FormSelect
 										label="Indent Type"
@@ -410,6 +423,7 @@ export function ConvertTab({ input, onInputChange, onStatsChange }: ConvertTabPr
 											{ value: 'spaces', label: 'Spaces' },
 											{ value: 'tabs', label: 'Tabs' },
 										]}
+										size="compact"
 									/>
 								</div>
 								<FormSelect
@@ -420,12 +434,14 @@ export function ConvertTab({ input, onInputChange, onStatsChange }: ConvertTabPr
 										{ value: '\n', label: 'LF (Unix)' },
 										{ value: '\r\n', label: 'CRLF (Windows)' },
 									]}
+									size="compact"
 								/>
 								<FormCheckboxGroup className="pt-1">
 									<FormCheckbox
 										label="Collapse content on single line"
 										checked={xmlCollapseContent}
 										onCheckedChange={setXmlCollapseContent}
+										size="compact"
 									/>
 								</FormCheckboxGroup>
 							</FormSection>
@@ -435,6 +451,7 @@ export function ConvertTab({ input, onInputChange, onStatsChange }: ConvertTabPr
 									label="Include XML declaration"
 									checked={xmlDeclaration}
 									onCheckedChange={setXmlDeclaration}
+									size="compact"
 								/>
 								{xmlDeclaration ? (
 									<div className="grid grid-cols-2 gap-2 pt-1">
@@ -463,11 +480,13 @@ export function ConvertTab({ input, onInputChange, onStatsChange }: ConvertTabPr
 									label="Use self-closing tags"
 									checked={xmlSelfClosing}
 									onCheckedChange={setXmlSelfClosing}
+									size="compact"
 								/>
 								<FormCheckbox
 									label="Space before self-closing />"
 									checked={xmlWhiteSpaceAtEndOfSelfclosingTag}
 									onCheckedChange={setXmlWhiteSpaceAtEndOfSelfclosingTag}
+									size="compact"
 								/>
 							</FormSection>
 
@@ -476,6 +495,7 @@ export function ConvertTab({ input, onInputChange, onStatsChange }: ConvertTabPr
 									label="Wrap text in CDATA"
 									checked={xmlCdata}
 									onCheckedChange={setXmlCdata}
+									size="compact"
 								/>
 								{xmlCdata ? (
 									<div className="pt-1">
@@ -494,6 +514,7 @@ export function ConvertTab({ input, onInputChange, onStatsChange }: ConvertTabPr
 									label="Escape special characters"
 									checked={xmlEscapeText}
 									onCheckedChange={setXmlEscapeText}
+									size="compact"
 								/>
 							</FormSection>
 
@@ -503,11 +524,13 @@ export function ConvertTab({ input, onInputChange, onStatsChange }: ConvertTabPr
 										label="Sort element keys"
 										checked={xmlSortKeys}
 										onCheckedChange={setXmlSortKeys}
+										size="compact"
 									/>
 									<FormCheckbox
 										label="Sort attributes"
 										checked={xmlSortAttributes}
 										onCheckedChange={setXmlSortAttributes}
+										size="compact"
 									/>
 								</FormCheckboxGroup>
 							</FormSection>

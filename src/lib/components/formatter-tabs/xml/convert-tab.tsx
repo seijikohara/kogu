@@ -171,6 +171,7 @@ export function ConvertTab({ input, onInputChange, onStatsChange }: ConvertTabPr
 										{ value: '4', label: '4' },
 										{ value: '8', label: '8' },
 									]}
+									size="compact"
 								/>
 							</FormSection>
 
@@ -179,6 +180,7 @@ export function ConvertTab({ input, onInputChange, onStatsChange }: ConvertTabPr
 									label="Sort keys alphabetically"
 									checked={jsonSortKeys}
 									onCheckedChange={setJsonSortKeys}
+									size="compact"
 								/>
 							</FormSection>
 						</>
@@ -193,6 +195,7 @@ export function ConvertTab({ input, onInputChange, onStatsChange }: ConvertTabPr
 										value={yamlIndentStr}
 										onValueChange={setYamlIndentStr}
 										options={['2', '4', '8']}
+										size="compact"
 									/>
 									<FormSelect
 										label="Line Width"
@@ -204,6 +207,7 @@ export function ConvertTab({ input, onInputChange, onStatsChange }: ConvertTabPr
 											{ value: '120', label: '120' },
 											{ value: '0', label: '∞' },
 										]}
+										size="compact"
 									/>
 								</div>
 								<FormSelect
@@ -215,17 +219,20 @@ export function ConvertTab({ input, onInputChange, onStatsChange }: ConvertTabPr
 										{ value: 'flow', label: 'Flow ({...})' },
 										{ value: 'any', label: 'Auto' },
 									]}
+									size="compact"
 								/>
 								<FormCheckboxGroup className="pt-1">
 									<FormCheckbox
 										label="Indent sequences"
 										checked={yamlIndentSeq}
 										onCheckedChange={setYamlIndentSeq}
+										size="compact"
 									/>
 									<FormCheckbox
 										label="Flow collection padding"
 										checked={yamlFlowCollectionPadding}
 										onCheckedChange={setYamlFlowCollectionPadding}
+										size="compact"
 									/>
 								</FormCheckboxGroup>
 							</FormSection>
@@ -242,22 +249,26 @@ export function ConvertTab({ input, onInputChange, onStatsChange }: ConvertTabPr
 										{ value: 'BLOCK_LITERAL', label: 'Block Literal (|)' },
 										{ value: 'BLOCK_FOLDED', label: 'Block Folded (>)' },
 									]}
+									size="compact"
 								/>
 								<FormCheckboxGroup className="pt-1">
 									<FormCheckbox
 										label="Force quotes on all strings"
 										checked={yamlForceQuotes}
 										onCheckedChange={setYamlForceQuotes}
+										size="compact"
 									/>
 									<FormCheckbox
 										label="Prefer single quotes"
 										checked={yamlSingleQuote}
 										onCheckedChange={setYamlSingleQuote}
+										size="compact"
 									/>
 									<FormCheckbox
 										label="Double-quoted as JSON style"
 										checked={yamlDoubleQuotedAsJSON}
 										onCheckedChange={setYamlDoubleQuotedAsJSON}
+										size="compact"
 									/>
 								</FormCheckboxGroup>
 							</FormSection>
@@ -272,12 +283,14 @@ export function ConvertTab({ input, onInputChange, onStatsChange }: ConvertTabPr
 										{ value: 'QUOTE_SINGLE', label: "Single Quote (')" },
 										{ value: 'QUOTE_DOUBLE', label: 'Double Quote (")' },
 									]}
+									size="compact"
 								/>
 								<FormCheckboxGroup className="pt-1">
 									<FormCheckbox
 										label="Sort keys alphabetically"
 										checked={yamlSortKeys}
 										onCheckedChange={setYamlSortKeys}
+										size="compact"
 									/>
 								</FormCheckboxGroup>
 							</FormSection>
@@ -316,6 +329,7 @@ export function ConvertTab({ input, onInputChange, onStatsChange }: ConvertTabPr
 									label="Disable YAML references/aliases"
 									checked={yamlNoRefs}
 									onCheckedChange={setYamlNoRefs}
+									size="compact"
 								/>
 							</FormSection>
 						</>
