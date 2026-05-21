@@ -29,7 +29,7 @@ import {
 } from '@/lib/components/form';
 import { SectionHeader } from '@/lib/components/layout';
 import { ToolShell } from '@/lib/components/shell';
-import { EmbeddedEmptyState, StatItem } from '@/lib/components/status';
+import { EmbeddedEmptyState, LiveStatusRegion, StatItem } from '@/lib/components/status';
 import { Button } from '@/lib/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/lib/components/ui/card';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/lib/components/ui/tooltip';
@@ -705,12 +705,7 @@ function QrCodeGeneratorPage() {
 					}
 				/>
 
-				<div
-					className="flex-1 overflow-auto p-6"
-					role="status"
-					aria-live="polite"
-					aria-atomic="false"
-				>
+				<LiveStatusRegion className="flex-1 overflow-auto p-6">
 					<div className="mx-auto flex max-w-3xl flex-col gap-6">
 						<Card density="compact" className="overflow-hidden">
 							<CardContent className="flex items-center justify-center p-8">
@@ -750,7 +745,7 @@ function QrCodeGeneratorPage() {
 							</CardContent>
 						</Card>
 					</div>
-				</div>
+				</LiveStatusRegion>
 			</div>
 		</ToolShell>
 	);

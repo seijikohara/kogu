@@ -30,7 +30,7 @@ import {
 } from '@/lib/components/form';
 import { UnifiedHostDetailPanel, UnifiedHostListItem } from '@/lib/components/network-scanner';
 import { ToolShell } from '@/lib/components/shell';
-import { EmptyState, ErrorDisplay, StatItem } from '@/lib/components/status';
+import { EmptyState, ErrorDisplay, LiveStatusRegion, StatItem } from '@/lib/components/status';
 import {
 	Accordion,
 	AccordionContent,
@@ -848,12 +848,7 @@ function ScanProgressPanel({
 	onCancel,
 }: ScanProgressPanelProps) {
 	return (
-		<div
-			className="shrink-0 border-b bg-surface-2 px-4 py-3"
-			role="status"
-			aria-live="polite"
-			aria-atomic="false"
-		>
+		<LiveStatusRegion className="shrink-0 border-b bg-surface-2 px-4 py-3">
 			<div className="mb-2 flex items-center justify-between">
 				<div className="flex items-center gap-2">
 					<Loader2 className="h-4 w-4 animate-spin text-primary" />
@@ -905,7 +900,7 @@ function ScanProgressPanel({
 					) : null}
 				</div>
 			</div>
-		</div>
+		</LiveStatusRegion>
 	);
 }
 
@@ -936,11 +931,9 @@ function HostListPane({
 }: HostListPaneProps) {
 	return (
 		<div className="flex h-full flex-col border-r">
-			<div
+			<LiveStatusRegion
+				atomic="true"
 				className="flex h-9 shrink-0 items-center justify-between border-b bg-surface-3 px-3"
-				role="status"
-				aria-live="polite"
-				aria-atomic="true"
 			>
 				<span className="text-xs font-medium text-muted-foreground">
 					Hosts ({unifiedHosts.length})
@@ -948,7 +941,7 @@ function HostListPane({
 				{totalOpenPorts > 0 ? (
 					<span className="text-xs text-success">{totalOpenPorts} open ports</span>
 				) : null}
-			</div>
+			</LiveStatusRegion>
 			<div
 				className="flex-1 overflow-auto outline-none focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:ring-inset"
 				role="listbox"

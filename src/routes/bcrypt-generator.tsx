@@ -7,7 +7,13 @@ import { ActionButton, CopyButton } from '@/lib/components/action';
 import { FormInfo, FormInput, FormMode, FormSection, FormSlider } from '@/lib/components/form';
 import { SectionHeader } from '@/lib/components/layout';
 import { ToolShell } from '@/lib/components/shell';
-import { EmptyState, ErrorDisplay, LoadingOverlay, StatItem } from '@/lib/components/status';
+import {
+	EmptyState,
+	ErrorDisplay,
+	LiveStatusRegion,
+	LoadingOverlay,
+	StatItem,
+} from '@/lib/components/status';
 import { Card, CardContent, CardHeader, CardTitle } from '@/lib/components/ui/card';
 import {
 	type BcryptCostInfo,
@@ -366,12 +372,7 @@ function BcryptGeneratorPage() {
 					title={activeTab === 'generate' ? 'Generated Hash' : 'Verification Result'}
 				/>
 
-				<div
-					className="flex-1 overflow-auto p-4"
-					role="status"
-					aria-live="polite"
-					aria-atomic="false"
-				>
+				<LiveStatusRegion className="flex-1 overflow-auto p-4">
 					{activeTab === 'generate' ? (
 						hashResult ? (
 							<div key={flashCounter} className="animate-flash-success space-y-4 rounded-md">
@@ -463,7 +464,7 @@ function BcryptGeneratorPage() {
 					) : (
 						<EmptyState icon={ShieldCheck} title="Enter a password and hash to verify" />
 					)}
-				</div>
+				</LiveStatusRegion>
 			</div>
 		</ToolShell>
 	);

@@ -7,7 +7,7 @@ import { CodeEditor } from '@/lib/components/editor';
 import { FormInfo, FormSection } from '@/lib/components/form';
 import { SectionHeader } from '@/lib/components/layout';
 import { ToolShell } from '@/lib/components/shell';
-import { EmbeddedEmptyState, StatItem } from '@/lib/components/status';
+import { EmbeddedEmptyState, LiveStatusRegion, StatItem } from '@/lib/components/status';
 import { Badge } from '@/lib/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/lib/components/ui/card';
 import {
@@ -121,12 +121,7 @@ function HashGeneratorPage() {
 				</div>
 				<div className="flex flex-1 flex-col overflow-hidden">
 					<SectionHeader title="Hash Results" />
-					<div
-						className="flex-1 overflow-auto p-4"
-						role="status"
-						aria-live="polite"
-						aria-atomic="false"
-					>
+					<LiveStatusRegion className="flex-1 overflow-auto p-4">
 						{textHashes.length > 0 ? (
 							<div className="space-y-3">
 								{textHashes.map((result) => (
@@ -173,7 +168,7 @@ function HashGeneratorPage() {
 								fillHeight
 							/>
 						)}
-					</div>
+					</LiveStatusRegion>
 				</div>
 			</div>
 		</ToolShell>

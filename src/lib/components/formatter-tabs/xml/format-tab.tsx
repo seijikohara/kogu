@@ -10,9 +10,9 @@ import {
 	FormSection,
 	FormSelect,
 } from '@/lib/components/form';
-import { SectionHeader, SplitPane } from '@/lib/components/layout';
+import { SplitPane } from '@/lib/components/layout';
 import { OptionsPanel } from '@/lib/components/panel';
-import { EmbeddedEmptyState } from '@/lib/components/status';
+import { EmptyOutputPane } from '@/lib/components/status';
 import {
 	defaultXmlFormatOptions,
 	formatXml,
@@ -277,17 +277,12 @@ export function FormatTab({ input, onInputChange, onStatsChange }: FormatTabProp
 				}
 				right={
 					input.trim().length === 0 ? (
-						<div className="flex h-full flex-col overflow-hidden">
-							<SectionHeader title="Output" />
-							<div className="flex-1">
-								<EmbeddedEmptyState
-									icon={FileText}
-									title="Enter XML to format"
-									description="The formatted (or minified) document will appear here."
-									fillHeight
-								/>
-							</div>
-						</div>
+						<EmptyOutputPane
+							headerTitle="Output"
+							icon={FileText}
+							title="Enter XML to format"
+							description="The formatted (or minified) document will appear here."
+						/>
 					) : (
 						<CodeEditor
 							title="Output"

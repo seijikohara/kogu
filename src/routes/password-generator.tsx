@@ -13,7 +13,7 @@ import {
 } from '@/lib/components/form';
 import { SectionHeader } from '@/lib/components/layout';
 import { ToolShell } from '@/lib/components/shell';
-import { EmbeddedEmptyState, StatItem } from '@/lib/components/status';
+import { EmbeddedEmptyState, LiveStatusRegion, StatItem } from '@/lib/components/status';
 import { Card, CardContent } from '@/lib/components/ui/card';
 import { createToolOptionsStore } from '@/lib/stores';
 import {
@@ -264,12 +264,7 @@ function PasswordGeneratorPage() {
 						) : null
 					}
 				/>
-				<div
-					className="flex-1 overflow-auto p-4"
-					role="status"
-					aria-live="polite"
-					aria-atomic="false"
-				>
+				<LiveStatusRegion className="flex-1 overflow-auto p-4">
 					{results.length > 0 ? (
 						<div key={flashCounter} className="animate-flash-success space-y-2 rounded-md">
 							{results.map((password) => (
@@ -289,7 +284,7 @@ function PasswordGeneratorPage() {
 							fillHeight
 						/>
 					)}
-				</div>
+				</LiveStatusRegion>
 			</div>
 		</ToolShell>
 	);
