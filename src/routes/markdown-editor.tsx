@@ -39,7 +39,7 @@ import { FormInfo, FormMode, FormSection } from '@/lib/components/form';
 import { SplitPane } from '@/lib/components/layout';
 import { MarkdownContextMenuItems, Vizel } from '@/lib/components/markdown';
 import { ToolShell } from '@/lib/components/shell';
-import { StatItem } from '@/lib/components/status';
+import { EmbeddedEmptyState, StatItem } from '@/lib/components/status';
 import { Button } from '@/lib/components/ui/button';
 import {
 	ContextMenu,
@@ -701,12 +701,12 @@ function MarkdownEditorPage() {
 										// biome-ignore lint/security/noDangerouslySetInnerHtml: htmlOutput originates from the local markdownToHtmlAsync pipeline; content is generated from user input that already lives in the same process.
 										<div dangerouslySetInnerHTML={{ __html: htmlOutput }} />
 									) : (
-										<div className="flex h-full items-center justify-center text-muted-foreground">
-											<div className="text-center">
-												<Eye className="mx-auto mb-2 h-12 w-12 opacity-50" />
-												<p className="text-sm">Preview will appear here</p>
-											</div>
-										</div>
+										<EmbeddedEmptyState
+											icon={Eye}
+											title="Preview will appear here"
+											description="Type Markdown on the left to render it on the right."
+											fillHeight
+										/>
 									)}
 								</div>
 							</div>

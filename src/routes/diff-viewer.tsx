@@ -13,6 +13,7 @@ import {
 	FormSlider,
 } from '@/lib/components/form';
 import { ToolShell } from '@/lib/components/shell';
+import { EmptyState } from '@/lib/components/status';
 import {
 	areTextsIdentical,
 	computeEnhancedDiff,
@@ -223,12 +224,11 @@ function DiffViewerPage() {
 	);
 
 	const emptyState = (
-		<div className="flex flex-1 items-center justify-center text-muted-foreground">
-			<div className="text-center">
-				<SplitSquareHorizontal className="mx-auto mb-2 h-12 w-12 opacity-50" />
-				<p className="text-sm">Enter text on both sides to compare</p>
-			</div>
-		</div>
+		<EmptyState
+			icon={SplitSquareHorizontal}
+			title="Enter text on both sides"
+			description="Add input on the left and right to see differences."
+		/>
 	);
 
 	const identicalState = (
