@@ -154,7 +154,7 @@ function HashGeneratorPage() {
 												toastLabel={result.algorithm}
 												size="sm"
 												showLabel
-												className="h-6"
+												className="h-7"
 											/>
 										</CardHeader>
 										<CardContent>

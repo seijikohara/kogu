@@ -713,7 +713,7 @@ function QrCodeGeneratorPage() {
 						) : null}
 
 						<Card density="compact">
-							<CardHeader className="flex flex-row items-center justify-between space-y-0 py-4">
+							<CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
 								<div className="flex items-center gap-2">
 									<ActiveKindIcon className="h-4 w-4 text-muted-foreground" />
 									<CardTitle className="text-sm font-medium">Encoded payload</CardTitle>

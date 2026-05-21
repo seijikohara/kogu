@@ -381,7 +381,7 @@ function SshKeyGeneratorPage() {
 								<Card density="compact">
 									<CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
 										<div className="flex items-center gap-2">
-											<Terminal className="h-4 w-4" />
+											<Terminal className="h-4 w-4 text-muted-foreground" />
 											<CardTitle className="text-sm font-medium">
 												Equivalent ssh-keygen Command
 											</CardTitle>

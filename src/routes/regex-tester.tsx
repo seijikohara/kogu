@@ -356,7 +356,7 @@ function RegexTesterPage() {
 								{features.length} feature{features.length === 1 ? '' : 's'}
 							</Badge>
 							<div className="ml-auto flex items-center gap-1">
-								<Button variant="ghost" size="sm" className="h-7" onClick={loadSample}>
+								<Button variant="outline" size="sm" className="h-7" onClick={loadSample}>
 									<FlaskConical className="mr-1.5 h-3.5 w-3.5" />
 									Sample
 								</Button>
@@ -369,7 +369,7 @@ function RegexTesterPage() {
 				<div className="shrink-0 border-b bg-background px-4 py-3">
 					<div className="mx-auto max-w-6xl">
 						<Card density="compact">
-							<CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 pt-3">
+							<CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
 								<div className="flex items-center gap-2">
 									<Workflow className="h-4 w-4 text-muted-foreground" />
 									<CardTitle className="text-sm font-medium">Railroad</CardTitle>

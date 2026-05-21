@@ -350,7 +350,7 @@ function GpgKeyGeneratorPage() {
 								<Card density="compact">
 									<CardHeader className="pb-3">
 										<div className="flex items-center gap-2">
-											<User className="h-4 w-4" />
+											<User className="h-4 w-4 text-muted-foreground" />
 											<CardTitle className="text-sm font-medium">Key Information</CardTitle>
 										</div>
 									</CardHeader>
@@ -428,7 +428,7 @@ function GpgKeyGeneratorPage() {
 								<Card density="compact">
 									<CardHeader className="pb-3">
 										<div className="flex items-center gap-2">
-											<Terminal className="h-4 w-4" />
+											<Terminal className="h-4 w-4 text-muted-foreground" />
 											<CardTitle className="text-sm font-medium">Equivalent GPG Commands</CardTitle>
 										</div>
 									</CardHeader>

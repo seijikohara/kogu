@@ -205,7 +205,7 @@ function JwtDecoderPage() {
 										toastLabel="Header"
 										size="sm"
 										showLabel
-										className="h-6"
+										className="h-7"
 									/>
 								</CardHeader>
 								<CardContent>
@@ -243,7 +243,7 @@ function JwtDecoderPage() {
 										toastLabel="Payload"
 										size="sm"
 										showLabel
-										className="h-6"
+										className="h-7"
 									/>
 								</CardHeader>
 								<CardContent>
@@ -297,7 +297,7 @@ function JwtDecoderPage() {
 										toastLabel="Signature"
 										size="sm"
 										showLabel
-										className="h-6"
+										className="h-7"
 									/>
 								</CardHeader>
 								<CardContent>
