@@ -131,11 +131,42 @@ function RootLayout() {
 		};
 		document.addEventListener('contextmenu', handleContextMenu, { capture: true });
 
+		// Radix UI's RemoveScroll (used by Select/Dialog/Popover/etc.) sets
+		// `document.body.style.pointer-events = 'none'` while open and clears it on
+		// close. When two overlays open simultaneously, or when an overlay unmounts
+		// before its cleanup effect fires (HMR, route change, double-open during
+		// navigation), the inline style leaks and every subsequent click on the
+		// page below is blocked. Watch the body's inline style: whenever it locks
+		// but no Radix overlay is currently open, clear it.
+		const radixOpenSelector =
+			'[data-state="open"][role="dialog"], ' +
+			'[data-state="open"][data-slot="popover-content"], ' +
+			'[data-state="open"][data-slot="select-content"], ' +
+			'[data-state="open"][data-slot="dropdown-menu-content"], ' +
+			'[data-state="open"][data-slot="context-menu-content"], ' +
+			'[data-state="open"][data-slot="tooltip-content"], ' +
+			'[data-state="open"][data-slot="hover-card-content"]';
+		const unlockBodyIfStuck = () => {
+			if (document.body.style.pointerEvents !== 'none') return;
+			if (document.querySelector(radixOpenSelector)) return;
+			document.body.style.pointerEvents = '';
+		};
+		const bodyStyleObserver = new MutationObserver(() => {
+			// Defer one frame so Radix's own cleanup (which fires synchronously in
+			// the same tick) wins when the dismissal is legitimate.
+			requestAnimationFrame(unlockBodyIfStuck);
+		});
+		bodyStyleObserver.observe(document.body, {
+			attributes: true,
+			attributeFilter: ['style'],
+		});
+
 		return () => {
 			window.removeEventListener('open-shortcuts-help', handleOpenShortcutsHelp);
 			window.removeEventListener('reset-all-settings', handleResetFromPalette);
 			unlistenMenuResetPromise.then((unlisten) => unlisten?.()).catch(() => {});
 			document.removeEventListener('contextmenu', handleContextMenu, { capture: true });
+			bodyStyleObserver.disconnect();
 		};
 	}, [handleResetAllSettings]);
 
