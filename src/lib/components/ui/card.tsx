@@ -3,12 +3,24 @@ import * as React from 'react';
 import { cn } from '@/lib/utils';
 
 type CardDensity = 'default' | 'compact';
+// Tonal variants apply a semantic border/40 + bg/5 pair on top of the base
+// Card surface. `default` keeps the neutral surface (no tinting).
+type CardVariant = 'default' | 'destructive' | 'warning' | 'info' | 'success';
 
 interface CardProps extends React.ComponentProps<'div'> {
 	readonly density?: CardDensity;
+	readonly variant?: CardVariant;
 }
 
-function Card({ className, density = 'default', ...props }: CardProps) {
+const cardVariantClasses: Record<CardVariant, string> = {
+	default: '',
+	destructive: 'border border-destructive/40 bg-destructive/5',
+	warning: 'border border-warning/40 bg-warning/5',
+	info: 'border border-info/40 bg-info/5',
+	success: 'border border-success/40 bg-success/5',
+};
+
+function Card({ className, density = 'default', variant = 'default', ...props }: CardProps) {
 	// Map Kogu's `density` API to shadcn Nova's `data-size` token.
 	// default -> default (gap-4, py-4, px-4)
 	// compact -> sm      (gap-3, py-3, px-3)
@@ -19,8 +31,10 @@ function Card({ className, density = 'default', ...props }: CardProps) {
 			data-slot="card"
 			data-size={size}
 			data-density={density}
+			data-variant={variant}
 			className={cn(
 				'group/card flex flex-col gap-4 overflow-hidden rounded-xl bg-card py-4 text-sm text-card-foreground ring-1 ring-foreground/10 has-data-[slot=card-footer]:pb-0 has-[>img:first-child]:pt-0 data-[size=sm]:gap-3 data-[size=sm]:py-3 data-[size=sm]:has-data-[slot=card-footer]:pb-0 *:[img:first-child]:rounded-t-xl *:[img:last-child]:rounded-b-xl',
+				cardVariantClasses[variant],
 				className
 			)}
 			{...props}

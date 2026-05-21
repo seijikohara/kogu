@@ -76,7 +76,9 @@ export function FormMode<T extends string>({
 							key={option.value}
 							value={option.value}
 							className={cn(
-								'h-9 w-full min-w-0 rounded-md px-2 text-sm font-medium transition-all',
+								// Compact rail rhythm: h-7 + text-xs to align with neighboring
+								// rail controls (Inputs, Buttons size="sm") instead of h-9.
+								'h-7 w-full min-w-0 rounded-md px-2 text-xs font-medium transition-all',
 								'flex items-center gap-1.5',
 								layout === 'horizontal' ? 'justify-center' : 'justify-start',
 								'data-[state=on]:bg-background data-[state=on]:shadow-sm',

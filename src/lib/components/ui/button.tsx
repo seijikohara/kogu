@@ -32,6 +32,8 @@ const buttonVariants = cva(
 				'icon-sm':
 					'size-7 rounded-[min(var(--radius-md),12px)] in-data-[slot=button-group]:rounded-lg',
 				'icon-lg': 'size-9',
+				// Markdown-editor toolbar repeat pattern: ghost icon button at h-7 w-7 p-0.
+				'toolbar-icon': 'h-7 w-7 p-0',
 			},
 		},
 		defaultVariants: {
