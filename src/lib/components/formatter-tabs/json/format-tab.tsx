@@ -1,6 +1,5 @@
 import { FileText } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
-import { toast } from 'sonner';
 
 import { CodeEditor, type ContextMenuItem } from '@/lib/components/editor';
 import {
@@ -13,6 +12,7 @@ import {
 import { SplitPane } from '@/lib/components/layout';
 import { OptionsPanel } from '@/lib/components/panel';
 import { EmptyOutputPane } from '@/lib/components/status';
+import { useClipboardActions } from '@/lib/hooks';
 import {
 	defaultJsonFormatOptions,
 	type JsonFormatOptions,
@@ -206,27 +206,10 @@ export function FormatTab({ input, onInputChange, onStatsChange }: FormatTabProp
 		});
 	}, [input, validation.valid, formatError, onStatsChange]);
 
-	const handlePaste = async () => {
-		try {
-			const text = await navigator.clipboard.readText();
-			if (text) onInputChange(text);
-		} catch {
-			// Clipboard access denied.
-		}
-	};
-
-	const handleClear = () => {
-		onInputChange('');
-	};
-
-	const handleCopy = async () => {
-		try {
-			await navigator.clipboard.writeText(output);
-			toast.success('Copied to clipboard');
-		} catch {
-			toast.error('Failed to copy to clipboard');
-		}
-	};
+	const { handlePaste, handleClear, handleCopy } = useClipboardActions({
+		onInputChange,
+		output,
+	});
 
 	const handleSample = () => {
 		onInputChange(SAMPLE_JSON);
