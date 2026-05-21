@@ -141,7 +141,7 @@ function RootLayout() {
 
 	return (
 		<ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-			<Toaster richColors />
+			<Toaster />
 			<KeyboardShortcutsDialog open={shortcutsOpen} onOpenChange={setShortcutsOpen} />
 			<TooltipProvider delayDuration={150}>
 				<div className="flex h-screen flex-col">
