@@ -416,7 +416,7 @@ export function TreeView({
 	return (
 		<>
 			<div
-				className="group/tree relative select-none font-mono text-[13px] leading-[1.5]"
+				className="group/tree relative select-none font-mono text-sm leading-[1.5]"
 				style={wrapperStyle}
 			>
 				{hasChildren ? (
