@@ -24,14 +24,18 @@ import {
 // ============================================================================
 
 describe('formatBytes', () => {
+	// Magnitude-aware precision: 2 decimals for values < 10, 1 decimal for
+	// values < 100, integer otherwise. Single source of truth lives in
+	// `@/lib/utils/format` and is re-exported by this service module.
 	it.each([
 		[0, '0 B'],
 		[100, '100 B'],
 		[1023, '1023 B'],
-		[1024, '1.0 KB'],
-		[1536, '1.5 KB'],
-		[1048576, '1.0 MB'],
-		[2621440, '2.5 MB'],
+		[1024, '1.00 KB'],
+		[1536, '1.50 KB'],
+		[1048576, '1.00 MB'],
+		[2621440, '2.50 MB'],
+		[1073741824, '1.00 GB'],
 	])('formats %d bytes as "%s"', (bytes, expected) => {
 		expect(formatBytes(bytes)).toBe(expected);
 	});

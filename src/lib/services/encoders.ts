@@ -7,14 +7,10 @@ import CryptoJS from 'crypto-js';
 // Utility Functions
 // ============================================================================
 
-/**
- * Format bytes to human-readable size.
- */
-export const formatBytes = (bytes: number): string => {
-	if (bytes < 1024) return `${bytes} B`;
-	if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-	return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-};
+// `formatBytes` previously had its own copy here; the canonical implementation
+// now lives in `@/lib/utils/format`. Re-export so existing consumers keep
+// their import path until they migrate.
+export { formatBytes } from '@/lib/utils';
 
 // ============================================================================
 // Base64 Encoder/Decoder

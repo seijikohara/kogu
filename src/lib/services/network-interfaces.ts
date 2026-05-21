@@ -66,16 +66,10 @@ export const getDetailedNetworkInterfaces = (): Promise<DetailedNetworkInterface
 // Formatting Utilities
 // =============================================================================
 
-const BYTE_UNITS = ['B', 'KB', 'MB', 'GB', 'TB', 'PB'] as const;
-
-/** Format byte count to human-readable string (e.g., "1.23 GB") */
-export const formatBytes = (bytes: number): string => {
-	if (bytes === 0) return '0 B';
-	const i = Math.floor(Math.log(bytes) / Math.log(1024));
-	const idx = Math.min(i, BYTE_UNITS.length - 1);
-	const value = bytes / 1024 ** idx;
-	return `${value < 10 ? value.toFixed(2) : value < 100 ? value.toFixed(1) : Math.round(value)} ${BYTE_UNITS[idx]}`;
-};
+// `formatBytes` previously had its own copy here; the canonical implementation
+// now lives in `@/lib/utils/format`. Re-export so existing consumers keep
+// their import path.
+export { formatBytes } from '@/lib/utils';
 
 const SPEED_UNITS = ['bps', 'Kbps', 'Mbps', 'Gbps', 'Tbps'] as const;
 
