@@ -66,10 +66,18 @@ function TabsTrigger({ className, ...props }: React.ComponentProps<typeof TabsPr
 }
 
 function TabsContent({ className, ...props }: React.ComponentProps<typeof TabsPrimitive.Content>) {
+	// Radix sets `tabIndex={0}` on TabsContent when its subtree has no focusable
+	// element, so the panel itself can receive keyboard focus. `outline-none`
+	// alone leaves that focus invisible. Pair it with a `focus-visible:` ring so
+	// keyboard users still see where focus is. Matches the focus-ring tokens used
+	// across the project's other primitives.
 	return (
 		<TabsPrimitive.Content
 			data-slot="tabs-content"
-			className={cn('flex-1 text-sm outline-none', className)}
+			className={cn(
+				'flex-1 rounded-md text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring/50',
+				className
+			)}
 			{...props}
 		/>
 	);
