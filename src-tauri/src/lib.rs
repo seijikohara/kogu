@@ -54,6 +54,7 @@ mod network;
 mod settings;
 
 use tauri::Manager;
+#[cfg(any(target_os = "macos", target_os = "windows"))]
 use tauri_plugin_decorum::WebviewWindowExt;
 
 use ast::{AstLanguage, AstParseResult};
@@ -399,23 +400,28 @@ pub fn run() {
         .manage(WorkerProcessState::new())
         .manage(NetworkScannerState::new())
         .setup(|app| {
-            let main_window = app
-                .get_webview_window("main")
-                .ok_or("Failed to get main window")?;
-
             // Windows: enable Snap Layout support via the decorum overlay titlebar.
             // The same call on macOS injects transparent <div data-tauri-drag-region>
             // overlays at the top of the document body, which sit above any in-flow
             // titlebar UI (e.g. the Command search input) and intercept clicks for
             // window drag, leaving controls unfocusable. macOS gets a fully native
             // overlay titlebar via tauri.conf.json's `titleBarStyle: "Overlay"`, so
-            // the decorum overlay is unnecessary and actively harmful there.
-            #[cfg(target_os = "windows")]
-            main_window.create_overlay_titlebar()?;
+            // the decorum overlay is unnecessary and actively harmful there. Linux
+            // needs neither call, so the `main_window` handle is only bound on
+            // platforms that consume it.
+            #[cfg(any(target_os = "macos", target_os = "windows"))]
+            {
+                let main_window = app
+                    .get_webview_window("main")
+                    .ok_or("Failed to get main window")?;
 
-            // macOS: position traffic lights centered in 32px (h-8) title bar.
-            #[cfg(target_os = "macos")]
-            main_window.set_traffic_lights_inset(12.0, 10.0)?;
+                #[cfg(target_os = "windows")]
+                main_window.create_overlay_titlebar()?;
+
+                // macOS: position traffic lights centered in 32px (h-8) title bar.
+                #[cfg(target_os = "macos")]
+                main_window.set_traffic_lights_inset(12.0, 10.0)?;
+            }
 
             // Initialize settings from config directory
             let config_dir = app
