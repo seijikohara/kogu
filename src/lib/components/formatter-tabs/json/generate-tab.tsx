@@ -33,9 +33,9 @@ import {
 	type TargetLanguage,
 	type TypeScriptOptions,
 } from '@/lib/services/code-generators';
+import { useClipboardActions } from '@/lib/hooks';
 import { parseJson, validateJson } from '@/lib/services/formatters';
 import { useJsonFormatterOptions } from '@/lib/stores';
-import { copyToClipboard, pasteFromClipboard } from '@/lib/utils/file-operations';
 
 import { JsonFormatSection } from './json-format-section';
 
@@ -316,20 +316,11 @@ export function GenerateTab({ input, onInputChange, onStatsChange }: GenerateTab
 		});
 	}, [input, inputValidation.valid, generateError, onStatsChange]);
 
-	const handlePaste = async () => {
-		const text = await pasteFromClipboard();
-		if (text) onInputChange(text);
-	};
-
-	const handleClear = () => {
-		onInputChange('{}');
-	};
-
-	const handleCopy = () => {
-		copyToClipboard(generatedCode).catch(() => {
-			// Clipboard write failed; ignore.
-		});
-	};
+	const { handlePaste, handleClear, handleCopy } = useClipboardActions({
+		onInputChange,
+		output: generatedCode,
+		emptyValue: '{}',
+	});
 
 	return (
 		<div className="flex flex-1 overflow-hidden">

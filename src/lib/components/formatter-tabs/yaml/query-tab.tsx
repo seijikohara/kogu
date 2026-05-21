@@ -13,8 +13,8 @@ import {
 import { SplitPane } from '@/lib/components/layout';
 import { OptionsPanel } from '@/lib/components/panel';
 import { EmptyOutputPane } from '@/lib/components/status';
+import { useClipboardActions } from '@/lib/hooks';
 import { executeJsonPath } from '@/lib/services/formatters';
-import { copyToClipboard, pasteFromClipboard } from '@/lib/utils/file-operations';
 
 type QueryOutputFormat = 'yaml' | 'json';
 
@@ -119,20 +119,14 @@ export function QueryTab({ input, onInputChange, onStatsChange }: QueryTabProps)
 		});
 	}, [input, inputValidation.valid, queryError, onStatsChange]);
 
-	const handlePaste = async () => {
-		const text = await pasteFromClipboard();
-		if (text) onInputChange(text);
-	};
+	const { handlePaste, handleCopy } = useClipboardActions({
+		onInputChange,
+		output: queryResult,
+	});
 
 	const handleClear = () => {
 		onInputChange('');
 		setQueryPath('$.');
-	};
-
-	const handleCopyResult = () => {
-		copyToClipboard(queryResult).catch(() => {
-			// Clipboard write failed; ignore.
-		});
 	};
 
 	return (
@@ -258,7 +252,7 @@ export function QueryTab({ input, onInputChange, onStatsChange }: QueryTabProps)
 							mode="readonly"
 							editorMode={queryOutputFormat}
 							placeholder="Query result..."
-							onCopy={handleCopyResult}
+							onCopy={handleCopy}
 						/>
 					)
 				}

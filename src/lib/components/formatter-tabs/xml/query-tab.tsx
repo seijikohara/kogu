@@ -6,8 +6,8 @@ import { FormInput, FormSection } from '@/lib/components/form';
 import { SplitPane } from '@/lib/components/layout';
 import { OptionsPanel } from '@/lib/components/panel';
 import { EmptyOutputPane } from '@/lib/components/status';
+import { useClipboardActions } from '@/lib/hooks';
 import { executeXPath, formatXml } from '@/lib/services/formatters';
-import { copyToClipboard, pasteFromClipboard } from '@/lib/utils/file-operations';
 
 interface TabStats {
 	readonly input: string;
@@ -79,20 +79,14 @@ export function QueryTab({ input, onInputChange, onStatsChange }: QueryTabProps)
 		});
 	}, [input, inputValidation.valid, queryError, onStatsChange]);
 
-	const handlePaste = async () => {
-		const text = await pasteFromClipboard();
-		if (text) onInputChange(text);
-	};
+	const { handlePaste, handleCopy } = useClipboardActions({
+		onInputChange,
+		output: queryOutput,
+	});
 
 	const handleClear = () => {
 		onInputChange('');
 		setXpathExpression('//');
-	};
-
-	const handleCopyOutput = () => {
-		copyToClipboard(queryOutput).catch(() => {
-			// Clipboard write failed; ignore.
-		});
 	};
 
 	return (
@@ -175,7 +169,7 @@ export function QueryTab({ input, onInputChange, onStatsChange }: QueryTabProps)
 							mode="readonly"
 							editorMode="xml"
 							placeholder="Query results will appear here..."
-							onCopy={handleCopyOutput}
+							onCopy={handleCopy}
 						/>
 					)
 				}

@@ -1,3 +1,4 @@
+export { useClipboardActions } from './use-clipboard-actions';
 export { useDocumentTitle } from './use-document-title';
 export {
 	useFormatterPage,
