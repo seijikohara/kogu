@@ -36,6 +36,7 @@ import {
 	updateSettings,
 } from '@/lib/services/settings';
 import { getGoogleFontsByCategory, loadGoogleFont } from '@/lib/services/google-fonts';
+import { useDocumentTitle } from '@/lib/hooks';
 
 export const Route = createFileRoute('/settings')({
 	component: SettingsPage,
@@ -55,9 +56,7 @@ function SettingsPage() {
 	const googleUiFonts = getGoogleFontsByCategory('sans-serif');
 	const googleCodeFonts = getGoogleFontsByCategory('monospace');
 
-	useEffect(() => {
-		document.title = 'Settings — Kogu';
-	}, []);
+	useDocumentTitle('Settings');
 
 	useEffect(() => {
 		getSettings()

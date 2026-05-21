@@ -22,6 +22,7 @@ import {
 	StatItem,
 } from '@/lib/components/status';
 import { Card, CardContent, CardHeader, CardTitle } from '@/lib/components/ui/card';
+import { useDocumentTitle } from '@/lib/hooks';
 import {
 	cancelWorkerOperation,
 	checkCliAvailability,
@@ -69,9 +70,7 @@ function SshKeyGeneratorPage() {
 	const [showFingerprint, setShowFingerprint] = useState(true);
 	const [showEquivalentCommand, setShowEquivalentCommand] = useState(true);
 
-	useEffect(() => {
-		document.title = 'SSH Key Generator — Kogu';
-	}, []);
+	useDocumentTitle('SSH Key Generator');
 
 	useEffect(() => {
 		checkCliAvailability()

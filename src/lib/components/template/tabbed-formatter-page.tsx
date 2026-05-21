@@ -1,7 +1,8 @@
 import { ArrowRightLeft, Code2, FileCheck, GitCompare, Play, Search } from 'lucide-react';
-import { useEffect, type ReactNode } from 'react';
+import type { ReactNode } from 'react';
 
 import { ToolShell } from '@/lib/components/shell';
+import { useDocumentTitle } from '@/lib/hooks';
 import {
 	useFormatterPage,
 	type FormatterTabType,
@@ -59,14 +60,7 @@ export function TabbedFormatterPage<TStats>({
 }: TabbedFormatterPageProps<TStats>) {
 	const page = useFormatterPage<TStats>({ calculateStats, persistKey });
 
-	// Set document title to mirror Svelte's `<svelte:head><title>` behaviour.
-	useEffect(() => {
-		const previous = document.title;
-		document.title = `${title} - Kogu`;
-		return () => {
-			document.title = previous;
-		};
-	}, [title]);
+	useDocumentTitle(title);
 
 	const handleTabChange = (tab: string) => {
 		page.tabSync.setActiveTab(tab as FormatterTabType);

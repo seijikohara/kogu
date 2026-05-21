@@ -92,6 +92,7 @@ import {
 } from '@/lib/services/network-scanner';
 import { createToolOptionsStore } from '@/lib/stores';
 import { cn } from '@/lib/utils';
+import { useDocumentTitle } from '@/lib/hooks';
 
 interface NetworkScannerOptions {
 	readonly target: string;
@@ -1185,9 +1186,7 @@ function NetworkScannerPage() {
 	// React batching (scan progress events arrive faster than render).
 	const unlistenRef = useRef<(() => void) | null>(null);
 
-	useEffect(() => {
-		document.title = 'Network Scanner — Kogu';
-	}, []);
+	useDocumentTitle('Network Scanner');
 
 	const startTimer = useCallback(() => {
 		setElapsedMs(0);

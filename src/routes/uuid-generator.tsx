@@ -1,5 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router';
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Fingerprint, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -18,6 +18,7 @@ import { ToolShell } from '@/lib/components/shell';
 import { EmbeddedEmptyState, LiveStatusRegion, StatItem } from '@/lib/components/status';
 import { Card, CardContent } from '@/lib/components/ui/card';
 import { createToolOptionsStore } from '@/lib/stores';
+import { useDocumentTitle } from '@/lib/hooks';
 import {
 	DEFAULT_COUNT,
 	DEFAULT_FORMAT_OPTIONS,
@@ -60,9 +61,7 @@ function UuidGeneratorPage() {
 	const [showOptions, setShowOptions] = useState(true);
 	const [flashCounter, setFlashCounter] = useState(0);
 
-	useEffect(() => {
-		document.title = 'UUID Generator — Kogu';
-	}, []);
+	useDocumentTitle('UUID Generator');
 
 	const needsNamespace = requiresNamespace(version);
 	const canGenerate = !needsNamespace || (namespace.length > 0 && nameInput.length > 0);

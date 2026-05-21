@@ -1,5 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Database } from 'lucide-react';
 import { toast } from 'sonner';
 import type { SqlLanguage } from 'sql-formatter';
@@ -15,6 +15,7 @@ import {
 import { SectionHeader, SplitPane } from '@/lib/components/layout';
 import { ToolShell } from '@/lib/components/shell';
 import { EmbeddedEmptyState, StatItem } from '@/lib/components/status';
+import { useDocumentTitle } from '@/lib/hooks';
 import {
 	calculateSqlStats,
 	defaultSqlFormatOptions,
@@ -63,9 +64,7 @@ function SqlFormatterPage() {
 		defaultSqlFormatOptions.newlineBeforeSemicolon
 	);
 
-	useEffect(() => {
-		document.title = 'SQL Formatter — Kogu';
-	}, []);
+	useDocumentTitle('SQL Formatter');
 
 	const tabWidth = Number.parseInt(tabWidthStr, 10) || 2;
 	const expressionWidth = Number.parseInt(expressionWidthStr, 10) || 50;

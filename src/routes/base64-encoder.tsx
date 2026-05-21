@@ -1,5 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Code2 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -15,6 +15,7 @@ import {
 import { SectionHeader, SplitPane } from '@/lib/components/layout';
 import { ToolShell } from '@/lib/components/shell';
 import { EmbeddedEmptyState, StatItem } from '@/lib/components/status';
+import { useDocumentTitle } from '@/lib/hooks';
 import {
 	BASE64_MIME_TYPES,
 	type Base64DecodeOptions,
@@ -59,9 +60,7 @@ function Base64EncoderPage() {
 		defaultBase64DecodeOptions.autoDetectVariant
 	);
 
-	useEffect(() => {
-		document.title = 'Base64 Encoder — Kogu';
-	}, []);
+	useDocumentTitle('Base64 Encoder');
 
 	const encodeOptions: Partial<Base64EncodeOptions> = {
 		variant,

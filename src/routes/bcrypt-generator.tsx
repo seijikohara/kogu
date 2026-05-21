@@ -15,6 +15,7 @@ import {
 	StatItem,
 } from '@/lib/components/status';
 import { Card, CardContent, CardHeader, CardTitle } from '@/lib/components/ui/card';
+import { useDocumentTitle } from '@/lib/hooks';
 import {
 	type BcryptCostInfo,
 	type BcryptHashResult,
@@ -60,9 +61,7 @@ function BcryptGeneratorPage() {
 	const [elapsedMs, setElapsedMs] = useState(0);
 	const timerIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-	useEffect(() => {
-		document.title = 'BCrypt Generator — Kogu';
-	}, []);
+	useDocumentTitle('BCrypt Generator');
 
 	useEffect(() => {
 		getBcryptCostInfo(cost)

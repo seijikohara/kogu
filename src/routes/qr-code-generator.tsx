@@ -33,6 +33,7 @@ import { EmbeddedEmptyState, LiveStatusRegion, StatItem } from '@/lib/components
 import { Button } from '@/lib/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/lib/components/ui/card';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/lib/components/ui/tooltip';
+import { useDocumentTitle } from '@/lib/hooks';
 import {
 	CONTENT_KINDS,
 	CORNER_DOT_TYPES,
@@ -114,9 +115,7 @@ function QrCodeGeneratorPage() {
 	const previewRef = useRef<HTMLDivElement | null>(null);
 	const qrInstanceRef = useRef<ReturnType<typeof createQr> | null>(null);
 
-	useEffect(() => {
-		document.title = 'QR Code Generator — Kogu';
-	}, []);
+	useDocumentTitle('QR Code Generator');
 
 	const currentContent = contents[activeKind];
 	const encodedData = encodeQrContent(currentContent);
