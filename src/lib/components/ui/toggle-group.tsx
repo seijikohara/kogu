@@ -22,22 +22,21 @@ const ToggleGroupContext = React.createContext<
 	orientation: 'horizontal',
 });
 
-// Forward refs so Tooltip.Trigger asChild and other Slot-based wrappers
-// can correctly attach refs onto the underlying Radix Root/Item elements.
-const ToggleGroup = React.forwardRef<
-	React.ElementRef<typeof ToggleGroupPrimitive.Root>,
-	React.ComponentPropsWithoutRef<typeof ToggleGroupPrimitive.Root> &
-		VariantProps<typeof toggleVariants> & {
-			spacing?: number;
-			orientation?: 'horizontal' | 'vertical';
-		}
->(
-	(
-		{ className, variant, size, spacing = 0, orientation = 'horizontal', children, ...props },
-		ref
-	) => (
+function ToggleGroup({
+	className,
+	variant,
+	size,
+	spacing = 0,
+	orientation = 'horizontal',
+	children,
+	...props
+}: React.ComponentProps<typeof ToggleGroupPrimitive.Root> &
+	VariantProps<typeof toggleVariants> & {
+		spacing?: number;
+		orientation?: 'horizontal' | 'vertical';
+	}) {
+	return (
 		<ToggleGroupPrimitive.Root
-			ref={ref}
 			data-slot="toggle-group"
 			data-variant={variant}
 			data-size={size}
@@ -54,20 +53,20 @@ const ToggleGroup = React.forwardRef<
 				{children}
 			</ToggleGroupContext.Provider>
 		</ToggleGroupPrimitive.Root>
-	)
-);
-ToggleGroup.displayName = ToggleGroupPrimitive.Root.displayName;
+	);
+}
 
-const ToggleGroupItem = React.forwardRef<
-	React.ElementRef<typeof ToggleGroupPrimitive.Item>,
-	React.ComponentPropsWithoutRef<typeof ToggleGroupPrimitive.Item> &
-		VariantProps<typeof toggleVariants>
->(({ className, children, variant = 'default', size = 'default', ...props }, ref) => {
+function ToggleGroupItem({
+	className,
+	children,
+	variant = 'default',
+	size = 'default',
+	...props
+}: React.ComponentProps<typeof ToggleGroupPrimitive.Item> & VariantProps<typeof toggleVariants>) {
 	const context = React.useContext(ToggleGroupContext);
 
 	return (
 		<ToggleGroupPrimitive.Item
-			ref={ref}
 			data-slot="toggle-group-item"
 			data-variant={context.variant || variant}
 			data-size={context.size || size}
@@ -85,7 +84,6 @@ const ToggleGroupItem = React.forwardRef<
 			{children}
 		</ToggleGroupPrimitive.Item>
 	);
-});
-ToggleGroupItem.displayName = ToggleGroupPrimitive.Item.displayName;
+}
 
 export { ToggleGroup, ToggleGroupItem };
