@@ -1,22 +1,12 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { useEffect } from 'react';
-import {
-	Check,
-	Eye,
-	FlaskConical,
-	GitBranch,
-	Info,
-	Search,
-	Sparkles,
-	Workflow,
-	X,
-} from 'lucide-react';
+import { Eye, FlaskConical, GitBranch, Info, Search, Sparkles, Workflow } from 'lucide-react';
 
 import { CopyButton } from '@/lib/components/action';
 import { FormError, FormInfo, FormSection, FormTextarea } from '@/lib/components/form';
 import { PatternEditor, RailroadView } from '@/lib/components/regex';
 import { ToolShell } from '@/lib/components/shell';
-import { EmbeddedEmptyState, StatItem } from '@/lib/components/status';
+import { EmbeddedEmptyState, StatItem, ValidityBadge } from '@/lib/components/status';
 import {
 	Accordion,
 	AccordionContent,
@@ -36,6 +26,7 @@ import {
 	compileRegex,
 	countCaptureGroups,
 	DEFAULT_FLAGS,
+	type FeatureUsage,
 	FLAG_INFO,
 	findFeatures,
 	findMatches,
@@ -43,6 +34,7 @@ import {
 	type RegexFlags,
 	type RegexMatch,
 	replaceText,
+	type Result,
 	SAMPLE_PATTERN,
 	SAMPLE_REPLACEMENT,
 	SAMPLE_TEST_TEXT,
@@ -178,6 +170,347 @@ function RenderNode({ node, depth }: RenderNodeProps) {
 				) : null}
 			</CardContent>
 		</Card>
+	);
+}
+
+interface MatchGroupListProps {
+	readonly match: RegexMatch;
+}
+
+function MatchGroupList({ match }: MatchGroupListProps) {
+	const hasPositional = match.groups.length > 0;
+	const namedEntries = Object.entries(match.namedGroups);
+	const hasNamed = namedEntries.length > 0;
+	if (!hasPositional && !hasNamed) return null;
+	return (
+		<>
+			{hasPositional ? (
+				<div className="mt-1.5 space-y-1">
+					{match.groups.map((group, gIdx) => {
+						const color = groupColor(gIdx + 1);
+						return (
+							<div
+								// biome-ignore lint/suspicious/noArrayIndexKey: groups in stable order
+								key={gIdx}
+								className="flex items-baseline gap-2 text-2xs"
+							>
+								<Badge className={cn('font-mono', color.bgSoft, color.text, color.border)}>
+									${gIdx + 1}
+								</Badge>
+								<code className="break-all font-mono text-muted-foreground">
+									{group.value || '∅'}
+								</code>
+							</div>
+						);
+					})}
+				</div>
+			) : null}
+			{hasNamed ? (
+				<div className="mt-1.5 space-y-1">
+					{namedEntries.map(([name, group], nIdx) => {
+						const color = groupColor(nIdx + 1);
+						return (
+							<div key={name} className="flex items-baseline gap-2 text-2xs">
+								<Badge className={cn('font-mono', color.bgSoft, color.text, color.border)}>
+									{name}
+								</Badge>
+								<code className="break-all font-mono text-muted-foreground">
+									{group.value || '∅'}
+								</code>
+							</div>
+						);
+					})}
+				</div>
+			) : null}
+		</>
+	);
+}
+
+interface MatchesAccordionProps {
+	readonly matches: readonly RegexMatch[];
+	readonly compiledOk: boolean;
+}
+
+function MatchesAccordion({ matches, compiledOk }: MatchesAccordionProps) {
+	return (
+		<AccordionItem value="matches">
+			<AccordionTrigger>
+				<div className="flex items-center gap-2">
+					<Search className="h-4 w-4 text-muted-foreground" />
+					<span className="text-sm font-medium">Matches</span>
+					<Badge variant="outline" className="font-mono text-2xs">
+						{matches.length}
+					</Badge>
+				</div>
+			</AccordionTrigger>
+			<AccordionContent>
+				{matches.length > 0 ? (
+					<div className="space-y-2">
+						{matches.map((match, mIdx) => (
+							// biome-ignore lint/suspicious/noArrayIndexKey: matches in stable order
+							<Card key={mIdx} density="compact">
+								<CardContent>
+									<div className="flex items-center gap-2">
+										<Badge variant="outline" className="font-mono text-2xs">
+											@{match.index}
+										</Badge>
+										<code className="break-all font-mono text-xs">{match.fullMatch}</code>
+									</div>
+									<MatchGroupList match={match} />
+								</CardContent>
+							</Card>
+						))}
+					</div>
+				) : (
+					<EmbeddedEmptyState
+						icon={Search}
+						title="No matches"
+						description={
+							compiledOk
+								? 'The pattern compiled but found no matches.'
+								: 'Fix the pattern error above to see matches.'
+						}
+					/>
+				)}
+			</AccordionContent>
+		</AccordionItem>
+	);
+}
+
+interface StructureAccordionProps {
+	readonly visualization: Result<VizNode>;
+}
+
+function StructureAccordion({ visualization }: StructureAccordionProps) {
+	return (
+		<AccordionItem value="structure">
+			<AccordionTrigger>
+				<div className="flex items-center gap-2">
+					<GitBranch className="h-4 w-4 text-muted-foreground" />
+					<span className="text-sm font-medium">Structure</span>
+				</div>
+			</AccordionTrigger>
+			<AccordionContent>
+				{visualization.ok ? (
+					<RenderNode node={visualization.value} depth={0} />
+				) : (
+					<p className="text-xs text-destructive">{visualization.error}</p>
+				)}
+			</AccordionContent>
+		</AccordionItem>
+	);
+}
+
+interface ExplainAccordionProps {
+	readonly flags: RegexFlags;
+	readonly flagString: string;
+	readonly captureGroupCount: number;
+	readonly features: readonly FeatureUsage[];
+}
+
+function ExplainAccordion({
+	flags,
+	flagString,
+	captureGroupCount,
+	features,
+}: ExplainAccordionProps) {
+	const activeFlags = FLAG_INFO.filter((info) => flags[info.id]);
+	return (
+		<AccordionItem value="explain">
+			<AccordionTrigger>
+				<div className="flex items-center gap-2">
+					<Info className="h-4 w-4 text-muted-foreground" />
+					<span className="text-sm font-medium">Explain</span>
+				</div>
+			</AccordionTrigger>
+			<AccordionContent>
+				<div className="space-y-3">
+					<Card density="compact">
+						<CardContent>
+							<div className="text-2xs font-medium uppercase tracking-wide text-muted-foreground">
+								Active flags
+							</div>
+							<div className="mt-1 flex flex-wrap gap-1">
+								{activeFlags.map((info) => (
+									<Badge key={info.id} variant="outline" className="font-mono text-2xs">
+										{info.char} {info.label}
+									</Badge>
+								))}
+								{flagString === '' ? (
+									<span className="text-2xs text-muted-foreground">None enabled</span>
+								) : null}
+							</div>
+						</CardContent>
+					</Card>
+					<Card density="compact">
+						<CardContent>
+							<div className="flex items-center justify-between">
+								<span className="text-2xs font-medium uppercase tracking-wide text-muted-foreground">
+									Capture groups
+								</span>
+								<Badge variant="outline" className="font-mono text-2xs">
+									{captureGroupCount}
+								</Badge>
+							</div>
+						</CardContent>
+					</Card>
+					<Card density="compact">
+						<CardContent>
+							<div className="text-2xs font-medium uppercase tracking-wide text-muted-foreground">
+								Detected features
+							</div>
+							{features.length > 0 ? (
+								<ul className="mt-1.5 space-y-1">
+									{features.map((feature) => (
+										<li key={feature.token} className="flex items-baseline gap-2 text-2xs">
+											<code className="rounded bg-muted px-1 py-0.5 font-mono">
+												{feature.token}
+											</code>
+											<span className="text-muted-foreground">{feature.description}</span>
+										</li>
+									))}
+								</ul>
+							) : (
+								<p className="mt-1 text-2xs text-muted-foreground">Plain text pattern.</p>
+							)}
+						</CardContent>
+					</Card>
+				</div>
+			</AccordionContent>
+		</AccordionItem>
+	);
+}
+
+interface InlinePreviewProps {
+	readonly segments: readonly Segment[];
+}
+
+function InlinePreview({ segments }: InlinePreviewProps) {
+	return (
+		<div>
+			<div className="mb-1.5 text-2xs font-medium uppercase tracking-wide text-muted-foreground">
+				Inline preview
+			</div>
+			<pre className="whitespace-pre-wrap break-all rounded-md border bg-muted p-3 font-mono text-sm">
+				{segments.map((seg, idx) => (
+					// biome-ignore lint/suspicious/noArrayIndexKey: segments are stable
+					<PreviewSegment key={idx} seg={seg} />
+				))}
+			</pre>
+		</div>
+	);
+}
+
+interface PreviewSegmentProps {
+	readonly seg: Segment;
+}
+
+function PreviewSegment({ seg }: PreviewSegmentProps) {
+	if (seg.matchIndex >= 0 && seg.groupIndex > 0) {
+		return <span className={cn('rounded px-0.5', groupColor(seg.groupIndex).bg)}>{seg.text}</span>;
+	}
+	if (seg.matchIndex >= 0) {
+		return <span className={cn('rounded px-0.5', matchBackdropColor)}>{seg.text}</span>;
+	}
+	return <span>{seg.text}</span>;
+}
+
+interface ReplaceCardProps {
+	readonly replaceEnabled: boolean;
+	readonly onToggle: () => void;
+	readonly replacement: string;
+	readonly onReplacementChange: (value: string) => void;
+	readonly replaceResult: Result<string>;
+	readonly replaceSegments: readonly Segment[];
+}
+
+function ReplaceCard({
+	replaceEnabled,
+	onToggle,
+	replacement,
+	onReplacementChange,
+	replaceResult,
+	replaceSegments,
+}: ReplaceCardProps) {
+	return (
+		<Card density="compact">
+			<CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+				<div className="flex items-center gap-2">
+					<Sparkles className="h-4 w-4 text-muted-foreground" />
+					<CardTitle className="text-sm font-medium">Replace</CardTitle>
+				</div>
+				<Button
+					variant={replaceEnabled ? 'default' : 'outline'}
+					size="sm"
+					className="h-7"
+					onClick={onToggle}
+				>
+					{replaceEnabled ? 'On' : 'Off'}
+				</Button>
+			</CardHeader>
+			<CardContent className="space-y-3">
+				{replaceEnabled ? (
+					<ReplaceCardBody
+						replacement={replacement}
+						onReplacementChange={onReplacementChange}
+						replaceResult={replaceResult}
+						replaceSegments={replaceSegments}
+					/>
+				) : (
+					<p className="text-sm text-muted-foreground">
+						Toggle the switch above to apply a replacement to the test text.
+					</p>
+				)}
+			</CardContent>
+		</Card>
+	);
+}
+
+interface ReplaceCardBodyProps {
+	readonly replacement: string;
+	readonly onReplacementChange: (value: string) => void;
+	readonly replaceResult: Result<string>;
+	readonly replaceSegments: readonly Segment[];
+}
+
+function ReplaceCardBody({
+	replacement,
+	onReplacementChange,
+	replaceResult,
+	replaceSegments,
+}: ReplaceCardBodyProps) {
+	return (
+		<>
+			<FormTextarea
+				label="Replacement"
+				value={replacement}
+				onValueChange={onReplacementChange}
+				placeholder="$1 [at] $2"
+				hint="Use $1, $2... for positional groups; $<name> for named groups; $& for the full match."
+				rows={2}
+				className="font-mono text-sm"
+			/>
+			{replaceResult.ok ? (
+				<>
+					<div>
+						<div className="mb-1.5 text-2xs font-medium uppercase tracking-wide text-muted-foreground">
+							Result
+						</div>
+						<pre className="overflow-auto whitespace-pre-wrap break-all rounded-md border bg-muted p-3 font-mono text-sm">
+							{replaceSegments.map((seg, idx) => (
+								// biome-ignore lint/suspicious/noArrayIndexKey: segments are stable
+								<span key={idx}>{seg.text}</span>
+							))}
+						</pre>
+					</div>
+					<div className="flex justify-end">
+						<CopyButton text={replaceResult.value} toastLabel="Result" size="sm" />
+					</div>
+				</>
+			) : (
+				<p className="text-sm text-destructive">{replaceResult.error}</p>
+			)}
+		</>
 	);
 }
 
@@ -336,20 +669,7 @@ function RegexTesterPage() {
 						</div>
 						<div className="flex flex-wrap items-center gap-2 text-xs">
 							<output aria-live="polite" aria-atomic="true" className="contents">
-								{validity === 'empty' ? (
-									<Badge variant="outline" className="text-muted-foreground">
-										empty
-									</Badge>
-								) : compiled.ok ? (
-									<Badge variant="outline" className="bg-success/10 text-success">
-										<Check className="mr-1 h-3 w-3" aria-hidden="true" /> valid
-									</Badge>
-								) : (
-									<Badge variant="outline" className="bg-destructive/10 text-destructive">
-										<X className="mr-1 h-3 w-3" aria-hidden="true" />
-										{compiled.error}
-									</Badge>
-								)}
+								<ValidityBadge state={validity} error={errorMessage} />
 							</output>
 							<Badge variant="outline">
 								{captureGroupCount} capture group{captureGroupCount === 1 ? '' : 's'}
@@ -427,273 +747,30 @@ function RegexTesterPage() {
 									rows={6}
 									className="font-mono text-sm"
 								/>
-								{matches.length > 0 || testText ? (
-									<div>
-										<div className="mb-1.5 text-2xs font-medium uppercase tracking-wide text-muted-foreground">
-											Inline preview
-										</div>
-										<pre className="whitespace-pre-wrap break-all rounded-md border bg-muted p-3 font-mono text-sm">
-											{segments.map((seg, idx) =>
-												seg.matchIndex >= 0 && seg.groupIndex > 0 ? (
-													<span
-														// biome-ignore lint/suspicious/noArrayIndexKey: segments are stable
-														key={idx}
-														className={cn('rounded px-0.5', groupColor(seg.groupIndex).bg)}
-													>
-														{seg.text}
-													</span>
-												) : seg.matchIndex >= 0 ? (
-													<span
-														// biome-ignore lint/suspicious/noArrayIndexKey: segments are stable
-														key={idx}
-														className={cn('rounded px-0.5', matchBackdropColor)}
-													>
-														{seg.text}
-													</span>
-												) : (
-													// biome-ignore lint/suspicious/noArrayIndexKey: segments are stable
-													<span key={idx}>{seg.text}</span>
-												)
-											)}
-										</pre>
-									</div>
-								) : null}
+								{matches.length > 0 || testText ? <InlinePreview segments={segments} /> : null}
 							</CardContent>
 						</Card>
 
-						<Card density="compact">
-							<CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
-								<div className="flex items-center gap-2">
-									<Sparkles className="h-4 w-4 text-muted-foreground" />
-									<CardTitle className="text-sm font-medium">Replace</CardTitle>
-								</div>
-								<Button
-									variant={replaceEnabled ? 'default' : 'outline'}
-									size="sm"
-									className="h-7"
-									onClick={() => setReplaceEnabled((v) => !v)}
-								>
-									{replaceEnabled ? 'On' : 'Off'}
-								</Button>
-							</CardHeader>
-							<CardContent className="space-y-3">
-								{replaceEnabled ? (
-									<>
-										<FormTextarea
-											label="Replacement"
-											value={replacement}
-											onValueChange={setReplacement}
-											placeholder="$1 [at] $2"
-											hint="Use $1, $2... for positional groups; $<name> for named groups; $& for the full match."
-											rows={2}
-											className="font-mono text-sm"
-										/>
-										{replaceResult.ok ? (
-											<>
-												<div>
-													<div className="mb-1.5 text-2xs font-medium uppercase tracking-wide text-muted-foreground">
-														Result
-													</div>
-													<pre className="overflow-auto whitespace-pre-wrap break-all rounded-md border bg-muted p-3 font-mono text-sm">
-														{replaceSegments.map((seg, idx) => (
-															// biome-ignore lint/suspicious/noArrayIndexKey: segments are stable
-															<span key={idx}>{seg.text}</span>
-														))}
-													</pre>
-												</div>
-												<div className="flex justify-end">
-													<CopyButton text={replaceResult.value} toastLabel="Result" size="sm" />
-												</div>
-											</>
-										) : (
-											<p className="text-sm text-destructive">{replaceResult.error}</p>
-										)}
-									</>
-								) : (
-									<p className="text-sm text-muted-foreground">
-										Toggle the switch above to apply a replacement to the test text.
-									</p>
-								)}
-							</CardContent>
-						</Card>
+						<ReplaceCard
+							replaceEnabled={replaceEnabled}
+							onToggle={() => setReplaceEnabled((v) => !v)}
+							replacement={replacement}
+							onReplacementChange={setReplacement}
+							replaceResult={replaceResult}
+							replaceSegments={replaceSegments}
+						/>
 					</div>
 
 					<div className="w-[var(--rail-w-wide)] shrink-0 overflow-auto border-l bg-surface-2 p-4">
 						<Accordion type="multiple" defaultValue={['matches', 'explain']} className="w-full">
-							<AccordionItem value="matches">
-								<AccordionTrigger>
-									<div className="flex items-center gap-2">
-										<Search className="h-4 w-4 text-muted-foreground" />
-										<span className="text-sm font-medium">Matches</span>
-										<Badge variant="outline" className="font-mono text-2xs">
-											{matches.length}
-										</Badge>
-									</div>
-								</AccordionTrigger>
-								<AccordionContent>
-									{matches.length > 0 ? (
-										<div className="space-y-2">
-											{matches.map((match, mIdx) => (
-												// biome-ignore lint/suspicious/noArrayIndexKey: matches in stable order
-												<Card key={mIdx} density="compact">
-													<CardContent>
-														<div className="flex items-center gap-2">
-															<Badge variant="outline" className="font-mono text-2xs">
-																@{match.index}
-															</Badge>
-															<code className="break-all font-mono text-xs">{match.fullMatch}</code>
-														</div>
-														{match.groups.length > 0 ? (
-															<div className="mt-1.5 space-y-1">
-																{match.groups.map((group, gIdx) => {
-																	const color = groupColor(gIdx + 1);
-																	return (
-																		<div
-																			// biome-ignore lint/suspicious/noArrayIndexKey: groups in stable order
-																			key={gIdx}
-																			className="flex items-baseline gap-2 text-2xs"
-																		>
-																			<Badge
-																				className={cn(
-																					'font-mono',
-																					color.bgSoft,
-																					color.text,
-																					color.border
-																				)}
-																			>
-																				${gIdx + 1}
-																			</Badge>
-																			<code className="break-all font-mono text-muted-foreground">
-																				{group.value || '∅'}
-																			</code>
-																		</div>
-																	);
-																})}
-															</div>
-														) : null}
-														{Object.keys(match.namedGroups).length > 0 ? (
-															<div className="mt-1.5 space-y-1">
-																{Object.entries(match.namedGroups).map(([name, group], nIdx) => {
-																	const color = groupColor(nIdx + 1);
-																	return (
-																		<div key={name} className="flex items-baseline gap-2 text-2xs">
-																			<Badge
-																				className={cn(
-																					'font-mono',
-																					color.bgSoft,
-																					color.text,
-																					color.border
-																				)}
-																			>
-																				{name}
-																			</Badge>
-																			<code className="break-all font-mono text-muted-foreground">
-																				{group.value || '∅'}
-																			</code>
-																		</div>
-																	);
-																})}
-															</div>
-														) : null}
-													</CardContent>
-												</Card>
-											))}
-										</div>
-									) : (
-										<EmbeddedEmptyState
-											icon={Search}
-											title="No matches"
-											description={
-												compiled.ok
-													? 'The pattern compiled but found no matches.'
-													: 'Fix the pattern error above to see matches.'
-											}
-										/>
-									)}
-								</AccordionContent>
-							</AccordionItem>
-
-							<AccordionItem value="structure">
-								<AccordionTrigger>
-									<div className="flex items-center gap-2">
-										<GitBranch className="h-4 w-4 text-muted-foreground" />
-										<span className="text-sm font-medium">Structure</span>
-									</div>
-								</AccordionTrigger>
-								<AccordionContent>
-									{visualization.ok ? (
-										<RenderNode node={visualization.value} depth={0} />
-									) : (
-										<p className="text-xs text-destructive">{visualization.error}</p>
-									)}
-								</AccordionContent>
-							</AccordionItem>
-
-							<AccordionItem value="explain">
-								<AccordionTrigger>
-									<div className="flex items-center gap-2">
-										<Info className="h-4 w-4 text-muted-foreground" />
-										<span className="text-sm font-medium">Explain</span>
-									</div>
-								</AccordionTrigger>
-								<AccordionContent>
-									<div className="space-y-3">
-										<Card density="compact">
-											<CardContent>
-												<div className="text-2xs font-medium uppercase tracking-wide text-muted-foreground">
-													Active flags
-												</div>
-												<div className="mt-1 flex flex-wrap gap-1">
-													{FLAG_INFO.filter((info) => flags[info.id]).map((info) => (
-														<Badge key={info.id} variant="outline" className="font-mono text-2xs">
-															{info.char} {info.label}
-														</Badge>
-													))}
-													{flagString === '' ? (
-														<span className="text-2xs text-muted-foreground">None enabled</span>
-													) : null}
-												</div>
-											</CardContent>
-										</Card>
-										<Card density="compact">
-											<CardContent>
-												<div className="flex items-center justify-between">
-													<span className="text-2xs font-medium uppercase tracking-wide text-muted-foreground">
-														Capture groups
-													</span>
-													<Badge variant="outline" className="font-mono text-2xs">
-														{captureGroupCount}
-													</Badge>
-												</div>
-											</CardContent>
-										</Card>
-										<Card density="compact">
-											<CardContent>
-												<div className="text-2xs font-medium uppercase tracking-wide text-muted-foreground">
-													Detected features
-												</div>
-												{features.length > 0 ? (
-													<ul className="mt-1.5 space-y-1">
-														{features.map((feature) => (
-															<li
-																key={feature.token}
-																className="flex items-baseline gap-2 text-2xs"
-															>
-																<code className="rounded bg-muted px-1 py-0.5 font-mono">
-																	{feature.token}
-																</code>
-																<span className="text-muted-foreground">{feature.description}</span>
-															</li>
-														))}
-													</ul>
-												) : (
-													<p className="mt-1 text-2xs text-muted-foreground">Plain text pattern.</p>
-												)}
-											</CardContent>
-										</Card>
-									</div>
-								</AccordionContent>
-							</AccordionItem>
+							<MatchesAccordion matches={matches} compiledOk={compiled.ok} />
+							<StructureAccordion visualization={visualization} />
+							<ExplainAccordion
+								flags={flags}
+								flagString={flagString}
+								captureGroupCount={captureGroupCount}
+								features={features}
+							/>
 						</Accordion>
 					</div>
 				</div>
