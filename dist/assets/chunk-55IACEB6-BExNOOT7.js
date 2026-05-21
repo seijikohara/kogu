@@ -1,1 +1,0 @@
-import{h as o,p as e}from"./src-n7QUociX.js";var s=o((t,a)=>{let n;return a==="sandbox"&&(n=e("#i"+t)),(a==="sandbox"?e(n.nodes()[0].contentDocument.body):e("body")).select(`[id="${t}"]`)},"getDiagramElement");export{s as t};

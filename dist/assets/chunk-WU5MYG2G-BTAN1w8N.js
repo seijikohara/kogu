@@ -1,1 +1,0 @@
-import{h as s,p as e}from"./src-n7QUociX.js";import{x as r}from"./chunk-CSCIHK7Q-SWmZnO1d.js";var m=s(t=>{const{securityLevel:n}=r();let o=e("body");return n==="sandbox"&&(o=e((e(`#i${t}`).node()?.contentDocument??document).body)),o.select(`#${t}`)},"selectSvgElement");export{m as t};
