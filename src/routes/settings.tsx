@@ -386,7 +386,7 @@ function SettingsPage() {
 							) : null}
 							<div className="space-y-2">
 								<Button variant="destructive" size="sm" onClick={handleReset}>
-									<RotateCcw className="mr-2 h-4 w-4" />
+									<RotateCcw className="h-4 w-4" />
 									Reset All Settings
 								</Button>
 								<p className="text-xs text-muted-foreground">

@@ -354,11 +354,11 @@ function SshKeyGeneratorPage() {
 								</CardContent>
 							</Card>
 
-							<div className="rounded-lg border border-warning/30 bg-warning/5 p-4">
-								<div className="mb-2 flex items-center justify-between">
+							<Card density="compact" variant="warning">
+								<CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
 									<div className="flex items-center gap-2">
 										<Lock className="h-4 w-4 text-warning" />
-										<span className="text-sm font-medium">Private Key</span>
+										<CardTitle className="text-sm font-medium">Private Key</CardTitle>
 										<span className="text-xs text-warning">(Keep Secret!)</span>
 									</div>
 									<CopyButton
@@ -368,14 +368,16 @@ function SshKeyGeneratorPage() {
 										showLabel
 										className="h-7"
 									/>
-								</div>
-								<pre className="max-h-48 overflow-auto whitespace-pre-wrap break-all rounded bg-muted p-2 font-mono text-xs">
-									{keyResult.private_key}
-								</pre>
-								<p className="mt-2 text-xs text-warning">
-									Save this to <code>~/.ssh/{privateKeyFile}</code> with permissions 600
-								</p>
-							</div>
+								</CardHeader>
+								<CardContent>
+									<pre className="max-h-48 overflow-auto whitespace-pre-wrap break-all rounded bg-muted p-2 font-mono text-xs">
+										{keyResult.private_key}
+									</pre>
+									<p className="mt-2 text-xs text-warning">
+										Save this to <code>~/.ssh/{privateKeyFile}</code> with permissions 600
+									</p>
+								</CardContent>
+							</Card>
 
 							{showEquivalentCommand ? (
 								<Card density="compact">

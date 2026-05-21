@@ -21,7 +21,6 @@ import {
 	FormSelect,
 	FormTextarea,
 } from '@/lib/components/form';
-import { SectionHeader } from '@/lib/components/layout';
 import { ToolShell } from '@/lib/components/shell';
 import { EmbeddedEmptyState, StatItem } from '@/lib/components/status';
 import { Badge } from '@/lib/components/ui/badge';
@@ -213,11 +212,6 @@ function CurlBuilderPage() {
 
 	const renderBuildTab = () => (
 		<div className="flex h-full flex-col overflow-hidden">
-			<SectionHeader
-				title="Build"
-				trailing={<CopyButton text={buildCommand} toastLabel="Command" size="sm" className="h-7" />}
-			/>
-
 			<div className="flex-1 overflow-auto p-4">
 				<div className="mx-auto flex max-w-5xl flex-col gap-4">
 					<Card density="compact">
@@ -495,11 +489,6 @@ function CurlBuilderPage() {
 
 	const renderParseTab = () => (
 		<div className="flex h-full flex-col overflow-hidden">
-			<SectionHeader
-				title="Parse"
-				trailing={<CopyButton text={parseInput} toastLabel="Command" size="sm" className="h-7" />}
-			/>
-
 			<div className="flex-1 overflow-auto p-4">
 				<div className="mx-auto flex max-w-5xl flex-col gap-4">
 					<Card density="compact">
@@ -520,15 +509,18 @@ function CurlBuilderPage() {
 									continuations are joined.
 								</CardDescription>
 							</div>
-							<Button
-								variant="outline"
-								size="sm"
-								className="h-7 shrink-0"
-								onClick={() => setParseInput(SAMPLE_CURL_COMMAND)}
-							>
-								<FlaskConical className="mr-1.5 h-3.5 w-3.5" />
-								Sample
-							</Button>
+							<div className="flex shrink-0 items-center gap-1">
+								<Button
+									variant="outline"
+									size="sm"
+									className="h-7 shrink-0"
+									onClick={() => setParseInput(SAMPLE_CURL_COMMAND)}
+								>
+									<FlaskConical className="h-3.5 w-3.5" />
+									Sample
+								</Button>
+								<CopyButton text={parseInput} toastLabel="Command" size="sm" />
+							</div>
 						</CardHeader>
 						<CardContent>
 							<FormTextarea
@@ -661,7 +653,7 @@ function CurlBuilderPage() {
 							</Card>
 						</>
 					) : (
-						<Card density="compact" className="border-destructive/40 bg-destructive/5">
+						<Card density="compact" variant="destructive">
 							<CardHeader className="pb-3">
 								<div className="flex items-center gap-2">
 									<Terminal className="h-4 w-4 text-destructive" />
@@ -685,11 +677,6 @@ function CurlBuilderPage() {
 		const selectedLabel = selectedLang?.label ?? '';
 		return (
 			<div className="flex h-full flex-col overflow-hidden">
-				<SectionHeader
-					title="Code"
-					trailing={<CopyButton text={code} toastLabel={selectedLabel} size="sm" className="h-7" />}
-				/>
-
 				<div className="flex-1 overflow-auto p-4">
 					<div className="mx-auto flex max-w-5xl flex-col gap-4">
 						<Card density="compact">

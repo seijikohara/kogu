@@ -32,6 +32,7 @@ import { ToolShell } from '@/lib/components/shell';
 import { EmbeddedEmptyState, StatItem } from '@/lib/components/status';
 import { Button } from '@/lib/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/lib/components/ui/card';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/lib/components/ui/tooltip';
 import {
 	CONTENT_KINDS,
 	CORNER_DOT_TYPES,
@@ -601,9 +602,20 @@ function QrCodeGeneratorPage() {
 										className="h-10 w-10 rounded object-contain"
 									/>
 									<span className="flex-1 text-xs text-muted-foreground">Logo loaded</span>
-									<Button variant="ghost" size="sm" className="h-7 px-2" onClick={handleLogoClear}>
-										<Trash2 className="h-3.5 w-3.5" />
-									</Button>
+									<Tooltip>
+										<TooltipTrigger asChild>
+											<Button
+												variant="ghost"
+												size="sm"
+												className="h-7 px-2"
+												onClick={handleLogoClear}
+											>
+												<Trash2 className="h-3.5 w-3.5" />
+												<span className="sr-only">Remove logo</span>
+											</Button>
+										</TooltipTrigger>
+										<TooltipContent>Remove logo</TooltipContent>
+									</Tooltip>
 								</div>
 								<FormSlider
 									label="Logo size"
@@ -701,7 +713,7 @@ function QrCodeGeneratorPage() {
 						</Card>
 
 						{!valid ? (
-							<Card density="compact" className="border-warning/40 bg-warning/5">
+							<Card density="compact" variant="warning">
 								<CardContent className="py-6">
 									<EmbeddedEmptyState
 										icon={QrCode}

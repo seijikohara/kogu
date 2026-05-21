@@ -542,7 +542,7 @@ export function UnifiedHostDetailPanel({
 						{/* IP Addresses Section */}
 						{ips.length > 1 || ipv6Addresses.length > 0 ? (
 							<div className="mb-4">
-								<SectionLabel icon={Hash} title="IP Addresses" />
+								<SectionLabel icon={Hash}>IP Addresses</SectionLabel>
 								<div className="space-y-2">
 									{ipv4Addresses.length > 0 ? (
 										<Card density="compact">
@@ -599,7 +599,7 @@ export function UnifiedHostDetailPanel({
 						{/* Device Classification */}
 						{classification && classification.category !== 'unknown' ? (
 							<div className="mb-4">
-								<SectionLabel icon={HeaderIcon} title="Device Type" />
+								<SectionLabel icon={HeaderIcon}>Device Type</SectionLabel>
 								<Card density="compact">
 									<CardContent>
 										<div className="flex items-center justify-between">
@@ -645,7 +645,7 @@ export function UnifiedHostDetailPanel({
 						{/* Device Info */}
 						{macAddress || vendor || netbiosName ? (
 							<div className="mb-4">
-								<SectionLabel icon={Cpu} title="Device Info" />
+								<SectionLabel icon={Cpu}>Device Info</SectionLabel>
 								<div className="grid grid-cols-2 gap-2">
 									{netbiosName ? (
 										<Card density="compact">
@@ -717,7 +717,7 @@ export function UnifiedHostDetailPanel({
 						{/* SSDP/UPnP Device Info */}
 						{hasSsdpInfo && ssdpDevice ? (
 							<div className="mb-4">
-								<SectionLabel icon={Wifi} title="SSDP/UPnP Device" />
+								<SectionLabel icon={Wifi}>SSDP/UPnP Device</SectionLabel>
 								<Card density="compact">
 									<CardContent>
 										{ssdpDevice.friendlyName ? (
@@ -781,7 +781,7 @@ export function UnifiedHostDetailPanel({
 						{wsDiscovery &&
 						(wsDiscovery.deviceTypes.length > 0 || wsDiscovery.scopes.length > 0) ? (
 							<div className="mb-4">
-								<SectionLabel icon={Globe} title="WS-Discovery" />
+								<SectionLabel icon={Globe}>WS-Discovery</SectionLabel>
 								<Card density="compact">
 									<CardContent>
 										{wsDiscovery.deviceTypes.length > 0 ? (
@@ -827,7 +827,7 @@ export function UnifiedHostDetailPanel({
 							snmpInfo.sysLocation ||
 							snmpInfo.sysContact) ? (
 							<div className="mb-4">
-								<SectionLabel icon={Server} title="SNMP" />
+								<SectionLabel icon={Server}>SNMP</SectionLabel>
 								<Card density="compact">
 									<CardContent className="space-y-2">
 										{snmpInfo.sysName ? (
@@ -864,7 +864,7 @@ export function UnifiedHostDetailPanel({
 						{/* Service Banners */}
 						{serviceBanners && serviceBanners.length > 0 ? (
 							<div className="mb-4">
-								<SectionLabel icon={Terminal} title="Service Banners" />
+								<SectionLabel icon={Terminal}>Service Banners</SectionLabel>
 								<Card density="compact">
 									<CardContent>
 										<div className="flex flex-wrap gap-1.5">
@@ -889,7 +889,7 @@ export function UnifiedHostDetailPanel({
 						{/* TLS Certificate Names */}
 						{tlsNames && tlsNames.length > 0 ? (
 							<div className="mb-4">
-								<SectionLabel icon={Shield} title="TLS Certificate" />
+								<SectionLabel icon={Shield}>TLS Certificate</SectionLabel>
 								<Card density="compact">
 									<CardContent>
 										<div className="text-xs font-medium text-muted-foreground">

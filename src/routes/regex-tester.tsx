@@ -357,7 +357,7 @@ function RegexTesterPage() {
 							</Badge>
 							<div className="ml-auto flex items-center gap-1">
 								<Button variant="outline" size="sm" className="h-7" onClick={loadSample}>
-									<FlaskConical className="mr-1.5 h-3.5 w-3.5" />
+									<FlaskConical className="h-3.5 w-3.5" />
 									Sample
 								</Button>
 								<CopyButton text={`/${pattern}/${flagString}`} toastLabel="Pattern" size="sm" />

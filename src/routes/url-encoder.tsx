@@ -533,7 +533,7 @@ function UrlEncoderPage() {
 				<div className="mb-2 flex items-center justify-between">
 					<span className="text-xs font-medium text-muted-foreground">Query Parameters</span>
 					<Button variant="outline" size="sm" onClick={addQueryParam}>
-						<Plus className="mr-1 h-3 w-3" />
+						<Plus className="h-3 w-3" />
 						Add Parameter
 					</Button>
 				</div>
@@ -576,7 +576,7 @@ function UrlEncoderPage() {
 					<div className="flex gap-1">
 						<CopyButton text={builtUrl} toastLabel="URL" size="sm" showLabel className="h-7" />
 						<Button variant="ghost" size="sm" onClick={() => window.open(builtUrl, '_blank')}>
-							<ExternalLink className="mr-1 h-3 w-3" />
+							<ExternalLink className="h-3 w-3" />
 							Open
 						</Button>
 					</div>

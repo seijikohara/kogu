@@ -4,7 +4,6 @@ import { Calendar, Check, Clock, FlaskConical, Pencil, Search, Sparkles, X } fro
 
 import { CopyButton } from '@/lib/components/action';
 import { FormError, FormInfo, FormInput, FormSection } from '@/lib/components/form';
-import { SectionHeader } from '@/lib/components/layout';
 import { ToolShell } from '@/lib/components/shell';
 import { EmbeddedEmptyState, StatItem } from '@/lib/components/status';
 import { Badge } from '@/lib/components/ui/badge';
@@ -100,11 +99,6 @@ function CronExpressionBuilderPage() {
 
 	const renderBuildTab = () => (
 		<div className="flex h-full flex-col overflow-hidden">
-			<SectionHeader
-				title="Build"
-				trailing={<CopyButton text={buildExpr} toastLabel="Expression" size="sm" className="h-7" />}
-			/>
-
 			<div className="flex-1 overflow-auto p-4">
 				<div className="mx-auto flex max-w-5xl flex-col gap-4">
 					<Card density="compact">
@@ -277,13 +271,6 @@ function CronExpressionBuilderPage() {
 
 	const renderParseTab = () => (
 		<div className="flex h-full flex-col overflow-hidden">
-			<SectionHeader
-				title="Parse"
-				trailing={
-					<CopyButton text={parseInput} toastLabel="Expression" size="sm" className="h-7" />
-				}
-			/>
-
 			<div className="flex-1 overflow-auto p-4">
 				<div className="mx-auto flex max-w-5xl flex-col gap-4">
 					<Card density="compact">
@@ -294,15 +281,18 @@ function CronExpressionBuilderPage() {
 									Paste a 5-field cron expression — minute, hour, day-of-month, month, day-of-week.
 								</CardDescription>
 							</div>
-							<Button
-								variant="outline"
-								size="sm"
-								className="h-7"
-								onClick={() => setParseInput(SAMPLE_CRON_EXPRESSION)}
-							>
-								<FlaskConical className="mr-1.5 h-3.5 w-3.5" />
-								Sample
-							</Button>
+							<div className="flex shrink-0 items-center gap-1">
+								<Button
+									variant="outline"
+									size="sm"
+									className="h-7"
+									onClick={() => setParseInput(SAMPLE_CRON_EXPRESSION)}
+								>
+									<FlaskConical className="h-3.5 w-3.5" />
+									Sample
+								</Button>
+								<CopyButton text={parseInput} toastLabel="Expression" size="sm" />
+							</div>
 						</CardHeader>
 						<CardContent>
 							<FormInput

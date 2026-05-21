@@ -75,7 +75,7 @@ export function LoadingOverlay({
 
 					{showCancel ? (
 						<Button variant="outline" size="sm" onClick={onCancel}>
-							<X className="mr-1.5 h-4 w-4" />
+							<X className="h-4 w-4" />
 							Cancel
 						</Button>
 					) : null}

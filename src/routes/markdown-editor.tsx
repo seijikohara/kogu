@@ -473,7 +473,7 @@ function MarkdownEditorPage() {
 								className="w-full justify-start"
 								onClick={handleCopyMarkdown}
 							>
-								<FilePenLine className="mr-2 h-3 w-3" />
+								<FilePenLine className="h-3 w-3" />
 								Copy Markdown
 							</Button>
 							<Button
@@ -482,7 +482,7 @@ function MarkdownEditorPage() {
 								className="w-full justify-start"
 								onClick={handleCopyHtml}
 							>
-								<Code className="mr-2 h-3 w-3" />
+								<Code className="h-3 w-3" />
 								Copy HTML
 							</Button>
 							<Button
@@ -491,7 +491,7 @@ function MarkdownEditorPage() {
 								className="w-full justify-start"
 								onClick={handleExportHtml}
 							>
-								<Download className="mr-2 h-3 w-3" />
+								<Download className="h-3 w-3" />
 								Export HTML File
 							</Button>
 						</div>
@@ -505,7 +505,7 @@ function MarkdownEditorPage() {
 							onClick={handleInsertToc}
 							disabled={toc.length === 0}
 						>
-							<TableOfContents className="mr-2 h-3 w-3" />
+							<TableOfContents className="h-3 w-3" />
 							Insert TOC
 						</Button>
 					</FormSection>
@@ -542,8 +542,7 @@ function MarkdownEditorPage() {
 								<TooltipTrigger asChild>
 									<Button
 										variant="ghost"
-										size="sm"
-										className="h-7 w-7 p-0"
+										size="toolbar-icon"
 										onClick={() => handleFormat(btn.action)}
 									>
 										<Icon className="h-3.5 w-3.5" />
@@ -589,8 +588,7 @@ function MarkdownEditorPage() {
 								<TooltipTrigger asChild>
 									<Button
 										variant="ghost"
-										size="sm"
-										className="h-7 w-7 p-0"
+										size="toolbar-icon"
 										onClick={() => handleFormat(btn.action)}
 									>
 										<Icon className="h-3.5 w-3.5" />
@@ -611,8 +609,7 @@ function MarkdownEditorPage() {
 								<TooltipTrigger asChild>
 									<Button
 										variant="ghost"
-										size="sm"
-										className="h-7 w-7 p-0"
+										size="toolbar-icon"
 										onClick={() => handleFormat(btn.action)}
 									>
 										<Icon className="h-3.5 w-3.5" />
@@ -630,8 +627,7 @@ function MarkdownEditorPage() {
 						<TooltipTrigger asChild>
 							<Button
 								variant="ghost"
-								size="sm"
-								className="h-7 w-7 p-0"
+								size="toolbar-icon"
 								onClick={() => handleFormat('clearFormat')}
 							>
 								<Eraser className="h-3.5 w-3.5" />
