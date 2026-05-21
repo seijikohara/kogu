@@ -45,14 +45,16 @@ const encode3bytes = (b1: number, b2: number, b3: number): string => {
 const encodePlantUml = (source: string): string => {
 	const data = new TextEncoder().encode(source);
 	const compressed = deflateRaw(data);
-	let result = '';
-	for (let i = 0; i < compressed.length; i += 3) {
+	// Walk the compressed buffer in 3-byte windows and concatenate each window's
+	// 4-character encoding. Reduce avoids both the let accumulator and the
+	// reassignable loop counter.
+	return Array.from({ length: Math.ceil(compressed.length / 3) }, (_, k) => {
+		const i = k * 3;
 		const b1 = compressed[i] ?? 0;
 		const b2 = compressed[i + 1] ?? 0;
 		const b3 = compressed[i + 2] ?? 0;
-		result += encode3bytes(b1, b2, b3);
-	}
-	return result;
+		return encode3bytes(b1, b2, b3);
+	}).join('');
 };
 
 /**
@@ -62,31 +64,28 @@ const encodePlantUml = (source: string): string => {
 const deflateRaw = (data: Uint8Array): Uint8Array => {
 	// PlantUML uses a custom deflate format
 	// For simplicity, use non-compressed deflate blocks
-	const result: number[] = [];
-
-	// Add data in 65535-byte chunks (max for non-compressed block)
+	// Max payload per non-compressed deflate block.
 	const chunkSize = 65535;
-	for (let i = 0; i < data.length; i += chunkSize) {
-		const chunk = data.slice(i, Math.min(i + chunkSize, data.length));
-		const isLast = i + chunkSize >= data.length;
-
-		// Block header: BFINAL=1/0, BTYPE=00 (non-compressed)
-		result.push(isLast ? 0x01 : 0x00);
-
-		// LEN (2 bytes, little-endian)
-		result.push(chunk.length & 0xff);
-		result.push((chunk.length >> 8) & 0xff);
-
-		// NLEN (one's complement of LEN)
+	const chunkCount = Math.ceil(data.length / chunkSize) || 1;
+	const result = Array.from({ length: chunkCount }, (_, k) => {
+		const offset = k * chunkSize;
+		const chunk = data.slice(offset, Math.min(offset + chunkSize, data.length));
+		const isLast = offset + chunkSize >= data.length;
+		// NLEN is the one's complement of LEN per RFC 1951.
 		const nlen = ~chunk.length & 0xffff;
-		result.push(nlen & 0xff);
-		result.push((nlen >> 8) & 0xff);
-
-		// Data
-		for (const byte of chunk) {
-			result.push(byte);
-		}
-	}
+		return [
+			// Block header: BFINAL=1/0, BTYPE=00 (non-compressed)
+			isLast ? 0x01 : 0x00,
+			// LEN (2 bytes, little-endian)
+			chunk.length & 0xff,
+			(chunk.length >> 8) & 0xff,
+			// NLEN (one's complement of LEN)
+			nlen & 0xff,
+			(nlen >> 8) & 0xff,
+			// Data
+			...chunk,
+		];
+	}).flat();
 
 	return new Uint8Array(result);
 };
@@ -99,49 +98,54 @@ export const getPlantUmlUrl = (source: string): string => {
 	return `https://www.plantuml.com/plantuml/svg/${encoded}`;
 };
 
-// Lazy-loaded modules
-let katexModule: typeof import('katex') | null = null;
-let mermaidModule: typeof import('mermaid') | null = null;
-let vizModule: typeof import('@viz-js/viz') | null = null;
+// Lazy-loaded module caches. The bindings themselves are const; only the
+// `value` field mutates on first load.
+const moduleCache: {
+	katex: typeof import('katex') | null;
+	mermaid: typeof import('mermaid') | null;
+	viz: typeof import('@viz-js/viz') | null;
+} = { katex: null, mermaid: null, viz: null };
 
 /**
  * Load KaTeX module lazily.
  */
 const loadKatex = async (): Promise<typeof import('katex')> => {
-	if (!katexModule) {
-		katexModule = await import('katex');
+	if (!moduleCache.katex) {
+		moduleCache.katex = await import('katex');
 	}
-	return katexModule;
+	return moduleCache.katex;
 };
 
 /**
  * Load Mermaid module lazily.
  */
 const loadMermaid = async (): Promise<typeof import('mermaid')> => {
-	if (!mermaidModule) {
-		mermaidModule = await import('mermaid');
-		mermaidModule.default.initialize({
+	if (!moduleCache.mermaid) {
+		const mod = await import('mermaid');
+		mod.default.initialize({
 			startOnLoad: false,
 			theme: 'default',
 			securityLevel: 'strict',
 			fontFamily: 'inherit',
 		});
+		moduleCache.mermaid = mod;
 	}
-	return mermaidModule;
+	return moduleCache.mermaid;
 };
 
 /**
  * Load Viz.js module lazily.
  */
 const loadViz = async (): Promise<typeof import('@viz-js/viz')> => {
-	if (!vizModule) {
-		vizModule = await import('@viz-js/viz');
+	if (!moduleCache.viz) {
+		moduleCache.viz = await import('@viz-js/viz');
 	}
-	return vizModule;
+	return moduleCache.viz;
 };
 
-// Mermaid diagram counter for unique IDs
-let mermaidDiagramCounter = 0;
+// Mermaid diagram counter for unique IDs. Wrapped in a const holder so the
+// binding is never reassigned; only `.value` mutates.
+const mermaidDiagramCounter = { value: 0 };
 
 /**
  * Render TeX/LaTeX expression to HTML.
@@ -176,7 +180,8 @@ export const renderTex = async (
 export const renderMermaid = async (source: string): Promise<DiagramRenderResult> => {
 	try {
 		const mermaid = await loadMermaid();
-		const id = `mermaid-diagram-${++mermaidDiagramCounter}`;
+		mermaidDiagramCounter.value += 1;
+		const id = `mermaid-diagram-${mermaidDiagramCounter.value}`;
 		const result: MermaidRenderResult = await mermaid.default.render(id, source);
 		return { success: true, html: result.svg };
 	} catch (error) {

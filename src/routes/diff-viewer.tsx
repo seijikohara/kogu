@@ -98,14 +98,18 @@ function DiffViewerPage() {
 				type: 'header',
 			});
 
-			let pendingDeletes: UnifiedLineWithSegments[] = [];
-			let pendingInserts: UnifiedLineWithSegments[] = [];
+			// Buffers for the current change block. Held on a const cursor so
+			// the in-place clears use field assignment instead of let-rebind.
+			const pending: {
+				deletes: UnifiedLineWithSegments[];
+				inserts: UnifiedLineWithSegments[];
+			} = { deletes: [], inserts: [] };
 
 			hunk.lines.forEach((line) => {
 				if (line.type === 'equal') {
-					flushChangeBlock(pendingDeletes, pendingInserts);
-					pendingDeletes = [];
-					pendingInserts = [];
+					flushChangeBlock(pending.deletes, pending.inserts);
+					pending.deletes = [];
+					pending.inserts = [];
 					lines.push({
 						kind: 'line',
 						prefix: ' ',
@@ -115,7 +119,7 @@ function DiffViewerPage() {
 						rightLineNumber: line.rightLineNumber,
 					});
 				} else if (line.type === 'modified') {
-					pendingDeletes.push({
+					pending.deletes.push({
 						kind: 'line',
 						prefix: '-',
 						content: line.leftContent,
@@ -124,7 +128,7 @@ function DiffViewerPage() {
 						leftLineNumber: line.leftLineNumber,
 						rightLineNumber: null,
 					});
-					pendingInserts.push({
+					pending.inserts.push({
 						kind: 'line',
 						prefix: '+',
 						content: line.rightContent,
@@ -134,7 +138,7 @@ function DiffViewerPage() {
 						rightLineNumber: line.rightLineNumber,
 					});
 				} else if (line.type === 'delete') {
-					pendingDeletes.push({
+					pending.deletes.push({
 						kind: 'line',
 						prefix: '-',
 						content: line.leftContent,
@@ -143,7 +147,7 @@ function DiffViewerPage() {
 						rightLineNumber: null,
 					});
 				} else if (line.type === 'insert') {
-					pendingInserts.push({
+					pending.inserts.push({
 						kind: 'line',
 						prefix: '+',
 						content: line.rightContent,
@@ -154,7 +158,7 @@ function DiffViewerPage() {
 				}
 			});
 
-			flushChangeBlock(pendingDeletes, pendingInserts);
+			flushChangeBlock(pending.deletes, pending.inserts);
 		});
 
 		return lines;

@@ -279,15 +279,17 @@ export function TreeView({
 	const [expandedStates, setExpandedStates] = useState<Record<string, boolean>>({});
 	useEffect(() => {
 		setExpandedStates((prev) => {
-			const next = { ...prev };
-			let changed = false;
-			for (const key of Object.keys(initialExpandedStates)) {
-				if (!(key in next)) {
-					next[key] = initialExpandedStates[key] ?? false;
-					changed = true;
-				}
-			}
-			return changed ? next : prev;
+			// Compute the diff first; only allocate a new object when at least
+			// one initial key is missing. reduce avoids the `changed` let flag.
+			const missingKeys = Object.keys(initialExpandedStates).filter((key) => !(key in prev));
+			if (missingKeys.length === 0) return prev;
+			return missingKeys.reduce<Record<string, boolean>>(
+				(acc, key) => {
+					acc[key] = initialExpandedStates[key] ?? false;
+					return acc;
+				},
+				{ ...prev }
+			);
 		});
 	}, [initialExpandedStates]);
 

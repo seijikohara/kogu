@@ -127,17 +127,19 @@ const buildSegments = (text: string, allMatches: readonly RegexMatch[]): readonl
 			if (start >= end) return null;
 			const slice = text.slice(start, end);
 			const matchIdx = allMatches.findIndex((m) => m.index <= start && m.endIndex >= end);
-			let groupIdx = 0;
-			if (matchIdx >= 0) {
+			// Derive the innermost matching group index as a const expression so
+			// the result never reassigns. Falls back to 0 if no group encloses
+			// the current slice.
+			const groupIdx = ((): number => {
+				if (matchIdx < 0) return 0;
 				const match = allMatches[matchIdx];
-				if (match) {
-					const inner = match.groups
-						.map((g, gi) => ({ ...g, oneBased: gi + 1 }))
-						.filter((g) => g.start >= 0 && g.start <= start && g.end >= end)
-						.sort((a, b) => b.start - a.start || a.end - b.end)[0];
-					if (inner) groupIdx = inner.oneBased;
-				}
-			}
+				if (!match) return 0;
+				const inner = match.groups
+					.map((g, gi) => ({ ...g, oneBased: gi + 1 }))
+					.filter((g) => g.start >= 0 && g.start <= start && g.end >= end)
+					.sort((a, b) => b.start - a.start || a.end - b.end)[0];
+				return inner?.oneBased ?? 0;
+			})();
 			return { text: slice, matchIndex: matchIdx, groupIndex: groupIdx };
 		})
 		.filter((s): s is Segment => s !== null);

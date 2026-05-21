@@ -48,14 +48,8 @@ const getElementName = (element: Element, ignoreNamespaces: boolean): string => 
  */
 const normalizeText = (text: string | null, options: XmlDiffOptions): string => {
 	if (!text) return '';
-	let normalized = text;
-	if (options.ignoreWhitespace) {
-		normalized = normalized.replace(/\s+/g, ' ').trim();
-	}
-	if (options.ignoreCase) {
-		normalized = normalized.toLowerCase();
-	}
-	return normalized;
+	const collapsed = options.ignoreWhitespace ? text.replace(/\s+/g, ' ').trim() : text;
+	return options.ignoreCase ? collapsed.toLowerCase() : collapsed;
 };
 
 /**

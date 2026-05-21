@@ -490,96 +490,90 @@ interface CodeBlockPlaceholder {
  * For TeX and diagram support, use markdownToHtmlAsync instead.
  */
 export const markdownToHtml = (markdown: string): string => {
-	let html = escapeHtml(markdown);
+	// Apply transforms as a const pipeline. Each step receives the previous
+	// output and returns a new string; reduce composes them in order.
+	type Transform = (input: string) => string;
+	const transforms: readonly Transform[] = [
+		// Code blocks (must be processed first to prevent other transformations)
+		(input) =>
+			input.replace(/```(\w*)\n([\s\S]*?)```/g, (_match, lang, code) => {
+				const langClass = lang ? ` class="language-${lang}"` : '';
+				return `<pre><code${langClass}>${code.trim()}</code></pre>`;
+			}),
+		// Inline code
+		(input) => input.replace(/`([^`]+)`/g, '<code>$1</code>'),
+		// Headers
+		(input) => input.replace(/^###### (.+)$/gm, '<h6>$1</h6>'),
+		(input) => input.replace(/^##### (.+)$/gm, '<h5>$1</h5>'),
+		(input) => input.replace(/^#### (.+)$/gm, '<h4>$1</h4>'),
+		(input) => input.replace(/^### (.+)$/gm, '<h3>$1</h3>'),
+		(input) => input.replace(/^## (.+)$/gm, '<h2>$1</h2>'),
+		(input) => input.replace(/^# (.+)$/gm, '<h1>$1</h1>'),
+		// Horizontal rule
+		(input) => input.replace(/^---$/gm, '<hr>'),
+		// Bold and italic
+		(input) => input.replace(/\*\*\*(.+?)\*\*\*/g, '<strong><em>$1</em></strong>'),
+		(input) => input.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>'),
+		(input) => input.replace(/\*(.+?)\*/g, '<em>$1</em>'),
+		(input) => input.replace(/___(.+?)___/g, '<strong><em>$1</em></strong>'),
+		(input) => input.replace(/__(.+?)__/g, '<strong>$1</strong>'),
+		(input) => input.replace(/_(.+?)_/g, '<em>$1</em>'),
+		// Strikethrough
+		(input) => input.replace(/~~(.+?)~~/g, '<del>$1</del>'),
+		// Links and images
+		(input) => input.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '<img src="$2" alt="$1">'),
+		(input) =>
+			input.replace(
+				/\[([^\]]+)\]\(([^)]+)\)/g,
+				'<a href="$2" target="_blank" rel="noopener">$1</a>'
+			),
+		// Blockquotes
+		(input) => input.replace(/^&gt; (.+)$/gm, '<blockquote>$1</blockquote>'),
+		// Task lists
+		(input) =>
+			input.replace(
+				/^- \[x\] (.+)$/gm,
+				'<li class="task-item checked"><input type="checkbox" checked disabled> $1</li>'
+			),
+		(input) =>
+			input.replace(
+				/^- \[ \] (.+)$/gm,
+				'<li class="task-item"><input type="checkbox" disabled> $1</li>'
+			),
+		// Unordered lists
+		(input) => input.replace(/^- (.+)$/gm, '<li>$1</li>'),
+		(input) => input.replace(/^\* (.+)$/gm, '<li>$1</li>'),
+		// Ordered lists
+		(input) => input.replace(/^\d+\. (.+)$/gm, '<li>$1</li>'),
+		// Wrap consecutive list items in ul/ol (simplified)
+		(input) =>
+			input.replace(/(<li>[\s\S]*?<\/li>)(\n<li>[\s\S]*?<\/li>)*/g, (match) =>
+				match.includes('task-item') ? `<ul class="task-list">${match}</ul>` : `<ul>${match}</ul>`
+			),
+		// Paragraphs (wrap text blocks)
+		(input) =>
+			input
+				.split('\n\n')
+				.map((block) => {
+					const trimmed = block.trim();
+					if (!trimmed) return '';
+					// Skip if already wrapped in a block element.
+					if (
+						trimmed.startsWith('<h') ||
+						trimmed.startsWith('<ul') ||
+						trimmed.startsWith('<ol') ||
+						trimmed.startsWith('<pre') ||
+						trimmed.startsWith('<blockquote') ||
+						trimmed.startsWith('<hr')
+					) {
+						return trimmed;
+					}
+					return `<p>${trimmed.replace(/\n/g, '<br>')}</p>`;
+				})
+				.join('\n'),
+	];
 
-	// Code blocks (must be processed first to prevent other transformations)
-	html = html.replace(/```(\w*)\n([\s\S]*?)```/g, (_match, lang, code) => {
-		const langClass = lang ? ` class="language-${lang}"` : '';
-		return `<pre><code${langClass}>${code.trim()}</code></pre>`;
-	});
-
-	// Inline code
-	html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
-
-	// Headers
-	html = html.replace(/^###### (.+)$/gm, '<h6>$1</h6>');
-	html = html.replace(/^##### (.+)$/gm, '<h5>$1</h5>');
-	html = html.replace(/^#### (.+)$/gm, '<h4>$1</h4>');
-	html = html.replace(/^### (.+)$/gm, '<h3>$1</h3>');
-	html = html.replace(/^## (.+)$/gm, '<h2>$1</h2>');
-	html = html.replace(/^# (.+)$/gm, '<h1>$1</h1>');
-
-	// Horizontal rule
-	html = html.replace(/^---$/gm, '<hr>');
-
-	// Bold and italic
-	html = html.replace(/\*\*\*(.+?)\*\*\*/g, '<strong><em>$1</em></strong>');
-	html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
-	html = html.replace(/\*(.+?)\*/g, '<em>$1</em>');
-	html = html.replace(/___(.+?)___/g, '<strong><em>$1</em></strong>');
-	html = html.replace(/__(.+?)__/g, '<strong>$1</strong>');
-	html = html.replace(/_(.+?)_/g, '<em>$1</em>');
-
-	// Strikethrough
-	html = html.replace(/~~(.+?)~~/g, '<del>$1</del>');
-
-	// Links and images
-	html = html.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '<img src="$2" alt="$1">');
-	html = html.replace(
-		/\[([^\]]+)\]\(([^)]+)\)/g,
-		'<a href="$2" target="_blank" rel="noopener">$1</a>'
-	);
-
-	// Blockquotes
-	html = html.replace(/^&gt; (.+)$/gm, '<blockquote>$1</blockquote>');
-
-	// Task lists
-	html = html.replace(
-		/^- \[x\] (.+)$/gm,
-		'<li class="task-item checked"><input type="checkbox" checked disabled> $1</li>'
-	);
-	html = html.replace(
-		/^- \[ \] (.+)$/gm,
-		'<li class="task-item"><input type="checkbox" disabled> $1</li>'
-	);
-
-	// Unordered lists
-	html = html.replace(/^- (.+)$/gm, '<li>$1</li>');
-	html = html.replace(/^\* (.+)$/gm, '<li>$1</li>');
-
-	// Ordered lists
-	html = html.replace(/^\d+\. (.+)$/gm, '<li>$1</li>');
-
-	// Wrap consecutive list items in ul/ol (simplified)
-	html = html.replace(/(<li>[\s\S]*?<\/li>)(\n<li>[\s\S]*?<\/li>)*/g, (match) => {
-		if (match.includes('task-item')) {
-			return `<ul class="task-list">${match}</ul>`;
-		}
-		return `<ul>${match}</ul>`;
-	});
-
-	// Paragraphs (wrap text blocks)
-	html = html
-		.split('\n\n')
-		.map((block) => {
-			const trimmed = block.trim();
-			if (!trimmed) return '';
-			// Skip if already wrapped in a block element
-			if (
-				trimmed.startsWith('<h') ||
-				trimmed.startsWith('<ul') ||
-				trimmed.startsWith('<ol') ||
-				trimmed.startsWith('<pre') ||
-				trimmed.startsWith('<blockquote') ||
-				trimmed.startsWith('<hr')
-			) {
-				return trimmed;
-			}
-			return `<p>${trimmed.replace(/\n/g, '<br>')}</p>`;
-		})
-		.join('\n');
-
-	return html;
+	return transforms.reduce((acc, transform) => transform(acc), escapeHtml(markdown));
 };
 
 /**
@@ -734,132 +728,134 @@ export const tocToMarkdown = (toc: readonly TocItem[]): string =>
  * - GraphViz diagrams: ```graphviz or ```dot
  */
 export const markdownToHtmlAsync = async (markdown: string): Promise<string> => {
-	// Extract code blocks first to protect them from other transformations
+	// Counters for placeholder ids live in a const cursor object so neither
+	// the binding nor the field requires `let`. Placeholder collections are
+	// const arrays mutated by the replace callbacks.
 	const codeBlocks: CodeBlockPlaceholder[] = [];
-	let blockId = 0;
+	const texExpressions: { id: string; expression: string; displayMode: boolean }[] = [];
+	const idCounters = { block: 0, tex: 0 };
 
-	// Replace code blocks with placeholders
-	let processedMarkdown = markdown.replace(
-		/```(\w*)\n([\s\S]*?)```/g,
-		(_match, lang: string, code: string) => {
-			const id = `__CODE_BLOCK_${blockId++}__`;
-			const language = lang.trim().toLowerCase();
-			const isDiagram = detectDiagramType(language) !== null;
-			codeBlocks.push({ id, language, code: code.trim(), isDiagram });
-			return id;
-		}
+	// Replace code blocks with placeholders, then display/inline TeX, then
+	// regular markdown -> HTML. The pipeline is built as a const reduce.
+	type Transform = (input: string) => string;
+	const preTransforms: readonly Transform[] = [
+		// Replace code blocks with placeholders.
+		(input) =>
+			input.replace(/```(\w*)\n([\s\S]*?)```/g, (_match, lang: string, code: string) => {
+				const id = `__CODE_BLOCK_${idCounters.block}__`;
+				idCounters.block += 1;
+				const language = lang.trim().toLowerCase();
+				const isDiagram = detectDiagramType(language) !== null;
+				codeBlocks.push({ id, language, code: code.trim(), isDiagram });
+				return id;
+			}),
+		// Display math: $$...$$ or \[...\]
+		(input) =>
+			input.replace(
+				/\$\$([\s\S]*?)\$\$|\\\[([\s\S]*?)\\\]/g,
+				(_, expr1: string | undefined, expr2: string | undefined) => {
+					const expression = (expr1 ?? expr2 ?? '').trim();
+					const id = `__TEX_DISPLAY_${idCounters.tex}__`;
+					idCounters.tex += 1;
+					texExpressions.push({ id, expression, displayMode: true });
+					return id;
+				}
+			),
+		// Inline math: $...$ or \(...\) (but not $$)
+		(input) =>
+			input.replace(
+				/(?<!\$)\$(?!\$)([^$\n]+?)\$(?!\$)|\\\(([^)]+?)\\\)/g,
+				(_, expr1: string | undefined, expr2: string | undefined) => {
+					const expression = (expr1 ?? expr2 ?? '').trim();
+					const id = `__TEX_INLINE_${idCounters.tex}__`;
+					idCounters.tex += 1;
+					texExpressions.push({ id, expression, displayMode: false });
+					return id;
+				}
+			),
+	];
+
+	const processedMarkdown = preTransforms.reduce((acc, transform) => transform(acc), markdown);
+
+	const htmlTransforms: readonly Transform[] = [
+		// Headers
+		(input) => input.replace(/^###### (.+)$/gm, '<h6>$1</h6>'),
+		(input) => input.replace(/^##### (.+)$/gm, '<h5>$1</h5>'),
+		(input) => input.replace(/^#### (.+)$/gm, '<h4>$1</h4>'),
+		(input) => input.replace(/^### (.+)$/gm, '<h3>$1</h3>'),
+		(input) => input.replace(/^## (.+)$/gm, '<h2>$1</h2>'),
+		(input) => input.replace(/^# (.+)$/gm, '<h1>$1</h1>'),
+		// Horizontal rule
+		(input) => input.replace(/^---$/gm, '<hr>'),
+		// Bold and italic
+		(input) => input.replace(/\*\*\*(.+?)\*\*\*/g, '<strong><em>$1</em></strong>'),
+		(input) => input.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>'),
+		(input) => input.replace(/\*(.+?)\*/g, '<em>$1</em>'),
+		(input) => input.replace(/___(.+?)___/g, '<strong><em>$1</em></strong>'),
+		(input) => input.replace(/__(.+?)__/g, '<strong>$1</strong>'),
+		(input) => input.replace(/_(.+?)_/g, '<em>$1</em>'),
+		// Strikethrough
+		(input) => input.replace(/~~(.+?)~~/g, '<del>$1</del>'),
+		// Inline code
+		(input) => input.replace(/`([^`]+)`/g, '<code>$1</code>'),
+		// Links and images
+		(input) => input.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '<img src="$2" alt="$1">'),
+		(input) =>
+			input.replace(
+				/\[([^\]]+)\]\(([^)]+)\)/g,
+				'<a href="$2" target="_blank" rel="noopener">$1</a>'
+			),
+		// Blockquotes
+		(input) => input.replace(/^&gt; (.+)$/gm, '<blockquote>$1</blockquote>'),
+		// Task lists
+		(input) =>
+			input.replace(
+				/^- \[x\] (.+)$/gm,
+				'<li class="task-item checked"><input type="checkbox" checked disabled> $1</li>'
+			),
+		(input) =>
+			input.replace(
+				/^- \[ \] (.+)$/gm,
+				'<li class="task-item"><input type="checkbox" disabled> $1</li>'
+			),
+		// Unordered lists
+		(input) => input.replace(/^- (.+)$/gm, '<li>$1</li>'),
+		(input) => input.replace(/^\* (.+)$/gm, '<li>$1</li>'),
+		// Ordered lists
+		(input) => input.replace(/^\d+\. (.+)$/gm, '<li>$1</li>'),
+		// Wrap consecutive list items
+		(input) =>
+			input.replace(/(<li>[\s\S]*?<\/li>)(\n<li>[\s\S]*?<\/li>)*/g, (match) =>
+				match.includes('task-item') ? `<ul class="task-list">${match}</ul>` : `<ul>${match}</ul>`
+			),
+		// Paragraphs
+		(input) =>
+			input
+				.split('\n\n')
+				.map((block) => {
+					const trimmed = block.trim();
+					if (!trimmed) return '';
+					if (
+						trimmed.startsWith('<h') ||
+						trimmed.startsWith('<ul') ||
+						trimmed.startsWith('<ol') ||
+						trimmed.startsWith('<pre') ||
+						trimmed.startsWith('<blockquote') ||
+						trimmed.startsWith('<hr') ||
+						trimmed.startsWith('__CODE_BLOCK_') ||
+						trimmed.startsWith('__TEX_')
+					) {
+						return trimmed;
+					}
+					return `<p>${trimmed.replace(/\n/g, '<br>')}</p>`;
+				})
+				.join('\n'),
+	];
+
+	const baseHtml = htmlTransforms.reduce(
+		(acc, transform) => transform(acc),
+		escapeHtml(processedMarkdown)
 	);
-
-	// Extract and render TeX expressions
-	const texExpressions: Array<{ id: string; expression: string; displayMode: boolean }> = [];
-	let texId = 0;
-
-	// Display math: $$...$$ or \[...\]
-	processedMarkdown = processedMarkdown.replace(
-		/\$\$([\s\S]*?)\$\$|\\\[([\s\S]*?)\\\]/g,
-		(_, expr1: string | undefined, expr2: string | undefined) => {
-			const expression = (expr1 ?? expr2 ?? '').trim();
-			const id = `__TEX_DISPLAY_${texId++}__`;
-			texExpressions.push({ id, expression, displayMode: true });
-			return id;
-		}
-	);
-
-	// Inline math: $...$ or \(...\) (but not $$)
-	processedMarkdown = processedMarkdown.replace(
-		/(?<!\$)\$(?!\$)([^$\n]+?)\$(?!\$)|\\\(([^)]+?)\\\)/g,
-		(_, expr1: string | undefined, expr2: string | undefined) => {
-			const expression = (expr1 ?? expr2 ?? '').trim();
-			const id = `__TEX_INLINE_${texId++}__`;
-			texExpressions.push({ id, expression, displayMode: false });
-			return id;
-		}
-	);
-
-	// Escape HTML and apply markdown transformations
-	let html = escapeHtml(processedMarkdown);
-
-	// Headers
-	html = html.replace(/^###### (.+)$/gm, '<h6>$1</h6>');
-	html = html.replace(/^##### (.+)$/gm, '<h5>$1</h5>');
-	html = html.replace(/^#### (.+)$/gm, '<h4>$1</h4>');
-	html = html.replace(/^### (.+)$/gm, '<h3>$1</h3>');
-	html = html.replace(/^## (.+)$/gm, '<h2>$1</h2>');
-	html = html.replace(/^# (.+)$/gm, '<h1>$1</h1>');
-
-	// Horizontal rule
-	html = html.replace(/^---$/gm, '<hr>');
-
-	// Bold and italic
-	html = html.replace(/\*\*\*(.+?)\*\*\*/g, '<strong><em>$1</em></strong>');
-	html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
-	html = html.replace(/\*(.+?)\*/g, '<em>$1</em>');
-	html = html.replace(/___(.+?)___/g, '<strong><em>$1</em></strong>');
-	html = html.replace(/__(.+?)__/g, '<strong>$1</strong>');
-	html = html.replace(/_(.+?)_/g, '<em>$1</em>');
-
-	// Strikethrough
-	html = html.replace(/~~(.+?)~~/g, '<del>$1</del>');
-
-	// Inline code
-	html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
-
-	// Links and images
-	html = html.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '<img src="$2" alt="$1">');
-	html = html.replace(
-		/\[([^\]]+)\]\(([^)]+)\)/g,
-		'<a href="$2" target="_blank" rel="noopener">$1</a>'
-	);
-
-	// Blockquotes
-	html = html.replace(/^&gt; (.+)$/gm, '<blockquote>$1</blockquote>');
-
-	// Task lists
-	html = html.replace(
-		/^- \[x\] (.+)$/gm,
-		'<li class="task-item checked"><input type="checkbox" checked disabled> $1</li>'
-	);
-	html = html.replace(
-		/^- \[ \] (.+)$/gm,
-		'<li class="task-item"><input type="checkbox" disabled> $1</li>'
-	);
-
-	// Unordered lists
-	html = html.replace(/^- (.+)$/gm, '<li>$1</li>');
-	html = html.replace(/^\* (.+)$/gm, '<li>$1</li>');
-
-	// Ordered lists
-	html = html.replace(/^\d+\. (.+)$/gm, '<li>$1</li>');
-
-	// Wrap consecutive list items
-	html = html.replace(/(<li>[\s\S]*?<\/li>)(\n<li>[\s\S]*?<\/li>)*/g, (match) => {
-		if (match.includes('task-item')) {
-			return `<ul class="task-list">${match}</ul>`;
-		}
-		return `<ul>${match}</ul>`;
-	});
-
-	// Paragraphs
-	html = html
-		.split('\n\n')
-		.map((block) => {
-			const trimmed = block.trim();
-			if (!trimmed) return '';
-			if (
-				trimmed.startsWith('<h') ||
-				trimmed.startsWith('<ul') ||
-				trimmed.startsWith('<ol') ||
-				trimmed.startsWith('<pre') ||
-				trimmed.startsWith('<blockquote') ||
-				trimmed.startsWith('<hr') ||
-				trimmed.startsWith('__CODE_BLOCK_') ||
-				trimmed.startsWith('__TEX_')
-			) {
-				return trimmed;
-			}
-			return `<p>${trimmed.replace(/\n/g, '<br>')}</p>`;
-		})
-		.join('\n');
 
 	// Render TeX expressions in parallel
 	const texResults = await Promise.all(
@@ -873,10 +869,10 @@ export const markdownToHtmlAsync = async (markdown: string): Promise<string> => 
 		})
 	);
 
-	// Replace TeX placeholders
-	for (const { id, html: texHtml } of texResults) {
-		html = html.replace(id, texHtml);
-	}
+	const htmlWithTex = texResults.reduce(
+		(acc, { id, html: texHtml }) => acc.replace(id, texHtml),
+		baseHtml
+	);
 
 	// Render diagrams in parallel
 	const diagramResults = await Promise.all(
@@ -897,10 +893,8 @@ export const markdownToHtmlAsync = async (markdown: string): Promise<string> => 
 		})
 	);
 
-	// Replace code block placeholders
-	for (const { id, html: blockHtml } of diagramResults) {
-		html = html.replace(id, blockHtml);
-	}
-
-	return html;
+	return diagramResults.reduce(
+		(acc, { id, html: blockHtml }) => acc.replace(id, blockHtml),
+		htmlWithTex
+	);
 };

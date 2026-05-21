@@ -88,7 +88,7 @@ export const buildLineToPathMap = (ast: AstNode | null): LineToPathMap => {
 export const findPathByLine = (lineToPathMap: LineToPathMap, targetLine: number): string | null =>
 	Array.from(lineToPathMap.entries())
 		.filter(([line]) => line <= targetLine)
-		.sort(([a], [b]) => b - a)
+		.toSorted(([a], [b]) => b - a)
 		.at(0)?.[1] ?? null;
 
 /**

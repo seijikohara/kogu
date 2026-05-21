@@ -14,10 +14,8 @@ export const normalizeValue = <T extends BaseDiffOptions>(value: unknown, option
 	if (value === null || value === undefined) return value;
 
 	if (typeof value === 'string') {
-		let normalized = value;
-		if (options.ignoreCase) normalized = normalized.toLowerCase();
-		if (options.ignoreWhitespace) normalized = normalized.replace(/\s+/g, '');
-		return normalized;
+		const lowered = options.ignoreCase ? value.toLowerCase() : value;
+		return options.ignoreWhitespace ? lowered.replace(/\s+/g, '') : lowered;
 	}
 
 	return value;
@@ -40,7 +38,7 @@ export const sortArray = <T extends BaseDiffOptions>(
 	arr: readonly unknown[],
 	options: T
 ): unknown[] =>
-	[...arr].sort((a, b) => {
+	arr.toSorted((a, b) => {
 		const strA = JSON.stringify(normalizeValue(a, options));
 		const strB = JSON.stringify(normalizeValue(b, options));
 		return strA.localeCompare(strB);

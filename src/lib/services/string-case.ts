@@ -292,13 +292,15 @@ export const toInvertCase = (text: string): string =>
 		.join('');
 
 export const toAlternatingCase = (text: string): string => {
-	let index = 0;
+	// Track the count of alphabetic characters seen so far in a const cursor.
+	// Even count -> lowercase, odd -> uppercase, leaving non-letters untouched.
+	const cursor = { index: 0 };
 	return text
 		.split('')
 		.map((char) => {
 			if (/[a-zA-Z]/.test(char)) {
-				const result = index % 2 === 0 ? char.toLowerCase() : char.toUpperCase();
-				index++;
+				const result = cursor.index % 2 === 0 ? char.toLowerCase() : char.toUpperCase();
+				cursor.index += 1;
 				return result;
 			}
 			return char;
@@ -307,11 +309,12 @@ export const toAlternatingCase = (text: string): string => {
 };
 
 export const toSpongeCase = (text: string): string => {
-	// Use a seeded pseudo-random approach for consistency
-	let seed = text.length;
+	// Use a seeded pseudo-random approach for consistency. The seed lives in a
+	// const cursor so successive pseudoRandom() calls stay deterministic.
+	const state = { seed: text.length };
 	const pseudoRandom = (): boolean => {
-		seed = (seed * 1103515245 + 12345) & 0x7fffffff;
-		return seed % 2 === 0;
+		state.seed = (state.seed * 1103515245 + 12345) & 0x7fffffff;
+		return state.seed % 2 === 0;
 	};
 
 	return text

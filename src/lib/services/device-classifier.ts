@@ -433,26 +433,26 @@ export const classifyDevice = (host: UnifiedHost): DeviceClassification => {
 		}
 	}
 
-	// Find the category with the highest total weight
-	let bestCategory: DeviceCategory = 'unknown';
-	let bestScore = 0;
-	let bestEvidence: string[] = [];
-
-	for (const [category, { totalWeight, evidence }] of scores) {
-		if (totalWeight > bestScore) {
-			bestScore = totalWeight;
-			bestCategory = category;
-			bestEvidence = evidence;
-		}
+	// Find the category with the highest total weight via reduce.
+	interface Best {
+		category: DeviceCategory;
+		score: number;
+		evidence: string[];
 	}
+	const initialBest: Best = { category: 'unknown', score: 0, evidence: [] };
+	const best = Array.from(scores).reduce<Best>(
+		(acc, [category, { totalWeight, evidence }]) =>
+			totalWeight > acc.score ? { category, score: totalWeight, evidence } : acc,
+		initialBest
+	);
 
 	// Normalize confidence to 0-1 range (cap at 1.0)
-	const confidence = Math.min(bestScore, 1.0);
+	const confidence = Math.min(best.score, 1.0);
 
 	return {
-		category: bestCategory,
+		category: best.category,
 		confidence,
-		evidence: bestEvidence,
+		evidence: best.evidence,
 	};
 };
 

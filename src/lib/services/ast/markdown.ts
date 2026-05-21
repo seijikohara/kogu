@@ -111,11 +111,14 @@ const parseBlocks = (
 	const lines = text.split('\n');
 	const blocks: MarkdownBlock[] = [];
 	const listCounters = new Map<number, number>();
-	let i = 0;
+	// Outer scan cursor plus a per-block end tracker (reused inside each
+	// multi-line block branch). Both bindings are const; only fields mutate.
+	const cursor = { i: 0 };
+	const end = { line: 0, offset: 0 };
 
-	while (i < lines.length) {
-		const line = lines[i] ?? '';
-		const lineNum = i + 1;
+	while (cursor.i < lines.length) {
+		const line = lines[cursor.i] ?? '';
+		const lineNum = cursor.i + 1;
 		const lineStart = getLineOffset(lineOffsets, lineNum);
 
 		// Heading
@@ -133,7 +136,7 @@ const parseBlocks = (
 					endOffset: lineStart + line.length,
 					level: hashes.length,
 				});
-				i++;
+				cursor.i += 1;
 				continue;
 			}
 		}
@@ -144,32 +147,32 @@ const parseBlocks = (
 			const language = codeBlockMatch[1] ?? '';
 			const startLineNum = lineNum;
 			const startLineOffset = lineStart;
-			let endLineNum = lineNum;
-			let endOffset = lineStart + line.length;
+			end.line = lineNum;
+			end.offset = lineStart + line.length;
 			const codeLines: string[] = [];
-			i++;
+			cursor.i += 1;
 
-			while (i < lines.length) {
-				const codeLine = lines[i] ?? '';
+			while (cursor.i < lines.length) {
+				const codeLine = lines[cursor.i] ?? '';
 				if (codeLine.startsWith('```')) {
-					endLineNum = i + 1;
-					endOffset = getLineOffset(lineOffsets, endLineNum) + codeLine.length;
-					i++;
+					end.line = cursor.i + 1;
+					end.offset = getLineOffset(lineOffsets, end.line) + codeLine.length;
+					cursor.i += 1;
 					break;
 				}
 				codeLines.push(codeLine);
-				endLineNum = i + 1;
-				endOffset = getLineOffset(lineOffsets, endLineNum) + codeLine.length;
-				i++;
+				end.line = cursor.i + 1;
+				end.offset = getLineOffset(lineOffsets, end.line) + codeLine.length;
+				cursor.i += 1;
 			}
 
 			blocks.push({
 				type: 'code_block',
 				content: codeLines.join('\n'),
 				startLine: startLineNum,
-				endLine: endLineNum,
+				endLine: end.line,
 				startOffset: startLineOffset,
-				endOffset,
+				endOffset: end.offset,
 				language: language || undefined,
 			});
 			continue;
@@ -185,7 +188,7 @@ const parseBlocks = (
 				startOffset: lineStart,
 				endOffset: lineStart + line.length,
 			});
-			i++;
+			cursor.i += 1;
 			continue;
 		}
 
@@ -194,16 +197,16 @@ const parseBlocks = (
 			const startLineNum = lineNum;
 			const startLineOffset = lineStart;
 			const quoteLines: string[] = [];
-			let endLineNum = lineNum;
-			let endOffset = lineStart + line.length;
+			end.line = lineNum;
+			end.offset = lineStart + line.length;
 
-			while (i < lines.length) {
-				const quoteLine = lines[i] ?? '';
+			while (cursor.i < lines.length) {
+				const quoteLine = lines[cursor.i] ?? '';
 				if (quoteLine.startsWith('>')) {
 					quoteLines.push(quoteLine.replace(/^>\s?/, ''));
-					endLineNum = i + 1;
-					endOffset = getLineOffset(lineOffsets, endLineNum) + quoteLine.length;
-					i++;
+					end.line = cursor.i + 1;
+					end.offset = getLineOffset(lineOffsets, end.line) + quoteLine.length;
+					cursor.i += 1;
 				} else if (quoteLine.trim() === '' && quoteLines.length > 0) {
 					break;
 				} else {
@@ -215,9 +218,9 @@ const parseBlocks = (
 				type: 'blockquote',
 				content: quoteLines.join('\n'),
 				startLine: startLineNum,
-				endLine: endLineNum,
+				endLine: end.line,
 				startOffset: startLineOffset,
-				endOffset,
+				endOffset: end.offset,
 			});
 			continue;
 		}
@@ -235,7 +238,7 @@ const parseBlocks = (
 					startOffset: lineStart,
 					endOffset: lineStart + line.length,
 				});
-				i++;
+				cursor.i += 1;
 				continue;
 			}
 		}
@@ -253,7 +256,7 @@ const parseBlocks = (
 					startOffset: lineStart,
 					endOffset: lineStart + line.length,
 				});
-				i++;
+				cursor.i += 1;
 				continue;
 			}
 		}
@@ -272,7 +275,7 @@ const parseBlocks = (
 					endOffset: lineStart + line.length,
 					level: 1, // Mark as ordered
 				});
-				i++;
+				cursor.i += 1;
 				continue;
 			}
 		}
@@ -283,11 +286,11 @@ const parseBlocks = (
 			const startLineNum = lineNum;
 			const startLineOffset = lineStart;
 			const tableRows: MarkdownBlock[] = [];
-			let endLineNum = lineNum;
-			let endOffset = lineStart + line.length;
+			end.line = lineNum;
+			end.offset = lineStart + line.length;
 
-			while (i < lines.length) {
-				const tableLine = lines[i] ?? '';
+			while (cursor.i < lines.length) {
+				const tableLine = lines[cursor.i] ?? '';
 				const rowMatch = /^\|(.+)\|$/.exec(tableLine);
 				if (rowMatch) {
 					// Skip separator row
@@ -295,15 +298,15 @@ const parseBlocks = (
 						tableRows.push({
 							type: 'table_row',
 							content: tableLine,
-							startLine: i + 1,
-							endLine: i + 1,
-							startOffset: getLineOffset(lineOffsets, i + 1),
-							endOffset: getLineOffset(lineOffsets, i + 1) + tableLine.length,
+							startLine: cursor.i + 1,
+							endLine: cursor.i + 1,
+							startOffset: getLineOffset(lineOffsets, cursor.i + 1),
+							endOffset: getLineOffset(lineOffsets, cursor.i + 1) + tableLine.length,
 						});
 					}
-					endLineNum = i + 1;
-					endOffset = getLineOffset(lineOffsets, endLineNum) + tableLine.length;
-					i++;
+					end.line = cursor.i + 1;
+					end.offset = getLineOffset(lineOffsets, end.line) + tableLine.length;
+					cursor.i += 1;
 				} else {
 					break;
 				}
@@ -314,9 +317,9 @@ const parseBlocks = (
 					type: 'table',
 					content: '',
 					startLine: startLineNum,
-					endLine: endLineNum,
+					endLine: end.line,
 					startOffset: startLineOffset,
-					endOffset,
+					endOffset: end.offset,
 					children: tableRows,
 				});
 			}
@@ -328,12 +331,12 @@ const parseBlocks = (
 			const startLineNum = lineNum;
 			const startLineOffset = lineStart;
 			const paraLines: string[] = [line];
-			let endLineNum = lineNum;
-			let endOffset = lineStart + line.length;
-			i++;
+			end.line = lineNum;
+			end.offset = lineStart + line.length;
+			cursor.i += 1;
 
-			while (i < lines.length) {
-				const paraLine = lines[i] ?? '';
+			while (cursor.i < lines.length) {
+				const paraLine = lines[cursor.i] ?? '';
 				// Stop at empty lines or block-level elements
 				if (
 					paraLine.trim() === '' ||
@@ -348,9 +351,9 @@ const parseBlocks = (
 					break;
 				}
 				paraLines.push(paraLine);
-				endLineNum = i + 1;
-				endOffset = getLineOffset(lineOffsets, endLineNum) + paraLine.length;
-				i++;
+				end.line = cursor.i + 1;
+				end.offset = getLineOffset(lineOffsets, end.line) + paraLine.length;
+				cursor.i += 1;
 			}
 
 			const content = paraLines.join(' ').trim();
@@ -359,16 +362,16 @@ const parseBlocks = (
 					type: 'paragraph',
 					content,
 					startLine: startLineNum,
-					endLine: endLineNum,
+					endLine: end.line,
 					startOffset: startLineOffset,
-					endOffset,
+					endOffset: end.offset,
 				});
 			}
 			continue;
 		}
 
 		// Empty line - skip
-		i++;
+		cursor.i += 1;
 	}
 
 	return { blocks, listCounters };
@@ -460,58 +463,59 @@ const blockToNode = (block: MarkdownBlock, path: string, index: number): AstNode
 		block.endOffset
 	);
 
-	let label: string;
-	let children: AstNode[] | undefined;
-
-	switch (block.type) {
-		case 'heading':
-			label = formatHeadingLabel(block.level ?? 1, block.content);
-			break;
-		case 'code_block':
-			label = formatCodeBlockLabel(block.language);
-			break;
-		case 'blockquote':
-			label = `Quote: ${block.content.slice(0, 30)}${block.content.length > 30 ? '...' : ''}`;
-			break;
-		case 'paragraph': {
-			const preview = block.content.slice(0, 40);
-			label = `Paragraph: ${preview}${block.content.length > 40 ? '...' : ''}`;
-			break;
+	// Derive both `label` and `children` via a single IIFE switch so the
+	// pairing stays atomic and avoids per-branch `let` reassignment.
+	const { label, children } = ((): { label: string; children?: AstNode[] } => {
+		switch (block.type) {
+			case 'heading':
+				return { label: formatHeadingLabel(block.level ?? 1, block.content) };
+			case 'code_block':
+				return { label: formatCodeBlockLabel(block.language) };
+			case 'blockquote':
+				return {
+					label: `Quote: ${block.content.slice(0, 30)}${block.content.length > 30 ? '...' : ''}`,
+				};
+			case 'paragraph': {
+				const preview = block.content.slice(0, 40);
+				return {
+					label: `Paragraph: ${preview}${block.content.length > 40 ? '...' : ''}`,
+				};
+			}
+			case 'list': {
+				const isOrdered = block.level === 1;
+				const itemCount = block.children?.length ?? 0;
+				return {
+					label: formatListLabel(isOrdered, itemCount),
+					children: block.children?.map((child, i) => blockToNode(child, `${path}[${i}]`, i)),
+				};
+			}
+			case 'list_item': {
+				const preview = block.content.slice(0, 35);
+				return { label: `• ${preview}${block.content.length > 35 ? '...' : ''}` };
+			}
+			case 'task_item': {
+				const preview = block.content.slice(0, 30);
+				return { label: `☐ ${preview}${block.content.length > 30 ? '...' : ''}` };
+			}
+			case 'table': {
+				const rowCount = block.children?.length ?? 0;
+				return {
+					label: `Table (${rowCount} rows)`,
+					children: block.children?.map((child, i) => blockToNode(child, `${path}.row[${i}]`, i)),
+				};
+			}
+			case 'table_row': {
+				const cells = block.content.split('|').filter((c) => c.trim());
+				return {
+					label: `Row: ${cells.slice(0, 3).join(' | ')}${cells.length > 3 ? '...' : ''}`,
+				};
+			}
+			case 'horizontal_rule':
+				return { label: '───────────' };
+			default:
+				return { label: block.content.slice(0, 40) };
 		}
-		case 'list': {
-			const isOrdered = block.level === 1;
-			const itemCount = block.children?.length ?? 0;
-			label = formatListLabel(isOrdered, itemCount);
-			children = block.children?.map((child, i) => blockToNode(child, `${path}[${i}]`, i));
-			break;
-		}
-		case 'list_item': {
-			const preview = block.content.slice(0, 35);
-			label = `• ${preview}${block.content.length > 35 ? '...' : ''}`;
-			break;
-		}
-		case 'task_item': {
-			const preview = block.content.slice(0, 30);
-			label = `☐ ${preview}${block.content.length > 30 ? '...' : ''}`;
-			break;
-		}
-		case 'table': {
-			const rowCount = block.children?.length ?? 0;
-			label = `Table (${rowCount} rows)`;
-			children = block.children?.map((child, i) => blockToNode(child, `${path}.row[${i}]`, i));
-			break;
-		}
-		case 'table_row': {
-			const cells = block.content.split('|').filter((c) => c.trim());
-			label = `Row: ${cells.slice(0, 3).join(' | ')}${cells.length > 3 ? '...' : ''}`;
-			break;
-		}
-		case 'horizontal_rule':
-			label = '───────────';
-			break;
-		default:
-			label = block.content.slice(0, 40);
-	}
+	})();
 
 	const nodePath =
 		block.type === 'heading'

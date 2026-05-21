@@ -242,13 +242,19 @@ const layoutNode = (node: VizNode, x: number, entryY: number): RailroadNode => {
 		if (node.children.length === 0) {
 			return layoutNode(EMPTY_VIZ_NODE, x, entryY);
 		}
-		const children: RailroadNode[] = [];
-		let cursorX = x;
-		for (const childNode of node.children) {
-			const child = layoutNode(childNode, cursorX, entryY);
-			children.push(child);
-			cursorX = child.x + child.width + SEQUENCE_GAP;
-		}
+		// Lay out children left-to-right, threading the running x position
+		// through a reduce so neither the cursor nor the accumulator needs let.
+		const layout = node.children.reduce<{ children: RailroadNode[]; cursorX: number }>(
+			(acc, childNode) => {
+				const child = layoutNode(childNode, acc.cursorX, entryY);
+				return {
+					children: [...acc.children, child],
+					cursorX: child.x + child.width + SEQUENCE_GAP,
+				};
+			},
+			{ children: [], cursorX: x }
+		);
+		const { children, cursorX } = layout;
 		const totalWidth = cursorX - x - SEQUENCE_GAP;
 		const ups = children.map((c) => c.entryY - c.y);
 		const downs = children.map((c) => c.y + c.height - c.exitY);
@@ -276,21 +282,27 @@ const layoutNode = (node: VizNode, x: number, entryY: number): RailroadNode => {
 		}
 		const innerWidth = sized.reduce((acc, s) => Math.max(acc, s.width), 0);
 		const totalWidth = innerWidth + CHOICE_DIVERGE * 2;
-		const children: RailroadNode[] = [];
 		const firstChildX = x + CHOICE_DIVERGE + (innerWidth - firstSized.width) / 2;
-		children.push(layoutNode(firstBranch, firstChildX, entryY));
-		let cursorY = entryY + firstSized.down + CHOICE_VERT_GAP;
-		for (let i = 0; i < restBranches.length; i++) {
-			const branch = restBranches[i];
-			const s = restSized[i];
-			if (!branch || !s) continue;
-			const childEntryY = cursorY + s.up;
-			const childX = x + CHOICE_DIVERGE + (innerWidth - s.width) / 2;
-			children.push(layoutNode(branch, childX, childEntryY));
-			cursorY = childEntryY + s.down + CHOICE_VERT_GAP;
-		}
+		const firstChild = layoutNode(firstBranch, firstChildX, entryY);
+		const initialCursorY = entryY + firstSized.down + CHOICE_VERT_GAP;
+		// Place remaining branches top-to-bottom, threading the running y
+		// position through a reduce so the cursor avoids `let`.
+		const restLayout = restBranches.reduce<{ children: RailroadNode[]; cursorY: number }>(
+			(acc, branch, i) => {
+				const s = restSized[i];
+				if (!branch || !s) return acc;
+				const childEntryY = acc.cursorY + s.up;
+				const childX = x + CHOICE_DIVERGE + (innerWidth - s.width) / 2;
+				return {
+					children: [...acc.children, layoutNode(branch, childX, childEntryY)],
+					cursorY: childEntryY + s.down + CHOICE_VERT_GAP,
+				};
+			},
+			{ children: [], cursorY: initialCursorY }
+		);
+		const children: RailroadNode[] = [firstChild, ...restLayout.children];
 		const up = firstSized.up;
-		const down = cursorY - entryY - CHOICE_VERT_GAP;
+		const down = restLayout.cursorY - entryY - CHOICE_VERT_GAP;
 		return {
 			kind: 'choice',
 			x,

@@ -163,42 +163,45 @@ const isLeafBlock = (node: PMNode): boolean => LEAF_BLOCK_TYPES.has(node.type.na
  */
 const getBlockIndexAtCursor = (editor: TiptapEditor): number => {
 	const { from } = editor.state.selection;
-	let blockIndex = 0;
-	let cursorBlockIndex = 0;
+	// `state` accumulates the walk across leaf blocks. The binding itself is
+	// const; only its fields mutate inside the descendants callback.
+	const state = { blockIndex: 0, cursorBlockIndex: 0 };
 
 	editor.state.doc.descendants((node: PMNode, pos: number) => {
 		if (!isLeafBlock(node)) return true;
 
 		if (pos <= from && from <= pos + node.nodeSize) {
-			cursorBlockIndex = blockIndex;
+			state.cursorBlockIndex = state.blockIndex;
 		}
-		blockIndex++;
+		state.blockIndex += 1;
 		return true;
 	});
 
-	return cursorBlockIndex;
+	return state.cursorBlockIndex;
 };
 
 /**
  * Get the ProseMirror position at a given leaf block index
  */
 const getBlockPositionByIndex = (editor: TiptapEditor, targetIndex: number): number => {
-	let blockIndex = 0;
-	let targetPos = 1;
+	// `state.blockIndex` tracks our position in the leaf-block stream;
+	// `state.targetPos` captures the ProseMirror position once we hit the
+	// target block. Returned from the const state object at the end.
+	const state = { blockIndex: 0, targetPos: 1 };
 
 	editor.state.doc.descendants((node: PMNode, pos: number) => {
-		if (targetPos > 1 && blockIndex > targetIndex) return false;
+		if (state.targetPos > 1 && state.blockIndex > targetIndex) return false;
 		if (!isLeafBlock(node)) return true;
 
-		if (blockIndex === targetIndex) {
-			targetPos = pos + 1;
+		if (state.blockIndex === targetIndex) {
+			state.targetPos = pos + 1;
 			return false;
 		}
-		blockIndex++;
+		state.blockIndex += 1;
 		return true;
 	});
 
-	return targetPos;
+	return state.targetPos;
 };
 
 /**

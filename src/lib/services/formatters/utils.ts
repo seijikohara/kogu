@@ -23,7 +23,7 @@ export const sortKeysDeep = (obj: unknown): unknown => {
 
 	return Object.fromEntries(
 		Object.keys(obj)
-			.sort()
+			.toSorted()
 			.map((key) => [key, sortKeysDeep((obj as Record<string, unknown>)[key])])
 	);
 };

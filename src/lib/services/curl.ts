@@ -305,11 +305,14 @@ export const parseCurl = (input: string): Result<ParsedCurl> => {
 		includeHeaders: false,
 		timeoutSeconds: 0,
 	};
-	let i = 1;
-	while (i < tokens.length) {
-		const token = tokens[i] ?? '';
-		const next = tokens[i + 1] ?? '';
-		i += handleFlag(acc, token, next);
+	// Walk the token stream. Each handleFlag call returns the number of tokens
+	// consumed, so we advance the cursor accordingly. Stored on a const cursor
+	// object so the loop counter avoids `let`.
+	const cursor = { i: 1 };
+	while (cursor.i < tokens.length) {
+		const token = tokens[cursor.i] ?? '';
+		const next = tokens[cursor.i + 1] ?? '';
+		cursor.i += handleFlag(acc, token, next);
 	}
 	if (acc.url === '') return { ok: false, error: 'No URL found in command' };
 	return {

@@ -87,8 +87,12 @@ export function Vizel({
 	// `features` are captured at instantiation time, matching the Svelte
 	// component's intentional non-reactivity for editor construction.
 	useEffect(() => {
-		let mounted = true;
-		let instance: VizelEditor | null = null;
+		// Track mount state and the resolved editor in a const ref object so
+		// the cleanup closure can mutate fields without `let` bindings.
+		const lifecycle: { mounted: boolean; instance: VizelEditor | null } = {
+			mounted: true,
+			instance: null,
+		};
 
 		createVizelEditorInstance({
 			...(placeholder !== undefined && { placeholder }),
@@ -104,22 +108,22 @@ export function Vizel({
 			onError: (error) => callbacksRef.current.onError?.(error),
 		})
 			.then((result) => {
-				if (!mounted) {
+				if (!lifecycle.mounted) {
 					result.editor.destroy();
 					return;
 				}
-				instance = result.editor;
+				lifecycle.instance = result.editor;
 				setEditor(result.editor);
 			})
 			.catch((error: unknown) => {
-				if (mounted) {
+				if (lifecycle.mounted) {
 					callbacksRef.current.onError?.(error as VizelError);
 				}
 			});
 
 		return () => {
-			mounted = false;
-			instance?.destroy();
+			lifecycle.mounted = false;
+			lifecycle.instance?.destroy();
 		};
 		// Construction options are captured once on mount, matching the Svelte
 		// wrapper's contract. Subsequent prop edits are handled by the second

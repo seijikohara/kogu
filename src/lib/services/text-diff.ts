@@ -133,21 +133,9 @@ export type { User };`;
  * Normalize text based on options for comparison.
  */
 const normalizeForComparison = (text: string, options: DiffOptions): string => {
-	let result = text;
-
-	if (options.trimLines) {
-		result = result.trim();
-	}
-
-	if (options.ignoreWhitespace) {
-		result = result.replace(/\s+/g, ' ').trim();
-	}
-
-	if (options.ignoreCase) {
-		result = result.toLowerCase();
-	}
-
-	return result;
+	const trimmed = options.trimLines ? text.trim() : text;
+	const collapsed = options.ignoreWhitespace ? trimmed.replace(/\s+/g, ' ').trim() : trimmed;
+	return options.ignoreCase ? collapsed.toLowerCase() : collapsed;
 };
 
 /**
@@ -169,9 +157,12 @@ const computeLcsTable = (
 	// Create 2D array initialized with zeros
 	const table: number[][] = Array.from({ length: m + 1 }, () => Array<number>(n + 1).fill(0));
 
-	// Fill the LCS table
-	for (let i = 1; i <= m; i++) {
-		for (let j = 1; j <= n; j++) {
+	// Fill the LCS table. The DP recurrence requires mutation of the table,
+	// but loop counters are expressed via index ranges instead of `for (let)`.
+	const rowIndices = Array.from({ length: m }, (_, k) => k + 1);
+	const colIndices = Array.from({ length: n }, (_, k) => k + 1);
+	rowIndices.forEach((i) => {
+		colIndices.forEach((j) => {
 			const leftItem = left[i - 1] ?? '';
 			const rightItem = right[j - 1] ?? '';
 			const leftNorm = normalizeForComparison(leftItem, options);
@@ -179,15 +170,14 @@ const computeLcsTable = (
 
 			const tableRow = table[i];
 			const prevRow = table[i - 1];
-			if (!tableRow || !prevRow) continue;
+			if (!tableRow || !prevRow) return;
 
-			if (leftNorm === rightNorm) {
-				tableRow[j] = (prevRow[j - 1] ?? 0) + 1;
-			} else {
-				tableRow[j] = Math.max(prevRow[j] ?? 0, tableRow[j - 1] ?? 0);
-			}
-		}
-	}
+			tableRow[j] =
+				leftNorm === rightNorm
+					? (prevRow[j - 1] ?? 0) + 1
+					: Math.max(prevRow[j] ?? 0, tableRow[j - 1] ?? 0);
+		});
+	});
 
 	return table;
 };
@@ -211,11 +201,14 @@ const backtrackDiff = (
 	table: readonly (readonly number[])[],
 	options: DiffOptions
 ): readonly DiffItem[] => {
+	// Walk backward through the LCS table. The traversal state (i, j) is
+	// expressed as a const cursor object updated via Object.assign so neither
+	// the binding nor the bound identifier needs `let`.
 	const result: DiffItem[] = [];
-	let i = left.length;
-	let j = right.length;
+	const cursor: { i: number; j: number } = { i: left.length, j: right.length };
 
-	while (i > 0 || j > 0) {
+	while (cursor.i > 0 || cursor.j > 0) {
+		const { i, j } = cursor;
 		if (i > 0 && j > 0) {
 			const leftItem = left[i - 1] ?? '';
 			const rightItem = right[j - 1] ?? '';
@@ -229,8 +222,7 @@ const backtrackDiff = (
 					rightIndex: j - 1,
 					value: rightItem,
 				});
-				i--;
-				j--;
+				Object.assign(cursor, { i: i - 1, j: j - 1 });
 			} else if (getTableValue(table, i - 1, j) >= getTableValue(table, i, j - 1)) {
 				result.unshift({
 					type: 'delete',
@@ -238,7 +230,7 @@ const backtrackDiff = (
 					rightIndex: null,
 					value: leftItem,
 				});
-				i--;
+				cursor.i = i - 1;
 			} else {
 				result.unshift({
 					type: 'insert',
@@ -246,7 +238,7 @@ const backtrackDiff = (
 					rightIndex: j - 1,
 					value: rightItem,
 				});
-				j--;
+				cursor.j = j - 1;
 			}
 		} else if (i > 0) {
 			result.unshift({
@@ -255,7 +247,7 @@ const backtrackDiff = (
 				rightIndex: null,
 				value: left[i - 1] ?? '',
 			});
-			i--;
+			cursor.i = i - 1;
 		} else {
 			result.unshift({
 				type: 'insert',
@@ -263,7 +255,7 @@ const backtrackDiff = (
 				rightIndex: j - 1,
 				value: right[j - 1] ?? '',
 			});
-			j--;
+			cursor.j = j - 1;
 		}
 	}
 
@@ -293,21 +285,23 @@ const buildCharLcsTable = (
 	const n = rightChars.length;
 	const table: number[][] = Array.from({ length: m + 1 }, () => Array<number>(n + 1).fill(0));
 
-	for (let i = 1; i <= m; i++) {
-		for (let j = 1; j <= n; j++) {
+	const rowIndices = Array.from({ length: m }, (_, k) => k + 1);
+	const colIndices = Array.from({ length: n }, (_, k) => k + 1);
+	rowIndices.forEach((i) => {
+		colIndices.forEach((j) => {
 			const leftChar = normalizeChar(getChar(leftChars, i - 1), ignoreCase);
 			const rightChar = normalizeChar(getChar(rightChars, j - 1), ignoreCase);
 
 			const tableRow = table[i];
 			const prevRow = table[i - 1];
-			if (!tableRow || !prevRow) continue;
+			if (!tableRow || !prevRow) return;
 
 			tableRow[j] =
 				leftChar === rightChar
 					? (prevRow[j - 1] ?? 0) + 1
 					: Math.max(prevRow[j] ?? 0, tableRow[j - 1] ?? 0);
-		}
-	}
+		});
+	});
 	return table;
 };
 
@@ -321,26 +315,25 @@ const backtrackCharDiff = (
 	ignoreCase: boolean
 ): DiffSegment[] => {
 	const segments: DiffSegment[] = [];
-	let i = leftChars.length;
-	let j = rightChars.length;
+	const cursor: { i: number; j: number } = { i: leftChars.length, j: rightChars.length };
 
-	while (i > 0 || j > 0) {
+	while (cursor.i > 0 || cursor.j > 0) {
+		const { i, j } = cursor;
 		const lc = getChar(leftChars, i - 1);
 		const rc = getChar(rightChars, j - 1);
 
 		if (i > 0 && j > 0 && normalizeChar(lc, ignoreCase) === normalizeChar(rc, ignoreCase)) {
 			segments.unshift({ type: 'equal', value: rc });
-			i--;
-			j--;
+			Object.assign(cursor, { i: i - 1, j: j - 1 });
 		} else if (
 			i > 0 &&
 			(j === 0 || getTableValue(table, i - 1, j) >= getTableValue(table, i, j - 1))
 		) {
 			segments.unshift({ type: 'delete', value: lc });
-			i--;
+			cursor.i = i - 1;
 		} else if (j > 0) {
 			segments.unshift({ type: 'insert', value: rc });
-			j--;
+			cursor.j = j - 1;
 		}
 	}
 	return segments;
@@ -387,70 +380,99 @@ const buildDiffResult = (
 	_right: readonly string[],
 	_options: DiffOptions
 ): DiffResult => {
-	const leftLines: DiffLine[] = [];
-	const rightLines: DiffLine[] = [];
+	// Fold the diff items into the final result. Counter state (line numbers
+	// and aggregate stats) lives in a single const accumulator instead of
+	// loose let bindings, keeping the fold purely const-based.
+	interface BuildState {
+		leftLines: DiffLine[];
+		rightLines: DiffLine[];
+		leftLineNum: number;
+		rightLineNum: number;
+		addedLines: number;
+		removedLines: number;
+		unchangedLines: number;
+		addedChars: number;
+		removedChars: number;
+	}
 
-	let leftLineNum = 1;
-	let rightLineNum = 1;
-	let addedLines = 0;
-	let removedLines = 0;
-	let unchangedLines = 0;
-	let addedChars = 0;
-	let removedChars = 0;
+	const initial: BuildState = {
+		leftLines: [],
+		rightLines: [],
+		leftLineNum: 1,
+		rightLineNum: 1,
+		addedLines: 0,
+		removedLines: 0,
+		unchangedLines: 0,
+		addedChars: 0,
+		removedChars: 0,
+	};
 
-	items.forEach((item) => {
+	const final = items.reduce<BuildState>((state, item) => {
 		if (item.type === 'equal') {
 			const leftContent = item.leftIndex !== null ? (left[item.leftIndex] ?? '') : '';
-			leftLines.push({
-				lineNumber: leftLineNum++,
+			state.leftLines.push({
+				lineNumber: state.leftLineNum,
 				content: leftContent,
 				type: 'equal',
 			});
-			rightLines.push({
-				lineNumber: rightLineNum++,
+			state.rightLines.push({
+				lineNumber: state.rightLineNum,
 				content: item.value,
 				type: 'equal',
 			});
-			unchangedLines++;
-		} else if (item.type === 'delete') {
-			leftLines.push({
-				lineNumber: leftLineNum++,
+			return {
+				...state,
+				leftLineNum: state.leftLineNum + 1,
+				rightLineNum: state.rightLineNum + 1,
+				unchangedLines: state.unchangedLines + 1,
+			};
+		}
+		if (item.type === 'delete') {
+			state.leftLines.push({
+				lineNumber: state.leftLineNum,
 				content: item.value,
 				type: 'delete',
 			});
-			rightLines.push({
+			state.rightLines.push({
 				lineNumber: null,
 				content: '',
 				type: 'equal',
 			});
-			removedLines++;
-			removedChars += item.value.length;
-		} else {
-			leftLines.push({
-				lineNumber: null,
-				content: '',
-				type: 'equal',
-			});
-			rightLines.push({
-				lineNumber: rightLineNum++,
-				content: item.value,
-				type: 'insert',
-			});
-			addedLines++;
-			addedChars += item.value.length;
+			return {
+				...state,
+				leftLineNum: state.leftLineNum + 1,
+				removedLines: state.removedLines + 1,
+				removedChars: state.removedChars + item.value.length,
+			};
 		}
-	});
+		state.leftLines.push({
+			lineNumber: null,
+			content: '',
+			type: 'equal',
+		});
+		state.rightLines.push({
+			lineNumber: state.rightLineNum,
+			content: item.value,
+			type: 'insert',
+		});
+		return {
+			...state,
+			rightLineNum: state.rightLineNum + 1,
+			addedLines: state.addedLines + 1,
+			addedChars: state.addedChars + item.value.length,
+		};
+	}, initial);
 
 	return {
-		leftLines,
-		rightLines,
+		leftLines: final.leftLines,
+		rightLines: final.rightLines,
 		stats: {
 			totalLines: Math.max(left.length, _right.length),
-			addedLines,
-			removedLines,
-			unchangedLines,
-			addedChars,
-			removedChars,
+			addedLines: final.addedLines,
+			removedLines: final.removedLines,
+			unchangedLines: final.unchangedLines,
+			addedChars: final.addedChars,
+			removedChars: final.removedChars,
 		},
 	};
 };
@@ -646,30 +668,29 @@ export const computeEnhancedDiff = (
 		})
 		.filter((change): change is RawChange => change !== null);
 
-	// Split rawChanges into segments separated by 'equal' lines
-	// Then pair deletes and inserts within each segment
-	const segments: RawChange[][] = [];
-	let currentSegment: RawChange[] = [];
-
-	rawChanges.forEach((change) => {
-		if (change.type === 'equal') {
-			if (currentSegment.length > 0) {
-				segments.push(currentSegment);
-				currentSegment = [];
+	// Split rawChanges into segments separated by 'equal' lines.
+	// Each equal line becomes its own singleton segment; runs of inserts/deletes
+	// between equal lines accumulate into shared segments for later pairing.
+	const { segments, currentSegment } = rawChanges.reduce<{
+		segments: RawChange[][];
+		currentSegment: RawChange[];
+	}>(
+		(acc, change) => {
+			if (change.type === 'equal') {
+				const flushed =
+					acc.currentSegment.length > 0 ? [...acc.segments, acc.currentSegment] : acc.segments;
+				return { segments: [...flushed, [change]], currentSegment: [] };
 			}
-			segments.push([change]);
-		} else {
-			currentSegment.push(change);
-		}
-	});
-	if (currentSegment.length > 0) {
-		segments.push(currentSegment);
-	}
+			return { segments: acc.segments, currentSegment: [...acc.currentSegment, change] };
+		},
+		{ segments: [], currentSegment: [] }
+	);
+	const finalSegments = currentSegment.length > 0 ? [...segments, currentSegment] : segments;
 
 	// Process each segment
 	const enhancedLines: EnhancedDiffLine[] = [];
 
-	segments.forEach((segment) => {
+	finalSegments.forEach((segment) => {
 		// If segment is just an equal line, add it directly
 		if (segment.length === 1 && segment[0]?.type === 'equal') {
 			const change = segment[0];

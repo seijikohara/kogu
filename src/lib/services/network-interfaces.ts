@@ -118,20 +118,20 @@ export const sortInterfaces = (
 	interfaces: readonly DetailedNetworkInterface[],
 	field: SortField
 ): DetailedNetworkInterface[] => {
-	const sorted = [...interfaces];
+	// toSorted returns a fresh array; no source-array mutation regardless of caller.
 	switch (field) {
 		case 'name':
-			return sorted.sort((a, b) => a.name.localeCompare(b.name));
+			return interfaces.toSorted((a, b) => a.name.localeCompare(b.name));
 		case 'status':
-			return sorted.sort((a, b) => {
+			return interfaces.toSorted((a, b) => {
 				if (a.isDefault !== b.isDefault) return a.isDefault ? -1 : 1;
 				if (a.isUp !== b.isUp) return a.isUp ? -1 : 1;
 				return a.name.localeCompare(b.name);
 			});
 		case 'type':
-			return sorted.sort((a, b) => a.interfaceType.localeCompare(b.interfaceType));
+			return interfaces.toSorted((a, b) => a.interfaceType.localeCompare(b.interfaceType));
 		case 'index':
-			return sorted.sort((a, b) => a.index - b.index);
+			return interfaces.toSorted((a, b) => a.index - b.index);
 	}
 };
 
