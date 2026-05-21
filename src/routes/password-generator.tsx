@@ -1,5 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Lock, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -16,6 +16,7 @@ import { ToolShell } from '@/lib/components/shell';
 import { EmbeddedEmptyState, LiveStatusRegion, StatItem } from '@/lib/components/status';
 import { Card, CardContent } from '@/lib/components/ui/card';
 import { createToolOptionsStore } from '@/lib/stores';
+import { useDocumentTitle } from '@/lib/hooks';
 import {
 	buildCharacterPool,
 	calculateEntropy,
@@ -53,9 +54,7 @@ function PasswordGeneratorPage() {
 	const [showOptions, setShowOptions] = useState(true);
 	const [flashCounter, setFlashCounter] = useState(0);
 
-	useEffect(() => {
-		document.title = 'Password Generator — Kogu';
-	}, []);
+	useDocumentTitle('Password Generator');
 
 	const pool = buildCharacterPool(options);
 	const entropy = calculateEntropy(options.length, pool.length);

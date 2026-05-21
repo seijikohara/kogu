@@ -1,3 +1,4 @@
+export { useDocumentTitle } from './use-document-title';
 export {
 	useFormatterPage,
 	FORMATTER_TABS,

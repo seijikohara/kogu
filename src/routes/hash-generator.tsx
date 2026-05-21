@@ -1,10 +1,11 @@
 import { createFileRoute } from '@tanstack/react-router';
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Hash, ShieldAlert, ShieldCheck } from 'lucide-react';
 
 import { CopyButton } from '@/lib/components/action';
 import { CodeEditor } from '@/lib/components/editor';
 import { FormInfo, FormSection } from '@/lib/components/form';
+import { useDocumentTitle } from '@/lib/hooks';
 import { SectionHeader } from '@/lib/components/layout';
 import { ToolShell } from '@/lib/components/shell';
 import { EmbeddedEmptyState, LiveStatusRegion, StatItem } from '@/lib/components/status';
@@ -25,9 +26,7 @@ function HashGeneratorPage() {
 	const [textInput, setTextInput] = useState('');
 	const [showOptions, setShowOptions] = useState(true);
 
-	useEffect(() => {
-		document.title = 'Hash Generator — Kogu';
-	}, []);
+	useDocumentTitle('Hash Generator');
 
 	const textHashes = useMemo(() => {
 		if (!textInput.trim()) return [];

@@ -43,6 +43,7 @@ import {
 	sortInterfaces,
 } from '@/lib/services/network-interfaces';
 import { cn } from '@/lib/utils';
+import { useDocumentTitle } from '@/lib/hooks';
 
 const getInterfaceTypeIcon = (type: string) => {
 	if (type === 'WiFi') return Wifi;
@@ -124,9 +125,7 @@ function NetworkInterfacesPage() {
 	const [showLoopback, setShowLoopback] = useState(false);
 	const [sortField, setSortField] = useState<SortField>('status');
 
-	useEffect(() => {
-		document.title = 'Network Interfaces — Kogu';
-	}, []);
+	useDocumentTitle('Network Interfaces');
 
 	const fetchInterfaces = useCallback(async () => {
 		setLoading(true);

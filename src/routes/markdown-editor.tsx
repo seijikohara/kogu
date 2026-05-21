@@ -54,6 +54,7 @@ import {
 } from '@/lib/components/ui/dropdown-menu';
 import { ListItemButton } from '@/lib/components/ui/list-item-button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/lib/components/ui/tooltip';
+import { useDocumentTitle } from '@/lib/hooks';
 import {
 	applyFormat,
 	exportAsHtml,
@@ -264,9 +265,7 @@ function MarkdownEditorPage() {
 	activeEditorRef.current = activeEditor;
 	inputRef.current = input;
 
-	useEffect(() => {
-		document.title = 'Markdown Editor - Kogu';
-	}, []);
+	useDocumentTitle('Markdown Editor');
 
 	const stats = useMemo(() => getMarkdownStats(input), [input]);
 	const toc = useMemo(() => generateToc(input), [input]);

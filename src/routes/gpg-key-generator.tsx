@@ -23,6 +23,7 @@ import {
 	StatItem,
 } from '@/lib/components/status';
 import { Card, CardContent, CardHeader, CardTitle } from '@/lib/components/ui/card';
+import { useDocumentTitle } from '@/lib/hooks';
 import {
 	buildGpgUserId,
 	cancelWorkerOperation,
@@ -66,9 +67,7 @@ function GpgKeyGeneratorPage() {
 	const [elapsedMs, setElapsedMs] = useState(0);
 	const timerIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-	useEffect(() => {
-		document.title = 'GPG Key Generator — Kogu';
-	}, []);
+	useDocumentTitle('GPG Key Generator');
 
 	useEffect(() => {
 		checkCliAvailability()

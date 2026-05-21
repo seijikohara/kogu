@@ -1,5 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router';
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import {
 	Code2,
 	FileCode,
@@ -34,6 +34,7 @@ import {
 } from '@/lib/components/ui/card';
 import { useActiveTab, useTabStore } from '@/lib/stores';
 import { cn } from '@/lib/utils';
+import { useDocumentTitle } from '@/lib/hooks';
 import {
 	AUTH_SCHEMES,
 	BODY_MODES,
@@ -105,9 +106,7 @@ function CurlBuilderPage() {
 	const [parseInput, setParseInput] = useState<string>('');
 	const [codeLang, setCodeLang] = useState<Language>('fetch');
 
-	useEffect(() => {
-		document.title = 'cURL Builder — Kogu';
-	}, []);
+	useDocumentTitle('cURL Builder');
 
 	const headers = useMemo(() => parseHeaderLines(headersText), [headersText]);
 

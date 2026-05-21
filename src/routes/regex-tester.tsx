@@ -1,5 +1,4 @@
 import { createFileRoute } from '@tanstack/react-router';
-import { useEffect } from 'react';
 import { Eye, FlaskConical, GitBranch, Info, Search, Sparkles, Workflow } from 'lucide-react';
 
 import { CopyButton } from '@/lib/components/action';
@@ -40,6 +39,7 @@ import {
 	SAMPLE_TEST_TEXT,
 } from '@/lib/services/regex';
 import { type VizNode, type VizNodeKind, visualizeRegex } from '@/lib/services/regex-viz';
+import { useDocumentTitle } from '@/lib/hooks';
 
 interface Segment {
 	readonly text: string;
@@ -528,9 +528,7 @@ function RegexTesterPage() {
 	const [replacement, setReplacement] = useState('');
 	const [showOptions, setShowOptions] = useState(true);
 
-	useEffect(() => {
-		document.title = 'Regex Tester — Kogu';
-	}, []);
+	useDocumentTitle('Regex Tester');
 
 	const loadSample = () => {
 		setPattern(SAMPLE_PATTERN);

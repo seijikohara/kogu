@@ -1,5 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { AlertTriangle, CheckCircle, Clock, Info, KeyRound } from 'lucide-react';
 
 import { CopyButton } from '@/lib/components/action';
@@ -10,6 +10,7 @@ import { ToolShell } from '@/lib/components/shell';
 import { EmptyState, LiveStatusRegion } from '@/lib/components/status';
 import { Card, CardContent, CardHeader, CardTitle } from '@/lib/components/ui/card';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/lib/components/ui/tooltip';
+import { useDocumentTitle } from '@/lib/hooks';
 import {
 	decodeJwt,
 	JWT_STANDARD_CLAIMS,
@@ -64,9 +65,7 @@ function JwtDecoderPage() {
 	const [input, setInput] = useState('');
 	const [showOptions, setShowOptions] = useState(true);
 
-	useEffect(() => {
-		document.title = 'JWT Decoder — Kogu';
-	}, []);
+	useDocumentTitle('JWT Decoder');
 
 	const { decoded, error } = ((): { decoded: JwtDecoded | null; error: string } => {
 		if (!input.trim()) return { decoded: null, error: '' };

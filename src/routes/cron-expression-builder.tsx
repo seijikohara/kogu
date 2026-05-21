@@ -1,5 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Calendar, Check, Clock, FlaskConical, Pencil, Search, Sparkles, X } from 'lucide-react';
 
 import { CopyButton } from '@/lib/components/action';
@@ -17,6 +17,7 @@ import {
 } from '@/lib/components/ui/card';
 import { useActiveTab, useTabStore } from '@/lib/stores';
 import { cn } from '@/lib/utils';
+import { useDocumentTitle } from '@/lib/hooks';
 import {
 	buildExpression,
 	CRON_FIELDS,
@@ -61,9 +62,7 @@ function CronExpressionBuilderPage() {
 	const [buildParts, setBuildParts] = useState<CronParts>({ ...DEFAULT_CRON_PARTS });
 	const [parseInput, setParseInput] = useState<string>('');
 
-	useEffect(() => {
-		document.title = 'Cron Expression Builder — Kogu';
-	}, []);
+	useDocumentTitle('Cron Expression Builder');
 
 	const buildExpr = buildExpression(buildParts);
 	const buildFieldValidations = Object.fromEntries(

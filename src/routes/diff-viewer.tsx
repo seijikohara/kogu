@@ -1,5 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Equal, GitCompare, Layers, Minus, Plus, SplitSquareHorizontal } from 'lucide-react';
 import { readText } from '@tauri-apps/plugin-clipboard-manager';
 
@@ -14,6 +14,7 @@ import {
 } from '@/lib/components/form';
 import { ToolShell } from '@/lib/components/shell';
 import { EmptyState } from '@/lib/components/status';
+import { useDocumentTitle } from '@/lib/hooks';
 import {
 	areTextsIdentical,
 	computeEnhancedDiff,
@@ -61,9 +62,7 @@ function DiffViewerPage() {
 	const [contextLines, setContextLines] = useState(3);
 	const [showInlineDiff, setShowInlineDiff] = useState(true);
 
-	useEffect(() => {
-		document.title = 'Diff Viewer — Kogu';
-	}, []);
+	useDocumentTitle('Diff Viewer');
 
 	const diffOptions: Partial<DiffOptions> = { ignoreWhitespace, ignoreCase, trimLines };
 

@@ -1,5 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { CaseSensitive } from 'lucide-react';
 import { readText } from '@tauri-apps/plugin-clipboard-manager';
 
@@ -16,6 +16,7 @@ import { SectionHeader } from '@/lib/components/layout';
 import { ToolShell } from '@/lib/components/shell';
 import { EmbeddedEmptyState, StatItem } from '@/lib/components/status';
 import { Card, CardContent } from '@/lib/components/ui/card';
+import { useDocumentTitle } from '@/lib/hooks';
 import {
 	CASE_DEFINITIONS,
 	convertToAllCases,
@@ -38,9 +39,7 @@ function StringCaseConverterPage() {
 	const [removeEmptyLines, setRemoveEmptyLines] = useState(false);
 	const [reverseLines, setReverseLines] = useState(false);
 
-	useEffect(() => {
-		document.title = 'String Case Converter — Kogu';
-	}, []);
+	useDocumentTitle('String Case Converter');
 
 	const processedInput = (() => {
 		if (!input.trim()) return '';

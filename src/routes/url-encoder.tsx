@@ -1,5 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { ArrowRightLeft, BookOpen, ExternalLink, Hammer, Link2, Plus, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -23,6 +23,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/lib/components/ui/ca
 import { Input } from '@/lib/components/ui/input';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/lib/components/ui/tooltip';
 import { useActiveTab, useTabStore } from '@/lib/stores';
+import { useDocumentTitle } from '@/lib/hooks';
 import {
 	buildUrl,
 	decodeUrlWithOptions,
@@ -99,9 +100,7 @@ function UrlEncoderPage() {
 		{ key: 'name', value: 'test' },
 	]);
 
-	useEffect(() => {
-		document.title = 'URL Encoder — Kogu';
-	}, []);
+	useDocumentTitle('URL Encoder');
 
 	const encodeOptions: Partial<UrlEncodeOptions> = {
 		mode: encodeMode,
