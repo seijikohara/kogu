@@ -65,8 +65,11 @@ export function FormMode<T extends string>({
 				onValueChange={handleChange}
 				aria-labelledby={label ? `${uid}-label` : undefined}
 				className={cn(
-					'w-full rounded-lg bg-muted p-1 ring-1 ring-border',
-					layout === 'horizontal' ? `grid ${gridColsClass} gap-1` : 'flex flex-col gap-1'
+					// Segmented-control container: 1 outer rounded surface in bg-muted; inner
+					// items pack tightly (gap-0.5) so groups of 3+ read as a single segmented
+					// switch rather than separate buttons. Matches shadcn TabsList rhythm.
+					'w-full rounded-lg bg-muted p-0.5 ring-1 ring-border',
+					layout === 'horizontal' ? `grid ${gridColsClass} gap-0.5` : 'flex flex-col gap-0.5'
 				)}
 			>
 				{options.map((option) => {
@@ -81,10 +84,12 @@ export function FormMode<T extends string>({
 								'h-7 w-full min-w-0 rounded-md px-2 text-xs font-medium transition-all',
 								'flex items-center gap-1.5',
 								layout === 'horizontal' ? 'justify-center' : 'justify-start',
-								'data-[state=on]:bg-background data-[state=on]:shadow-sm',
-								'data-[state=on]:ring-1 data-[state=on]:ring-border/60',
-								'data-[state=off]:bg-background/50 data-[state=off]:text-muted-foreground',
-								'data-[state=off]:hover:bg-background/80 data-[state=off]:hover:text-foreground'
+								// Active segment: floats above the container with bg-background + shadow.
+								'data-[state=on]:bg-background data-[state=on]:text-foreground data-[state=on]:shadow-sm',
+								// Inactive segments: transparent so the bg-muted container reads as a
+								// single surface; only the active segment visually pops out.
+								'data-[state=off]:bg-transparent data-[state=off]:text-muted-foreground',
+								'data-[state=off]:hover:bg-background/60 data-[state=off]:hover:text-foreground'
 							)}
 						>
 							{Icon ? <Icon className="h-3.5 w-3.5 shrink-0" /> : null}
