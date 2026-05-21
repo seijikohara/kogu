@@ -366,7 +366,12 @@ function BcryptGeneratorPage() {
 					title={activeTab === 'generate' ? 'Generated Hash' : 'Verification Result'}
 				/>
 
-				<div className="flex-1 overflow-auto p-4">
+				<div
+					className="flex-1 overflow-auto p-4"
+					role="status"
+					aria-live="polite"
+					aria-atomic="false"
+				>
 					{activeTab === 'generate' ? (
 						hashResult ? (
 							<div key={flashCounter} className="animate-flash-success space-y-4 rounded-md">

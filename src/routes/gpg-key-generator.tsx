@@ -343,7 +343,12 @@ function GpgKeyGeneratorPage() {
 				/>
 				<SectionHeader title="Generated Keys" />
 
-				<div className="flex-1 overflow-auto p-4">
+				<div
+					className="flex-1 overflow-auto p-4"
+					role="status"
+					aria-live="polite"
+					aria-atomic="false"
+				>
 					{keyResult ? (
 						<div key={flashCounter} className="animate-flash-success space-y-4 rounded-md">
 							{showKeyInfo ? (

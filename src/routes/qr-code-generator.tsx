@@ -705,7 +705,12 @@ function QrCodeGeneratorPage() {
 					}
 				/>
 
-				<div className="flex-1 overflow-auto p-6">
+				<div
+					className="flex-1 overflow-auto p-6"
+					role="status"
+					aria-live="polite"
+					aria-atomic="false"
+				>
 					<div className="mx-auto flex max-w-3xl flex-col gap-6">
 						<Card density="compact" className="overflow-hidden">
 							<CardContent className="flex items-center justify-center p-8">

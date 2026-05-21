@@ -258,7 +258,12 @@ function UuidGeneratorPage() {
 						) : null
 					}
 				/>
-				<div className="flex-1 overflow-auto p-4">
+				<div
+					className="flex-1 overflow-auto p-4"
+					role="status"
+					aria-live="polite"
+					aria-atomic="false"
+				>
 					{results.length > 0 ? (
 						<div key={flashCounter} className="animate-flash-success space-y-2 rounded-md">
 							{results.map((uuid) => (
