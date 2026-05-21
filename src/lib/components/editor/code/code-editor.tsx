@@ -182,7 +182,7 @@ function ViewToggle({ viewMode, canShowTree, editorMode, onChange }: ViewToggleP
 				value="code"
 				aria-label="Code View"
 				title="Code View"
-				className="h-6 w-6 rounded p-0 data-[state=on]:bg-background data-[state=on]:shadow-sm"
+				className="h-6 w-6 rounded p-0 aria-pressed:bg-background aria-pressed:shadow-sm"
 			>
 				<CodeIcon className="h-3.5 w-3.5" />
 			</ToggleGroupItem>
@@ -191,7 +191,7 @@ function ViewToggle({ viewMode, canShowTree, editorMode, onChange }: ViewToggleP
 				aria-label="Split View"
 				title="Split View"
 				disabled={!canShowTree}
-				className="h-6 w-6 rounded p-0 data-[state=on]:bg-background data-[state=on]:shadow-sm"
+				className="h-6 w-6 rounded p-0 aria-pressed:bg-background aria-pressed:shadow-sm"
 			>
 				<Columns2 className="h-3.5 w-3.5" />
 			</ToggleGroupItem>
@@ -200,7 +200,7 @@ function ViewToggle({ viewMode, canShowTree, editorMode, onChange }: ViewToggleP
 				aria-label="Tree View"
 				title="Tree View"
 				disabled={!canShowTree}
-				className="h-6 w-6 rounded p-0 data-[state=on]:bg-background data-[state=on]:shadow-sm"
+				className="h-6 w-6 rounded p-0 aria-pressed:bg-background aria-pressed:shadow-sm"
 			>
 				<ListTree className="h-3.5 w-3.5" />
 			</ToggleGroupItem>
