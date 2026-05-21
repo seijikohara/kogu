@@ -122,40 +122,47 @@ export function FormatTab({ input, onInputChange, onStatsChange }: FormatTabProp
 				return { output: stringifyJson(processedData, outputFormat, { indent: 0 }), error: '' };
 			}
 
-			let result = stringifyJson(processedData, outputFormat, {
+			const baseResult = stringifyJson(processedData, outputFormat, {
 				indent: formatOptions.indentType === 'tabs' ? '\t' : formatOptions.indentSize,
 				sortKeys: formatOptions.sortKeys,
 				trailingComma: formatOptions.trailingComma,
 				quote: formatOptions.quoteStyle,
 			});
 
-			// Apply additional formatting options.
-			if (formatOptions.escapeUnicode) {
-				result = result.replace(
-					/[\u0080-\uffff]/g,
-					(char) => `\\u${`0000${char.charCodeAt(0).toString(16)}`.slice(-4)}`
-				);
-			}
-			if (formatOptions.arrayBracketSpacing) {
-				result = result.replace(/\[(?!\s*\n)/g, '[ ').replace(/(?<!\n\s*)\]/g, ' ]');
-			}
-			if (formatOptions.objectBracketSpacing) {
-				result = result.replace(/\{(?!\s*\n)/g, '{ ').replace(/(?<!\n\s*)\}/g, ' }');
-			}
-			if (!formatOptions.colonSpacing) {
-				result = result.replace(/:\s+/g, ':');
-			}
-			if (formatOptions.compactArrays && (formatOptions.indentSize ?? 2) > 0) {
-				result = result.replace(
-					/\[\s*\n(\s*)((?:"[^"]*"|'[^']*'|[\d.eE+-]+|true|false|null)(?:,\s*\n\s*(?:"[^"]*"|'[^']*'|[\d.eE+-]+|true|false|null))*)\s*\n\s*\]/g,
-					(_, _indent, content: string) => {
-						const items = content.split(/,\s*\n\s*/);
-						return `[${items.join(', ')}]`;
-					}
-				);
-			}
+			// Apply additional formatting options as a const pipeline so each
+			// rule reads from / writes to a fresh string.
+			type Transform = (input: string) => string;
+			const transforms: readonly Transform[] = [
+				formatOptions.escapeUnicode
+					? (input) =>
+							input.replace(
+								/[\u0080-\uffff]/g,
+								(char) => `\\u${`0000${char.charCodeAt(0).toString(16)}`.slice(-4)}`
+							)
+					: (input) => input,
+				formatOptions.arrayBracketSpacing
+					? (input) => input.replace(/\[(?!\s*\n)/g, '[ ').replace(/(?<!\n\s*)\]/g, ' ]')
+					: (input) => input,
+				formatOptions.objectBracketSpacing
+					? (input) => input.replace(/\{(?!\s*\n)/g, '{ ').replace(/(?<!\n\s*)\}/g, ' }')
+					: (input) => input,
+				formatOptions.colonSpacing ? (input) => input : (input) => input.replace(/:\s+/g, ':'),
+				formatOptions.compactArrays && (formatOptions.indentSize ?? 2) > 0
+					? (input) =>
+							input.replace(
+								/\[\s*\n(\s*)((?:"[^"]*"|'[^']*'|[\d.eE+-]+|true|false|null)(?:,\s*\n\s*(?:"[^"]*"|'[^']*'|[\d.eE+-]+|true|false|null))*)\s*\n\s*\]/g,
+								(_, _indent, content: string) => {
+									const items = content.split(/,\s*\n\s*/);
+									return `[${items.join(', ')}]`;
+								}
+							)
+					: (input) => input,
+			];
 
-			return { output: result, error: '' };
+			return {
+				output: transforms.reduce((acc, transform) => transform(acc), baseResult),
+				error: '',
+			};
 		} catch (e) {
 			return { output: '', error: e instanceof Error ? e.message : 'Invalid JSON' };
 		}

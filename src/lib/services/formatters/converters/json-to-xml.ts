@@ -39,12 +39,12 @@ const convertObjectToXml = (
 	const selfCloseEnd = options.whiteSpaceAtEndOfSelfclosingTag ? ' />' : '/>';
 
 	const entries = options.sortKeys
-		? Object.entries(data).sort(([a], [b]) => a.localeCompare(b))
+		? Object.entries(data).toSorted(([a], [b]) => a.localeCompare(b))
 		: Object.entries(data);
 
 	const attributeEntries = entries.filter(([key]) => key.startsWith(attributePrefix));
 	const sortedAttrEntries = options.sortAttributes
-		? [...attributeEntries].sort(([a], [b]) => a.localeCompare(b))
+		? attributeEntries.toSorted(([a], [b]) => a.localeCompare(b))
 		: attributeEntries;
 
 	const attributes = sortedAttrEntries

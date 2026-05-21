@@ -490,7 +490,7 @@ function NetworkScannerPage() {
 
 	const autoSelectFirstHost = useCallback((hosts: readonly string[]) => {
 		if (hasAutoSelectedRef.current || hosts.length === 0) return;
-		const firstIp = [...hosts].sort()[0];
+		const firstIp = hosts.toSorted()[0];
 		if (!firstIp) return;
 		setSelectedHostId((prev) => {
 			if (prev !== null) return prev;
@@ -622,23 +622,22 @@ function NetworkScannerPage() {
 		e.preventDefault();
 		const currentIdx = unifiedHosts.findIndex((h) => h.id === selectedHostId);
 
-		let nextIdx: number;
-		switch (e.key) {
-			case 'ArrowDown':
-				nextIdx = currentIdx < 0 ? 0 : Math.min(currentIdx + 1, unifiedHosts.length - 1);
-				break;
-			case 'ArrowUp':
-				nextIdx = currentIdx < 0 ? 0 : Math.max(currentIdx - 1, 0);
-				break;
-			case 'Home':
-				nextIdx = 0;
-				break;
-			case 'End':
-				nextIdx = unifiedHosts.length - 1;
-				break;
-			default:
-				return;
-		}
+		// Resolve target index via IIFE switch; null short-circuits non-nav keys.
+		const nextIdx = ((): number | null => {
+			switch (e.key) {
+				case 'ArrowDown':
+					return currentIdx < 0 ? 0 : Math.min(currentIdx + 1, unifiedHosts.length - 1);
+				case 'ArrowUp':
+					return currentIdx < 0 ? 0 : Math.max(currentIdx - 1, 0);
+				case 'Home':
+					return 0;
+				case 'End':
+					return unifiedHosts.length - 1;
+				default:
+					return null;
+			}
+		})();
+		if (nextIdx === null) return;
 		const next = unifiedHosts[nextIdx];
 		if (next) {
 			selectHost(next.id);

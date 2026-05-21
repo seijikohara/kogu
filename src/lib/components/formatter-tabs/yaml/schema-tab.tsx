@@ -97,13 +97,15 @@ export function SchemaTab({ input, onInputChange, onStatsChange }: SchemaTabProp
 		try {
 			const data = yaml.parse(input);
 
-			// Parse schema (accepts YAML or JSON).
-			let schema: unknown;
-			try {
-				schema = JSON.parse(schemaDefinition);
-			} catch {
-				schema = yaml.parse(schemaDefinition);
-			}
+			// Parse schema (accepts YAML or JSON). Use a try-block IIFE so the
+			// resolved value can stay const regardless of which parser succeeds.
+			const schema = ((): unknown => {
+				try {
+					return JSON.parse(schemaDefinition);
+				} catch {
+					return yaml.parse(schemaDefinition);
+				}
+			})();
 
 			const ajv = new Ajv({
 				allErrors: schemaAllErrors,

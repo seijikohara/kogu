@@ -7,10 +7,12 @@
 // ============================================================================
 
 const iterateXPathResult = function* (result: XPathResult): Generator<Node> {
-	let node = result.iterateNext();
-	while (node !== null) {
-		yield node;
-		node = result.iterateNext();
+	// Pull nodes lazily from the XPathResult iterator until it returns null.
+	// The cursor lives in a const holder so the generator avoids `let`.
+	const cursor: { node: Node | null } = { node: result.iterateNext() };
+	while (cursor.node !== null) {
+		yield cursor.node;
+		cursor.node = result.iterateNext();
 	}
 };
 

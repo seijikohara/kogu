@@ -95,31 +95,30 @@ export const encodeToBase64 = (
 	const bytes = new TextEncoder().encode(text);
 	const binary = Array.from(bytes, (byte) => String.fromCharCode(byte)).join('');
 
-	// Standard Base64 encoding
-	let result = globalThis.btoa(binary);
+	// Standard Base64 encoding -> apply optional transforms as a const
+	// pipeline so each step is a referentially-transparent string -> string.
+	type Transform = (input: string) => string;
+	const transforms: readonly Transform[] = [
+		// Convert to URL-safe variant if needed
+		opts.variant === 'url-safe'
+			? (input) => input.replace(/\+/g, '-').replace(/\//g, '_')
+			: (input) => input,
+		// Remove padding if not wanted
+		opts.padding ? (input) => input : (input) => input.replace(/=+$/, ''),
+		// Add line breaks if specified
+		opts.lineBreak === 'none'
+			? (input) => input
+			: (input) => {
+					const lineLength = opts.lineBreak === '64' ? 64 : 76;
+					return input.match(new RegExp(`.{1,${lineLength}}`, 'g'))?.join('\n') ?? input;
+				},
+		// Wrap as Data URL if requested
+		opts.dataUrl
+			? (input) => `data:${opts.mimeType};base64,${input.replace(/\n/g, '')}`
+			: (input) => input,
+	];
 
-	// Convert to URL-safe variant if needed
-	if (opts.variant === 'url-safe') {
-		result = result.replace(/\+/g, '-').replace(/\//g, '_');
-	}
-
-	// Remove padding if not wanted
-	if (!opts.padding) {
-		result = result.replace(/=+$/, '');
-	}
-
-	// Add line breaks if specified
-	if (opts.lineBreak !== 'none') {
-		const lineLength = opts.lineBreak === '64' ? 64 : 76;
-		result = result.match(new RegExp(`.{1,${lineLength}}`, 'g'))?.join('\n') ?? result;
-	}
-
-	// Wrap as Data URL if requested
-	if (opts.dataUrl) {
-		result = `data:${opts.mimeType};base64,${result.replace(/\n/g, '')}`;
-	}
-
-	return result;
+	return transforms.reduce((acc, transform) => transform(acc), globalThis.btoa(binary));
 };
 
 /**
@@ -131,40 +130,34 @@ export const decodeFromBase64 = (
 ): string => {
 	const opts = { ...defaultBase64DecodeOptions, ...options };
 
-	let input = base64;
+	// Strip Data URL prefix if present.
+	const stripDataUrl = (value: string): string => {
+		if (!value.startsWith('data:')) return value;
+		const commaIndex = value.indexOf(',');
+		return commaIndex === -1 ? value : value.slice(commaIndex + 1);
+	};
 
-	// Handle Data URL
-	if (input.startsWith('data:')) {
-		const commaIndex = input.indexOf(',');
-		if (commaIndex !== -1) {
-			input = input.slice(commaIndex + 1);
-		}
-	}
-
-	// Remove whitespace if option is set
-	if (opts.ignoreWhitespace) {
-		input = input.replace(/\s/g, '');
-	}
-
-	// Auto-detect and convert URL-safe variant
-	if (opts.autoDetectVariant) {
-		if (input.includes('-') || input.includes('_')) {
-			input = input.replace(/-/g, '+').replace(/_/g, '/');
-		}
-	}
-
-	// Remove invalid characters if option is set
-	if (opts.ignoreInvalidChars) {
-		input = input.replace(/[^A-Za-z0-9+/=]/g, '');
-	}
+	const cleaned = ((): string => {
+		type Transform = (value: string) => string;
+		const steps: readonly Transform[] = [
+			stripDataUrl,
+			opts.ignoreWhitespace ? (value) => value.replace(/\s/g, '') : (value) => value,
+			opts.autoDetectVariant
+				? (value) =>
+						value.includes('-') || value.includes('_')
+							? value.replace(/-/g, '+').replace(/_/g, '/')
+							: value
+				: (value) => value,
+			opts.ignoreInvalidChars ? (value) => value.replace(/[^A-Za-z0-9+/=]/g, '') : (value) => value,
+		];
+		return steps.reduce((acc, step) => step(acc), base64);
+	})();
 
 	// Add padding if missing
-	const padding = input.length % 4;
-	if (padding) {
-		input += '='.repeat(4 - padding);
-	}
+	const padding = cleaned.length % 4;
+	const padded = padding ? cleaned + '='.repeat(4 - padding) : cleaned;
 
-	const binary = globalThis.atob(input);
+	const binary = globalThis.atob(padded);
 	const bytes = Uint8Array.from(binary, (char) => char.charCodeAt(0));
 	return new TextDecoder().decode(bytes);
 };
@@ -181,20 +174,14 @@ export const validateBase64 = (
 	}
 
 	const opts = { ...defaultBase64DecodeOptions, ...options };
-	let cleanInput = input;
 
-	// Handle Data URL
-	if (cleanInput.startsWith('data:')) {
-		const commaIndex = cleanInput.indexOf(',');
-		if (commaIndex !== -1) {
-			cleanInput = cleanInput.slice(commaIndex + 1);
-		}
-	}
-
-	// Remove whitespace if option is set
-	if (opts.ignoreWhitespace) {
-		cleanInput = cleanInput.replace(/\s/g, '');
-	}
+	// Strip the Data URL prefix (if any), then optionally drop whitespace.
+	const withoutDataUrl = ((): string => {
+		if (!input.startsWith('data:')) return input;
+		const commaIndex = input.indexOf(',');
+		return commaIndex === -1 ? input : input.slice(commaIndex + 1);
+	})();
+	const cleanInput = opts.ignoreWhitespace ? withoutDataUrl.replace(/\s/g, '') : withoutDataUrl;
 
 	// Check for valid Base64 characters (including URL-safe)
 	const base64Regex = opts.autoDetectVariant
@@ -375,65 +362,54 @@ export const encodeUrlWithOptions = (
 	options: Partial<UrlEncodeOptions> = {}
 ): string => {
 	const opts = { ...defaultUrlEncodeOptions, ...options };
-	let input = text;
 
-	// Handle newlines first
-	switch (opts.newlineHandling) {
-		case 'crlf':
-			input = input.replace(/\r?\n/g, '\r\n');
-			break;
-		case 'lf':
-			input = input.replace(/\r\n/g, '\n');
-			break;
-		case 'remove':
-			input = input.replace(/\r?\n/g, '');
-			break;
-		// 'encode' - leave as-is, will be percent-encoded
-	}
-
-	let result: string;
-
-	switch (opts.mode) {
-		case 'component':
-			result = encodeURIComponent(input);
-			break;
-		case 'uri':
-			result = encodeURI(input);
-			break;
-		case 'form':
-			// application/x-www-form-urlencoded
-			result = encodeURIComponent(input).replace(/%20/g, '+');
-			break;
-		case 'path':
-			// Encode but preserve /
-			result = input
-				.split('/')
-				.map((segment) => encodeURIComponent(segment))
-				.join('/');
-			break;
-		case 'custom':
-			// Custom encoding with preserved characters
-			result = customUrlEncode(input, opts.preserveChars, opts.encodeNonAscii);
-			break;
-		default:
-			result = encodeURIComponent(input);
-	}
-
-	// Apply space encoding preference (only if not form mode which already uses +)
-	if (opts.mode !== 'form') {
-		if (opts.spaceEncoding === 'plus') {
-			result = result.replace(/%20/g, '+');
+	// 1. Apply the newline-handling normalization.
+	const normalized = ((): string => {
+		switch (opts.newlineHandling) {
+			case 'crlf':
+				return text.replace(/\r?\n/g, '\r\n');
+			case 'lf':
+				return text.replace(/\r\n/g, '\n');
+			case 'remove':
+				return text.replace(/\r?\n/g, '');
+			default:
+				// 'encode' - leave as-is, will be percent-encoded
+				return text;
 		}
-	}
+	})();
 
-	// Apply hex case preference
-	if (opts.hexCase === 'lower') {
-		result = result.replace(/%[0-9A-F]{2}/g, (match) => match.toLowerCase());
-	} else {
-		result = result.replace(/%[0-9a-f]{2}/g, (match) => match.toUpperCase());
-	}
+	// 2. Encode per the selected mode.
+	const encoded = ((): string => {
+		switch (opts.mode) {
+			case 'component':
+				return encodeURIComponent(normalized);
+			case 'uri':
+				return encodeURI(normalized);
+			case 'form':
+				// application/x-www-form-urlencoded
+				return encodeURIComponent(normalized).replace(/%20/g, '+');
+			case 'path':
+				// Encode but preserve /
+				return normalized
+					.split('/')
+					.map((segment) => encodeURIComponent(segment))
+					.join('/');
+			case 'custom':
+				// Custom encoding with preserved characters
+				return customUrlEncode(normalized, opts.preserveChars, opts.encodeNonAscii);
+			default:
+				return encodeURIComponent(normalized);
+		}
+	})();
 
-	return result;
+	// 3. Apply space encoding preference (form mode already uses '+').
+	const spaceAdjusted =
+		opts.mode !== 'form' && opts.spaceEncoding === 'plus' ? encoded.replace(/%20/g, '+') : encoded;
+
+	// 4. Apply hex case preference.
+	return opts.hexCase === 'lower'
+		? spaceAdjusted.replace(/%[0-9A-F]{2}/g, (match) => match.toLowerCase())
+		: spaceAdjusted.replace(/%[0-9a-f]{2}/g, (match) => match.toUpperCase());
 };
 
 /**
@@ -441,25 +417,23 @@ export const encodeUrlWithOptions = (
  */
 const customUrlEncode = (text: string, preserveChars: string, encodeNonAscii: boolean): string => {
 	const safeChars = new Set([...RFC3986_UNRESERVED, ...preserveChars]);
-	let result = '';
 
-	for (const char of text) {
-		const code = char.charCodeAt(0);
-
-		if (safeChars.has(char)) {
-			result += char;
-		} else if (code > 127 && !encodeNonAscii) {
-			result += char;
-		} else {
-			// Encode the character
+	// Encode each Unicode code point and join the resulting fragments. Array
+	// spread iterates by code point (not UTF-16 code unit), matching the
+	// original for..of behavior.
+	return [...text]
+		.map((char) => {
+			const code = char.charCodeAt(0);
+			if (safeChars.has(char)) return char;
+			if (code > 127 && !encodeNonAscii) return char;
+			// Encode the character byte-by-byte as %HH.
 			const bytes = new TextEncoder().encode(char);
-			for (const byte of bytes) {
-				result += `%${byte.toString(16).toUpperCase().padStart(2, '0')}`;
-			}
-		}
-	}
-
-	return result;
+			return Array.from(
+				bytes,
+				(byte) => `%${byte.toString(16).toUpperCase().padStart(2, '0')}`
+			).join('');
+		})
+		.join('');
 };
 
 /**
@@ -470,58 +444,46 @@ export const decodeUrlWithOptions = (
 	options: Partial<UrlDecodeOptions> = {}
 ): string => {
 	const opts = { ...defaultUrlDecodeOptions, ...options };
-	let input = text;
 
-	// Replace + with space if option is set
-	if (opts.plusAsSpace) {
-		input = input.replace(/\+/g, ' ');
-	}
+	// 1. Optional + -> space.
+	const plusReplaced = opts.plusAsSpace ? text.replace(/\+/g, ' ') : text;
+	// 2. Optional sanitization of invalid percent escapes.
+	const sanitized =
+		opts.invalidHandling !== 'error'
+			? sanitizePercentEncoding(plusReplaced, opts.invalidHandling)
+			: plusReplaced;
 
-	// Handle invalid sequences based on option
-	if (opts.invalidHandling !== 'error') {
-		input = sanitizePercentEncoding(input, opts.invalidHandling);
-	}
-
-	let result: string;
-	try {
-		result = decodeURIComponent(input);
-	} catch {
-		if (opts.invalidHandling === 'error') {
-			throw new Error('Invalid percent-encoded sequence');
+	// 3. First decode pass; on failure, either throw (error mode) or fall back to the sanitized input.
+	const firstPass = ((): string => {
+		try {
+			return decodeURIComponent(sanitized);
+		} catch {
+			if (opts.invalidHandling === 'error') {
+				throw new Error('Invalid percent-encoded sequence');
+			}
+			return sanitized;
 		}
-		// If sanitization didn't help, return as-is
-		result = input;
-	}
+	})();
 
-	// Decode multiple times if option is set
-	if (opts.decodeMultiple) {
-		let iterations = 0;
-		let prev = result;
-		while (iterations < opts.maxIterations) {
-			// Check if there are still percent-encoded sequences
-			if (!/%[0-9A-Fa-f]{2}/.test(result)) {
-				break;
-			}
+	if (!opts.decodeMultiple) return firstPass;
 
-			try {
-				let decoded = result;
-				if (opts.plusAsSpace) {
-					decoded = decoded.replace(/\+/g, ' ');
-				}
-				result = decodeURIComponent(decoded);
-			} catch {
-				break;
-			}
-
-			if (result === prev) {
-				break;
-			}
-			prev = result;
-			iterations++;
+	// 4. Multi-pass decoding: repeatedly decode while there's still escaped
+	// content. The cursor object holds the rolling result plus the previous
+	// value (used to detect a fixed point) and the iteration counter.
+	const cursor = { result: firstPass, prev: firstPass, iterations: 0 };
+	while (cursor.iterations < opts.maxIterations) {
+		if (!/%[0-9A-Fa-f]{2}/.test(cursor.result)) break;
+		try {
+			const candidate = opts.plusAsSpace ? cursor.result.replace(/\+/g, ' ') : cursor.result;
+			cursor.result = decodeURIComponent(candidate);
+		} catch {
+			break;
 		}
+		if (cursor.result === cursor.prev) break;
+		cursor.prev = cursor.result;
+		cursor.iterations += 1;
 	}
-
-	return result;
+	return cursor.result;
 };
 
 /**
@@ -550,21 +512,20 @@ export const isDoubleEncoded = (text: string): boolean => {
  * Count encoding depth (how many times text has been encoded).
  */
 export const getEncodingDepth = (text: string): number => {
-	let depth = 0;
-	let current = text;
-
-	while (/%[0-9A-Fa-f]{2}/.test(current) && depth < 10) {
+	// Peel one percent-decoding layer at a time, tracking depth in a const
+	// cursor so we can stop at 10 iterations or when the value stabilizes.
+	const cursor = { depth: 0, current: text };
+	while (/%[0-9A-Fa-f]{2}/.test(cursor.current) && cursor.depth < 10) {
 		try {
-			const decoded = decodeURIComponent(current);
-			if (decoded === current) break;
-			current = decoded;
-			depth++;
+			const decoded = decodeURIComponent(cursor.current);
+			if (decoded === cursor.current) break;
+			cursor.current = decoded;
+			cursor.depth += 1;
 		} catch {
 			break;
 		}
 	}
-
-	return depth;
+	return cursor.depth;
 };
 
 // Legacy functions for backward compatibility
@@ -864,33 +825,23 @@ export const generateFileHash = (file: File, algorithm: HashAlgorithm): Promise<
 		const reader = new FileReader();
 		reader.onload = () => {
 			const wordArray = CryptoJS.lib.WordArray.create(reader.result as ArrayBuffer);
-			let hash: string;
 
-			switch (algorithm) {
-				case 'MD5':
-					hash = CryptoJS.MD5(wordArray).toString();
-					break;
-				case 'SHA1':
-					hash = CryptoJS.SHA1(wordArray).toString();
-					break;
-				case 'SHA224':
-					hash = CryptoJS.SHA224(wordArray).toString();
-					break;
-				case 'SHA256':
-					hash = CryptoJS.SHA256(wordArray).toString();
-					break;
-				case 'SHA384':
-					hash = CryptoJS.SHA384(wordArray).toString();
-					break;
-				case 'SHA512':
-					hash = CryptoJS.SHA512(wordArray).toString();
-					break;
-				default:
-					reject(new Error(`Unknown algorithm: ${algorithm}`));
-					return;
+			// Dispatch the algorithm via a map of factories. Unknown algorithms
+			// are surfaced via `null`, which triggers the reject path below.
+			const hashFactories: Record<HashAlgorithm, (wa: CryptoJS.lib.WordArray) => string> = {
+				MD5: (wa) => CryptoJS.MD5(wa).toString(),
+				SHA1: (wa) => CryptoJS.SHA1(wa).toString(),
+				SHA224: (wa) => CryptoJS.SHA224(wa).toString(),
+				SHA256: (wa) => CryptoJS.SHA256(wa).toString(),
+				SHA384: (wa) => CryptoJS.SHA384(wa).toString(),
+				SHA512: (wa) => CryptoJS.SHA512(wa).toString(),
+			};
+			const factory = hashFactories[algorithm];
+			if (!factory) {
+				reject(new Error(`Unknown algorithm: ${algorithm}`));
+				return;
 			}
-
-			resolve(hash);
+			resolve(factory(wordArray));
 		};
 		reader.onerror = () => reject(new Error('Failed to read file'));
 		reader.readAsArrayBuffer(file);

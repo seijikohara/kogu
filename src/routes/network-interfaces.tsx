@@ -167,23 +167,23 @@ function NetworkInterfacesPage() {
 		if (filteredInterfaces.length === 0) return;
 		e.preventDefault();
 		const currentIdx = filteredInterfaces.findIndex((iface) => iface.index === selectedIndex);
-		let nextIdx: number;
-		switch (e.key) {
-			case 'ArrowDown':
-				nextIdx = currentIdx < 0 ? 0 : Math.min(currentIdx + 1, filteredInterfaces.length - 1);
-				break;
-			case 'ArrowUp':
-				nextIdx = currentIdx < 0 ? 0 : Math.max(currentIdx - 1, 0);
-				break;
-			case 'Home':
-				nextIdx = 0;
-				break;
-			case 'End':
-				nextIdx = filteredInterfaces.length - 1;
-				break;
-			default:
-				return;
-		}
+		// Resolve the next index via a const IIFE switch; returns null when the
+		// key isn't a navigation key so we can short-circuit afterwards.
+		const nextIdx = ((): number | null => {
+			switch (e.key) {
+				case 'ArrowDown':
+					return currentIdx < 0 ? 0 : Math.min(currentIdx + 1, filteredInterfaces.length - 1);
+				case 'ArrowUp':
+					return currentIdx < 0 ? 0 : Math.max(currentIdx - 1, 0);
+				case 'Home':
+					return 0;
+				case 'End':
+					return filteredInterfaces.length - 1;
+				default:
+					return null;
+			}
+		})();
+		if (nextIdx === null) return;
 		const next = filteredInterfaces[nextIdx];
 		if (!next) return;
 		setSelectedIndex(next.index);

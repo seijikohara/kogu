@@ -44,14 +44,23 @@ function StringCaseConverterPage() {
 
 	const processedInput = (() => {
 		if (!input.trim()) return '';
-		let lines = input.split('\n');
-		if (trimLines) lines = lines.map((line) => line.trim());
-		if (removeEmptyLines) lines = lines.filter((line) => line.length > 0);
-		if (removeDuplicates) lines = [...new Set(lines)];
-		if (sortLines === 'asc') lines = [...lines].sort((a, b) => a.localeCompare(b));
-		else if (sortLines === 'desc') lines = [...lines].sort((a, b) => b.localeCompare(a));
-		if (reverseLines) lines = [...lines].reverse();
-		return lines.join('\n');
+		// Build the transformation pipeline as a const array of string[] ->
+		// string[] steps so each option contributes one immutable fold step.
+		type LineTransform = (input: readonly string[]) => readonly string[];
+		const transforms: readonly LineTransform[] = [
+			trimLines ? (lines) => lines.map((line) => line.trim()) : (lines) => lines,
+			removeEmptyLines ? (lines) => lines.filter((line) => line.length > 0) : (lines) => lines,
+			removeDuplicates ? (lines) => [...new Set(lines)] : (lines) => lines,
+			sortLines === 'asc'
+				? (lines) => lines.toSorted((a, b) => a.localeCompare(b))
+				: sortLines === 'desc'
+					? (lines) => lines.toSorted((a, b) => b.localeCompare(a))
+					: (lines) => lines,
+			reverseLines ? (lines) => lines.toReversed() : (lines) => lines,
+		];
+		return transforms
+			.reduce<readonly string[]>((acc, transform) => transform(acc), input.split('\n'))
+			.join('\n');
 	})();
 
 	const caseResults = processedInput.trim() ? convertToAllCases(processedInput) : [];

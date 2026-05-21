@@ -2,14 +2,16 @@ import { platform } from '@tauri-apps/plugin-os';
 
 export type Platform = 'macos' | 'windows' | 'linux' | 'unknown';
 
-let cachedPlatform: Platform | null = null;
+// Module-level cache for the resolved OS platform. Wrapped in a const
+// holder so the binding itself is never reassigned.
+const platformCache: { value: Platform | null } = { value: null };
 
 export const getPlatform = async (): Promise<Platform> => {
-	if (cachedPlatform) return cachedPlatform;
+	if (platformCache.value) return platformCache.value;
 
 	try {
 		const os = await platform();
-		cachedPlatform =
+		const resolved: Platform =
 			os === 'macos'
 				? 'macos'
 				: os === 'windows'
@@ -17,7 +19,8 @@ export const getPlatform = async (): Promise<Platform> => {
 					: os === 'linux'
 						? 'linux'
 						: 'unknown';
-		return cachedPlatform;
+		platformCache.value = resolved;
+		return resolved;
 	} catch {
 		return 'unknown';
 	}

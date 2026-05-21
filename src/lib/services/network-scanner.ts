@@ -715,7 +715,7 @@ export const getMergeKey = (ip: string, hostname: string | null): string => {
 };
 
 /** Sort IPs: IPv4 first (numerically), then IPv6 */
-const sortIps = (ips: readonly string[]): string[] => [...ips].sort(compareIpAddresses);
+const sortIps = (ips: readonly string[]): string[] => ips.toSorted(compareIpAddresses);
 
 /** Compare hosts by their primary IP address (numerically) */
 const compareByIp = (a: UnifiedHost, b: UnifiedHost): number => {
@@ -1071,16 +1071,19 @@ const selectHostname = (
 	entries: readonly { value: string; source: string | null }[]
 ): { hostname: string | null; source: string | null } => {
 	if (entries.length === 0) return { hostname: null, source: null };
-	let bestRank = Number.POSITIVE_INFINITY;
-	let best: { value: string; source: string | null } | null = null;
-	for (const entry of entries) {
-		const rank = hostnameSourceRank(entry.source);
-		if (rank < bestRank) {
-			bestRank = rank;
-			best = entry;
-		}
-	}
-	const fallback = best ?? entries[0] ?? null;
+	// Pick the entry with the lowest source rank via reduce; ties keep the
+	// earlier entry (preserving prior selection order).
+	const best = entries.reduce<{
+		entry: { value: string; source: string | null } | null;
+		rank: number;
+	}>(
+		(acc, entry) => {
+			const rank = hostnameSourceRank(entry.source);
+			return rank < acc.rank ? { entry, rank } : acc;
+		},
+		{ entry: null, rank: Number.POSITIVE_INFINITY }
+	);
+	const fallback = best.entry ?? entries[0] ?? null;
 	return fallback
 		? { hostname: fallback.value, source: fallback.source }
 		: { hostname: null, source: null };
@@ -1126,7 +1129,9 @@ const buildUnifiedHost = (group: readonly IpObservation[]): UnifiedHost => {
 		}
 	}
 
-	host.ports.sort((a, b) => a.port - b.port);
+	// Replace with a sorted copy via toSorted() so the array isn't mutated in
+	// place (immutable-leaning style; ES2023 supported by the TS7 target).
+	host.ports = host.ports.toSorted((a, b) => a.port - b.port);
 	return host;
 };
 

@@ -61,7 +61,7 @@ const processObject = (
 ): unknown => {
 	const entries = Object.entries(obj);
 	const sortedEntries = opts.sortKeys
-		? [...entries].sort(([a], [b]) => a.localeCompare(b))
+		? entries.toSorted(([a], [b]) => a.localeCompare(b))
 		: entries;
 
 	const processed = Object.fromEntries(

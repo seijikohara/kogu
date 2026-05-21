@@ -8,12 +8,15 @@ import tsWorker from 'monaco-editor/esm/vs/language/typescript/ts.worker?worker'
 import { configureMonacoYaml } from 'monaco-yaml';
 import yamlWorker from '@/lib/workers/yaml.worker?worker';
 
+// One-shot configuration flags. Kept on a const holder so the bindings
+// themselves never reassign; only the boolean fields flip.
+const monacoSetupState = { environment: false, yaml: false };
+
 // Configure Monaco Environment once. The desktop runtime is always client-side, so we can
 // assign self.MonacoEnvironment at module load without a browser guard.
-let monacoEnvironmentConfigured = false;
 const configureMonacoEnvironment = () => {
-	if (monacoEnvironmentConfigured) return;
-	monacoEnvironmentConfigured = true;
+	if (monacoSetupState.environment) return;
+	monacoSetupState.environment = true;
 	self.MonacoEnvironment = {
 		getWorker(_: unknown, label: string) {
 			switch (label) {
@@ -40,14 +43,13 @@ const configureMonacoEnvironment = () => {
 };
 configureMonacoEnvironment();
 
-let yamlConfigured = false;
 const configureYaml = () => {
-	if (yamlConfigured) return;
+	if (monacoSetupState.yaml) return;
 	configureMonacoYaml(monaco, {
 		validate: true,
 		format: { enable: true },
 	});
-	yamlConfigured = true;
+	monacoSetupState.yaml = true;
 };
 
 export type EditorMode =

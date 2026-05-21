@@ -537,9 +537,11 @@ export const CodeEditor = forwardRef<CodeEditorHandle, CodeEditorProps>(function
 			setLineToPathMap(new Map());
 			return;
 		}
-		let cancelled = false;
+		// Cancellation flag in a const ref so the cleanup closure can flip
+		// `.cancelled` without a `let` binding.
+		const lifecycle = { cancelled: false };
 		parseToAst(value, language).then((result) => {
-			if (cancelled) return;
+			if (lifecycle.cancelled) return;
 			setCurrentAst(result.ast);
 			setParseErrors(result.errors);
 			if (result.ast) {
@@ -551,7 +553,7 @@ export const CodeEditor = forwardRef<CodeEditorHandle, CodeEditorProps>(function
 			}
 		});
 		return () => {
-			cancelled = true;
+			lifecycle.cancelled = true;
 		};
 	}, [value, editorMode]);
 

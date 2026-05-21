@@ -68,27 +68,30 @@ const readGroupHeader = (input: string, i: number): { text: string; isCapturing:
 };
 
 const readCharClass = (input: string, i: number): string => {
-	// `[`...`]` with `\]` escape support.
-	let j = i + 1;
-	if (input[j] === '^') j++;
-	if (input[j] === ']') j++; // a `]` immediately after `[` or `[^` is literal
-	while (j < input.length && input[j] !== ']') {
-		if (input[j] === '\\' && j + 1 < input.length) j += 2;
-		else j += 1;
+	// `[`...`]` with `\]` escape support. The scan position is tracked via a
+	// const cursor object so the inner walk does not need a `let`.
+	const cursor = { j: i + 1 };
+	if (input[cursor.j] === '^') cursor.j += 1;
+	// A `]` immediately after `[` or `[^` is literal.
+	if (input[cursor.j] === ']') cursor.j += 1;
+	while (cursor.j < input.length && input[cursor.j] !== ']') {
+		cursor.j += input[cursor.j] === '\\' && cursor.j + 1 < input.length ? 2 : 1;
 	}
-	return input.slice(i, Math.min(j + 1, input.length));
+	return input.slice(i, Math.min(cursor.j + 1, input.length));
 };
 
 export const tokenizeRegex = (pattern: string): readonly Token[] => {
+	// Sequential scanner: the cursor (position + capture counter) lives in a
+	// const holder object, and the output token list / capturing-group stack
+	// are const arrays mutated in place. No `let` bindings needed.
 	const out: Token[] = [];
 	const groupStack: number[] = [];
-	let captureCount = 0;
-	let i = 0;
-	while (i < pattern.length) {
-		const c = pattern[i] ?? '';
+	const cursor = { i: 0, captureCount: 0 };
+	while (cursor.i < pattern.length) {
+		const c = pattern[cursor.i] ?? '';
 		// Escape sequence
 		if (c === '\\') {
-			const pair = pattern.slice(i, i + 2);
+			const pair = pattern.slice(cursor.i, cursor.i + 2);
 			if (ANCHOR_ESCAPES.has(pair)) {
 				out.push({ kind: 'anchor', text: pair });
 			} else if (pair === '\\') {
@@ -96,29 +99,26 @@ export const tokenizeRegex = (pattern: string): readonly Token[] => {
 			} else {
 				out.push({ kind: 'escape', text: pair });
 			}
-			i += 2;
+			cursor.i += 2;
 			continue;
 		}
 		// Anchor
 		if (c === '^' || c === '$') {
 			out.push({ kind: 'anchor', text: c });
-			i += 1;
+			cursor.i += 1;
 			continue;
 		}
 		// Alternation
 		if (c === '|') {
 			out.push({ kind: 'alternation', text: c });
-			i += 1;
+			cursor.i += 1;
 			continue;
 		}
 		// Group open
 		if (c === '(') {
-			const header = readGroupHeader(pattern, i);
-			let groupIndex: number | undefined;
-			if (header.isCapturing) {
-				captureCount += 1;
-				groupIndex = captureCount;
-			}
+			const header = readGroupHeader(pattern, cursor.i);
+			const groupIndex = header.isCapturing ? cursor.captureCount + 1 : undefined;
+			if (header.isCapturing) cursor.captureCount += 1;
 			groupStack.push(groupIndex ?? 0);
 			if (header.text === '(') {
 				out.push({ kind: 'group-open', text: '(', groupIndex });
@@ -126,33 +126,33 @@ export const tokenizeRegex = (pattern: string): readonly Token[] => {
 				out.push({ kind: 'group-open', text: '(', groupIndex });
 				out.push({ kind: 'group-meta', text: header.text.slice(1) });
 			}
-			i += header.text.length;
+			cursor.i += header.text.length;
 			continue;
 		}
 		// Group close
 		if (c === ')') {
 			const groupIndex = groupStack.pop() ?? 0;
 			out.push({ kind: 'group-close', text: ')', groupIndex });
-			i += 1;
+			cursor.i += 1;
 			continue;
 		}
 		// Char class
 		if (c === '[') {
-			const text = readCharClass(pattern, i);
+			const text = readCharClass(pattern, cursor.i);
 			out.push({ kind: 'char-class', text });
-			i += text.length;
+			cursor.i += text.length;
 			continue;
 		}
 		// Quantifier
-		if (isQuantifierStart(pattern, i)) {
-			const text = readQuantifier(pattern, i);
+		if (isQuantifierStart(pattern, cursor.i)) {
+			const text = readQuantifier(pattern, cursor.i);
 			out.push({ kind: 'quantifier', text });
-			i += text.length;
+			cursor.i += text.length;
 			continue;
 		}
 		// Literal character
 		out.push({ kind: 'literal', text: c });
-		i += 1;
+		cursor.i += 1;
 	}
 	return out;
 };

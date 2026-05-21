@@ -272,16 +272,18 @@ function MarkdownEditorPage() {
 	const toc = useMemo(() => generateToc(input), [input]);
 	const valid: boolean | null = input.trim() ? true : null;
 
-	// Render HTML preview asynchronously to support TeX and diagrams.
+	// Render HTML preview asynchronously to support TeX and diagrams. The
+	// cancellation flag lives in a const ref so the cleanup closure can flip
+	// it without a `let` binding.
 	useEffect(() => {
-		let cancelled = false;
+		const lifecycle = { cancelled: false };
 		markdownToHtmlAsync(input)
 			.then((result) => {
-				if (!cancelled) setHtmlOutput(result);
+				if (!lifecycle.cancelled) setHtmlOutput(result);
 			})
 			.catch(() => {});
 		return () => {
-			cancelled = true;
+			lifecycle.cancelled = true;
 		};
 	}, [input]);
 
@@ -296,17 +298,15 @@ function MarkdownEditorPage() {
 
 	const handleFormat = useCallback(
 		(action: FormatAction['type'], providedUrl?: string) => {
-			let actionUrl = providedUrl;
-			if (action === 'link' && !actionUrl) {
-				const inputUrl = prompt('Enter URL:');
-				if (!inputUrl) return;
-				actionUrl = inputUrl;
-			}
-			if (action === 'image' && !actionUrl) {
-				const inputUrl = prompt('Enter image URL:');
-				if (!inputUrl) return;
-				actionUrl = inputUrl;
-			}
+			// Resolve the URL for link/image actions via a const IIFE so neither
+			// the prompt nor the early-return path needs a `let` rebind.
+			const actionUrl = ((): string | undefined => {
+				if (providedUrl) return providedUrl;
+				if (action === 'link') return prompt('Enter URL:') ?? undefined;
+				if (action === 'image') return prompt('Enter image URL:') ?? undefined;
+				return undefined;
+			})();
+			if ((action === 'link' || action === 'image') && !actionUrl) return;
 
 			const targetEditor = activeEditor ?? 'monaco';
 
