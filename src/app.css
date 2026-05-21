@@ -341,9 +341,6 @@
 	--color-border-strong: var(--border-strong);
 	--color-accent-brand: var(--accent-brand);
 	--animate-fade-in: fade-in var(--duration-base) ease-out;
-	--animate-slide-in: slide-in var(--duration-base) ease-out;
-	--animate-slide-up: slide-up var(--duration-slow) var(--ease-standard);
-	--animate-scale-in: scale-in var(--duration-base) var(--ease-standard);
 	/*
 	 * Motion duration tokens exposed as Tailwind utilities (`duration-fast`,
 	 * `duration-base`, `duration-slow`). Tailwind v4 reads from the
@@ -445,39 +442,6 @@
 	}
 }
 
-@keyframes slide-in {
-	from {
-		opacity: 0;
-		transform: translateY(4px);
-	}
-	to {
-		opacity: 1;
-		transform: translateY(0);
-	}
-}
-
-@keyframes slide-up {
-	from {
-		opacity: 0;
-		transform: translateY(8px);
-	}
-	to {
-		opacity: 1;
-		transform: translateY(0);
-	}
-}
-
-@keyframes scale-in {
-	from {
-		opacity: 0;
-		transform: scale(0.95);
-	}
-	to {
-		opacity: 1;
-		transform: scale(1);
-	}
-}
-
 /*
  * Accordion height keyframes. The CSS variable on the `to`/`from` side is
  * populated by the underlying accordion primitive at runtime. radix-ui
@@ -503,11 +467,19 @@
 	}
 }
 
+/*
+ * Reduced-motion gate. Covers both the project's custom `animate-fade-in`
+ * + accordion utilities and the `tw-animate-css` `.animate-in` /
+ * `.animate-out` classes that every Radix primitive (Dialog, Popover,
+ * Sheet, Tooltip, DropdownMenu, Select, ContextMenu, HoverCard, etc.)
+ * relies on for entry/exit motion. Without the `.animate-in`/`.animate-out`
+ * entries here, users with `prefers-reduced-motion` would still see
+ * every overlay slide/fade/zoom into view.
+ */
 @media (prefers-reduced-motion: reduce) {
+	.animate-in,
+	.animate-out,
 	.animate-fade-in,
-	.animate-slide-in,
-	.animate-slide-up,
-	.animate-scale-in,
 	[data-state='open'].animate-accordion-down,
 	[data-state='closed'].animate-accordion-up {
 		animation: none;
