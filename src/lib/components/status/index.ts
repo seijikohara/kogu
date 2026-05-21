@@ -20,4 +20,4 @@ export { StatusBadge } from './status-badge';
 export type { StatusBadgeProps, StatusBadgeStatus } from './status-badge';
 
 export { ValidityBadge } from './validity-badge';
-export type { ValidityBadgeProps } from './validity-badge';
+export type { ValidityBadgeProps, ValidityState } from './validity-badge';

@@ -14,6 +14,8 @@ import { OptionsPanel } from '@/lib/components/panel';
 import {
 	defaultJsonFormatOptions,
 	type JsonFormatOptions,
+	type JsonInputFormat,
+	type JsonOutputFormat,
 	parseJson,
 	processJsonWithOptions,
 	SAMPLE_JSON,
@@ -39,6 +41,83 @@ interface FormatTabProps {
 	readonly onInputChange: (value: string) => void;
 	readonly onStatsChange?: (stats: TabStats) => void;
 }
+
+type Transform = (input: string) => string;
+
+const identity: Transform = (input) => input;
+
+const escapeUnicodeTransform: Transform = (input) =>
+	input.replace(
+		/[\u0080-\uffff]/g,
+		(char) => `\\u${`0000${char.charCodeAt(0).toString(16)}`.slice(-4)}`
+	);
+
+const arrayBracketSpacingTransform: Transform = (input) =>
+	input.replace(/\[(?!\s*\n)/g, '[ ').replace(/(?<!\n\s*)\]/g, ' ]');
+
+const objectBracketSpacingTransform: Transform = (input) =>
+	input.replace(/\{(?!\s*\n)/g, '{ ').replace(/(?<!\n\s*)\}/g, ' }');
+
+const stripColonSpacingTransform: Transform = (input) => input.replace(/:\s+/g, ':');
+
+const compactArraysTransform: Transform = (input) =>
+	input.replace(
+		/\[\s*\n(\s*)((?:"[^"]*"|'[^']*'|[\d.eE+-]+|true|false|null)(?:,\s*\n\s*(?:"[^"]*"|'[^']*'|[\d.eE+-]+|true|false|null))*)\s*\n\s*\]/g,
+		(_, _indent, content: string) => {
+			const items = content.split(/,\s*\n\s*/);
+			return `[${items.join(', ')}]`;
+		}
+	);
+
+const buildFormatTransforms = (options: Partial<JsonFormatOptions>): readonly Transform[] => {
+	const compactArraysEnabled = Boolean(options.compactArrays) && (options.indentSize ?? 2) > 0;
+	return [
+		options.escapeUnicode ? escapeUnicodeTransform : identity,
+		options.arrayBracketSpacing ? arrayBracketSpacingTransform : identity,
+		options.objectBracketSpacing ? objectBracketSpacingTransform : identity,
+		options.colonSpacing ? identity : stripColonSpacingTransform,
+		compactArraysEnabled ? compactArraysTransform : identity,
+	];
+};
+
+interface FormattedResult {
+	readonly output: string;
+	readonly error: string;
+}
+
+const computeFormattedOutput = (
+	input: string,
+	inputFormat: JsonInputFormat,
+	outputFormat: JsonOutputFormat,
+	formatMode: FormatMode,
+	formatOptions: Partial<JsonFormatOptions>
+): FormattedResult => {
+	if (!input.trim()) return { output: '', error: '' };
+
+	try {
+		const data = parseJson(input, inputFormat);
+		const processedData = processJsonWithOptions(data, formatOptions);
+
+		if (formatMode === 'minify') {
+			return { output: stringifyJson(processedData, outputFormat, { indent: 0 }), error: '' };
+		}
+
+		const baseResult = stringifyJson(processedData, outputFormat, {
+			indent: formatOptions.indentType === 'tabs' ? '\t' : formatOptions.indentSize,
+			sortKeys: formatOptions.sortKeys,
+			trailingComma: formatOptions.trailingComma,
+			quote: formatOptions.quoteStyle,
+		});
+
+		const transforms = buildFormatTransforms(formatOptions);
+		return {
+			output: transforms.reduce((acc, transform) => transform(acc), baseResult),
+			error: '',
+		};
+	} catch (e) {
+		return { output: '', error: e instanceof Error ? e.message : 'Invalid JSON' };
+	}
+};
 
 export function FormatTab({ input, onInputChange, onStatsChange }: FormatTabProps) {
 	const { value: jsonOptions } = useJsonFormatterOptions();
@@ -109,64 +188,13 @@ export function FormatTab({ input, onInputChange, onStatsChange }: FormatTabProp
 		return { valid: result.valid };
 	}, [input, inputFormat]);
 
-	const { output, error: formatError } = ((): { output: string; error: string } => {
-		if (!input.trim()) return { output: '', error: '' };
-
-		try {
-			const data = parseJson(input, inputFormat);
-
-			// Apply filtering options (removeNulls, removeEmptyStrings, etc.).
-			const processedData = processJsonWithOptions(data, formatOptions);
-
-			if (formatMode === 'minify') {
-				return { output: stringifyJson(processedData, outputFormat, { indent: 0 }), error: '' };
-			}
-
-			const baseResult = stringifyJson(processedData, outputFormat, {
-				indent: formatOptions.indentType === 'tabs' ? '\t' : formatOptions.indentSize,
-				sortKeys: formatOptions.sortKeys,
-				trailingComma: formatOptions.trailingComma,
-				quote: formatOptions.quoteStyle,
-			});
-
-			// Apply additional formatting options as a const pipeline so each
-			// rule reads from / writes to a fresh string.
-			type Transform = (input: string) => string;
-			const transforms: readonly Transform[] = [
-				formatOptions.escapeUnicode
-					? (input) =>
-							input.replace(
-								/[\u0080-\uffff]/g,
-								(char) => `\\u${`0000${char.charCodeAt(0).toString(16)}`.slice(-4)}`
-							)
-					: (input) => input,
-				formatOptions.arrayBracketSpacing
-					? (input) => input.replace(/\[(?!\s*\n)/g, '[ ').replace(/(?<!\n\s*)\]/g, ' ]')
-					: (input) => input,
-				formatOptions.objectBracketSpacing
-					? (input) => input.replace(/\{(?!\s*\n)/g, '{ ').replace(/(?<!\n\s*)\}/g, ' }')
-					: (input) => input,
-				formatOptions.colonSpacing ? (input) => input : (input) => input.replace(/:\s+/g, ':'),
-				formatOptions.compactArrays && (formatOptions.indentSize ?? 2) > 0
-					? (input) =>
-							input.replace(
-								/\[\s*\n(\s*)((?:"[^"]*"|'[^']*'|[\d.eE+-]+|true|false|null)(?:,\s*\n\s*(?:"[^"]*"|'[^']*'|[\d.eE+-]+|true|false|null))*)\s*\n\s*\]/g,
-								(_, _indent, content: string) => {
-									const items = content.split(/,\s*\n\s*/);
-									return `[${items.join(', ')}]`;
-								}
-							)
-					: (input) => input,
-			];
-
-			return {
-				output: transforms.reduce((acc, transform) => transform(acc), baseResult),
-				error: '',
-			};
-		} catch (e) {
-			return { output: '', error: e instanceof Error ? e.message : 'Invalid JSON' };
-		}
-	})();
+	const { output, error: formatError } = computeFormattedOutput(
+		input,
+		inputFormat,
+		outputFormat,
+		formatMode,
+		formatOptions
+	);
 
 	useEffect(() => {
 		onStatsChange?.({
