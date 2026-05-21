@@ -1,9 +1,11 @@
+import { Search } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 
 import { CodeEditor } from '@/lib/components/editor';
 import { FormInput, FormSection } from '@/lib/components/form';
-import { SplitPane } from '@/lib/components/layout';
+import { SectionHeader, SplitPane } from '@/lib/components/layout';
 import { OptionsPanel } from '@/lib/components/panel';
+import { EmbeddedEmptyState } from '@/lib/components/status';
 import { executeXPath, formatXml } from '@/lib/services/formatters';
 import { copyToClipboard, pasteFromClipboard } from '@/lib/utils/file-operations';
 
@@ -159,14 +161,28 @@ export function QueryTab({ input, onInputChange, onStatsChange }: QueryTabProps)
 					/>
 				}
 				right={
-					<CodeEditor
-						title="Result"
-						value={queryOutput}
-						mode="readonly"
-						editorMode="xml"
-						placeholder="Query results will appear here..."
-						onCopy={handleCopyOutput}
-					/>
+					input.trim().length === 0 ? (
+						<div className="flex h-full flex-col overflow-hidden">
+							<SectionHeader title="Result" />
+							<div className="flex-1">
+								<EmbeddedEmptyState
+									icon={Search}
+									title="Enter XML to query"
+									description="Run an XPath expression to see matching nodes here."
+									fillHeight
+								/>
+							</div>
+						</div>
+					) : (
+						<CodeEditor
+							title="Result"
+							value={queryOutput}
+							mode="readonly"
+							editorMode="xml"
+							placeholder="Query results will appear here..."
+							onCopy={handleCopyOutput}
+						/>
+					)
 				}
 			/>
 		</div>

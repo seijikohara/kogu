@@ -1,3 +1,4 @@
+import { Search } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 
 import { CodeEditor } from '@/lib/components/editor';
@@ -8,8 +9,9 @@ import {
 	FormSection,
 	FormSelect,
 } from '@/lib/components/form';
-import { SplitPane } from '@/lib/components/layout';
+import { SectionHeader, SplitPane } from '@/lib/components/layout';
 import { OptionsPanel } from '@/lib/components/panel';
+import { EmbeddedEmptyState } from '@/lib/components/status';
 import { executeJsonPath, validateJson } from '@/lib/services/formatters';
 import { useJsonFormatterOptions } from '@/lib/stores';
 import { copyToClipboard, pasteFromClipboard } from '@/lib/utils/file-operations';
@@ -240,14 +242,28 @@ export function QueryTab({ input, onInputChange, onStatsChange }: QueryTabProps)
 					/>
 				}
 				right={
-					<CodeEditor
-						title="Result"
-						value={queryResult}
-						mode="readonly"
-						editorMode="json"
-						placeholder="Query result..."
-						onCopy={handleCopyResult}
-					/>
+					input.trim().length === 0 ? (
+						<div className="flex h-full flex-col overflow-hidden">
+							<SectionHeader title="Result" />
+							<div className="flex-1">
+								<EmbeddedEmptyState
+									icon={Search}
+									title="Enter JSON to query"
+									description="Run a JSONPath expression to see matching values here."
+									fillHeight
+								/>
+							</div>
+						</div>
+					) : (
+						<CodeEditor
+							title="Result"
+							value={queryResult}
+							mode="readonly"
+							editorMode="json"
+							placeholder="Query result..."
+							onCopy={handleCopyResult}
+						/>
+					)
 				}
 			/>
 		</div>
