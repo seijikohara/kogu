@@ -57,6 +57,7 @@ export function ListItemButton({
 	wrap = false,
 	type = 'button',
 	role,
+	tabIndex,
 	children,
 	style,
 	...rest
@@ -65,12 +66,20 @@ export function ListItemButton({
 		variant === 'tree-node' && depth > 0 ? { paddingLeft: `${depth * 12}px`, ...style } : style;
 
 	// aria-selected only applies to roles that support it (option, treeitem, etc.).
-	const ariaSelected = role === 'option' || role === 'treeitem' ? selected : undefined;
+	const isComposite = role === 'option' || role === 'treeitem';
+	const ariaSelected = isComposite ? selected : undefined;
+
+	// Composite-widget children (listbox option, tree item) participate in their
+	// parent's keyboard model — the container holds the single tab stop and
+	// handles arrow navigation. Default tabIndex to -1 so Tab does not stop on
+	// every child; allow the caller to override when needed.
+	const resolvedTabIndex = tabIndex ?? (isComposite ? -1 : undefined);
 
 	return (
 		<button
 			type={type}
 			role={role}
+			tabIndex={resolvedTabIndex}
 			data-slot="list-item-button"
 			data-selected={selected}
 			aria-selected={ariaSelected}
