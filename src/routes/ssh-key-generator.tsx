@@ -14,7 +14,13 @@ import {
 } from '@/lib/components/form';
 import { SectionHeader } from '@/lib/components/layout';
 import { ToolShell } from '@/lib/components/shell';
-import { EmptyState, ErrorDisplay, LoadingOverlay, StatItem } from '@/lib/components/status';
+import {
+	EmptyState,
+	ErrorDisplay,
+	LiveStatusRegion,
+	LoadingOverlay,
+	StatItem,
+} from '@/lib/components/status';
 import { Card, CardContent, CardHeader, CardTitle } from '@/lib/components/ui/card';
 import {
 	cancelWorkerOperation,
@@ -307,12 +313,7 @@ function SshKeyGeneratorPage() {
 				/>
 				<SectionHeader title="Generated Keys" />
 
-				<div
-					className="flex-1 overflow-auto p-4"
-					role="status"
-					aria-live="polite"
-					aria-atomic="false"
-				>
+				<LiveStatusRegion className="flex-1 overflow-auto p-4">
 					{keyResult ? (
 						<div key={flashCounter} className="animate-flash-success space-y-4 rounded-md">
 							{showFingerprint ? (
@@ -414,7 +415,7 @@ function SshKeyGeneratorPage() {
 					) : (
 						<EmptyState icon={Key} title="Configure options and generate an SSH key pair" />
 					)}
-				</div>
+				</LiveStatusRegion>
 			</div>
 		</ToolShell>
 	);

@@ -7,7 +7,7 @@ import { CodeEditor } from '@/lib/components/editor';
 import { FormInfo, FormSection } from '@/lib/components/form';
 import { SectionHeader } from '@/lib/components/layout';
 import { ToolShell } from '@/lib/components/shell';
-import { EmptyState } from '@/lib/components/status';
+import { EmptyState, LiveStatusRegion } from '@/lib/components/status';
 import { Card, CardContent, CardHeader, CardTitle } from '@/lib/components/ui/card';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/lib/components/ui/tooltip';
 import {
@@ -181,12 +181,7 @@ function JwtDecoderPage() {
 				<div className="flex flex-1 flex-col overflow-hidden">
 					<SectionHeader title="Decoded Token" />
 					{decoded ? (
-						<div
-							className="flex-1 space-y-4 overflow-auto p-4"
-							role="status"
-							aria-live="polite"
-							aria-atomic="false"
-						>
+						<LiveStatusRegion className="flex-1 space-y-4 overflow-auto p-4">
 							{decoded.isExpired ? (
 								<div className="flex items-center gap-2 rounded-lg border border-destructive/50 bg-destructive/10 p-3 text-sm text-destructive">
 									<AlertTriangle className="h-4 w-4" />
@@ -310,7 +305,7 @@ function JwtDecoderPage() {
 									</p>
 								</CardContent>
 							</Card>
-						</div>
+						</LiveStatusRegion>
 					) : (
 						<div className="flex-1">
 							{error ? (

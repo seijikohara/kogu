@@ -10,9 +10,9 @@ import {
 	FormSection,
 	FormSelect,
 } from '@/lib/components/form';
-import { SectionHeader, SplitPane } from '@/lib/components/layout';
+import { SplitPane } from '@/lib/components/layout';
 import { OptionsPanel } from '@/lib/components/panel';
-import { EmbeddedEmptyState } from '@/lib/components/status';
+import { EmptyOutputPane } from '@/lib/components/status';
 import {
 	type CSharpOptions,
 	type GoOptions,
@@ -853,17 +853,12 @@ export function GenerateTab({ input, onInputChange, onStatsChange }: GenerateTab
 				}
 				right={
 					input.trim().length === 0 ? (
-						<div className="flex h-full flex-col overflow-hidden">
-							<SectionHeader title={`Generated Code (${LANGUAGE_INFO[generateLanguage].label})`} />
-							<div className="flex-1">
-								<EmbeddedEmptyState
-									icon={Code}
-									title="Enter JSON to generate code"
-									description={`The ${LANGUAGE_INFO[generateLanguage].label} class definitions will appear here.`}
-									fillHeight
-								/>
-							</div>
-						</div>
+						<EmptyOutputPane
+							headerTitle={`Generated Code (${LANGUAGE_INFO[generateLanguage].label})`}
+							icon={Code}
+							title="Enter JSON to generate code"
+							description={`The ${LANGUAGE_INFO[generateLanguage].label} class definitions will appear here.`}
+						/>
 					) : (
 						<CodeEditor
 							title={`Generated Code (${LANGUAGE_INFO[generateLanguage].label})`}
