@@ -179,7 +179,7 @@ function TerminalGlyph({ n }: { readonly n: TerminalNode }) {
 				y={n.entryY}
 				textAnchor="middle"
 				dominantBaseline="middle"
-				className={`${tone.text} font-mono text-[11px]`}
+				className={`${tone.text} font-mono text-2xs`}
 			>
 				{n.label}
 			</text>

@@ -48,7 +48,7 @@ function HomePage() {
 											<Link
 												key={tool.id}
 												to={tool.url as never}
-												className="focus-ring group block rounded-xl"
+												className="group block rounded-xl outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary/30"
 											>
 												<Card className="h-full border-border/50 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-border hover:shadow-md">
 													<CardContent className="flex h-full items-center gap-4 p-5">
