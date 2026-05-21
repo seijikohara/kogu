@@ -5,7 +5,6 @@ import {
 	ArrowDown,
 	ArrowUp,
 	Cable,
-	Circle,
 	Flag,
 	Globe,
 	Network,
@@ -20,7 +19,7 @@ import { CopyButton } from '@/lib/components/action';
 import { FormCheckbox, FormCheckboxGroup, FormSection, FormSelect } from '@/lib/components/form';
 import { SectionHeader, SectionLabel } from '@/lib/components/layout';
 import { ToolShell } from '@/lib/components/shell';
-import { EmptyState, StatItem } from '@/lib/components/status';
+import { EmptyState, ErrorDisplay, StatItem } from '@/lib/components/status';
 import { Badge } from '@/lib/components/ui/badge';
 import { Button } from '@/lib/components/ui/button';
 import { Card, CardContent } from '@/lib/components/ui/card';
@@ -664,7 +663,7 @@ function NetworkInterfacesPage() {
 							))}
 						</div>
 					) : error ? (
-						<EmptyState icon={Circle} title="Failed to load interfaces" description={error} />
+						<ErrorDisplay variant="centered" title="Failed to load interfaces" message={error} />
 					) : (
 						<EmptyState icon={Server} title="No interfaces match the current filters" />
 					)}
