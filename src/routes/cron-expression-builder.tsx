@@ -291,7 +291,7 @@ function CronExpressionBuilderPage() {
 									<FlaskConical className="h-3.5 w-3.5" />
 									Sample
 								</Button>
-								<CopyButton text={parseInput} toastLabel="Expression" size="sm" />
+								<CopyButton text={parseInput} toastLabel="Expression" variant="outline" size="sm" />
 							</div>
 						</CardHeader>
 						<CardContent>

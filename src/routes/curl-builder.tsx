@@ -519,7 +519,7 @@ function CurlBuilderPage() {
 									<FlaskConical className="h-3.5 w-3.5" />
 									Sample
 								</Button>
-								<CopyButton text={parseInput} toastLabel="Command" size="sm" />
+								<CopyButton text={parseInput} toastLabel="Command" variant="outline" size="sm" />
 							</div>
 						</CardHeader>
 						<CardContent>

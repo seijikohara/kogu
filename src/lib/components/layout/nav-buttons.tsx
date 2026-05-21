@@ -37,7 +37,8 @@ export function NavButtons(_: NavButtonsProps = {}) {
 						size="icon-sm"
 						disabled={!navState.canGoBack}
 						onClick={handleBack}
-						className="h-7 w-7"
+						// TitleBar sits on bg-surface-2; restore visible hover affordance.
+						className="h-7 w-7 hover:bg-interactive-hover"
 					>
 						<ChevronLeft className="h-4 w-4" />
 						<span className="sr-only">Go back</span>
@@ -52,7 +53,8 @@ export function NavButtons(_: NavButtonsProps = {}) {
 						size="icon-sm"
 						disabled={!navState.canGoForward}
 						onClick={handleForward}
-						className="h-7 w-7"
+						// TitleBar sits on bg-surface-2; restore visible hover affordance.
+						className="h-7 w-7 hover:bg-interactive-hover"
 					>
 						<ChevronRight className="h-4 w-4" />
 						<span className="sr-only">Go forward</span>

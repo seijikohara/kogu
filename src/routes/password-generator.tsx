@@ -258,7 +258,8 @@ function PasswordGeneratorPage() {
 								label="Copy All"
 								toastLabel={`${results.length} password${results.length > 1 ? 's' : ''}`}
 								size="sm"
-								className="h-7"
+								// SectionHeader is bg-surface-2; restore visible hover affordance.
+								className="h-7 hover:bg-interactive-hover"
 							/>
 						) : null
 					}

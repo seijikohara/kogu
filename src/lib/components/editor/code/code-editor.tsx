@@ -140,7 +140,10 @@ function ToolbarButton({ icon: Icon, label, title, onClick }: ToolbarButtonProps
 		<Button
 			variant="ghost"
 			size="sm"
-			className="h-6 gap-1 px-2 text-xs"
+			// Header sits on bg-surface-2 (≈ bg-muted in light mode), so the default
+			// ghost hover (bg-muted) blends in. Use the project's interactive-hover
+			// token to restore a visible affordance without changing the chrome.
+			className="h-6 gap-1 px-2 text-xs hover:bg-interactive-hover"
 			onClick={onClick}
 			title={title}
 		>

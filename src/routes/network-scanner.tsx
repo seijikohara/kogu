@@ -1064,7 +1064,9 @@ function NetworkScannerPage() {
 								label="Cancel"
 								variant="ghost"
 								size="sm"
-								className="w-auto text-muted-foreground hover:text-destructive"
+								// Progress panel is bg-surface-2; pair text hover with interactive-hover
+								// background so the affordance is visible.
+								className="w-auto text-muted-foreground hover:bg-interactive-hover hover:text-destructive"
 								onClick={() => {
 									handleCancelDiscovery().catch(() => {});
 								}}
@@ -1149,7 +1151,9 @@ function NetworkScannerPage() {
 									label="Cancel"
 									variant="ghost"
 									size="sm"
-									className="w-auto text-muted-foreground hover:text-destructive"
+									// Progress panel is bg-surface-2; pair text hover with interactive-hover
+									// background so the affordance is visible.
+									className="w-auto text-muted-foreground hover:bg-interactive-hover hover:text-destructive"
 									onClick={() => {
 										handleCancel().catch(() => {});
 									}}

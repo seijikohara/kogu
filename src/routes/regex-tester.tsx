@@ -360,7 +360,12 @@ function RegexTesterPage() {
 									<FlaskConical className="h-3.5 w-3.5" />
 									Sample
 								</Button>
-								<CopyButton text={`/${pattern}/${flagString}`} toastLabel="Pattern" size="sm" />
+								<CopyButton
+									text={`/${pattern}/${flagString}`}
+									toastLabel="Pattern"
+									variant="outline"
+									size="sm"
+								/>
 							</div>
 						</div>
 					</div>

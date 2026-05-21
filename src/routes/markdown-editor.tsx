@@ -543,6 +543,7 @@ function MarkdownEditorPage() {
 									<Button
 										variant="ghost"
 										size="toolbar-icon"
+										className="hover:bg-interactive-hover"
 										onClick={() => handleFormat(btn.action)}
 									>
 										<Icon className="h-3.5 w-3.5" />
@@ -558,7 +559,12 @@ function MarkdownEditorPage() {
 
 					<DropdownMenu>
 						<DropdownMenuTrigger asChild>
-							<Button variant="ghost" size="sm" className="h-7 gap-1 px-2" title="Headings">
+							<Button
+								variant="ghost"
+								size="sm"
+								className="h-7 gap-1 px-2 hover:bg-interactive-hover"
+								title="Headings"
+							>
 								<Heading2 className="h-3.5 w-3.5" />
 								<ChevronDown className="h-3 w-3" />
 							</Button>
@@ -589,6 +595,7 @@ function MarkdownEditorPage() {
 									<Button
 										variant="ghost"
 										size="toolbar-icon"
+										className="hover:bg-interactive-hover"
 										onClick={() => handleFormat(btn.action)}
 									>
 										<Icon className="h-3.5 w-3.5" />
@@ -610,6 +617,7 @@ function MarkdownEditorPage() {
 									<Button
 										variant="ghost"
 										size="toolbar-icon"
+										className="hover:bg-interactive-hover"
 										onClick={() => handleFormat(btn.action)}
 									>
 										<Icon className="h-3.5 w-3.5" />
@@ -628,6 +636,7 @@ function MarkdownEditorPage() {
 							<Button
 								variant="ghost"
 								size="toolbar-icon"
+								className="hover:bg-interactive-hover"
 								onClick={() => handleFormat('clearFormat')}
 							>
 								<Eraser className="h-3.5 w-3.5" />

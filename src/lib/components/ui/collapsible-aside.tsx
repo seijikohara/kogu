@@ -66,7 +66,14 @@ export function CollapsibleAside({
 			) : (
 				<Tooltip>
 					<TooltipTrigger asChild>
-						<Button variant="ghost" size="icon" className="m-1.5 h-8 w-8" onClick={handleToggle}>
+						<Button
+							variant="ghost"
+							size="icon"
+							// Aside sits on bg-surface-2 / bg-sidebar; default ghost hover
+							// (bg-muted) blends in. Use interactive-hover for visible affordance.
+							className="m-1.5 h-8 w-8 hover:bg-interactive-hover"
+							onClick={handleToggle}
+						>
 							<Settings2 className="h-4 w-4" />
 							<span className="sr-only">Show {title}</span>
 						</Button>

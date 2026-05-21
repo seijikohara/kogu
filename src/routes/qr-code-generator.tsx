@@ -683,7 +683,8 @@ function QrCodeGeneratorPage() {
 							<Button
 								variant="ghost"
 								size="sm"
-								className="h-7 gap-1 px-2 text-xs"
+								// SectionHeader is bg-surface-2; restore visible hover affordance.
+								className="h-7 gap-1 px-2 text-xs hover:bg-interactive-hover"
 								disabled={!valid || !colorsValid}
 								onClick={() => handleDownload('svg')}
 							>
@@ -693,7 +694,7 @@ function QrCodeGeneratorPage() {
 							<Button
 								variant="ghost"
 								size="sm"
-								className="h-7 gap-1 px-2 text-xs"
+								className="h-7 gap-1 px-2 text-xs hover:bg-interactive-hover"
 								disabled={!valid || !colorsValid}
 								onClick={() => handleDownload('png')}
 							>
