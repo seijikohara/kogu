@@ -5,6 +5,83 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/*
+ * shadcn/ui custom data-attribute variants.
+ *
+ * These mirror the variant declarations shipped with the canonical shadcn
+ * registry (`packages/shadcn/src/tailwind.css` upstream). The primitives under
+ * `src/lib/components/ui/` are direct copies of the shadcn `radix-nova` style
+ * and rely on these shortcuts (`data-open:`, `data-closed:`, `data-active:`,
+ * etc.) to read Radix's `data-state="..."` attributes. Without these custom
+ * variants the classes compile to `[data-open]` (attribute existence) and
+ * silently no-op against Radix's `data-state="open"`.
+ *
+ * The `:where()` wrapper keeps specificity at 0 so callers can still override
+ * via `data-[state=open]:` or plain `data-open:` overrides without specificity
+ * wars. Each variant accepts both forms (`data-state="x"` and `data-x`) so it
+ * works regardless of whether the primitive sets the attribute directly or
+ * goes through Radix's state machine.
+ */
+@custom-variant data-open {
+	&:where([data-state='open']),
+	&:where([data-open]:not([data-open='false'])) {
+		@slot;
+	}
+}
+
+@custom-variant data-closed {
+	&:where([data-state='closed']),
+	&:where([data-closed]:not([data-closed='false'])) {
+		@slot;
+	}
+}
+
+@custom-variant data-checked {
+	&:where([data-state='checked']),
+	&:where([data-checked]:not([data-checked='false'])) {
+		@slot;
+	}
+}
+
+@custom-variant data-unchecked {
+	&:where([data-state='unchecked']),
+	&:where([data-unchecked]:not([data-unchecked='false'])) {
+		@slot;
+	}
+}
+
+@custom-variant data-selected {
+	&:where([data-selected='true']) {
+		@slot;
+	}
+}
+
+@custom-variant data-disabled {
+	&:where([data-disabled='true']),
+	&:where([data-disabled]:not([data-disabled='false'])) {
+		@slot;
+	}
+}
+
+@custom-variant data-active {
+	&:where([data-state='active']),
+	&:where([data-active]:not([data-active='false'])) {
+		@slot;
+	}
+}
+
+@custom-variant data-horizontal {
+	&:where([data-orientation='horizontal']) {
+		@slot;
+	}
+}
+
+@custom-variant data-vertical {
+	&:where([data-orientation='vertical']) {
+		@slot;
+	}
+}
+
 :root {
 	--radius: 0.625rem;
 	/* shadcn/ui standard colors (pure grayscale) */
@@ -403,21 +480,23 @@
 
 /*
  * Accordion height keyframes. The CSS variable on the `to`/`from` side is
- * populated by bits-ui at runtime (`--bits-accordion-content-height`), which
- * is what allows the height animation to animate to the natural content size.
+ * populated by the underlying accordion primitive at runtime. radix-ui
+ * (used in this React port) exposes `--radix-accordion-content-height`;
+ * bits-ui (the Svelte port lineage) exposes `--bits-accordion-content-height`.
+ * Both are listed so the same stylesheet works against either runtime.
  */
 @keyframes accordion-down {
 	from {
 		height: 0;
 	}
 	to {
-		height: var(--bits-accordion-content-height);
+		height: var(--radix-accordion-content-height, var(--bits-accordion-content-height));
 	}
 }
 
 @keyframes accordion-up {
 	from {
-		height: var(--bits-accordion-content-height);
+		height: var(--radix-accordion-content-height, var(--bits-accordion-content-height));
 	}
 	to {
 		height: 0;

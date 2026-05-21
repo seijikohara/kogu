@@ -1,7 +1,8 @@
 /**
  * Audits page/component files for design-rule violations.
  *
- * Checks (from .claude/rules/svelte/components.md § Container Patterns):
+ * Checks (from .claude/rules/react/components.md § Container Patterns,
+ * which is authored in Phase 6 of the React migration):
  * 1. No `bg-surface-3 rounded` ad-hoc cards — must use `Card.Root` or `bg-card`.
  *
  * Allowed (intentionally excluded):
@@ -46,7 +47,7 @@ const walk = (dir: string, out: string[]): void => {
 		const stats = statSync(full);
 		if (stats.isDirectory()) {
 			walk(full, out);
-		} else if (full.endsWith('.svelte') || full.endsWith('.ts')) {
+		} else if (full.endsWith('.tsx') || full.endsWith('.ts')) {
 			out.push(full);
 		}
 	}
@@ -74,7 +75,7 @@ if (violations.length > 0) {
 	console.error(
 		`❌ ${violations.length} design rule violation${violations.length === 1 ? '' : 's'} found.`
 	);
-	console.error('   See .claude/rules/svelte/components.md § Container Patterns.\n');
+	console.error('   See .claude/rules/react/components.md § Container Patterns.\n');
 	for (const v of violations) {
 		const rel = relative(PROJECT_ROOT, v.file);
 		console.error(`  ${rel}:${v.line}`);

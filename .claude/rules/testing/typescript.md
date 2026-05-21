@@ -1,8 +1,8 @@
 ---
-paths: 'src/**/*.{test,spec}.ts'
+paths: 'src/**/*.{test,spec}.{ts,tsx}'
 ---
 
-# TypeScript/Svelte Testing Guidelines
+# TypeScript/React Testing Guidelines
 
 ## Test Framework
 
@@ -18,8 +18,8 @@ src/lib/services/
 └── formatters.test.ts    # Co-located test file
 
 src/lib/components/ui/
-├── button.svelte
-└── button.test.ts        # Component test
+├── button.tsx
+└── button.test.tsx       # Component test
 ```
 
 ## Running Tests
@@ -113,52 +113,35 @@ describe('fetchData', () => {
 
 ### Basic Component Test
 
-```typescript
-import { describe, it, expect } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/svelte';
-import Button from './button.svelte';
+```tsx
+import { describe, it, expect, vi } from 'vitest';
+import { render, screen, fireEvent } from '@testing-library/react';
+import { Button } from './button';
 
 describe('Button', () => {
 	it('renders with text', () => {
-		render(Button, { props: { children: 'Click me' } });
+		render(<Button>Click me</Button>);
 
 		expect(screen.getByRole('button')).toHaveTextContent('Click me');
 	});
 
-	it('calls onclick handler when clicked', async () => {
-		let clicked = false;
-		render(Button, {
-			props: {
-				children: 'Click',
-				onclick: () => {
-					clicked = true;
-				},
-			},
-		});
+	it('calls onClick handler when clicked', async () => {
+		const onClick = vi.fn();
+		render(<Button onClick={onClick}>Click</Button>);
 
 		await fireEvent.click(screen.getByRole('button'));
 
-		expect(clicked).toBe(true);
+		expect(onClick).toHaveBeenCalledTimes(1);
 	});
 
 	it('applies variant classes', () => {
-		render(Button, {
-			props: {
-				children: 'Button',
-				variant: 'destructive',
-			},
-		});
+		render(<Button variant="destructive">Button</Button>);
 
 		expect(screen.getByRole('button')).toHaveClass('bg-destructive');
 	});
 
 	it('is disabled when disabled prop is true', () => {
-		render(Button, {
-			props: {
-				children: 'Button',
-				disabled: true,
-			},
-		});
+		render(<Button disabled>Button</Button>);
 
 		expect(screen.getByRole('button')).toBeDisabled();
 	});
@@ -167,15 +150,15 @@ describe('Button', () => {
 
 ### Testing User Interactions
 
-```typescript
-import { render, screen, fireEvent } from '@testing-library/svelte';
+```tsx
+import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import Input from './input.svelte';
+import { Input } from './input';
 
 describe('Input', () => {
 	it('updates value on user input', async () => {
 		const user = userEvent.setup();
-		render(Input, { props: { placeholder: 'Enter text' } });
+		render(<Input placeholder="Enter text" />);
 
 		const input = screen.getByPlaceholderText('Enter text');
 		await user.type(input, 'Hello');
@@ -448,6 +431,6 @@ afterEach(() => {
 ## References
 
 - [Vitest Documentation](https://vitest.dev/)
-- [Testing Library - Svelte](https://testing-library.com/docs/svelte-testing-library/intro)
-- [Svelte Testing Guide](https://svelte.dev/docs/svelte/testing)
+- [Testing Library - React](https://testing-library.com/docs/react-testing-library/intro)
+- [React Testing Guide](https://react.dev/learn/testing)
 - [jest-dom Matchers](https://github.com/testing-library/jest-dom)

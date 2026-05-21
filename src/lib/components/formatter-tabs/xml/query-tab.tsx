@@ -1,0 +1,176 @@
+import { useEffect, useMemo, useState } from 'react';
+
+import { CodeEditor } from '@/lib/components/editor';
+import { FormInput, FormSection } from '@/lib/components/form';
+import { SplitPane } from '@/lib/components/layout';
+import { OptionsPanel } from '@/lib/components/panel';
+import { executeXPath, formatXml } from '@/lib/services/formatters';
+import { copyToClipboard, pasteFromClipboard } from '@/lib/utils/file-operations';
+
+interface TabStats {
+	readonly input: string;
+	readonly valid: boolean | null;
+	readonly error: string;
+}
+
+interface QueryTabProps {
+	readonly input: string;
+	readonly onInputChange: (value: string) => void;
+	readonly onStatsChange?: (stats: TabStats) => void;
+}
+
+export function QueryTab({ input, onInputChange, onStatsChange }: QueryTabProps) {
+	const [xpathExpression, setXpathExpression] = useState('//');
+	const [showOptions, setShowOptions] = useState(true);
+
+	const inputValidation = useMemo<{ valid: boolean | null }>(() => {
+		if (!input.trim()) return { valid: null };
+		try {
+			const parser = new DOMParser();
+			const doc = parser.parseFromString(input, 'application/xml');
+			const parserError = doc.querySelector('parsererror');
+			return { valid: parserError === null };
+		} catch {
+			return { valid: false };
+		}
+	}, [input]);
+
+	const queryResultData = useMemo<{ output: string; error: string; count: number }>(() => {
+		if (!input.trim() || xpathExpression.trim() === '' || xpathExpression.trim() === '//') {
+			return { output: '', error: '', count: 0 };
+		}
+		try {
+			const results = executeXPath(input, xpathExpression);
+			if (results.length === 0) {
+				return { output: '', error: 'No matches found', count: 0 };
+			}
+			const formattedResults = results.map((result) => {
+				try {
+					return formatXml(result, { indentSize: 2 });
+				} catch {
+					return result;
+				}
+			});
+			return {
+				output: formattedResults.join('\n\n'),
+				error: '',
+				count: results.length,
+			};
+		} catch (e) {
+			return {
+				output: '',
+				error: e instanceof Error ? e.message : 'Query failed',
+				count: 0,
+			};
+		}
+	}, [input, xpathExpression]);
+
+	const queryOutput = queryResultData.output;
+	const queryError = queryResultData.error;
+	const resultCount = queryResultData.count;
+
+	useEffect(() => {
+		onStatsChange?.({
+			input,
+			valid: inputValidation.valid,
+			error: queryError,
+		});
+	}, [input, inputValidation.valid, queryError, onStatsChange]);
+
+	const handlePaste = async () => {
+		const text = await pasteFromClipboard();
+		if (text) onInputChange(text);
+	};
+
+	const handleClear = () => {
+		onInputChange('');
+		setXpathExpression('//');
+	};
+
+	const handleCopyOutput = () => {
+		copyToClipboard(queryOutput).catch(() => {
+			// Clipboard write failed; ignore.
+		});
+	};
+
+	return (
+		<div className="flex flex-1 overflow-hidden">
+			<OptionsPanel
+				show={showOptions}
+				onClose={() => setShowOptions(false)}
+				onOpen={() => setShowOptions(true)}
+			>
+				<FormSection title="XPath Expression">
+					<FormInput
+						label="Path Expression"
+						value={xpathExpression}
+						onValueChange={setXpathExpression}
+						placeholder="//element"
+						size="compact"
+						className="font-mono"
+					/>
+					{resultCount > 0 ? (
+						<div className="rounded-md bg-primary/10 p-2 text-xs text-primary">
+							{'Found '}
+							<strong>{resultCount}</strong>
+							{resultCount > 1 ? ' matches' : ' match'}
+						</div>
+					) : null}
+				</FormSection>
+
+				<FormSection title="Examples">
+					<div className="space-y-1.5 text-xs">
+						<div className="space-y-1">
+							<code className="text-muted-foreground">{'//element'}</code>
+							<p className="text-muted-foreground/70">{'Select all elements named "element"'}</p>
+						</div>
+						<div className="space-y-1">
+							<code className="text-muted-foreground">{'//element[@attr]'}</code>
+							<p className="text-muted-foreground/70">{'Elements with attribute "attr"'}</p>
+						</div>
+						<div className="space-y-1">
+							<code className="text-muted-foreground">{"//element[@attr='value']"}</code>
+							<p className="text-muted-foreground/70">{'Elements with specific attribute value'}</p>
+						</div>
+						<div className="space-y-1">
+							<code className="text-muted-foreground">{'//parent/child'}</code>
+							<p className="text-muted-foreground/70">{'Direct child elements'}</p>
+						</div>
+						<div className="space-y-1">
+							<code className="text-muted-foreground">{'//element/text()'}</code>
+							<p className="text-muted-foreground/70">{'Text content of elements'}</p>
+						</div>
+					</div>
+				</FormSection>
+			</OptionsPanel>
+
+			<SplitPane
+				className="flex-1"
+				left={
+					<CodeEditor
+						title="Input"
+						value={input}
+						onChange={onInputChange}
+						mode="input"
+						editorMode="xml"
+						placeholder="Enter XML here..."
+						onPaste={handlePaste}
+						onClear={handleClear}
+					/>
+				}
+				right={
+					<CodeEditor
+						title="Result"
+						value={queryOutput}
+						mode="readonly"
+						editorMode="xml"
+						placeholder="Query results will appear here..."
+						onCopy={handleCopyOutput}
+					/>
+				}
+			/>
+		</div>
+	);
+}
+
+export type { QueryTabProps };

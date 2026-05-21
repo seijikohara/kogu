@@ -5,14 +5,14 @@ pre-commit:
   parallel: true
   commands:
     frontend-format:
-      glob: '*.{ts,js,svelte,json,css,md,html}'
-      exclude: 'node_modules|bun.lock|.svelte-kit'
+      glob: '*.{ts,tsx,js,jsx,json,css,md,html}'
+      exclude: 'node_modules|bun.lock|route-tree.gen.ts'
       run: bun run format --write {staged_files} && git add {staged_files}
       stage_fixed: true
 
     frontend-lint:
-      glob: '*.{ts,js,svelte}'
-      exclude: 'node_modules|.svelte-kit'
+      glob: '*.{ts,tsx,js,jsx}'
+      exclude: 'node_modules|route-tree.gen.ts'
       run: bun run biome lint --no-errors-on-unmatched {staged_files}
 
     backend-format:

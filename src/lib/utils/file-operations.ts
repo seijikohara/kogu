@@ -1,5 +1,5 @@
 import { readText, writeText } from '@tauri-apps/plugin-clipboard-manager';
-import { toast } from 'svelte-sonner';
+import { toast } from 'sonner';
 
 // ============================================================================
 // Types

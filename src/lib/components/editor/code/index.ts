@@ -1,10 +1,13 @@
-export { default as CodeEditor } from './code-editor.svelte';
-export type {
-	ContextMenuItem,
-	CursorPosition,
-	EditorContext,
-	EditorMode,
-	HighlightLine,
-} from './code-editor-wrapper.svelte';
-export { default as CodeEditorWrapper } from './code-editor-wrapper.svelte';
-export { default as TreeView } from './tree-view.svelte';
+export { CodeEditor, type CodeEditorHandle, type CodeEditorProps } from './code-editor';
+export {
+	CodeEditorWrapper,
+	type CodeEditorWrapperHandle,
+	type CodeEditorWrapperProps,
+	type ContextMenuItem,
+	type CursorPosition,
+	type EditorContext,
+	type EditorMode,
+	type EditorTheme,
+	type HighlightLine,
+} from './code-editor-wrapper';
+export { TreeView, type TreeViewProps } from './tree-view';

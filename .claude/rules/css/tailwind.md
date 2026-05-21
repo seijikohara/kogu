@@ -1,5 +1,5 @@
 ---
-paths: src/**/*.{svelte,css}
+paths: src/**/*.{tsx,css}
 ---
 
 # Tailwind CSS v4 Guidelines
@@ -86,48 +86,57 @@ Use OKLCH for perceptually uniform colors with P3 gamut support:
 
 Always prefer Tailwind utility classes over inline styles:
 
-```svelte
-<!-- Preferred: Tailwind classes -->
-<div class="flex items-center gap-2 p-4 rounded-md bg-muted">
-	<span class="text-sm font-medium">Label</span>
-</div>
+```tsx
+{
+	/* Preferred: Tailwind classes */
+}
+<div className="flex items-center gap-2 p-4 rounded-md bg-muted">
+	<span className="text-sm font-medium">Label</span>
+</div>;
 
-<!-- Avoid: Inline styles -->
-<div style="display: flex; padding: 16px;">
+{
+	/* Avoid: Inline styles */
+}
+<div style={{ display: 'flex', padding: 16 }} />;
 ```
 
 ## Use cn() for Conditional Classes
 
-Use the `cn()` utility from `$lib/utils` for conditional class names:
+Use the `cn()` utility from `@/lib/utils` for conditional class names:
 
-```svelte
-<script lang="ts">
-	import { cn } from '$lib/utils';
-</script>
+```tsx
+import { cn } from '@/lib/utils';
 
-<button
-	class={cn(
-		'px-4 py-2 rounded-md transition-colors',
-		isActive && 'bg-primary text-primary-foreground',
-		isDisabled && 'opacity-50 cursor-not-allowed'
-	)}
->
-	Button
-</button>
+export function ActionButton({ isActive, isDisabled }: ActionButtonProps) {
+	return (
+		<button
+			type="button"
+			className={cn(
+				'px-4 py-2 rounded-md transition-colors',
+				isActive && 'bg-primary text-primary-foreground',
+				isDisabled && 'opacity-50 cursor-not-allowed'
+			)}
+		>
+			Button
+		</button>
+	);
+}
 ```
 
 ## Container Queries
 
 Container queries are built-in (no plugin required):
 
-```svelte
-<!-- Define container -->
-<div class="@container">
-	<!-- Responsive to container width -->
-	<div class="@sm:flex @md:grid @lg:grid-cols-3">
-		<!-- Content adapts to container, not viewport -->
+```tsx
+{
+	/* Define container */
+}
+<div className="@container">
+	{/* Responsive to container width */}
+	<div className="@sm:flex @md:grid @lg:grid-cols-3">
+		{/* Content adapts to container, not viewport */}
 	</div>
-</div>
+</div>;
 ```
 
 | Query  | Min Width |
@@ -143,10 +152,8 @@ Container queries are built-in (no plugin required):
 
 Use built-in 3D transform utilities:
 
-```svelte
-<div class="rotate-x-45 rotate-y-12 perspective-500">
-	<!-- 3D transformed element -->
-</div>
+```tsx
+<div className="rotate-x-45 rotate-y-12 perspective-500">{/* 3D transformed element */}</div>
 ```
 
 | Utility               | Description          |
@@ -157,26 +164,28 @@ Use built-in 3D transform utilities:
 | `perspective-{value}` | Set perspective      |
 | `transform-3d`        | Enable 3D transforms |
 
-## shadcn-svelte Integration
+## shadcn/ui Integration
 
-This project uses shadcn-svelte components with Tailwind CSS v4.
+This project uses shadcn/ui (React) components with Tailwind CSS v4.
 
 ### Color Tokens
 
 Use semantic color tokens defined in `app.css`:
 
-```svelte
-<!-- Background colors -->
-<div class="bg-background">Primary background</div>
-<div class="bg-card">Card background</div>
-<div class="bg-muted">Muted background</div>
+```tsx
+{/* Background colors */}
+<div className="bg-background">Primary background</div>
+<div className="bg-card">Card background</div>
+<div className="bg-muted">Muted background</div>
 
-<!-- Text colors -->
-<span class="text-foreground">Primary text</span>
-<span class="text-muted-foreground">Secondary text</span>
+{/* Text colors */}
+<span className="text-foreground">Primary text</span>
+<span className="text-muted-foreground">Secondary text</span>
 
-<!-- Interactive states -->
-<button class="bg-primary text-primary-foreground hover:bg-primary/90"> Primary Button </button>
+{/* Interactive states */}
+<button type="button" className="bg-primary text-primary-foreground hover:bg-primary/90">
+	Primary Button
+</button>
 ```
 
 ### Available Color Tokens
@@ -226,16 +235,18 @@ Use `@layer` for proper cascade ordering:
 
 ## Scoped Styles
 
-Only use `<style>` for styles that cannot be expressed with Tailwind:
+Prefer Tailwind utilities. When a style cannot be expressed with utilities, add it to `app.css` under the appropriate `@layer` so it remains globally available:
 
-```svelte
-<style>
-	/* Custom font for code */
-	:global(.code-editor) {
+```css
+/* app.css */
+@layer components {
+	.code-editor {
 		font-family: 'Monaco', 'Menlo', monospace;
 	}
-</style>
+}
 ```
+
+React does not have a scoped-style block equivalent to Svelte's `<style>` — colocate component-specific overrides in `app.css` or use CSS Modules if isolation is required.
 
 ## Best Practices
 
@@ -269,13 +280,13 @@ To explicitly include additional sources:
 
 Match data attributes on elements via the explicit arbitrary syntax. Do **not** use shorthand variants like `data-horizontal:` or `data-state:` unless a corresponding `@custom-variant` is registered in `app.css`.
 
-```svelte
-<!-- Preferred: explicit attribute selector. Works without configuration. -->
-<div data-state="active" class="data-[state=active]:bg-primary">…</div>
-<span data-orientation="horizontal" class="data-[orientation=horizontal]:h-1.5">…</span>
+```tsx
+{/* Preferred: explicit attribute selector. Works without configuration. */}
+<div data-state="active" className="data-[state=active]:bg-primary">…</div>
+<span data-orientation="horizontal" className="data-[orientation=horizontal]:h-1.5">…</span>
 
-<!-- Avoid: shorthand requires a custom-variant declaration that the project does not have. -->
-<span data-orientation="horizontal" class="data-horizontal:h-1.5">…</span>
+{/* Avoid: shorthand requires a custom-variant declaration that the project does not have. */}
+<span data-orientation="horizontal" className="data-horizontal:h-1.5">…</span>
 ```
 
 The shorthand silently no-ops when the variant is not registered. Symptoms include zero-height tracks, missing hidden states, and otherwise invisible UI. Verify with `getComputedStyle` if a Tailwind class on an attribute-driven primitive looks ineffective.
@@ -293,16 +304,26 @@ Otherwise, prefer the arbitrary syntax — it travels with the component and doe
 
 When a single component needs a value that varies by prop or recursion depth, propagate it through a CSS variable rather than inline `style` strings constructed in JavaScript:
 
-```svelte
-<!-- Preferred: CSS variable on the wrapper, Tailwind arbitrary value on consumers. -->
-<div style:--tree-depth={level} style:padding-left="calc(var(--tree-depth) * 16px)">
-	<button class="absolute left-[calc(var(--tree-depth)*16px+4px)]">…</button>
-</div>
+```tsx
+{
+	/* Preferred: CSS variable on the wrapper, Tailwind arbitrary value on consumers. */
+}
+<div
+	style={{ '--tree-depth': level, paddingLeft: 'calc(var(--tree-depth) * 16px)' } as CSSProperties}
+>
+	<button type="button" className="absolute left-[calc(var(--tree-depth)*16px+4px)]">
+		…
+	</button>
+</div>;
 
-<!-- Avoid: hand-built style strings in two places that must agree numerically. -->
-<div style="padding-left: {level * 16}px">
-	<button style="left: {level * 16 + 4}px">…</button>
-</div>
+{
+	/* Avoid: hand-built style strings in two places that must agree numerically. */
+}
+<div style={{ paddingLeft: `${level * 16}px` }}>
+	<button type="button" style={{ left: `${level * 16 + 4}px` }}>
+		…
+	</button>
+</div>;
 ```
 
-Single source of truth via a CSS variable lets one declaration drive multiple positions and survives theme overrides.
+Single source of truth via a CSS variable lets one declaration drive multiple positions and survives theme overrides. React requires casting the style object when using custom CSS variables — use `as CSSProperties` or an inline type assertion.

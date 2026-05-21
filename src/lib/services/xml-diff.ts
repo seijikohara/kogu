@@ -1,4 +1,4 @@
-import type { GenericDiffItem } from '$lib/constants/diff.js';
+import type { GenericDiffItem } from '@/lib/constants/diff';
 
 export interface XmlDiffOptions {
 	ignoreWhitespace?: boolean;

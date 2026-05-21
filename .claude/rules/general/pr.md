@@ -23,7 +23,7 @@ Brief description of changes (1-3 bullet points).
 
 ### Added
 
-- New `compare-tab.svelte` component
+- New `compare-tab.tsx` component
 - `findJsonDifferences` function in formatters
 
 ### Changed
