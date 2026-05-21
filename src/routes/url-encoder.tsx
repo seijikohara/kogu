@@ -416,25 +416,18 @@ function UrlEncoderPage() {
 	const renderParseTab = () => (
 		<div className="flex flex-1 flex-col overflow-hidden p-4">
 			<div className="mb-4">
-				<label
-					htmlFor="url-parse-input"
-					className="mb-1 block text-xs font-medium text-muted-foreground"
-				>
-					URL to Parse
-				</label>
-				<div className="flex gap-2">
-					<Input
-						id="url-parse-input"
-						type="text"
-						placeholder="https://example.com/path?query=value"
-						value={parseInput}
-						onChange={(e) => setParseInput(e.currentTarget.value)}
-						className="flex-1 font-mono text-sm"
-					/>
-					<Button variant="outline" size="sm" onClick={handleParseSample}>
-						Sample
-					</Button>
-				</div>
+				<FormInput
+					label="URL to Parse"
+					value={parseInput}
+					onValueChange={setParseInput}
+					placeholder="https://example.com/path?query=value"
+					className="font-mono"
+					trailing={
+						<Button variant="outline" size="sm" onClick={handleParseSample}>
+							Sample
+						</Button>
+					}
+				/>
 			</div>
 
 			{parsedUrl ? (
@@ -513,19 +506,12 @@ function UrlEncoderPage() {
 	const renderBuildTab = () => (
 		<div className="flex flex-1 flex-col overflow-hidden p-4">
 			<div className="mb-4">
-				<label
-					htmlFor="url-base-input"
-					className="mb-1 block text-xs font-medium text-muted-foreground"
-				>
-					Base URL
-				</label>
-				<Input
-					id="url-base-input"
-					type="text"
-					placeholder="https://example.com/path"
+				<FormInput
+					label="Base URL"
 					value={baseUrl}
-					onChange={(e) => setBaseUrl(e.currentTarget.value)}
-					className="font-mono text-sm"
+					onValueChange={setBaseUrl}
+					placeholder="https://example.com/path"
+					className="font-mono"
 				/>
 			</div>
 
