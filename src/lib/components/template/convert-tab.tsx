@@ -1,8 +1,10 @@
+import { ArrowRightLeft } from 'lucide-react';
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
 
 import { CodeEditor, type EditorMode } from '@/lib/components/editor';
-import { SplitPane } from '@/lib/components/layout';
+import { SectionHeader, SplitPane } from '@/lib/components/layout';
 import { OptionsPanel } from '@/lib/components/panel';
+import { EmbeddedEmptyState } from '@/lib/components/status';
 
 type ValidationResult = { valid: boolean | null } & Record<string, unknown>;
 type StatsResult = { input: string; valid: boolean | null; error: string } & Record<
@@ -122,14 +124,28 @@ export function ConvertTab({
 					/>
 				}
 				right={
-					<CodeEditor
-						title={outputTitle}
-						value={output}
-						mode="readonly"
-						editorMode={outputEditorMode}
-						placeholder="Converted output..."
-						onCopy={handleCopyOutput}
-					/>
+					input.trim().length === 0 ? (
+						<div className="flex h-full flex-col overflow-hidden">
+							<SectionHeader title={outputTitle ?? 'Output'} />
+							<div className="flex-1">
+								<EmbeddedEmptyState
+									icon={ArrowRightLeft}
+									title={`Enter ${inputEditorMode.toUpperCase()} to convert`}
+									description="The converted document will appear here."
+									fillHeight
+								/>
+							</div>
+						</div>
+					) : (
+						<CodeEditor
+							title={outputTitle}
+							value={output}
+							mode="readonly"
+							editorMode={outputEditorMode}
+							placeholder="Converted output..."
+							onCopy={handleCopyOutput}
+						/>
+					)
 				}
 			/>
 		</div>

@@ -1,3 +1,4 @@
+import { Code } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 
 import { CodeEditor } from '@/lib/components/editor';
@@ -9,8 +10,9 @@ import {
 	FormSection,
 	FormSelect,
 } from '@/lib/components/form';
-import { SplitPane } from '@/lib/components/layout';
+import { SectionHeader, SplitPane } from '@/lib/components/layout';
 import { OptionsPanel } from '@/lib/components/panel';
+import { EmbeddedEmptyState } from '@/lib/components/status';
 import {
 	type CSharpOptions,
 	type GoOptions,
@@ -850,14 +852,28 @@ export function GenerateTab({ input, onInputChange, onStatsChange }: GenerateTab
 					/>
 				}
 				right={
-					<CodeEditor
-						title={`Generated Code (${LANGUAGE_INFO[generateLanguage].label})`}
-						value={generatedCode}
-						mode="readonly"
-						editorMode={generateEditorMode}
-						placeholder="Generated code will appear here..."
-						onCopy={handleCopy}
-					/>
+					input.trim().length === 0 ? (
+						<div className="flex h-full flex-col overflow-hidden">
+							<SectionHeader title={`Generated Code (${LANGUAGE_INFO[generateLanguage].label})`} />
+							<div className="flex-1">
+								<EmbeddedEmptyState
+									icon={Code}
+									title="Enter JSON to generate code"
+									description={`The ${LANGUAGE_INFO[generateLanguage].label} class definitions will appear here.`}
+									fillHeight
+								/>
+							</div>
+						</div>
+					) : (
+						<CodeEditor
+							title={`Generated Code (${LANGUAGE_INFO[generateLanguage].label})`}
+							value={generatedCode}
+							mode="readonly"
+							editorMode={generateEditorMode}
+							placeholder="Generated code will appear here..."
+							onCopy={handleCopy}
+						/>
+					)
 				}
 			/>
 		</div>
