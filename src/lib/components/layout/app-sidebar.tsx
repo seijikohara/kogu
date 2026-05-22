@@ -89,6 +89,12 @@ export function AppSidebar(_: AppSidebarProps = {}) {
 
 	const pathname = useRouterState({ select: (state) => state.location.pathname });
 	const sidebar = useSidebar();
+	// Recent section shows only in collapsed (icon-only) mode. The expanded
+	// sidebar already displays every category inline, so a Recent section
+	// adds noise without value AND shifts the categorized tree downward
+	// when items get added or reordered. In icon-only mode the labels are
+	// hidden, so Recent earns its place as a quick-access shortcut row.
+	const showRecent = sidebar.state === 'collapsed';
 
 	// Record visits to tool pages (excludes `/` and `/settings`, which are
 	// filtered out of `getToolPages`'s definition).
@@ -154,7 +160,7 @@ export function AppSidebar(_: AppSidebarProps = {}) {
 						</SidebarGroupContent>
 					</SidebarGroup>
 				) : null}
-				{recentPages.length > 0 ? (
+				{showRecent && recentPages.length > 0 ? (
 					<SidebarGroup>
 						<SidebarGroupLabel className="text-sidebar-foreground">
 							<div className="flex items-center gap-2 px-2 py-1.5">
