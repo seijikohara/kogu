@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { Lock, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
 
-import { ActionButton, CopyButton } from '@/lib/components/action';
+import { ActionButton } from '@/lib/components/action';
 import { getErrorMessage } from '@/lib/utils';
 import {
 	FormCheckbox,
@@ -12,10 +12,9 @@ import {
 	FormSection,
 	FormSlider,
 } from '@/lib/components/form';
-import { SectionHeader } from '@/lib/components/layout';
+import { GeneratedListPanel } from '@/lib/components/panel';
 import { ToolShell } from '@/lib/components/shell';
-import { EmbeddedEmptyState, LiveStatusRegion, StatItem } from '@/lib/components/status';
-import { Card, CardContent } from '@/lib/components/ui/card';
+import { StatItem } from '@/lib/components/status';
 import { createToolOptionsStore } from '@/lib/stores';
 import { useDocumentTitle } from '@/lib/hooks';
 import {
@@ -247,45 +246,16 @@ function PasswordGeneratorPage() {
 				</>
 			}
 		>
-			<div className="flex h-full flex-col overflow-hidden">
-				<SectionHeader
-					title="Generated Passwords"
-					count={results.length || undefined}
-					trailing={
-						results.length > 0 ? (
-							<CopyButton
-								text={results.join('\n')}
-								label="Copy All"
-								toastLabel={`${results.length} password${results.length > 1 ? 's' : ''}`}
-								size="sm"
-								// SectionHeader is bg-surface-2; restore visible hover affordance.
-								className="h-7 hover:bg-interactive-hover"
-							/>
-						) : null
-					}
-				/>
-				<LiveStatusRegion className="flex-1 overflow-auto p-4">
-					{results.length > 0 ? (
-						<div key={flashCounter} className="animate-flash-success space-y-2 rounded-md">
-							{results.map((password) => (
-								<Card key={password} density="compact">
-									<CardContent className="flex items-center gap-2">
-										<code className="flex-1 break-all font-mono text-sm">{password}</code>
-										<CopyButton text={password} toastLabel="Password" size="sm" showLabel={false} />
-									</CardContent>
-								</Card>
-							))}
-						</div>
-					) : (
-						<EmbeddedEmptyState
-							icon={Lock}
-							title="Generate passwords"
-							description="Adjust the options on the left and click Generate to create secure passwords."
-							fillHeight
-						/>
-					)}
-				</LiveStatusRegion>
-			</div>
+			<GeneratedListPanel
+				title="Generated Passwords"
+				itemToastLabel="Password"
+				copyAllToastLabel={(n) => `${n} password${n > 1 ? 's' : ''}`}
+				emptyIcon={Lock}
+				emptyTitle="Generate passwords"
+				emptyDescription="Adjust the options on the left and click Generate to create secure passwords."
+				results={results}
+				flashCounter={flashCounter}
+			/>
 		</ToolShell>
 	);
 }
