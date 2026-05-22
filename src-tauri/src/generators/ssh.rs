@@ -222,7 +222,7 @@ fn generate_with_library(options: SshKeyOptions) -> Result<SshKeyResult, Generat
         method: _,
     } = options;
 
-    let mut rng = rand_core::OsRng;
+    let mut rng = ssh_key::rand_core::OsRng;
     let comment_str = comment.as_deref().unwrap_or("");
 
     let private_key: PrivateKey = match algorithm {

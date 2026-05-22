@@ -3290,7 +3290,6 @@ dependencies = [
  "pgp",
  "quick-xml 0.40.1",
  "rand 0.10.1",
- "rand_core 0.6.4",
  "reqwest",
  "roxmltree",
  "rustls",

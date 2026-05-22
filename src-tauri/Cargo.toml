@@ -83,5 +83,18 @@ x509-parser = "0.18"
 # DNS PTR Reverse Lookup
 hickory-resolver = { version = "0.26", features = ["tokio", "system-config"] }
 csnmp = "0.6.0"
-rand_core = { version = "0.6", features = ["getrandom"] }
+
+# Note: no direct `rand_core` dependency.
+#
+# The codebase only needs `OsRng` for `ssh-key` and `pgp` key generation,
+# both of which transitively pin `rand_core` 0.6 (via the RustCrypto 0.13
+# cohort). We re-export through `ssh_key::rand_core::OsRng` rather than
+# declaring `rand_core` here, which prevents Renovate from proposing the
+# 0.6 → 0.10 jump that would mismatch the transitive bound (tracked at
+# PR #260, closed).
+#
+# When `pgp` advances to a release that uses the newer RustCrypto cohort
+# (0.14+, which speaks `rand_core` 0.10), all three callers can switch to
+# the new trait at once and we can revisit whether to add `rand_core`
+# back as a direct dep on the consolidated version.
 
