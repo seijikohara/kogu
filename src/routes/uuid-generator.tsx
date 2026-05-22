@@ -3,7 +3,7 @@ import { useMemo, useState } from 'react';
 import { Fingerprint, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
 
-import { ActionButton, CopyButton } from '@/lib/components/action';
+import { ActionButton } from '@/lib/components/action';
 import { getErrorMessage } from '@/lib/utils';
 import {
 	FormCheckbox,
@@ -14,10 +14,9 @@ import {
 	FormSelect,
 	FormSlider,
 } from '@/lib/components/form';
-import { SectionHeader } from '@/lib/components/layout';
+import { GeneratedListPanel } from '@/lib/components/panel';
 import { ToolShell } from '@/lib/components/shell';
-import { EmbeddedEmptyState, LiveStatusRegion, StatItem } from '@/lib/components/status';
-import { Card, CardContent } from '@/lib/components/ui/card';
+import { StatItem } from '@/lib/components/status';
 import { createToolOptionsStore } from '@/lib/stores';
 import { useDocumentTitle } from '@/lib/hooks';
 import {
@@ -241,45 +240,16 @@ function UuidGeneratorPage() {
 				</>
 			}
 		>
-			<div className="flex h-full flex-col overflow-hidden">
-				<SectionHeader
-					title="Generated UUIDs"
-					count={results.length || undefined}
-					trailing={
-						results.length > 0 ? (
-							<CopyButton
-								text={results.join('\n')}
-								label="Copy All"
-								toastLabel={`${results.length} UUID${results.length > 1 ? 's' : ''}`}
-								size="sm"
-								// SectionHeader is bg-surface-2; restore visible hover affordance.
-								className="h-7 hover:bg-interactive-hover"
-							/>
-						) : null
-					}
-				/>
-				<LiveStatusRegion className="flex-1 overflow-auto p-4">
-					{results.length > 0 ? (
-						<div key={flashCounter} className="animate-flash-success space-y-2 rounded-md">
-							{results.map((uuid) => (
-								<Card key={uuid} density="compact">
-									<CardContent className="flex items-center gap-2">
-										<code className="flex-1 break-all font-mono text-sm">{uuid}</code>
-										<CopyButton text={uuid} toastLabel="UUID" size="sm" showLabel={false} />
-									</CardContent>
-								</Card>
-							))}
-						</div>
-					) : (
-						<EmbeddedEmptyState
-							icon={Fingerprint}
-							title="Generate UUIDs"
-							description="Pick a version on the left and click Generate to create unique identifiers."
-							fillHeight
-						/>
-					)}
-				</LiveStatusRegion>
-			</div>
+			<GeneratedListPanel
+				title="Generated UUIDs"
+				itemToastLabel="UUID"
+				copyAllToastLabel={(n) => `${n} UUID${n > 1 ? 's' : ''}`}
+				emptyIcon={Fingerprint}
+				emptyTitle="Generate UUIDs"
+				emptyDescription="Pick a version on the left and click Generate to create unique identifiers."
+				results={results}
+				flashCounter={flashCounter}
+			/>
 		</ToolShell>
 	);
 }
