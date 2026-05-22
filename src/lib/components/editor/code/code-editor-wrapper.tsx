@@ -410,7 +410,7 @@ export const CodeEditorWrapper = forwardRef<CodeEditorWrapperHandle, CodeEditorW
 			// biome-ignore lint/a11y/noStaticElementInteractions: Monaco mounts focusable, role-aware editor widgets inside this container; the contextmenu handler delegates to Monaco's own keyboard/mouse semantics.
 			<div
 				ref={containerRef}
-				className="code-editor-wrapper relative isolate z-0 overflow-hidden border border-border [&_.monaco-editor]:h-full [&_.highlight-added]:bg-[hsl(142_76%_36%/0.25)] [&_.highlight-changed]:bg-[hsl(45_93%_47%/0.25)] [&_.highlight-glyph-added]:bg-[hsl(142_76%_36%)] [&_.highlight-glyph-changed]:bg-[hsl(45_93%_47%)] [&_.highlight-glyph-removed]:bg-[hsl(0_84%_60%)] [&_.highlight-removed]:bg-[hsl(0_84%_60%/0.25)]"
+				className="code-editor-wrapper relative isolate z-0 overflow-hidden [&_.monaco-editor]:h-full [&_.highlight-added]:bg-[hsl(142_76%_36%/0.25)] [&_.highlight-changed]:bg-[hsl(45_93%_47%/0.25)] [&_.highlight-glyph-added]:bg-[hsl(142_76%_36%)] [&_.highlight-glyph-changed]:bg-[hsl(45_93%_47%)] [&_.highlight-glyph-removed]:bg-[hsl(0_84%_60%)] [&_.highlight-removed]:bg-[hsl(0_84%_60%/0.25)]"
 				style={{ height }}
 				onContextMenu={handleContextMenu}
 			/>
