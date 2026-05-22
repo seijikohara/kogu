@@ -11,6 +11,7 @@ import { ToolShell } from '@/lib/components/shell';
 import { EmbeddedEmptyState, LiveStatusRegion, StatItem } from '@/lib/components/status';
 import { Badge } from '@/lib/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/lib/components/ui/card';
+import { CodeBlock } from '@/lib/components/ui/code-block';
 import {
 	formatBytes,
 	generateAllHashes,
@@ -152,9 +153,7 @@ function HashGeneratorPage() {
 											/>
 										</CardHeader>
 										<CardContent>
-											<code className="block break-all rounded bg-muted p-2 font-mono text-xs">
-												{result.hash}
-											</code>
+											<CodeBlock>{result.hash}</CodeBlock>
 										</CardContent>
 									</Card>
 								))}

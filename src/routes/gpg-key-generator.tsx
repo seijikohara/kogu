@@ -23,6 +23,7 @@ import {
 	StatItem,
 } from '@/lib/components/status';
 import { Card, CardContent, CardHeader, CardTitle } from '@/lib/components/ui/card';
+import { CodeBlock } from '@/lib/components/ui/code-block';
 import { useDocumentTitle } from '@/lib/hooks';
 import {
 	buildGpgUserId,
@@ -397,9 +398,9 @@ function GpgKeyGeneratorPage() {
 									/>
 								</CardHeader>
 								<CardContent>
-									<pre className="max-h-48 overflow-auto whitespace-pre-wrap break-all rounded bg-muted p-2 font-mono text-xs">
+									<CodeBlock as="pre" maxHeight="md" wrap>
 										{keyResult.public_key}
-									</pre>
+									</CodeBlock>
 									<p className="mt-2 text-xs text-muted-foreground">
 										Share this key with others so they can encrypt messages to you
 									</p>
@@ -422,9 +423,9 @@ function GpgKeyGeneratorPage() {
 									/>
 								</CardHeader>
 								<CardContent>
-									<pre className="max-h-48 overflow-auto whitespace-pre-wrap break-all rounded bg-muted p-2 font-mono text-xs">
+									<CodeBlock as="pre" maxHeight="md" wrap>
 										{keyResult.private_key}
-									</pre>
+									</CodeBlock>
 									<p className="mt-2 text-xs text-warning">
 										Never share this key. Import with: <code>gpg --import private-key.asc</code>
 									</p>
@@ -451,9 +452,7 @@ function GpgKeyGeneratorPage() {
 														className="h-6 w-6"
 													/>
 												</div>
-												<code className="block rounded bg-muted p-2 font-mono text-xs">
-													{keyResult.gpg_command_interactive}
-												</code>
+												<CodeBlock>{keyResult.gpg_command_interactive}</CodeBlock>
 											</div>
 
 											<div>
@@ -466,9 +465,9 @@ function GpgKeyGeneratorPage() {
 														className="h-6 w-6"
 													/>
 												</div>
-												<pre className="max-h-32 overflow-auto whitespace-pre-wrap rounded bg-muted p-2 font-mono text-xs">
+												<CodeBlock as="pre" maxHeight="sm" wrap>
 													{keyResult.gpg_command_batch}
-												</pre>
+												</CodeBlock>
 											</div>
 										</div>
 									</CardContent>

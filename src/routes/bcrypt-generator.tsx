@@ -15,6 +15,7 @@ import {
 	StatItem,
 } from '@/lib/components/status';
 import { Card, CardContent, CardHeader, CardTitle } from '@/lib/components/ui/card';
+import { CodeBlock } from '@/lib/components/ui/code-block';
 import { useDocumentTitle } from '@/lib/hooks';
 import {
 	type BcryptCostInfo,
@@ -387,9 +388,9 @@ function BcryptGeneratorPage() {
 										/>
 									</CardHeader>
 									<CardContent>
-										<code className="block break-all rounded bg-muted p-3 font-mono text-sm">
+										<CodeBlock padding="md" size="sm">
 											{hashResult.hash}
-										</code>
+										</CodeBlock>
 									</CardContent>
 								</Card>
 
