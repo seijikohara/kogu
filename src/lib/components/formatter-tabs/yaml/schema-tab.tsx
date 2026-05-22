@@ -1,10 +1,11 @@
 import Ajv from 'ajv';
 import addFormats from 'ajv-formats';
 import { FileCheck, Wand2 } from 'lucide-react';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import * as yaml from 'yaml';
 
+import { useReportStats, useValidation } from '@/lib/hooks';
 import { CodeEditor } from '@/lib/components/editor';
 import { FormCheckbox, FormCheckboxGroup, FormMode, FormSection } from '@/lib/components/form';
 import { SplitPane } from '@/lib/components/layout';
@@ -51,15 +52,14 @@ export function SchemaTab({ input, onInputChange, onStatsChange }: SchemaTabProp
 	const [schemaVerboseErrors, setSchemaVerboseErrors] = useState<boolean>(false);
 	const [outputSchemaFormat, setOutputSchemaFormat] = useState<SchemaFormat>('yaml');
 
-	const inputValidation = useMemo<{ valid: boolean | null }>(() => {
-		if (!input.trim()) return { valid: null };
+	const inputValid = useValidation(input, (s) => {
 		try {
-			yaml.parse(input);
-			return { valid: true };
+			yaml.parse(s);
+			return true;
 		} catch {
-			return { valid: false };
+			return false;
 		}
-	}, [input]);
+	});
 
 	const inferredSchema = useMemo<string>(() => {
 		if (!input.trim()) return '';
@@ -82,13 +82,7 @@ export function SchemaTab({ input, onInputChange, onStatsChange }: SchemaTabProp
 			? `${schemaValidationResult.errors.length} validation error(s)`
 			: '');
 
-	useEffect(() => {
-		onStatsChange?.({
-			input,
-			valid: inputValidation.valid,
-			error: combinedError,
-		});
-	}, [input, inputValidation.valid, combinedError, onStatsChange]);
+	useReportStats(onStatsChange, input, inputValid, combinedError);
 
 	const handleValidateSchema = useCallback(() => {
 		if (!input.trim() || !schemaDefinition.trim()) {

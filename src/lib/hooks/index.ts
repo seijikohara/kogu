@@ -9,3 +9,5 @@ export {
 	type UseFormatterPageReturn,
 } from './use-formatter-page';
 export { useIsMobile } from './use-mobile';
+export { useReportStats } from './use-report-stats';
+export { useValidation } from './use-validation';

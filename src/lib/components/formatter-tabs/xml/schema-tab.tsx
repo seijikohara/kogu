@@ -1,7 +1,8 @@
 import { FileCheck, Wand2 } from 'lucide-react';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
+import { useReportStats, useValidation } from '@/lib/hooks';
 import { CodeEditor } from '@/lib/components/editor';
 import { FormCheckbox, FormCheckboxGroup, FormSection } from '@/lib/components/form';
 import { SplitPane } from '@/lib/components/layout';
@@ -124,17 +125,15 @@ export function SchemaTab({ input, onInputChange, onStatsChange }: SchemaTabProp
 	const [validateNamespaces, setValidateNamespaces] = useState<boolean>(true);
 	const [validateDtd, setValidateDtd] = useState<boolean>(false);
 
-	const inputValidation = useMemo<{ valid: boolean | null }>(() => {
-		if (!input.trim()) return { valid: null };
+	const inputValid = useValidation(input, (s) => {
 		try {
 			const parser = new DOMParser();
-			const doc = parser.parseFromString(input, 'application/xml');
-			const parserError = doc.querySelector('parsererror');
-			return { valid: parserError === null };
+			const doc = parser.parseFromString(s, 'application/xml');
+			return doc.querySelector('parsererror') === null;
 		} catch {
-			return { valid: false };
+			return false;
 		}
-	}, [input]);
+	});
 
 	const inferredSchema = useMemo<string>(() => {
 		if (!input.trim()) return '';
@@ -151,13 +150,7 @@ export function SchemaTab({ input, onInputChange, onStatsChange }: SchemaTabProp
 			? `${schemaValidationResult.errors.length} validation error(s)`
 			: '');
 
-	useEffect(() => {
-		onStatsChange?.({
-			input,
-			valid: inputValidation.valid,
-			error: combinedError,
-		});
-	}, [input, inputValidation.valid, combinedError, onStatsChange]);
+	useReportStats(onStatsChange, input, inputValid, combinedError);
 
 	const handleValidateSchema = useCallback(() => {
 		if (!input.trim() || !schemaDefinition.trim()) {

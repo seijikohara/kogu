@@ -1,6 +1,7 @@
 import { ArrowRightLeft } from 'lucide-react';
-import { useEffect, useMemo, useState, type ReactNode } from 'react';
+import { useMemo, useState, type ReactNode } from 'react';
 
+import { useReportStats } from '@/lib/hooks';
 import { CodeEditor } from '@/lib/components/editor';
 import { getErrorMessage } from '@/lib/utils';
 import { FormSection } from '@/lib/components/form';
@@ -132,13 +133,7 @@ export function CompareTab({
 	};
 
 	// Report stats to parent.
-	useEffect(() => {
-		onStatsChange?.({
-			input,
-			valid: combinedValidity,
-			error: compareError,
-		});
-	}, [input, combinedValidity, compareError, onStatsChange]);
+	useReportStats(onStatsChange, input, combinedValidity, compareError);
 
 	const handleSwap = () => {
 		const temp = input;

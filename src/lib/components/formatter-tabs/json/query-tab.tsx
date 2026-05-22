@@ -1,5 +1,5 @@
 import { Search } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
+import { useState } from 'react';
 
 import {
 	FormCheckbox,
@@ -11,7 +11,7 @@ import {
 import { getErrorMessage } from '@/lib/utils';
 import { InputOutputSplit } from '@/lib/components/layout';
 import { OptionsPanel } from '@/lib/components/panel';
-import { useClipboardActions } from '@/lib/hooks';
+import { useClipboardActions, useReportStats, useValidation } from '@/lib/hooks';
 import { executeJsonPath, validateJson } from '@/lib/services/formatters';
 import { useJsonFormatterOptions } from '@/lib/stores';
 
@@ -73,11 +73,7 @@ export function QueryTab({ input, onInputChange, onStatsChange }: QueryTabProps)
 	const [queryFlattenArrays, setQueryFlattenArrays] = useState<boolean>(false);
 	const [queryWrapResults, setQueryWrapResults] = useState<boolean>(true);
 
-	const inputValidation = useMemo<{ valid: boolean | null }>(() => {
-		if (!input.trim()) return { valid: null };
-		const result = validateJson(input, inputFormat);
-		return { valid: result.valid };
-	}, [input, inputFormat]);
+	const inputValid = useValidation(input, (s) => validateJson(s, inputFormat).valid);
 
 	const queryMaxResults = Number.parseInt(queryMaxResultsStr, 10) || 0;
 
@@ -106,13 +102,7 @@ export function QueryTab({ input, onInputChange, onStatsChange }: QueryTabProps)
 	const queryResult = queryResultData.result;
 	const queryError = queryResultData.error;
 
-	useEffect(() => {
-		onStatsChange?.({
-			input,
-			valid: inputValidation.valid,
-			error: queryError,
-		});
-	}, [input, inputValidation.valid, queryError, onStatsChange]);
+	useReportStats(onStatsChange, input, inputValid, queryError);
 
 	const { handlePaste, handleCopy } = useClipboardActions({
 		onInputChange,

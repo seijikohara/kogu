@@ -1,11 +1,11 @@
 import { Search } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 
 import { FormInput, FormSection } from '@/lib/components/form';
 import { getErrorMessage } from '@/lib/utils';
 import { InputOutputSplit } from '@/lib/components/layout';
 import { OptionsPanel } from '@/lib/components/panel';
-import { useClipboardActions } from '@/lib/hooks';
+import { useClipboardActions, useReportStats, useValidation } from '@/lib/hooks';
 import { executeXPath, formatXml } from '@/lib/services/formatters';
 
 interface TabStats {
@@ -24,17 +24,15 @@ export function QueryTab({ input, onInputChange, onStatsChange }: QueryTabProps)
 	const [xpathExpression, setXpathExpression] = useState('//');
 	const [showOptions, setShowOptions] = useState(true);
 
-	const inputValidation = useMemo<{ valid: boolean | null }>(() => {
-		if (!input.trim()) return { valid: null };
+	const inputValid = useValidation(input, (s) => {
 		try {
 			const parser = new DOMParser();
-			const doc = parser.parseFromString(input, 'application/xml');
-			const parserError = doc.querySelector('parsererror');
-			return { valid: parserError === null };
+			const doc = parser.parseFromString(s, 'application/xml');
+			return doc.querySelector('parsererror') === null;
 		} catch {
-			return { valid: false };
+			return false;
 		}
-	}, [input]);
+	});
 
 	const queryResultData = useMemo<{ output: string; error: string; count: number }>(() => {
 		if (!input.trim() || xpathExpression.trim() === '' || xpathExpression.trim() === '//') {
@@ -70,13 +68,7 @@ export function QueryTab({ input, onInputChange, onStatsChange }: QueryTabProps)
 	const queryError = queryResultData.error;
 	const resultCount = queryResultData.count;
 
-	useEffect(() => {
-		onStatsChange?.({
-			input,
-			valid: inputValidation.valid,
-			error: queryError,
-		});
-	}, [input, inputValidation.valid, queryError, onStatsChange]);
+	useReportStats(onStatsChange, input, inputValid, queryError);
 
 	const { handlePaste, handleCopy } = useClipboardActions({
 		onInputChange,

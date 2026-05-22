@@ -1,5 +1,5 @@
 import { FileText } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 
 import type { ContextMenuItem } from '@/lib/components/editor';
 import { getErrorMessage } from '@/lib/utils';
@@ -12,7 +12,7 @@ import {
 } from '@/lib/components/form';
 import { InputOutputSplit } from '@/lib/components/layout';
 import { OptionsPanel } from '@/lib/components/panel';
-import { useClipboardActions } from '@/lib/hooks';
+import { useClipboardActions, useReportStats } from '@/lib/hooks';
 import {
 	defaultJsonFormatOptions,
 	type JsonFormatOptions,
@@ -198,13 +198,7 @@ export function FormatTab({ input, onInputChange, onStatsChange }: FormatTabProp
 		formatOptions
 	);
 
-	useEffect(() => {
-		onStatsChange?.({
-			input,
-			valid: validation.valid,
-			error: formatError,
-		});
-	}, [input, validation.valid, formatError, onStatsChange]);
+	useReportStats(onStatsChange, input, validation.valid, formatError);
 
 	const { handlePaste, handleClear, handleCopy } = useClipboardActions({
 		onInputChange,
