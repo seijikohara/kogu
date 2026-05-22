@@ -10,6 +10,7 @@ import { ToolShell } from '@/lib/components/shell';
 import { EmptyState, LiveStatusRegion } from '@/lib/components/status';
 import { Card, CardContent, CardHeader, CardTitle } from '@/lib/components/ui/card';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/lib/components/ui/tooltip';
+import { CodeBlock } from '@/lib/components/ui/code-block';
 import { useDocumentTitle } from '@/lib/hooks';
 import {
 	decodeJwt,
@@ -223,9 +224,9 @@ function JwtDecoderPage() {
 											) : null}
 										</div>
 									) : null}
-									<pre className="overflow-auto rounded bg-muted p-3 font-mono text-xs">
+									<CodeBlock as="pre" padding="md">
 										{formatJson(decoded.header)}
-									</pre>
+									</CodeBlock>
 								</CardContent>
 							</Card>
 
@@ -241,9 +242,9 @@ function JwtDecoderPage() {
 									/>
 								</CardHeader>
 								<CardContent>
-									<pre className="overflow-auto rounded bg-muted p-3 font-mono text-xs">
+									<CodeBlock as="pre" padding="md">
 										{formatJson(decoded.payload)}
-									</pre>
+									</CodeBlock>
 								</CardContent>
 							</Card>
 
@@ -295,9 +296,7 @@ function JwtDecoderPage() {
 									/>
 								</CardHeader>
 								<CardContent>
-									<code className="block break-all rounded bg-muted p-3 font-mono text-xs">
-										{decoded.signature}
-									</code>
+									<CodeBlock padding="md">{decoded.signature}</CodeBlock>
 									<p className="mt-2 text-xs text-muted-foreground">
 										Note: Signature verification requires the secret key and is not performed
 										client-side.

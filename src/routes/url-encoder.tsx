@@ -22,6 +22,7 @@ import { Button } from '@/lib/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/lib/components/ui/card';
 import { Input } from '@/lib/components/ui/input';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/lib/components/ui/tooltip';
+import { CodeBlock } from '@/lib/components/ui/code-block';
 import { useActiveTab, useTabStore } from '@/lib/stores';
 import { useDocumentTitle } from '@/lib/hooks';
 import {
@@ -567,7 +568,9 @@ function UrlEncoderPage() {
 					</div>
 				</CardHeader>
 				<CardContent>
-					<code className="block break-all rounded bg-muted p-3 font-mono text-sm">{builtUrl}</code>
+					<CodeBlock padding="md" size="sm">
+						{builtUrl}
+					</CodeBlock>
 				</CardContent>
 			</Card>
 		</div>

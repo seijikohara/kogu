@@ -22,6 +22,7 @@ import {
 	StatItem,
 } from '@/lib/components/status';
 import { Card, CardContent, CardHeader, CardTitle } from '@/lib/components/ui/card';
+import { CodeBlock } from '@/lib/components/ui/code-block';
 import { useDocumentTitle } from '@/lib/hooks';
 import {
 	cancelWorkerOperation,
@@ -328,9 +329,7 @@ function SshKeyGeneratorPage() {
 										/>
 									</CardHeader>
 									<CardContent>
-										<code className="block rounded bg-muted p-2 font-mono text-sm">
-											{keyResult.fingerprint}
-										</code>
+										<CodeBlock size="sm">{keyResult.fingerprint}</CodeBlock>
 									</CardContent>
 								</Card>
 							) : null}
@@ -350,9 +349,9 @@ function SshKeyGeneratorPage() {
 									/>
 								</CardHeader>
 								<CardContent>
-									<pre className="max-h-32 overflow-auto whitespace-pre-wrap break-all rounded bg-muted p-2 font-mono text-xs">
+									<CodeBlock as="pre" maxHeight="sm" wrap>
 										{keyResult.public_key}
-									</pre>
+									</CodeBlock>
 									<p className="mt-2 text-xs text-muted-foreground">
 										Add this to <code>~/.ssh/authorized_keys</code> on remote servers
 									</p>
@@ -375,9 +374,9 @@ function SshKeyGeneratorPage() {
 									/>
 								</CardHeader>
 								<CardContent>
-									<pre className="max-h-48 overflow-auto whitespace-pre-wrap break-all rounded bg-muted p-2 font-mono text-xs">
+									<CodeBlock as="pre" maxHeight="md" wrap>
 										{keyResult.private_key}
-									</pre>
+									</CodeBlock>
 									<p className="mt-2 text-xs text-warning">
 										Save this to <code>~/.ssh/{privateKeyFile}</code> with permissions 600
 									</p>
@@ -402,9 +401,7 @@ function SshKeyGeneratorPage() {
 										/>
 									</CardHeader>
 									<CardContent>
-										<code className="block rounded bg-muted p-2 font-mono text-xs">
-											{keyResult.ssh_keygen_command}
-										</code>
+										<CodeBlock>{keyResult.ssh_keygen_command}</CodeBlock>
 									</CardContent>
 								</Card>
 							) : null}
