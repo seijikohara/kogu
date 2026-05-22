@@ -12,6 +12,7 @@ import { Button } from '@/lib/components/ui/button';
 import { inferJsonSchema, parseJson, validateJson } from '@/lib/services/formatters';
 import { useJsonFormatterOptions } from '@/lib/stores';
 import { cn } from '@/lib/utils';
+import { getErrorMessage } from '@/lib/utils';
 import { copyToClipboard, pasteFromClipboard } from '@/lib/utils/file-operations';
 
 import { JsonFormatSection } from './json-format-section';
@@ -118,7 +119,7 @@ export function SchemaTab({ input, onInputChange, onStatsChange }: SchemaTabProp
 			}
 			setSchemaError('');
 		} catch (e) {
-			setSchemaError(e instanceof Error ? e.message : 'Validation failed');
+			setSchemaError(getErrorMessage(e, 'Validation failed'));
 			setSchemaValidationResult(null);
 		}
 	}, [

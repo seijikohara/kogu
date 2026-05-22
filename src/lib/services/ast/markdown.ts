@@ -4,6 +4,7 @@
  */
 
 import type { AstNode, AstNodeType, AstParseResult, AstPosition, AstRange } from './types.js';
+import { getErrorMessage } from '@/lib/utils';
 
 /** Markdown block types for parsing */
 interface MarkdownBlock {
@@ -563,7 +564,7 @@ export const parseMarkdownToAst = (text: string): AstParseResult => {
 			ast: null,
 			errors: [
 				{
-					message: error instanceof Error ? error.message : String(error),
+					message: getErrorMessage(error),
 				},
 			],
 		};

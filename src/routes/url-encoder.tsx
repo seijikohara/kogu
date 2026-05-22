@@ -4,6 +4,7 @@ import { ArrowRightLeft, BookOpen, ExternalLink, Hammer, Link2, Plus, Trash2 } f
 import { toast } from 'sonner';
 
 import { CopyButton } from '@/lib/components/action';
+import { getErrorMessage } from '@/lib/utils';
 import { CodeEditor } from '@/lib/components/editor';
 import {
 	FormCheckbox,
@@ -131,7 +132,7 @@ function UrlEncoderPage() {
 					: decodeUrlWithOptions(input, decodeOptions);
 			return { output: result, error: '' };
 		} catch (e) {
-			return { output: '', error: e instanceof Error ? e.message : 'Invalid input' };
+			return { output: '', error: getErrorMessage(e, 'Invalid input') };
 		}
 	})();
 

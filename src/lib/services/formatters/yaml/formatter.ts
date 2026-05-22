@@ -3,6 +3,7 @@
  */
 
 import * as yaml from 'yaml';
+import { getErrorMessage } from '@/lib/utils';
 
 import { defaultYamlFormatOptions } from '../constants.js';
 import type { YamlFormatOptions, YamlStats } from '../types.js';
@@ -77,7 +78,7 @@ export const validateYaml = (input: string): { valid: boolean; error?: string } 
 	} catch (e) {
 		return {
 			valid: false,
-			error: e instanceof Error ? e.message : 'Invalid YAML',
+			error: getErrorMessage(e, 'Invalid YAML'),
 		};
 	}
 };

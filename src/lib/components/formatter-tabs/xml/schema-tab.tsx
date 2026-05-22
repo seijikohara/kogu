@@ -8,6 +8,7 @@ import { SplitPane } from '@/lib/components/layout';
 import { OptionsPanel } from '@/lib/components/panel';
 import { Button } from '@/lib/components/ui/button';
 import { cn } from '@/lib/utils';
+import { getErrorMessage } from '@/lib/utils';
 import { copyToClipboard, pasteFromClipboard } from '@/lib/utils/file-operations';
 
 interface TabStats {
@@ -109,7 +110,7 @@ const inferXsdSchema = (xmlInput: string): string => {
 
 		return `${header}${elementDefs}\n\n</xs:schema>`;
 	} catch (e) {
-		throw new Error(e instanceof Error ? e.message : 'Failed to infer schema');
+		throw new Error(getErrorMessage(e, 'Failed to infer schema'));
 	}
 };
 
@@ -221,7 +222,7 @@ export function SchemaTab({ input, onInputChange, onStatsChange }: SchemaTabProp
 			}
 			setSchemaError('');
 		} catch (e) {
-			setSchemaError(e instanceof Error ? e.message : 'Validation failed');
+			setSchemaError(getErrorMessage(e, 'Validation failed'));
 			setSchemaValidationResult(null);
 		}
 	}, [input, schemaDefinition, validateNamespaces]);

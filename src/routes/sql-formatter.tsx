@@ -5,6 +5,7 @@ import { toast } from 'sonner';
 import type { SqlLanguage } from 'sql-formatter';
 
 import { CodeEditor } from '@/lib/components/editor';
+import { getErrorMessage } from '@/lib/utils';
 import {
 	FormCheckbox,
 	FormCheckboxGroup,
@@ -98,7 +99,7 @@ function SqlFormatterPage() {
 			const result = mode === 'minify' ? minifySql(input) : formatSql(input, formatOptions);
 			return { output: result, error: '' };
 		} catch (e) {
-			return { output: '', error: e instanceof Error ? e.message : 'Invalid SQL' };
+			return { output: '', error: getErrorMessage(e, 'Invalid SQL') };
 		}
 	})();
 

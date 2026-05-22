@@ -4,6 +4,7 @@ import { Code2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { CodeEditor } from '@/lib/components/editor';
+import { getErrorMessage } from '@/lib/utils';
 import {
 	FormCheckbox,
 	FormCheckboxGroup,
@@ -89,7 +90,7 @@ function Base64EncoderPage() {
 					: decodeFromBase64(input, decodeOptions);
 			return { output: result, error: '' };
 		} catch (e) {
-			return { output: '', error: e instanceof Error ? e.message : 'Invalid input' };
+			return { output: '', error: getErrorMessage(e, 'Invalid input') };
 		}
 	})();
 

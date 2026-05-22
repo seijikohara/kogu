@@ -2,6 +2,7 @@ import { Code } from 'lucide-react';
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
 
 import type { EditorMode } from '@/lib/components/editor';
+import { getErrorMessage } from '@/lib/utils';
 import {
 	FormCheckbox,
 	FormCheckboxGroup,
@@ -331,7 +332,7 @@ export function GenerateTabTemplate({
 					return { code: generateCode(data, 'php', options as PhpOptions), error: '' };
 			}
 		} catch (e) {
-			return { code: '', error: e instanceof Error ? e.message : 'Failed to generate code' };
+			return { code: '', error: getErrorMessage(e, 'Failed to generate code') };
 		}
 	})();
 

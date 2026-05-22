@@ -6,6 +6,7 @@
  */
 
 import { CronExpressionParser } from 'cron-parser';
+import { getErrorMessage } from '@/lib/utils';
 import cronstrue from 'cronstrue';
 
 export type Result<T> =
@@ -135,7 +136,7 @@ export const explainExpression = (expression: string): Result<string> => {
 	try {
 		return { ok: true, value: cronstrue.toString(expression, { use24HourTimeFormat: true }) };
 	} catch (e) {
-		return { ok: false, error: e instanceof Error ? e.message : String(e) };
+		return { ok: false, error: getErrorMessage(e) };
 	}
 };
 
@@ -149,7 +150,7 @@ export const validateField = (field: keyof CronParts, value: string): Result<tru
 		CronExpressionParser.parse(candidate);
 		return { ok: true, value: true };
 	} catch (e) {
-		return { ok: false, error: e instanceof Error ? e.message : String(e) };
+		return { ok: false, error: getErrorMessage(e) };
 	}
 };
 
@@ -161,7 +162,7 @@ export const nextExecutions = (expression: string, count: number): Result<readon
 		const dates = Array.from({ length: count }, () => interval.next().toDate());
 		return { ok: true, value: dates };
 	} catch (e) {
-		return { ok: false, error: e instanceof Error ? e.message : String(e) };
+		return { ok: false, error: getErrorMessage(e) };
 	}
 };
 

@@ -3,6 +3,7 @@
  */
 
 import { format as sqlFormat } from 'sql-formatter';
+import { getErrorMessage } from '@/lib/utils';
 
 import { defaultSqlFormatOptions } from '../constants.js';
 import type { SqlFormatOptions, SqlStats } from '../types.js';
@@ -52,7 +53,7 @@ export const validateSql = (input: string): { valid: boolean; error?: string } =
 	} catch (e) {
 		return {
 			valid: false,
-			error: e instanceof Error ? e.message : 'Invalid SQL',
+			error: getErrorMessage(e, 'Invalid SQL'),
 		};
 	}
 };

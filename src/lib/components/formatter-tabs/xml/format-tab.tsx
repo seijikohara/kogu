@@ -2,6 +2,7 @@ import { FileText } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 
 import type { ContextMenuItem } from '@/lib/components/editor';
+import { getErrorMessage } from '@/lib/utils';
 import {
 	FormCheckbox,
 	FormCheckboxGroup,
@@ -100,7 +101,7 @@ export function FormatTab({ input, onInputChange, onStatsChange }: FormatTabProp
 			const result = formatMode === 'minify' ? minifyXml(input) : formatXml(input, formatOptions);
 			return { output: result, error: '' };
 		} catch (e) {
-			return { output: '', error: e instanceof Error ? e.message : 'Invalid XML' };
+			return { output: '', error: getErrorMessage(e, 'Invalid XML') };
 		}
 	})();
 

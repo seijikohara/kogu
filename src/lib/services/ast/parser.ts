@@ -4,6 +4,7 @@
  */
 
 import { parseMarkdownToAst } from './markdown.js';
+import { getErrorMessage } from '@/lib/utils';
 import type {
 	AstLanguage,
 	AstNode,
@@ -36,7 +37,7 @@ export const parseToAst = async (text: string, language: AstLanguage): Promise<A
 			ast: null,
 			errors: [
 				{
-					message: error instanceof Error ? error.message : String(error),
+					message: getErrorMessage(error),
 				},
 			],
 		};

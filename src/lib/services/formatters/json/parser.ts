@@ -3,6 +3,7 @@
  */
 
 import JSON5 from 'json5';
+import { getErrorMessage } from '@/lib/utils';
 import * as jsonc from 'jsonc-parser';
 
 import type {
@@ -199,7 +200,7 @@ export const validateJson = (
 	} catch (e) {
 		return {
 			valid: false,
-			error: e instanceof Error ? e.message : 'Invalid JSON',
+			error: getErrorMessage(e, 'Invalid JSON'),
 			detectedFormat,
 		};
 	}

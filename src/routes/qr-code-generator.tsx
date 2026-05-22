@@ -18,6 +18,7 @@ import type { CornerDotType, CornerSquareType, DotType } from 'qr-code-styling';
 import { toast } from 'sonner';
 
 import { CopyButton } from '@/lib/components/action';
+import { getErrorMessage } from '@/lib/utils';
 import {
 	FormCheckbox,
 	FormInfo,
@@ -228,7 +229,7 @@ function QrCodeGeneratorPage() {
 			toast.success(`${extension.toUpperCase()} downloaded`);
 		} catch (e) {
 			toast.error('Download failed', {
-				description: e instanceof Error ? e.message : String(e),
+				description: getErrorMessage(e),
 			});
 		}
 	};

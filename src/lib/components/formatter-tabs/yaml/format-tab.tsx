@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from 'react';
 import * as yaml from 'yaml';
 
 import type { ContextMenuItem } from '@/lib/components/editor';
+import { getErrorMessage } from '@/lib/utils';
 import {
 	FormCheckbox,
 	FormCheckboxGroup,
@@ -120,7 +121,7 @@ export function FormatTab({ input, onInputChange, onStatsChange }: FormatTabProp
 
 			return { output: result, error: '' };
 		} catch (e) {
-			return { output: '', error: e instanceof Error ? e.message : 'Invalid YAML' };
+			return { output: '', error: getErrorMessage(e, 'Invalid YAML') };
 		}
 	})();
 
