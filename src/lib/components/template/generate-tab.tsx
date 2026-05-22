@@ -7,7 +7,6 @@ import {
 	FormCheckbox,
 	FormCheckboxGroup,
 	FormInput,
-	FormMode,
 	FormSection,
 	FormSelect,
 } from '@/lib/components/form';
@@ -356,10 +355,14 @@ export function GenerateTabTemplate({
 				{extraOptions}
 
 				<FormSection title="Target Language">
-					<FormMode
+					<FormSelect
 						value={generateLanguage}
-						onValueChange={setGenerateLanguage}
-						options={LANGUAGE_OPTIONS.map((lang) => ({ value: lang.value, label: lang.label }))}
+						onValueChange={(v) => setGenerateLanguage(v as TargetLanguage)}
+						options={LANGUAGE_OPTIONS.map((lang) => ({
+							value: lang.value,
+							label: lang.label,
+							description: `.${lang.extension}`,
+						}))}
 					/>
 				</FormSection>
 
