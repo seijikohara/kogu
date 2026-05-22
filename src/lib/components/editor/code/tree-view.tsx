@@ -27,7 +27,7 @@ import {
 import { toast } from 'sonner';
 import { Button } from '@/lib/components/ui/button';
 import { ListItemButton } from '@/lib/components/ui/list-item-button';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/lib/components/ui/tooltip';
+import { IconTooltip } from '@/lib/components/ui/icon-tooltip';
 import type { AstNode, AstNodeType } from '@/lib/services/ast';
 
 const TYPE_ICON_MAP: Partial<Record<AstNodeType, LucideIcon>> = {
@@ -420,26 +420,23 @@ export function TreeView({
 				style={wrapperStyle}
 			>
 				{hasChildren ? (
-					<Tooltip>
-						<TooltipTrigger asChild>
-							<Button
-								variant="ghost"
-								size="icon-sm"
-								className="absolute top-1/2 left-[calc(var(--tree-depth)*16px+4px)] z-10 h-5 w-5 -translate-y-1/2 rounded transition-all hover:bg-muted-foreground/20"
-								tabIndex={-1}
-								onClick={(e) => {
-									e.stopPropagation();
-									setExpanded(!expanded);
-								}}
-							>
-								<ChevronRight
-									className={`h-3.5 w-3.5 text-muted-foreground transition-transform duration-200 ${expanded ? 'rotate-90' : ''}`}
-								/>
-								<span className="sr-only">{chevronLabel}</span>
-							</Button>
-						</TooltipTrigger>
-						<TooltipContent>{chevronLabel}</TooltipContent>
-					</Tooltip>
+					<IconTooltip label={chevronLabel}>
+						<Button
+							variant="ghost"
+							size="icon-sm"
+							className="absolute top-1/2 left-[calc(var(--tree-depth)*16px+4px)] z-10 h-5 w-5 -translate-y-1/2 rounded transition-all hover:bg-muted-foreground/20"
+							tabIndex={-1}
+							onClick={(e) => {
+								e.stopPropagation();
+								setExpanded(!expanded);
+							}}
+						>
+							<ChevronRight
+								className={`h-3.5 w-3.5 text-muted-foreground transition-transform duration-200 ${expanded ? 'rotate-90' : ''}`}
+							/>
+							<span className="sr-only">{chevronLabel}</span>
+						</Button>
+					</IconTooltip>
 				) : null}
 
 				<ListItemButton
@@ -473,40 +470,34 @@ export function TreeView({
 				</ListItemButton>
 
 				<div className="absolute top-1/2 right-1 flex -translate-y-1/2 items-center gap-0.5 opacity-0 transition-opacity group-hover/tree:opacity-100">
-					<Tooltip>
-						<TooltipTrigger asChild>
-							<Button
-								variant="ghost"
-								size="icon-sm"
-								className="h-5 w-5 text-muted-foreground hover:bg-muted hover:text-foreground"
-								tabIndex={-1}
-								onClick={handleCopyPath}
-							>
-								<span className="font-mono text-xs">$</span>
-								<span className="sr-only">Copy path</span>
-							</Button>
-						</TooltipTrigger>
-						<TooltipContent>Copy path</TooltipContent>
-					</Tooltip>
-					<Tooltip>
-						<TooltipTrigger asChild>
-							<Button
-								variant="ghost"
-								size="icon-sm"
-								className="h-5 w-5 text-muted-foreground hover:bg-muted hover:text-foreground"
-								tabIndex={-1}
-								onClick={handleCopyValue}
-							>
-								{justCopied === node.path ? (
-									<Check className="h-3 w-3 text-success" />
-								) : (
-									<Copy className="h-3 w-3" />
-								)}
-								<span className="sr-only">Copy value</span>
-							</Button>
-						</TooltipTrigger>
-						<TooltipContent>Copy value</TooltipContent>
-					</Tooltip>
+					<IconTooltip label="Copy path">
+						<Button
+							variant="ghost"
+							size="icon-sm"
+							className="h-5 w-5 text-muted-foreground hover:bg-muted hover:text-foreground"
+							tabIndex={-1}
+							onClick={handleCopyPath}
+						>
+							<span className="font-mono text-xs">$</span>
+							<span className="sr-only">Copy path</span>
+						</Button>
+					</IconTooltip>
+					<IconTooltip label="Copy value">
+						<Button
+							variant="ghost"
+							size="icon-sm"
+							className="h-5 w-5 text-muted-foreground hover:bg-muted hover:text-foreground"
+							tabIndex={-1}
+							onClick={handleCopyValue}
+						>
+							{justCopied === node.path ? (
+								<Check className="h-3 w-3 text-success" />
+							) : (
+								<Copy className="h-3 w-3" />
+							)}
+							<span className="sr-only">Copy value</span>
+						</Button>
+					</IconTooltip>
 				</div>
 			</div>
 

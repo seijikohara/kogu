@@ -53,7 +53,7 @@ import {
 	DropdownMenuTrigger,
 } from '@/lib/components/ui/dropdown-menu';
 import { ListItemButton } from '@/lib/components/ui/list-item-button';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/lib/components/ui/tooltip';
+import { IconTooltip } from '@/lib/components/ui/icon-tooltip';
 import { useDocumentTitle } from '@/lib/hooks';
 import {
 	applyFormat,
@@ -537,20 +537,17 @@ function MarkdownEditorPage() {
 					{textFormatButtons.map((btn) => {
 						const Icon = btn.icon;
 						return (
-							<Tooltip key={btn.action}>
-								<TooltipTrigger asChild>
-									<Button
-										variant="ghost"
-										size="toolbar-icon"
-										className="hover:bg-interactive-hover"
-										onClick={() => handleFormat(btn.action)}
-									>
-										<Icon className="h-3.5 w-3.5" />
-										<span className="sr-only">{btn.label}</span>
-									</Button>
-								</TooltipTrigger>
-								<TooltipContent>{btn.label}</TooltipContent>
-							</Tooltip>
+							<IconTooltip key={btn.action} label={btn.label}>
+								<Button
+									variant="ghost"
+									size="toolbar-icon"
+									className="hover:bg-interactive-hover"
+									onClick={() => handleFormat(btn.action)}
+								>
+									<Icon className="h-3.5 w-3.5" />
+									<span className="sr-only">{btn.label}</span>
+								</Button>
+							</IconTooltip>
 						);
 					})}
 
@@ -589,20 +586,17 @@ function MarkdownEditorPage() {
 					{listButtons.map((btn) => {
 						const Icon = btn.icon;
 						return (
-							<Tooltip key={btn.action}>
-								<TooltipTrigger asChild>
-									<Button
-										variant="ghost"
-										size="toolbar-icon"
-										className="hover:bg-interactive-hover"
-										onClick={() => handleFormat(btn.action)}
-									>
-										<Icon className="h-3.5 w-3.5" />
-										<span className="sr-only">{btn.label}</span>
-									</Button>
-								</TooltipTrigger>
-								<TooltipContent>{btn.label}</TooltipContent>
-							</Tooltip>
+							<IconTooltip key={btn.action} label={btn.label}>
+								<Button
+									variant="ghost"
+									size="toolbar-icon"
+									className="hover:bg-interactive-hover"
+									onClick={() => handleFormat(btn.action)}
+								>
+									<Icon className="h-3.5 w-3.5" />
+									<span className="sr-only">{btn.label}</span>
+								</Button>
+							</IconTooltip>
 						);
 					})}
 
@@ -611,39 +605,33 @@ function MarkdownEditorPage() {
 					{insertButtons.map((btn) => {
 						const Icon = btn.icon;
 						return (
-							<Tooltip key={btn.action}>
-								<TooltipTrigger asChild>
-									<Button
-										variant="ghost"
-										size="toolbar-icon"
-										className="hover:bg-interactive-hover"
-										onClick={() => handleFormat(btn.action)}
-									>
-										<Icon className="h-3.5 w-3.5" />
-										<span className="sr-only">{btn.label}</span>
-									</Button>
-								</TooltipTrigger>
-								<TooltipContent>{btn.label}</TooltipContent>
-							</Tooltip>
+							<IconTooltip key={btn.action} label={btn.label}>
+								<Button
+									variant="ghost"
+									size="toolbar-icon"
+									className="hover:bg-interactive-hover"
+									onClick={() => handleFormat(btn.action)}
+								>
+									<Icon className="h-3.5 w-3.5" />
+									<span className="sr-only">{btn.label}</span>
+								</Button>
+							</IconTooltip>
 						);
 					})}
 
 					<div className="mx-1 h-4 w-px bg-border" />
 
-					<Tooltip>
-						<TooltipTrigger asChild>
-							<Button
-								variant="ghost"
-								size="toolbar-icon"
-								className="hover:bg-interactive-hover"
-								onClick={() => handleFormat('clearFormat')}
-							>
-								<Eraser className="h-3.5 w-3.5" />
-								<span className="sr-only">Clear Formatting</span>
-							</Button>
-						</TooltipTrigger>
-						<TooltipContent>Clear Formatting</TooltipContent>
-					</Tooltip>
+					<IconTooltip label="Clear Formatting">
+						<Button
+							variant="ghost"
+							size="toolbar-icon"
+							className="hover:bg-interactive-hover"
+							onClick={() => handleFormat('clearFormat')}
+						>
+							<Eraser className="h-3.5 w-3.5" />
+							<span className="sr-only">Clear Formatting</span>
+						</Button>
+					</IconTooltip>
 				</div>
 
 				<SplitPane

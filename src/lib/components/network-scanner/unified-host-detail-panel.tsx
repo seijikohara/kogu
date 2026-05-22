@@ -50,7 +50,7 @@ import {
 } from '@/lib/components/ui/select';
 import { Skeleton } from '@/lib/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/lib/components/ui/tabs';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/lib/components/ui/tooltip';
+import { IconTooltip } from '@/lib/components/ui/icon-tooltip';
 import {
 	DEVICE_CATEGORIES,
 	type DeviceCategory,
@@ -313,22 +313,19 @@ function OpenPortCard({ port }: OpenPortCardProps) {
 							{port.tlsCert ? <PortTlsDetails cert={port.tlsCert} /> : null}
 						</div>
 					</div>
-					<Tooltip>
-						<TooltipTrigger asChild>
-							<Button
-								variant="ghost"
-								size="icon-sm"
-								className="h-6 w-6 text-muted-foreground hover:bg-muted hover:text-foreground"
-								onClick={() => {
-									copyToClipboard(String(port.port), 'Port number').catch(() => {});
-								}}
-							>
-								<Copy className="h-3 w-3" />
-								<span className="sr-only">Copy port</span>
-							</Button>
-						</TooltipTrigger>
-						<TooltipContent>Copy port</TooltipContent>
-					</Tooltip>
+					<IconTooltip label="Copy port">
+						<Button
+							variant="ghost"
+							size="icon-sm"
+							className="h-6 w-6 text-muted-foreground hover:bg-muted hover:text-foreground"
+							onClick={() => {
+								copyToClipboard(String(port.port), 'Port number').catch(() => {});
+							}}
+						>
+							<Copy className="h-3 w-3" />
+							<span className="sr-only">Copy port</span>
+						</Button>
+					</IconTooltip>
 				</div>
 			</CardContent>
 		</Card>
@@ -852,25 +849,22 @@ function MdnsServiceCard({ service }: MdnsServiceCardProps) {
 							</details>
 						) : null}
 					</div>
-					<Tooltip>
-						<TooltipTrigger asChild>
-							<Button
-								variant="ghost"
-								size="icon-sm"
-								className="h-6 w-6 shrink-0 text-muted-foreground hover:bg-muted hover:text-foreground"
-								onClick={() => {
-									copyToClipboard(
-										`${service.instanceName} (${service.serviceType}:${service.port})`,
-										'Service info'
-									).catch(() => {});
-								}}
-							>
-								<Copy className="h-3 w-3" />
-								<span className="sr-only">Copy service info</span>
-							</Button>
-						</TooltipTrigger>
-						<TooltipContent>Copy service info</TooltipContent>
-					</Tooltip>
+					<IconTooltip label="Copy service info">
+						<Button
+							variant="ghost"
+							size="icon-sm"
+							className="h-6 w-6 shrink-0 text-muted-foreground hover:bg-muted hover:text-foreground"
+							onClick={() => {
+								copyToClipboard(
+									`${service.instanceName} (${service.serviceType}:${service.port})`,
+									'Service info'
+								).catch(() => {});
+							}}
+						>
+							<Copy className="h-3 w-3" />
+							<span className="sr-only">Copy service info</span>
+						</Button>
+					</IconTooltip>
 				</div>
 			</CardContent>
 		</Card>
@@ -1167,22 +1161,19 @@ function NamedInfoCard({ label, value }: NamedInfoCardProps) {
 				<div className="text-xs text-muted-foreground">{label}</div>
 				<div className="mt-0.5 flex items-center gap-1.5 font-mono text-sm font-medium">
 					{value}
-					<Tooltip>
-						<TooltipTrigger asChild>
-							<Button
-								variant="ghost"
-								size="icon-sm"
-								className="h-5 w-5 text-muted-foreground hover:bg-muted hover:text-foreground"
-								onClick={() => {
-									copyToClipboard(value, label).catch(() => {});
-								}}
-							>
-								<Copy className="h-3 w-3" />
-								<span className="sr-only">{`Copy ${label}`}</span>
-							</Button>
-						</TooltipTrigger>
-						<TooltipContent>{`Copy ${label}`}</TooltipContent>
-					</Tooltip>
+					<IconTooltip label={`Copy ${label}`}>
+						<Button
+							variant="ghost"
+							size="icon-sm"
+							className="h-5 w-5 text-muted-foreground hover:bg-muted hover:text-foreground"
+							onClick={() => {
+								copyToClipboard(value, label).catch(() => {});
+							}}
+						>
+							<Copy className="h-3 w-3" />
+							<span className="sr-only">{`Copy ${label}`}</span>
+						</Button>
+					</IconTooltip>
 				</div>
 			</CardContent>
 		</Card>
@@ -1442,36 +1433,30 @@ function HostDetailHeader({
 				</div>
 				<div className="flex items-center gap-1">
 					{hasWebPort ? (
-						<Tooltip>
-							<TooltipTrigger asChild>
-								<Button
-									variant="ghost"
-									size="icon-sm"
-									className="h-7 w-7 text-muted-foreground hover:bg-muted hover:text-foreground"
-									onClick={onOpenInBrowser}
-								>
-									<Globe className="h-3.5 w-3.5" />
-									<span className="sr-only">Open in browser</span>
-								</Button>
-							</TooltipTrigger>
-							<TooltipContent>Open in browser</TooltipContent>
-						</Tooltip>
+						<IconTooltip label="Open in browser">
+							<Button
+								variant="ghost"
+								size="icon-sm"
+								className="h-7 w-7 text-muted-foreground hover:bg-muted hover:text-foreground"
+								onClick={onOpenInBrowser}
+							>
+								<Globe className="h-3.5 w-3.5" />
+								<span className="sr-only">Open in browser</span>
+							</Button>
+						</IconTooltip>
 					) : null}
 					{hasSshPort ? (
-						<Tooltip>
-							<TooltipTrigger asChild>
-								<Button
-									variant="ghost"
-									size="icon-sm"
-									className="h-7 w-7 text-muted-foreground hover:bg-muted hover:text-foreground"
-									onClick={onCopySshCommand}
-								>
-									<Terminal className="h-3.5 w-3.5" />
-									<span className="sr-only">Copy SSH command</span>
-								</Button>
-							</TooltipTrigger>
-							<TooltipContent>Copy SSH command</TooltipContent>
-						</Tooltip>
+						<IconTooltip label="Copy SSH command">
+							<Button
+								variant="ghost"
+								size="icon-sm"
+								className="h-7 w-7 text-muted-foreground hover:bg-muted hover:text-foreground"
+								onClick={onCopySshCommand}
+							>
+								<Terminal className="h-3.5 w-3.5" />
+								<span className="sr-only">Copy SSH command</span>
+							</Button>
+						</IconTooltip>
 					) : null}
 					{scanDurationMs ? (
 						<div className="ml-1 flex items-center gap-1 text-xs text-muted-foreground">
@@ -1563,20 +1548,17 @@ function CopyIconButton({
 	onClick,
 }: CopyIconButtonProps) {
 	return (
-		<Tooltip>
-			<TooltipTrigger asChild>
-				<Button
-					variant="ghost"
-					size="icon-sm"
-					className={cn(buttonClass, 'text-muted-foreground hover:bg-muted hover:text-foreground')}
-					onClick={onClick}
-				>
-					<Copy className={iconClass} />
-					<span className="sr-only">{label}</span>
-				</Button>
-			</TooltipTrigger>
-			<TooltipContent>{label}</TooltipContent>
-		</Tooltip>
+		<IconTooltip label={label}>
+			<Button
+				variant="ghost"
+				size="icon-sm"
+				className={cn(buttonClass, 'text-muted-foreground hover:bg-muted hover:text-foreground')}
+				onClick={onClick}
+			>
+				<Copy className={iconClass} />
+				<span className="sr-only">{label}</span>
+			</Button>
+		</IconTooltip>
 	);
 }
 

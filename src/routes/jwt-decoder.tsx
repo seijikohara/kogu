@@ -9,7 +9,7 @@ import { SectionHeader } from '@/lib/components/layout';
 import { ToolShell } from '@/lib/components/shell';
 import { EmptyState, LiveStatusRegion } from '@/lib/components/status';
 import { Card, CardContent, CardHeader, CardTitle } from '@/lib/components/ui/card';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/lib/components/ui/tooltip';
+import { IconTooltip } from '@/lib/components/ui/icon-tooltip';
 import { CodeBlock } from '@/lib/components/ui/code-block';
 import { useDocumentTitle } from '@/lib/hooks';
 import {
@@ -209,18 +209,15 @@ function JwtDecoderPage() {
 											<span className="font-mono font-medium text-muted-foreground">alg:</span>
 											<code className="rounded bg-muted px-1.5 py-0.5 font-mono">{headerAlg}</code>
 											{algDescription ? (
-												<Tooltip>
-													<TooltipTrigger asChild>
-														<button
-															type="button"
-															className="inline-flex h-4 w-4 items-center justify-center rounded text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-														>
-															<Info className="h-3.5 w-3.5" />
-															<span className="sr-only">Algorithm details</span>
-														</button>
-													</TooltipTrigger>
-													<TooltipContent>{algDescription}</TooltipContent>
-												</Tooltip>
+												<IconTooltip label={algDescription}>
+													<button
+														type="button"
+														className="inline-flex h-4 w-4 items-center justify-center rounded text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+													>
+														<Info className="h-3.5 w-3.5" />
+														<span className="sr-only">Algorithm details</span>
+													</button>
+												</IconTooltip>
 											) : null}
 										</div>
 									) : null}
