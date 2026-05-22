@@ -30,7 +30,11 @@ function XmlFormatterPage() {
 						<StatItem label="Depth" value={liveStats.depth} />
 						<StatItem label="Size" value={liveStats.size} />
 					</>
-				) : null
+				) : (
+					<span className="text-xs text-muted-foreground/70">
+						Paste, drop, or load sample to get started
+					</span>
+				)
 			}
 			renderTabContent={({ tab, input, onInputChange, onStatsChange }) => {
 				switch (tab) {

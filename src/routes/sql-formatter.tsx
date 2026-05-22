@@ -141,7 +141,11 @@ function SqlFormatterPage() {
 						<StatItem label="Statements" value={stats.statements} />
 						<StatItem label="Size" value={stats.size} />
 					</>
-				) : null
+				) : (
+					<span className="text-xs text-muted-foreground/70">
+						Paste, drop, or load sample to get started
+					</span>
+				)
 			}
 			rail={
 				<>
