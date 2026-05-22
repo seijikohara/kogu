@@ -22,7 +22,7 @@ import { StatItem } from '@/lib/components/status';
 import { Button } from '@/lib/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/lib/components/ui/card';
 import { Input } from '@/lib/components/ui/input';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/lib/components/ui/tooltip';
+import { IconTooltip } from '@/lib/components/ui/icon-tooltip';
 import { CodeBlock } from '@/lib/components/ui/code-block';
 import { useActiveTab, useTabStore } from '@/lib/stores';
 import { useDocumentTitle } from '@/lib/hooks';
@@ -543,15 +543,12 @@ function UrlEncoderPage() {
 								onChange={(e) => updateQueryParam(index, 'value', e.currentTarget.value)}
 								className="flex-1 font-mono text-sm"
 							/>
-							<Tooltip>
-								<TooltipTrigger asChild>
-									<Button variant="ghost" size="icon" onClick={() => removeQueryParam(index)}>
-										<Trash2 className="h-4 w-4" />
-										<span className="sr-only">Remove parameter</span>
-									</Button>
-								</TooltipTrigger>
-								<TooltipContent>Remove parameter</TooltipContent>
-							</Tooltip>
+							<IconTooltip label="Remove parameter">
+								<Button variant="ghost" size="icon" onClick={() => removeQueryParam(index)}>
+									<Trash2 className="h-4 w-4" />
+									<span className="sr-only">Remove parameter</span>
+								</Button>
+							</IconTooltip>
 						</div>
 					))}
 				</div>

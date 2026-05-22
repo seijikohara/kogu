@@ -33,7 +33,7 @@ import { ToolShell } from '@/lib/components/shell';
 import { EmbeddedEmptyState, LiveStatusRegion, StatItem } from '@/lib/components/status';
 import { Button } from '@/lib/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/lib/components/ui/card';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/lib/components/ui/tooltip';
+import { IconTooltip } from '@/lib/components/ui/icon-tooltip';
 import { useDocumentTitle } from '@/lib/hooks';
 import {
 	CONTENT_KINDS,
@@ -602,20 +602,17 @@ function QrCodeGeneratorPage() {
 										className="h-10 w-10 rounded object-contain"
 									/>
 									<span className="flex-1 text-xs text-muted-foreground">Logo loaded</span>
-									<Tooltip>
-										<TooltipTrigger asChild>
-											<Button
-												variant="ghost"
-												size="sm"
-												className="h-7 px-2"
-												onClick={handleLogoClear}
-											>
-												<Trash2 className="h-3.5 w-3.5" />
-												<span className="sr-only">Remove logo</span>
-											</Button>
-										</TooltipTrigger>
-										<TooltipContent>Remove logo</TooltipContent>
-									</Tooltip>
+									<IconTooltip label="Remove logo">
+										<Button
+											variant="ghost"
+											size="sm"
+											className="h-7 px-2"
+											onClick={handleLogoClear}
+										>
+											<Trash2 className="h-3.5 w-3.5" />
+											<span className="sr-only">Remove logo</span>
+										</Button>
+									</IconTooltip>
 								</div>
 								<FormSlider
 									label="Logo size"

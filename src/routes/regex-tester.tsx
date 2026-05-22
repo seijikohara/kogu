@@ -16,7 +16,7 @@ import { Badge } from '@/lib/components/ui/badge';
 import { Button } from '@/lib/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/lib/components/ui/card';
 import { ToggleGroup, ToggleGroupItem } from '@/lib/components/ui/toggle-group';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/lib/components/ui/tooltip';
+import { IconTooltip } from '@/lib/components/ui/icon-tooltip';
 import { useState } from 'react';
 import { createToolOptionsStore } from '@/lib/stores';
 import { cn } from '@/lib/utils';
@@ -649,18 +649,15 @@ function RegexTesterPage() {
 								{FLAG_INFO.map((info) => {
 									const flagTooltip = FLAG_TOOLTIPS[info.char] ?? info.label;
 									return (
-										<Tooltip key={info.id}>
-											<TooltipTrigger asChild>
-												<ToggleGroupItem
-													value={info.id}
-													aria-label={info.label}
-													className="h-9 w-9 font-mono aria-pressed:border-primary aria-pressed:bg-primary aria-pressed:text-primary-foreground"
-												>
-													{info.char}
-												</ToggleGroupItem>
-											</TooltipTrigger>
-											<TooltipContent>{flagTooltip}</TooltipContent>
-										</Tooltip>
+										<IconTooltip key={info.id} label={flagTooltip}>
+											<ToggleGroupItem
+												value={info.id}
+												aria-label={info.label}
+												className="h-9 w-9 font-mono aria-pressed:border-primary aria-pressed:bg-primary aria-pressed:text-primary-foreground"
+											>
+												{info.char}
+											</ToggleGroupItem>
+										</IconTooltip>
 									);
 								})}
 							</ToggleGroup>
