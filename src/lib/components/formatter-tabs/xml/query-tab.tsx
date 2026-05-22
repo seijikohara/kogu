@@ -1,11 +1,9 @@
 import { Search } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 
-import { CodeEditor } from '@/lib/components/editor';
 import { FormInput, FormSection } from '@/lib/components/form';
-import { SplitPane } from '@/lib/components/layout';
+import { InputOutputSplit } from '@/lib/components/layout';
 import { OptionsPanel } from '@/lib/components/panel';
-import { EmptyOutputPane } from '@/lib/components/status';
 import { useClipboardActions } from '@/lib/hooks';
 import { executeXPath, formatXml } from '@/lib/services/formatters';
 
@@ -140,39 +138,21 @@ export function QueryTab({ input, onInputChange, onStatsChange }: QueryTabProps)
 				</FormSection>
 			</OptionsPanel>
 
-			<SplitPane
+			<InputOutputSplit
 				className="flex-1"
-				left={
-					<CodeEditor
-						title="Input"
-						value={input}
-						onChange={onInputChange}
-						mode="input"
-						editorMode="xml"
-						placeholder="Enter XML here..."
-						onPaste={handlePaste}
-						onClear={handleClear}
-					/>
-				}
-				right={
-					input.trim().length === 0 ? (
-						<EmptyOutputPane
-							headerTitle="Result"
-							icon={Search}
-							title="Enter XML to query"
-							description="Run an XPath expression to see matching nodes here."
-						/>
-					) : (
-						<CodeEditor
-							title="Result"
-							value={queryOutput}
-							mode="readonly"
-							editorMode="xml"
-							placeholder="Query results will appear here..."
-							onCopy={handleCopy}
-						/>
-					)
-				}
+				input={input}
+				onInputChange={onInputChange}
+				editorMode="xml"
+				inputPlaceholder="Enter XML here..."
+				onPaste={handlePaste}
+				onClear={handleClear}
+				output={queryOutput}
+				outputTitle="Result"
+				outputPlaceholder="Query results will appear here..."
+				onCopy={handleCopy}
+				emptyIcon={Search}
+				emptyTitle="Enter XML to query"
+				emptyDescription="Run an XPath expression to see matching nodes here."
 			/>
 		</div>
 	);
