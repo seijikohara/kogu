@@ -61,10 +61,7 @@ export function AppSidebar(_: AppSidebarProps = {}) {
 						>
 							<Link to="/">
 								<img src="/logo.svg" alt="Kogu" className="size-8 rounded-lg" />
-								<div className="grid flex-1 text-left text-sm leading-tight">
-									<span className="truncate font-semibold">Kogu</span>
-									<span className="truncate text-xs text-muted-foreground">Developer Tools</span>
-								</div>
+								<span className="flex-1 truncate text-sm font-semibold">Kogu</span>
 							</Link>
 						</SidebarMenuButton>
 					</SidebarMenuItem>
