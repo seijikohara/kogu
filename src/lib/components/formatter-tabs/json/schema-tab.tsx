@@ -1,9 +1,10 @@
 import Ajv from 'ajv';
 import addFormats from 'ajv-formats';
 import { FileCheck, Wand2 } from 'lucide-react';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
+import { useReportStats, useValidation } from '@/lib/hooks';
 import { CodeEditor } from '@/lib/components/editor';
 import { FormCheckbox, FormCheckboxGroup, FormSection } from '@/lib/components/form';
 import { SplitPane } from '@/lib/components/layout';
@@ -53,11 +54,7 @@ export function SchemaTab({ input, onInputChange, onStatsChange }: SchemaTabProp
 	const [schemaValidateFormats, setSchemaValidateFormats] = useState<boolean>(true);
 	const [schemaVerboseErrors, setSchemaVerboseErrors] = useState<boolean>(false);
 
-	const inputValidation = useMemo<{ valid: boolean | null }>(() => {
-		if (!input.trim()) return { valid: null };
-		const result = validateJson(input, inputFormat);
-		return { valid: result.valid };
-	}, [input, inputFormat]);
+	const inputValid = useValidation(input, (s) => validateJson(s, inputFormat).valid);
 
 	const inferredSchema = useMemo<string>(() => {
 		if (!input.trim() || input.trim() === '{}') return '';
@@ -74,13 +71,7 @@ export function SchemaTab({ input, onInputChange, onStatsChange }: SchemaTabProp
 			? `${schemaValidationResult.errors.length} validation error(s)`
 			: '');
 
-	useEffect(() => {
-		onStatsChange?.({
-			input,
-			valid: inputValidation.valid,
-			error: combinedError,
-		});
-	}, [input, inputValidation.valid, combinedError, onStatsChange]);
+	useReportStats(onStatsChange, input, inputValid, combinedError);
 
 	const handleValidateSchema = useCallback(() => {
 		if (!input.trim() || !schemaDefinition.trim()) {

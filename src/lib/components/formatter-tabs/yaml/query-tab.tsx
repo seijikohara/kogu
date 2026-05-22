@@ -1,5 +1,5 @@
 import { Search } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
+import { useState } from 'react';
 import * as yaml from 'yaml';
 
 import {
@@ -12,7 +12,7 @@ import {
 import { getErrorMessage } from '@/lib/utils';
 import { InputOutputSplit } from '@/lib/components/layout';
 import { OptionsPanel } from '@/lib/components/panel';
-import { useClipboardActions } from '@/lib/hooks';
+import { useClipboardActions, useReportStats, useValidation } from '@/lib/hooks';
 import { executeJsonPath } from '@/lib/services/formatters';
 
 type QueryOutputFormat = 'yaml' | 'json';
@@ -69,15 +69,14 @@ export function QueryTab({ input, onInputChange, onStatsChange }: QueryTabProps)
 	const [queryFlattenArrays, setQueryFlattenArrays] = useState<boolean>(false);
 	const [queryWrapResults, setQueryWrapResults] = useState<boolean>(true);
 
-	const inputValidation = useMemo<{ valid: boolean | null }>(() => {
-		if (!input.trim()) return { valid: null };
+	const inputValid = useValidation(input, (s) => {
 		try {
-			yaml.parse(input);
-			return { valid: true };
+			yaml.parse(s);
+			return true;
 		} catch {
-			return { valid: false };
+			return false;
 		}
-	}, [input]);
+	});
 
 	const queryMaxResults = Number.parseInt(queryMaxResultsStr, 10) || 0;
 
@@ -110,13 +109,7 @@ export function QueryTab({ input, onInputChange, onStatsChange }: QueryTabProps)
 	const queryResult = queryResultData.result;
 	const queryError = queryResultData.error;
 
-	useEffect(() => {
-		onStatsChange?.({
-			input,
-			valid: inputValidation.valid,
-			error: queryError,
-		});
-	}, [input, inputValidation.valid, queryError, onStatsChange]);
+	useReportStats(onStatsChange, input, inputValid, queryError);
 
 	const { handlePaste, handleCopy } = useClipboardActions({
 		onInputChange,

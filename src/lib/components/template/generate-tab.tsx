@@ -1,5 +1,5 @@
 import { Code } from 'lucide-react';
-import { useEffect, useMemo, useState, type ReactNode } from 'react';
+import { useMemo, useState, type ReactNode } from 'react';
 
 import type { EditorMode } from '@/lib/components/editor';
 import { getErrorMessage } from '@/lib/utils';
@@ -13,7 +13,7 @@ import {
 } from '@/lib/components/form';
 import { InputOutputSplit } from '@/lib/components/layout';
 import { OptionsPanel } from '@/lib/components/panel';
-import { useClipboardActions } from '@/lib/hooks';
+import { useClipboardActions, useReportStats } from '@/lib/hooks';
 import {
 	type CSharpOptions,
 	generateCode,
@@ -338,13 +338,7 @@ export function GenerateTabTemplate({
 
 	const generateEditorMode = LANGUAGE_INFO[generateLanguage].editorMode;
 
-	useEffect(() => {
-		onStatsChange?.({
-			input,
-			valid: inputValidation.valid,
-			error: generateError,
-		});
-	}, [input, inputValidation.valid, generateError, onStatsChange]);
+	useReportStats(onStatsChange, input, inputValidation.valid, generateError);
 
 	const { handlePaste, handleClear, handleCopy } = useClipboardActions({
 		onInputChange,

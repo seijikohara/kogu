@@ -1,5 +1,5 @@
 import { FileText } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import * as yaml from 'yaml';
 
 import type { ContextMenuItem } from '@/lib/components/editor';
@@ -14,7 +14,7 @@ import {
 } from '@/lib/components/form';
 import { InputOutputSplit } from '@/lib/components/layout';
 import { OptionsPanel } from '@/lib/components/panel';
-import { useClipboardActions } from '@/lib/hooks';
+import { useClipboardActions, useReportStats } from '@/lib/hooks';
 import { SAMPLE_YAML, sortKeysDeep, validateYaml } from '@/lib/services/formatters';
 
 type FormatMode = 'format' | 'minify';
@@ -125,13 +125,7 @@ export function FormatTab({ input, onInputChange, onStatsChange }: FormatTabProp
 		}
 	})();
 
-	useEffect(() => {
-		onStatsChange?.({
-			input,
-			valid: validation.valid,
-			error: formatError,
-		});
-	}, [input, validation.valid, formatError, onStatsChange]);
+	useReportStats(onStatsChange, input, validation.valid, formatError);
 
 	const { handlePaste, handleClear, handleCopy } = useClipboardActions({
 		onInputChange,
