@@ -1,6 +1,5 @@
 import { Link, useRouterState } from '@tanstack/react-router';
-import { useTheme } from 'next-themes';
-import { ChevronLeft, ChevronRight, Monitor, Moon, Settings, Sun } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Settings } from 'lucide-react';
 
 import {
 	Collapsible,
@@ -25,29 +24,12 @@ import { CATEGORIES, getPagesByCategory } from '@/lib/services/pages';
 import { useSidebarStore } from '@/lib/stores';
 import { cn } from '@/lib/utils';
 
-type ThemeName = 'light' | 'dark' | 'system';
-
-const cycleTheme = (current: ThemeName): ThemeName => {
-	if (current === 'light') return 'dark';
-	if (current === 'dark') return 'system';
-	return 'light';
-};
-
-const isThemeName = (value: string | undefined): value is ThemeName =>
-	value === 'light' || value === 'dark' || value === 'system';
-
 export function AppSidebar(_: AppSidebarProps = {}) {
 	const openGroups = useSidebarStore((s) => s.openGroups);
 	const setGroupOpen = useSidebarStore((s) => s.setGroupOpen);
 
 	const pathname = useRouterState({ select: (state) => state.location.pathname });
 	const sidebar = useSidebar();
-	const { theme, setTheme } = useTheme();
-	const activeTheme: ThemeName = isThemeName(theme) ? theme : 'system';
-
-	const handleToggleTheme = () => {
-		setTheme(cycleTheme(activeTheme));
-	};
 
 	return (
 		<Sidebar collapsible="icon">
@@ -133,27 +115,11 @@ export function AppSidebar(_: AppSidebarProps = {}) {
 						</SidebarMenuButton>
 					</SidebarMenuItem>
 					<SidebarMenuItem>
-						<SidebarMenuButton onClick={handleToggleTheme} tooltip="Toggle theme">
-							{activeTheme === 'dark' ? (
-								<>
-									<Moon className="size-4" />
-									<span>Dark Mode</span>
-								</>
-							) : activeTheme === 'light' ? (
-								<>
-									<Sun className="size-4" />
-									<span>Light Mode</span>
-								</>
-							) : (
-								<>
-									<Monitor className="size-4" />
-									<span>System</span>
-								</>
-							)}
-						</SidebarMenuButton>
-					</SidebarMenuItem>
-					<SidebarMenuItem>
-						<SidebarMenuButton onClick={sidebar.toggleSidebar} tooltip="Toggle sidebar">
+						<SidebarMenuButton
+							onClick={sidebar.toggleSidebar}
+							tooltip="Toggle sidebar"
+							className="text-muted-foreground"
+						>
 							<ChevronLeft className="size-4 transition-transform duration-200 group-data-[state=collapsed]:rotate-180" />
 							<span>Collapse</span>
 						</SidebarMenuButton>
