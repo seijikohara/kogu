@@ -8,7 +8,7 @@ export const TitleBar = forwardRef<TitleBarCommandHandle, TitleBarProps>(
 		return (
 			<header
 				data-tauri-drag-region
-				className="flex h-8 shrink-0 items-center justify-center gap-2 border-b bg-background px-4"
+				className="flex h-8 shrink-0 items-center justify-center gap-2 border-b bg-surface-1 px-4"
 			>
 				<NavButtons />
 				<TitleBarCommand ref={ref} />

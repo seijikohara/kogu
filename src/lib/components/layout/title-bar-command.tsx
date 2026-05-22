@@ -96,10 +96,10 @@ export const TitleBarCommand = forwardRef<TitleBarCommandHandle, TitleBarCommand
 				>
 					<div
 						className={cn(
-							'flex h-6 items-center gap-2 rounded-lg border px-3 transition-colors',
+							'flex h-6 items-center gap-2 rounded-md border px-3 transition-colors',
 							open
 								? 'border-ring bg-background ring-2 ring-ring/30'
-								: 'border-transparent bg-surface-2 hover:bg-surface-3'
+								: 'border-border/60 bg-background hover:bg-accent/50'
 						)}
 					>
 						<Search className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
