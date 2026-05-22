@@ -212,7 +212,7 @@ function SettingsPage() {
 									>
 										<Command>
 											<CommandInput placeholder="Search fonts..." />
-											<CommandList className="max-h-48">
+											<CommandList className="max-h-72">
 												<CommandEmpty>No fonts found.</CommandEmpty>
 												<CommandGroup heading="System Fonts">
 													<FontPickerItem
@@ -297,7 +297,7 @@ function SettingsPage() {
 									>
 										<Command>
 											<CommandInput placeholder="Search fonts..." />
-											<CommandList className="max-h-48">
+											<CommandList className="max-h-72">
 												<CommandEmpty>No fonts found.</CommandEmpty>
 												<CommandGroup heading="System Monospace Fonts">
 													<FontPickerItem
