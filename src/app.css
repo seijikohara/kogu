@@ -91,7 +91,13 @@
 	--card-foreground: oklch(0.145 0 0);
 	--popover: oklch(1 0 0);
 	--popover-foreground: oklch(0.145 0 0);
-	--primary: oklch(0.205 0 0);
+	/*
+	 * Brand color: Copper / Brass. Mid-luminance warm hue (60°) selected so
+	 * primary action buttons read clearly on a white background and the
+	 * sidebar active state pop visibly without overwhelming the page. Pair
+	 * with near-white foreground for WCAG AA on solid primary surfaces.
+	 */
+	--primary: oklch(0.55 0.15 60);
 	--primary-foreground: oklch(0.985 0 0);
 	--secondary: oklch(0.97 0 0);
 	--secondary-foreground: oklch(0.205 0 0);
@@ -114,7 +120,7 @@
 	--info-foreground: oklch(0.98 0.01 250);
 	--border: oklch(0.922 0 0);
 	--input: oklch(0.922 0 0);
-	--ring: oklch(0.708 0 0);
+	--ring: oklch(0.55 0.15 60);
 	--chart-1: oklch(0.646 0.222 41.116);
 	--chart-2: oklch(0.6 0.118 184.704);
 	--chart-3: oklch(0.398 0.07 227.392);
@@ -123,12 +129,12 @@
 	/* Sidebar/Rail (shadcn/ui Sidebar standard) */
 	--sidebar: oklch(0.98 0 0);
 	--sidebar-foreground: oklch(0.145 0 0);
-	--sidebar-primary: oklch(0.205 0 0);
+	--sidebar-primary: oklch(0.55 0.15 60);
 	--sidebar-primary-foreground: oklch(0.985 0 0);
 	--sidebar-accent: oklch(0.97 0 0);
 	--sidebar-accent-foreground: oklch(0.205 0 0);
 	--sidebar-border: oklch(0.922 0 0);
-	--sidebar-ring: oklch(0.708 0 0);
+	--sidebar-ring: oklch(0.55 0.15 60);
 	/* Surface hierarchy (pure grayscale) */
 	--surface-0: oklch(1 0 0);
 	--surface-1: oklch(0.985 0 0);
@@ -187,8 +193,14 @@
 	--card-foreground: oklch(0.985 0 0);
 	--popover: oklch(0.205 0 0);
 	--popover-foreground: oklch(0.985 0 0);
-	--primary: oklch(0.985 0 0);
-	--primary-foreground: oklch(0.205 0 0);
+	/*
+	 * Brand color: Copper / Brass (dark variant). Lightness lifted to 0.70
+	 * for visibility on dark backgrounds; foreground uses a deep
+	 * Copper-tinted near-black so the contrast hue is part of the brand
+	 * family rather than a neutral grey.
+	 */
+	--primary: oklch(0.7 0.13 60);
+	--primary-foreground: oklch(0.15 0.05 60);
 	--secondary: oklch(0.269 0 0);
 	--secondary-foreground: oklch(0.985 0 0);
 	--muted: oklch(0.269 0 0);
@@ -211,7 +223,7 @@
 	--info-foreground: oklch(0.16 0.02 250);
 	--border: oklch(1 0 0 / 10%);
 	--input: oklch(1 0 0 / 15%);
-	--ring: oklch(0.556 0 0);
+	--ring: oklch(0.7 0.13 60);
 	--chart-1: oklch(0.488 0.243 264.376);
 	--chart-2: oklch(0.696 0.17 162.48);
 	--chart-3: oklch(0.769 0.188 70.08);
@@ -220,12 +232,12 @@
 	/* Sidebar/Rail (dark mode) */
 	--sidebar: oklch(0.205 0 0);
 	--sidebar-foreground: oklch(0.985 0 0);
-	--sidebar-primary: oklch(0.985 0 0);
-	--sidebar-primary-foreground: oklch(0.205 0 0);
+	--sidebar-primary: oklch(0.7 0.13 60);
+	--sidebar-primary-foreground: oklch(0.15 0.05 60);
 	--sidebar-accent: oklch(0.269 0 0);
 	--sidebar-accent-foreground: oklch(0.985 0 0);
 	--sidebar-border: oklch(1 0 0 / 10%);
-	--sidebar-ring: oklch(0.556 0 0);
+	--sidebar-ring: oklch(0.7 0.13 60);
 	/* Surface hierarchy (pure grayscale) */
 	--surface-0: oklch(0.22 0 0);
 	--surface-1: oklch(0.18 0 0);
