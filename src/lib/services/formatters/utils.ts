@@ -4,13 +4,10 @@
 
 import type { JsonFormatOptions, StatsAccumulator } from './types.js';
 
-/** Format bytes to human readable string */
-export const formatBytes = (bytes: number): string =>
-	bytes < 1024
-		? `${bytes} B`
-		: bytes < 1024 * 1024
-			? `${(bytes / 1024).toFixed(2)} KB`
-			: `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
+// `formatBytes` previously had its own copy here; the canonical implementation
+// now lives in `@/lib/utils/format`. Re-export so existing service consumers
+// (json/xml/yaml/sql formatter stats) keep their relative import path.
+export { formatBytes } from '@/lib/utils';
 
 /** Get indent string from options */
 export const getIndentString = (options: JsonFormatOptions): string =>
