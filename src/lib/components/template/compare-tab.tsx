@@ -2,6 +2,7 @@ import { ArrowRightLeft } from 'lucide-react';
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
 
 import { CodeEditor } from '@/lib/components/editor';
+import { getErrorMessage } from '@/lib/utils';
 import { FormSection } from '@/lib/components/form';
 import { SplitPane } from '@/lib/components/layout';
 import { DiffLegend, DiffResults, OptionsPanel } from '@/lib/components/panel';
@@ -103,7 +104,7 @@ export function CompareTab({
 		} catch (e) {
 			return {
 				diffs: [] as GenericDiffItem[],
-				error: e instanceof Error ? e.message : 'Compare failed',
+				error: getErrorMessage(e, 'Compare failed'),
 			};
 		}
 	}, [input, input2, compare]);

@@ -91,7 +91,7 @@ import {
 	WELL_KNOWN_SERVICES,
 } from '@/lib/services/network-scanner';
 import { createToolOptionsStore } from '@/lib/stores';
-import { cn } from '@/lib/utils';
+import { cn, getErrorMessage } from '@/lib/utils';
 import { useDocumentTitle } from '@/lib/hooks';
 
 interface NetworkScannerOptions {
@@ -205,7 +205,7 @@ const reportDiscoverySuccess = (hostsFound: number) => {
 };
 
 const reportDiscoveryError = (e: unknown) => {
-	const msg = e instanceof Error ? e.message : String(e);
+	const msg = getErrorMessage(e);
 	if (!msg.includes('cancelled')) {
 		toast.error('Discovery failed', { description: msg });
 	}
@@ -1347,7 +1347,7 @@ function NetworkScannerPage() {
 
 	const reportScanError = useCallback((scanId: string, e: unknown) => {
 		if (currentScanIdRef.current !== scanId) return;
-		const message = e instanceof Error ? e.message : String(e);
+		const message = getErrorMessage(e);
 		setError(message);
 		if (!message.includes('cancelled')) {
 			toast.error('Scan failed', { description: message });
@@ -1466,7 +1466,7 @@ function NetworkScannerPage() {
 			}
 		} catch (e) {
 			toast.error('Failed to load network interfaces', {
-				description: e instanceof Error ? e.message : String(e),
+				description: getErrorMessage(e),
 			});
 		} finally {
 			setIsLoadingInterfaces(false);

@@ -12,6 +12,7 @@ import { OptionsPanel } from '@/lib/components/panel';
 import { Button } from '@/lib/components/ui/button';
 import { inferJsonSchema } from '@/lib/services/formatters';
 import { cn } from '@/lib/utils';
+import { getErrorMessage } from '@/lib/utils';
 import { copyToClipboard, pasteFromClipboard } from '@/lib/utils/file-operations';
 
 type SchemaFormat = 'yaml' | 'json';
@@ -136,7 +137,7 @@ export function SchemaTab({ input, onInputChange, onStatsChange }: SchemaTabProp
 			}
 			setSchemaError('');
 		} catch (e) {
-			setSchemaError(e instanceof Error ? e.message : 'Validation failed');
+			setSchemaError(getErrorMessage(e, 'Validation failed'));
 			setSchemaValidationResult(null);
 		}
 	}, [

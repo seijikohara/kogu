@@ -4,6 +4,7 @@
  */
 
 import type { RenderResult as MermaidRenderResult } from 'mermaid';
+import { getErrorMessage } from '@/lib/utils';
 
 // Types
 export type DiagramType = 'mermaid' | 'plantuml' | 'graphviz';
@@ -165,7 +166,7 @@ export const renderTex = async (
 		});
 		return { success: true, html };
 	} catch (error) {
-		const message = error instanceof Error ? error.message : String(error);
+		const message = getErrorMessage(error);
 		return {
 			success: false,
 			html: `<span class="tex-error">${escapeHtml(message)}</span>`,
@@ -185,7 +186,7 @@ export const renderMermaid = async (source: string): Promise<DiagramRenderResult
 		const result: MermaidRenderResult = await mermaid.default.render(id, source);
 		return { success: true, html: result.svg };
 	} catch (error) {
-		const message = error instanceof Error ? error.message : String(error);
+		const message = getErrorMessage(error);
 		return {
 			success: false,
 			html: `<div class="diagram-error">${escapeHtml(message)}</div>`,
@@ -204,7 +205,7 @@ export const renderGraphviz = async (source: string): Promise<DiagramRenderResul
 		const svg = viz.renderSVGElement(source);
 		return { success: true, html: svg.outerHTML };
 	} catch (error) {
-		const message = error instanceof Error ? error.message : String(error);
+		const message = getErrorMessage(error);
 		return {
 			success: false,
 			html: `<div class="diagram-error">${escapeHtml(message)}</div>`,
@@ -222,7 +223,7 @@ export const renderPlantUml = (source: string): DiagramRenderResult => {
 		const html = `<img src="${escapeHtml(url)}" alt="PlantUML diagram" class="plantuml-diagram" loading="lazy" />`;
 		return { success: true, html };
 	} catch (error) {
-		const message = error instanceof Error ? error.message : String(error);
+		const message = getErrorMessage(error);
 		return {
 			success: false,
 			html: `<div class="diagram-error">${escapeHtml(message)}</div>`,

@@ -4,6 +4,7 @@ import { Check, Hash, ShieldCheck, X } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { ActionButton, CopyButton } from '@/lib/components/action';
+import { getErrorMessage } from '@/lib/utils';
 import { FormInfo, FormInput, FormMode, FormSection, FormSlider } from '@/lib/components/form';
 import { SectionHeader } from '@/lib/components/layout';
 import { ToolShell } from '@/lib/components/shell';
@@ -113,7 +114,7 @@ function BcryptGeneratorPage() {
 			}
 		} catch (e) {
 			if (!generateCancelledRef.current) {
-				const message = e instanceof Error ? e.message : String(e);
+				const message = getErrorMessage(e);
 				setGenerateError(message);
 				toast.error('Failed to generate hash', { description: message });
 			}
@@ -151,7 +152,7 @@ function BcryptGeneratorPage() {
 			}
 		} catch (e) {
 			if (!verifyCancelledRef.current) {
-				const message = e instanceof Error ? e.message : String(e);
+				const message = getErrorMessage(e);
 				setVerifyError(message);
 				toast.error('Verification failed', { description: message });
 			}

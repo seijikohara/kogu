@@ -5,6 +5,7 @@
  */
 
 import { parse } from 'regexp-tree';
+import { getErrorMessage } from '@/lib/utils';
 
 export type Result<T> =
 	| { readonly ok: true; readonly value: T }
@@ -267,6 +268,6 @@ export const visualizeRegex = (pattern: string, flagString: string): Result<VizN
 		const ast = parse(re);
 		return { ok: true, value: buildVizNode(ast) };
 	} catch (e) {
-		return { ok: false, error: e instanceof Error ? e.message : String(e) };
+		return { ok: false, error: getErrorMessage(e) };
 	}
 };

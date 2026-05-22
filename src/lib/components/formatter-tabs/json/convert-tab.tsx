@@ -18,6 +18,7 @@ import {
 } from '@/lib/services/formatters';
 import { useJsonFormatterOptions } from '@/lib/stores';
 import { copyToClipboard, pasteFromClipboard } from '@/lib/utils/file-operations';
+import { getErrorMessage } from '@/lib/utils';
 
 import { JsonFormatSection } from './json-format-section';
 
@@ -181,7 +182,7 @@ export function ConvertTab({ input, onInputChange, onStatsChange }: ConvertTabPr
 						: jsonToXml(value, xmlOptions, inputFormat);
 				return { output: result, error: '' };
 			} catch (e) {
-				return { output: '', error: e instanceof Error ? e.message : 'Conversion failed' };
+				return { output: '', error: getErrorMessage(e, 'Conversion failed') };
 			}
 		},
 		[convertFormat, yamlOptions, xmlOptions, inputFormat]

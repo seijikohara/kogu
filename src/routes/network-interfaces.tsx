@@ -43,6 +43,7 @@ import {
 	sortInterfaces,
 } from '@/lib/services/network-interfaces';
 import { cn } from '@/lib/utils';
+import { getErrorMessage } from '@/lib/utils';
 import { useDocumentTitle } from '@/lib/hooks';
 
 const getInterfaceTypeIcon = (type: string) => {
@@ -134,7 +135,7 @@ function NetworkInterfacesPage() {
 			const result = await getDetailedNetworkInterfaces();
 			setInterfaces(result);
 		} catch (e) {
-			const message = e instanceof Error ? e.message : String(e);
+			const message = getErrorMessage(e);
 			setError(message);
 			toast.error('Failed to fetch network interfaces', { description: message });
 		} finally {

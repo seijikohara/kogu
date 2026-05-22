@@ -4,6 +4,7 @@ import { Key, Lock, Terminal, Unlock } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { ActionButton, CopyButton } from '@/lib/components/action';
+import { getErrorMessage } from '@/lib/utils';
 import {
 	FormCheckbox,
 	FormCheckboxGroup,
@@ -118,7 +119,7 @@ function SshKeyGeneratorPage() {
 			}
 		} catch (e) {
 			if (!isCancelledRef.current) {
-				const message = e instanceof Error ? e.message : String(e);
+				const message = getErrorMessage(e);
 				setError(message);
 				toast.error('Failed to generate SSH key', { description: message });
 			}

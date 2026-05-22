@@ -2,6 +2,7 @@ import { FileText } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 
 import type { ContextMenuItem } from '@/lib/components/editor';
+import { getErrorMessage } from '@/lib/utils';
 import {
 	FormCheckbox,
 	FormCheckboxGroup,
@@ -116,7 +117,7 @@ const computeFormattedOutput = (
 			error: '',
 		};
 	} catch (e) {
-		return { output: '', error: e instanceof Error ? e.message : 'Invalid JSON' };
+		return { output: '', error: getErrorMessage(e, 'Invalid JSON') };
 	}
 };
 

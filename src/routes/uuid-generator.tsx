@@ -4,6 +4,7 @@ import { Fingerprint, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { ActionButton, CopyButton } from '@/lib/components/action';
+import { getErrorMessage } from '@/lib/utils';
 import {
 	FormCheckbox,
 	FormCheckboxGroup,
@@ -104,7 +105,7 @@ function UuidGeneratorPage() {
 			setFlashCounter((c) => c + 1);
 			toast.success(`Generated ${next.length} UUID${next.length > 1 ? 's' : ''}`);
 		} catch (e) {
-			const message = e instanceof Error ? e.message : String(e);
+			const message = getErrorMessage(e);
 			setError(message);
 			setResults([]);
 			toast.error('Failed to generate UUID', { description: message });

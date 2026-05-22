@@ -9,6 +9,7 @@ import {
 	FormSection,
 	FormSelect,
 } from '@/lib/components/form';
+import { getErrorMessage } from '@/lib/utils';
 import { InputOutputSplit } from '@/lib/components/layout';
 import { OptionsPanel } from '@/lib/components/panel';
 import { useClipboardActions } from '@/lib/hooks';
@@ -102,7 +103,7 @@ export function QueryTab({ input, onInputChange, onStatsChange }: QueryTabProps)
 			const result = Array.isArray(rawResult) ? applyArrayOptions(rawResult, opts) : rawResult;
 			return { result: formatQueryResult(result, opts), error: '' };
 		} catch (e) {
-			return { result: '', error: e instanceof Error ? e.message : 'Query failed' };
+			return { result: '', error: getErrorMessage(e, 'Query failed') };
 		}
 	})();
 

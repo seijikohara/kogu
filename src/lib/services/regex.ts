@@ -5,6 +5,8 @@
  * the metacharacter classes present in the pattern.
  */
 
+import { getErrorMessage } from '@/lib/utils';
+
 export type Result<T> =
 	| { readonly ok: true; readonly value: T }
 	| { readonly ok: false; readonly error: string };
@@ -66,7 +68,7 @@ export const compileRegex = (pattern: string, flags: RegexFlags): Result<RegExp>
 		const flagString = withIndicesFlag(flagsToString(flags));
 		return { ok: true, value: new RegExp(pattern, flagString) };
 	} catch (e) {
-		return { ok: false, error: e instanceof Error ? e.message : String(e) };
+		return { ok: false, error: getErrorMessage(e) };
 	}
 };
 
@@ -151,7 +153,7 @@ export const replaceText = (
 	try {
 		return { ok: true, value: text.replace(compiled.value, replacement) };
 	} catch (e) {
-		return { ok: false, error: e instanceof Error ? e.message : String(e) };
+		return { ok: false, error: getErrorMessage(e) };
 	}
 };
 

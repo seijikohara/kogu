@@ -2,6 +2,7 @@ import { Search } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 
 import { FormInput, FormSection } from '@/lib/components/form';
+import { getErrorMessage } from '@/lib/utils';
 import { InputOutputSplit } from '@/lib/components/layout';
 import { OptionsPanel } from '@/lib/components/panel';
 import { useClipboardActions } from '@/lib/hooks';
@@ -59,7 +60,7 @@ export function QueryTab({ input, onInputChange, onStatsChange }: QueryTabProps)
 		} catch (e) {
 			return {
 				output: '',
-				error: e instanceof Error ? e.message : 'Query failed',
+				error: getErrorMessage(e, 'Query failed'),
 				count: 0,
 			};
 		}

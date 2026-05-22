@@ -17,6 +17,7 @@ import {
 	yamlToXml,
 } from '@/lib/services/formatters';
 import { copyToClipboard, pasteFromClipboard } from '@/lib/utils/file-operations';
+import { getErrorMessage } from '@/lib/utils';
 
 type ConvertFormat = 'json' | 'xml';
 type XmlIndentType = 'spaces' | 'tabs';
@@ -125,7 +126,7 @@ export function ConvertTab({ input, onInputChange, onStatsChange }: ConvertTabPr
 					convertFormat === 'json' ? yamlToJson(value, jsonOptions) : yamlToXml(value, xmlOptions);
 				return { output: result, error: '' };
 			} catch (e) {
-				return { output: '', error: e instanceof Error ? e.message : 'Conversion failed' };
+				return { output: '', error: getErrorMessage(e, 'Conversion failed') };
 			}
 		},
 		[convertFormat, jsonOptions, xmlOptions]
