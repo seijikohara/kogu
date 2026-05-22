@@ -87,7 +87,13 @@ export const TitleBarCommand = forwardRef<TitleBarCommandHandle, TitleBarCommand
 		}, [open, close]);
 
 		return (
-			<div ref={containerRef} className="relative w-full max-w-md">
+			<div
+				ref={containerRef}
+				className={cn(
+					'relative transition-[max-width] duration-150',
+					open ? 'w-full max-w-md' : 'w-fit max-w-[240px]'
+				)}
+			>
 				<CommandPrimitive
 					loop
 					shouldFilter
@@ -96,10 +102,10 @@ export const TitleBarCommand = forwardRef<TitleBarCommandHandle, TitleBarCommand
 				>
 					<div
 						className={cn(
-							'flex h-6 items-center gap-2 rounded-md border px-3 transition-colors',
+							'flex h-6 items-center gap-2 rounded-md border transition-colors',
 							open
-								? 'border-ring bg-background ring-2 ring-ring/30'
-								: 'border-border/60 bg-background hover:bg-accent/50'
+								? 'border-ring bg-background px-3 ring-2 ring-ring/30'
+								: 'border-border/60 bg-background px-2 hover:bg-accent/50'
 						)}
 					>
 						<Search className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
@@ -107,10 +113,13 @@ export const TitleBarCommand = forwardRef<TitleBarCommandHandle, TitleBarCommand
 							ref={inputRef}
 							value={query}
 							onValueChange={setQuery}
-							placeholder="Search pages..."
+							placeholder="Search…"
 							onFocus={() => setOpen(true)}
 							onKeyDown={handleInputKeydown}
-							className="h-full flex-1 bg-transparent text-xs font-normal text-foreground outline-none placeholder:text-muted-foreground"
+							className={cn(
+								'h-full bg-transparent text-xs font-normal text-foreground outline-none placeholder:text-muted-foreground',
+								open ? 'flex-1' : 'w-32'
+							)}
 						/>
 						<kbd className="pointer-events-none hidden shrink-0 rounded border border-border/40 bg-card px-1.5 py-0.5 font-mono text-2xs text-muted-foreground sm:inline">
 							{formatShortcut('K', true)}
