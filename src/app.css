@@ -85,12 +85,18 @@
 :root {
 	--radius: 0.625rem;
 	/* shadcn/ui standard colors (pure grayscale) */
+	/*
+	 * Color palette referenced from VS Code Default Light Modern (2023+):
+	 * editor.background `#FFFFFF`, foreground `#3B3B3B`, side-panel chrome
+	 * `#F8F8F8`. Softer fg than the previous near-black drops the perceived
+	 * heaviness while staying WCAG AA on white surfaces.
+	 */
 	--background: oklch(1 0 0);
-	--foreground: oklch(0.145 0 0);
+	--foreground: oklch(0.3 0 0);
 	--card: oklch(1 0 0);
-	--card-foreground: oklch(0.145 0 0);
+	--card-foreground: oklch(0.3 0 0);
 	--popover: oklch(1 0 0);
-	--popover-foreground: oklch(0.145 0 0);
+	--popover-foreground: oklch(0.3 0 0);
 	--primary: oklch(0.205 0 0);
 	--primary-foreground: oklch(0.985 0 0);
 	--secondary: oklch(0.97 0 0);
@@ -101,7 +107,7 @@
 	 * against `--background` (oklch(1 0 0)) and `--card` (oklch(1 0 0)).
 	 * Approximate luminance ratio: (1 + 0.05) / (0.46 + 0.05) ≈ 4.6:1 (was 3.4:1).
 	 */
-	--muted-foreground: oklch(0.46 0 0);
+	--muted-foreground: oklch(0.5 0 0);
 	--accent: oklch(0.97 0 0);
 	--accent-foreground: oklch(0.205 0 0);
 	--destructive: oklch(0.577 0.245 27.325);
@@ -112,8 +118,8 @@
 	--warning-foreground: oklch(0.98 0.02 75);
 	--info: oklch(0.55 0.15 250);
 	--info-foreground: oklch(0.98 0.01 250);
-	--border: oklch(0.9 0 0);
-	--input: oklch(0.9 0 0);
+	--border: oklch(0.92 0 0);
+	--input: oklch(0.92 0 0);
 	--ring: oklch(0.708 0 0);
 	--chart-1: oklch(0.646 0.222 41.116);
 	--chart-2: oklch(0.6 0.118 184.704);
@@ -121,34 +127,34 @@
 	--chart-4: oklch(0.828 0.189 84.429);
 	--chart-5: oklch(0.769 0.188 70.08);
 	/*
-	 * Sidebar (flat / borderless): aligned with the VS Code Modern / Zed
-	 * tradition where panel surfaces share the editor background and rely
-	 * on a thin border for separation. Eliminates the tonal step between
-	 * navigation and content — every pixel of background reads as one
-	 * "work surface". The right-edge border (`group-data-[side=left]:
-	 * border-r` inside `Sidebar`) carries the visual delimiter.
+	 * Sidebar / chrome surfaces, matching VS Code Default Light Modern's
+	 * `sideBar.background: #F8F8F8`. The editor surface stays pure white;
+	 * sidebar / status bar / title bar are one tonal step recessed, which
+	 * is the subtle "panel" hierarchy VS Code Modern actually uses (not
+	 * the fully flat reading I attempted earlier).
 	 */
-	--sidebar: oklch(1 0 0);
-	--sidebar-foreground: oklch(0.145 0 0);
+	--sidebar: oklch(0.973 0 0);
+	--sidebar-foreground: oklch(0.3 0 0);
 	--sidebar-primary: oklch(0.205 0 0);
 	--sidebar-primary-foreground: oklch(0.985 0 0);
-	--sidebar-accent: oklch(0.97 0 0);
-	--sidebar-accent-foreground: oklch(0.205 0 0);
-	--sidebar-border: oklch(0.9 0 0);
+	--sidebar-accent: oklch(0.94 0 0);
+	--sidebar-accent-foreground: oklch(0.3 0 0);
+	--sidebar-border: oklch(0.92 0 0);
 	--sidebar-ring: oklch(0.708 0 0);
 	/*
-	 * Surface hierarchy (flat at the outer chrome, retained for sub-panels).
-	 * Surfaces 0–2 share the editor background to keep the top toolbar,
-	 * sidebar, rail, status bar, and SectionHeader visually flush; surfaces
-	 * 3–4 keep a faint grey for true sub-panel separators (diff-results
-	 * footer, markdown-editor formatting bar, network-scanner sub-headers)
-	 * where a border alone wouldn't read as a section break.
+	 * Surface hierarchy, VS Code Default Light Modern-style:
+	 * Surface 0 is the editor (#FFFFFF). Surfaces 1–2 carry the chrome
+	 * recessed tier (#F8F8F8) — top title bar, sidebar, rail, status bar,
+	 * SectionHeader. Surfaces 3–4 stay one notch deeper for true sub-panel
+	 * separators (diff-results footer, markdown-editor formatting bar,
+	 * network-scanner sub-headers) where the chrome tier itself needs
+	 * further subdivision.
 	 */
 	--surface-0: oklch(1 0 0);
-	--surface-1: oklch(1 0 0);
-	--surface-2: oklch(1 0 0);
-	--surface-3: oklch(0.95 0 0);
-	--surface-4: oklch(0.93 0 0);
+	--surface-1: oklch(0.973 0 0);
+	--surface-2: oklch(0.973 0 0);
+	--surface-3: oklch(0.94 0 0);
+	--surface-4: oklch(0.92 0 0);
 	/* Panel and accent */
 	--panel: oklch(0.98 0.008 250);
 	--accent-soft: oklch(0.96 0.02 250);
@@ -194,13 +200,18 @@
 }
 
 .dark {
-	/* shadcn/ui standard colors (pure grayscale) */
-	--background: oklch(0.145 0 0);
-	--foreground: oklch(0.985 0 0);
-	--card: oklch(0.205 0 0);
-	--card-foreground: oklch(0.985 0 0);
-	--popover: oklch(0.205 0 0);
-	--popover-foreground: oklch(0.985 0 0);
+	/*
+	 * Color palette referenced from VS Code Default Dark Modern (2023+):
+	 * editor.background `#1F1F1F`, foreground `#CCCCCC`, side-panel chrome
+	 * `#181818`. The bg and fg are softer than the previous near-black /
+	 * near-white pair so text reads less harsh on extended sessions.
+	 */
+	--background: oklch(0.193 0 0);
+	--foreground: oklch(0.84 0 0);
+	--card: oklch(0.193 0 0);
+	--card-foreground: oklch(0.84 0 0);
+	--popover: oklch(0.22 0 0);
+	--popover-foreground: oklch(0.84 0 0);
 	--primary: oklch(0.985 0 0);
 	--primary-foreground: oklch(0.205 0 0);
 	--secondary: oklch(0.269 0 0);
@@ -212,9 +223,9 @@
 	 * Approximate luminance ratio: (0.76 + 0.05) / (0.205 + 0.05) ≈ 3.2 in OKLCH
 	 * space; sRGB-mapped contrast is ≈ 5.2:1 (was ≈ 4.3:1).
 	 */
-	--muted-foreground: oklch(0.76 0 0);
-	--accent: oklch(0.371 0 0);
-	--accent-foreground: oklch(0.985 0 0);
+	--muted-foreground: oklch(0.62 0 0);
+	--accent: oklch(0.27 0 0);
+	--accent-foreground: oklch(0.84 0 0);
 	--destructive: oklch(0.704 0.191 22.216);
 	--destructive-foreground: oklch(0.16 0.02 22);
 	--success: oklch(0.72 0.19 149);
@@ -223,8 +234,8 @@
 	--warning-foreground: oklch(0.16 0.02 75);
 	--info: oklch(0.68 0.15 250);
 	--info-foreground: oklch(0.16 0.02 250);
-	--border: oklch(1 0 0 / 15%);
-	--input: oklch(1 0 0 / 20%);
+	--border: oklch(1 0 0 / 12%);
+	--input: oklch(1 0 0 / 15%);
 	--ring: oklch(0.556 0 0);
 	--chart-1: oklch(0.488 0.243 264.376);
 	--chart-2: oklch(0.696 0.17 162.48);
@@ -232,29 +243,32 @@
 	--chart-4: oklch(0.627 0.265 303.9);
 	--chart-5: oklch(0.645 0.246 16.439);
 	/*
-	 * Sidebar (flat / borderless in dark mode too). Aligned with VS Code
-	 * Modern / Zed where the sidebar shares the editor background and
-	 * relies on a thin border for the right-edge separator.
+	 * Sidebar / chrome surfaces in dark mode, matching VS Code Default Dark
+	 * Modern's `sideBar.background: #181818`. The editor stays at #1F1F1F;
+	 * chrome is one tonal step deeper so the navigation reads as recessed
+	 * against the work surface.
 	 */
-	--sidebar: oklch(0.145 0 0);
-	--sidebar-foreground: oklch(0.985 0 0);
+	--sidebar: oklch(0.165 0 0);
+	--sidebar-foreground: oklch(0.84 0 0);
 	--sidebar-primary: oklch(0.985 0 0);
 	--sidebar-primary-foreground: oklch(0.205 0 0);
-	--sidebar-accent: oklch(0.269 0 0);
-	--sidebar-accent-foreground: oklch(0.985 0 0);
-	--sidebar-border: oklch(1 0 0 / 15%);
+	--sidebar-accent: oklch(0.24 0 0);
+	--sidebar-accent-foreground: oklch(0.84 0 0);
+	--sidebar-border: oklch(1 0 0 / 12%);
 	--sidebar-ring: oklch(0.556 0 0);
 	/*
-	 * Surface hierarchy (dark, flat at the outer chrome). Surfaces 0-2 match
-	 * the editor background; surfaces 3-4 keep recessed darkness for true
-	 * sub-panel separators (diff-results, markdown-editor toolbar, network-
+	 * Surface hierarchy in dark mode, VS Code Default Dark Modern-style:
+	 * Surface 0 is the editor (#1F1F1F). Surfaces 1–2 carry the chrome
+	 * recessed tier (#181818) — title bar, sidebar, status bar,
+	 * SectionHeader. Surfaces 3–4 are reserved for deeper sub-panels
+	 * (diff-results footer, markdown-editor formatting bar, network-
 	 * scanner sub-headers).
 	 */
-	--surface-0: oklch(0.145 0 0);
-	--surface-1: oklch(0.145 0 0);
-	--surface-2: oklch(0.145 0 0);
-	--surface-3: oklch(0.12 0 0);
-	--surface-4: oklch(0.1 0 0);
+	--surface-0: oklch(0.193 0 0);
+	--surface-1: oklch(0.165 0 0);
+	--surface-2: oklch(0.165 0 0);
+	--surface-3: oklch(0.13 0 0);
+	--surface-4: oklch(0.11 0 0);
 	/* Panel and accent */
 	--panel: oklch(0.2 0.02 260);
 	--accent-soft: oklch(0.25 0.025 260);

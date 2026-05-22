@@ -2,7 +2,18 @@ import { createFileRoute } from '@tanstack/react-router';
 import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { confirm } from '@tauri-apps/plugin-dialog';
-import { AlertTriangle, Check, ChevronsUpDown, Globe, RotateCcw, Settings } from 'lucide-react';
+import { useTheme } from 'next-themes';
+import {
+	AlertTriangle,
+	Check,
+	ChevronsUpDown,
+	Globe,
+	Monitor,
+	Moon,
+	RotateCcw,
+	Settings,
+	Sun,
+} from 'lucide-react';
 
 import { Alert, AlertDescription, AlertTitle } from '@/lib/components/ui/alert';
 import { Button } from '@/lib/components/ui/button';
@@ -23,6 +34,13 @@ import {
 } from '@/lib/components/ui/command';
 import { Label } from '@/lib/components/ui/label';
 import { Popover, PopoverContent, PopoverTrigger } from '@/lib/components/ui/popover';
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from '@/lib/components/ui/select';
 import { FormCheckbox, FormSlider } from '@/lib/components/form';
 import {
 	applyAllSettings,
@@ -103,6 +121,8 @@ function SettingsPage() {
 	const [settingsFilePath, setSettingsFilePath] = useState('');
 	const [uiFontOpen, setUiFontOpen] = useState(false);
 	const [codeFontOpen, setCodeFontOpen] = useState(false);
+
+	const { theme, setTheme } = useTheme();
 
 	const saveTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 	const initializedRef = useRef(false);
@@ -185,9 +205,32 @@ function SettingsPage() {
 					<Card density="compact" id="appearance">
 						<CardHeader>
 							<CardTitle>Appearance</CardTitle>
-							<CardDescription>Customize fonts used throughout the application</CardDescription>
+							<CardDescription>Theme and fonts used throughout the application</CardDescription>
 						</CardHeader>
 						<CardContent className="space-y-6">
+							<div className="space-y-1.5">
+								<Label className="text-sm font-medium">Theme</Label>
+								<Select value={theme ?? 'system'} onValueChange={setTheme}>
+									<SelectTrigger className="w-full">
+										<SelectValue />
+									</SelectTrigger>
+									<SelectContent>
+										<SelectItem value="system">
+											<Monitor className="h-4 w-4" />
+											System
+										</SelectItem>
+										<SelectItem value="light">
+											<Sun className="h-4 w-4" />
+											Light
+										</SelectItem>
+										<SelectItem value="dark">
+											<Moon className="h-4 w-4" />
+											Dark
+										</SelectItem>
+									</SelectContent>
+								</Select>
+							</div>
+
 							<div className="space-y-1.5">
 								<Label className="text-sm font-medium">UI Font Family</Label>
 								<Popover open={uiFontOpen} onOpenChange={setUiFontOpen}>

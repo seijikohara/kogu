@@ -1,4 +1,5 @@
 import { forwardRef, useEffect, useImperativeHandle, useRef } from 'react';
+import { useTheme } from 'next-themes';
 import * as monaco from 'monaco-editor';
 import editorWorker from 'monaco-editor/esm/vs/editor/editor.worker?worker';
 import cssWorker from 'monaco-editor/esm/vs/language/css/css.worker?worker';
@@ -134,7 +135,7 @@ export const CodeEditorWrapper = forwardRef<CodeEditorWrapperHandle, CodeEditorW
 		{
 			value = '',
 			mode = 'json',
-			theme = 'dark',
+			theme,
 			height = '300px',
 			readOnly = false,
 			gotoLine = null,
@@ -148,6 +149,13 @@ export const CodeEditorWrapper = forwardRef<CodeEditorWrapperHandle, CodeEditorW
 		},
 		ref
 	) {
+		// Resolve theme: explicit prop wins, otherwise follow the app theme
+		// (next-themes). `resolvedTheme` is always `'light'` or `'dark'` even
+		// when the user picked `'system'`, so the editor tracks OS preference
+		// changes without an extra system listener here.
+		const { resolvedTheme } = useTheme();
+		const effectiveTheme: EditorTheme = theme ?? (resolvedTheme === 'light' ? 'light' : 'dark');
+
 		const containerRef = useRef<HTMLDivElement | null>(null);
 		const editorRef = useRef<monaco.editor.IStandaloneCodeEditor | null>(null);
 		const decorationCollectionRef = useRef<monaco.editor.IEditorDecorationsCollection | null>(null);
@@ -264,7 +272,7 @@ export const CodeEditorWrapper = forwardRef<CodeEditorWrapperHandle, CodeEditorW
 			const editor = monaco.editor.create(container, {
 				value,
 				language: LANGUAGE_MAP[mode],
-				theme: getMonacoTheme(theme),
+				theme: getMonacoTheme(effectiveTheme),
 				readOnly,
 				automaticLayout: true,
 				minimap: { enabled: false },
@@ -337,8 +345,8 @@ export const CodeEditorWrapper = forwardRef<CodeEditorWrapperHandle, CodeEditorW
 
 		useEffect(() => {
 			if (!editorRef.current) return;
-			monaco.editor.setTheme(getMonacoTheme(theme));
-		}, [theme]);
+			monaco.editor.setTheme(getMonacoTheme(effectiveTheme));
+		}, [effectiveTheme]);
 
 		useEffect(() => {
 			const editor = editorRef.current;
@@ -402,7 +410,7 @@ export const CodeEditorWrapper = forwardRef<CodeEditorWrapperHandle, CodeEditorW
 			// biome-ignore lint/a11y/noStaticElementInteractions: Monaco mounts focusable, role-aware editor widgets inside this container; the contextmenu handler delegates to Monaco's own keyboard/mouse semantics.
 			<div
 				ref={containerRef}
-				className="code-editor-wrapper relative isolate z-0 overflow-hidden border border-border [&_.monaco-editor]:h-full [&_.highlight-added]:bg-[hsl(142_76%_36%/0.25)] [&_.highlight-changed]:bg-[hsl(45_93%_47%/0.25)] [&_.highlight-glyph-added]:bg-[hsl(142_76%_36%)] [&_.highlight-glyph-changed]:bg-[hsl(45_93%_47%)] [&_.highlight-glyph-removed]:bg-[hsl(0_84%_60%)] [&_.highlight-removed]:bg-[hsl(0_84%_60%/0.25)]"
+				className="code-editor-wrapper relative isolate z-0 overflow-hidden [&_.monaco-editor]:h-full [&_.highlight-added]:bg-[hsl(142_76%_36%/0.25)] [&_.highlight-changed]:bg-[hsl(45_93%_47%/0.25)] [&_.highlight-glyph-added]:bg-[hsl(142_76%_36%)] [&_.highlight-glyph-changed]:bg-[hsl(45_93%_47%)] [&_.highlight-glyph-removed]:bg-[hsl(0_84%_60%)] [&_.highlight-removed]:bg-[hsl(0_84%_60%/0.25)]"
 				style={{ height }}
 				onContextMenu={handleContextMenu}
 			/>
