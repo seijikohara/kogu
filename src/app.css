@@ -3,6 +3,13 @@
 
 @import 'tw-animate-css';
 
+/*
+ * Design tokens. This file is generated from `src/lib/theme/tokens.ts` by
+ * `bun run build:tokens` — edit the TypeScript source, then re-run the
+ * script (or rely on `bun run check`, which regenerates and asserts).
+ */
+@import './lib/theme/tokens.generated.css';
+
 @custom-variant dark (&:is(.dark *));
 
 /*
@@ -80,225 +87,6 @@
 	&:where([data-orientation='vertical']) {
 		@slot;
 	}
-}
-
-:root {
-	--radius: 0.625rem;
-	/* shadcn/ui standard colors (pure grayscale) */
-	/*
-	 * Color palette referenced from VS Code Default Light Modern (2023+):
-	 * editor.background `#FFFFFF`, foreground `#3B3B3B`, side-panel chrome
-	 * `#F8F8F8`. Softer fg than the previous near-black drops the perceived
-	 * heaviness while staying WCAG AA on white surfaces.
-	 */
-	--background: oklch(1 0 0);
-	--foreground: oklch(0.3 0 0);
-	--card: oklch(1 0 0);
-	--card-foreground: oklch(0.3 0 0);
-	--popover: oklch(1 0 0);
-	--popover-foreground: oklch(0.3 0 0);
-	--primary: oklch(0.205 0 0);
-	--primary-foreground: oklch(0.985 0 0);
-	--secondary: oklch(0.97 0 0);
-	--secondary-foreground: oklch(0.205 0 0);
-	--muted: oklch(0.97 0 0);
-	/*
-	 * Lowered from oklch(0.556 0 0) to oklch(0.46 0 0) to meet WCAG AA contrast
-	 * against `--background` (oklch(1 0 0)) and `--card` (oklch(1 0 0)).
-	 * Approximate luminance ratio: (1 + 0.05) / (0.46 + 0.05) ≈ 4.6:1 (was 3.4:1).
-	 */
-	--muted-foreground: oklch(0.5 0 0);
-	--accent: oklch(0.97 0 0);
-	--accent-foreground: oklch(0.205 0 0);
-	--destructive: oklch(0.577 0.245 27.325);
-	--destructive-foreground: oklch(0.98 0.01 27);
-	--success: oklch(0.52 0.17 142);
-	--success-foreground: oklch(0.98 0.01 142);
-	--warning: oklch(0.65 0.17 75);
-	--warning-foreground: oklch(0.98 0.02 75);
-	--info: oklch(0.55 0.15 250);
-	--info-foreground: oklch(0.98 0.01 250);
-	--border: oklch(0.92 0 0);
-	--input: oklch(0.92 0 0);
-	--ring: oklch(0.708 0 0);
-	--chart-1: oklch(0.646 0.222 41.116);
-	--chart-2: oklch(0.6 0.118 184.704);
-	--chart-3: oklch(0.398 0.07 227.392);
-	--chart-4: oklch(0.828 0.189 84.429);
-	--chart-5: oklch(0.769 0.188 70.08);
-	/*
-	 * Sidebar / chrome surfaces, matching VS Code Default Light Modern's
-	 * `sideBar.background: #F8F8F8`. The editor surface stays pure white;
-	 * sidebar / status bar / title bar are one tonal step recessed, which
-	 * is the subtle "panel" hierarchy VS Code Modern actually uses (not
-	 * the fully flat reading I attempted earlier).
-	 */
-	--sidebar: oklch(0.973 0 0);
-	--sidebar-foreground: oklch(0.3 0 0);
-	--sidebar-primary: oklch(0.205 0 0);
-	--sidebar-primary-foreground: oklch(0.985 0 0);
-	--sidebar-accent: oklch(0.94 0 0);
-	--sidebar-accent-foreground: oklch(0.3 0 0);
-	--sidebar-border: oklch(0.92 0 0);
-	--sidebar-ring: oklch(0.708 0 0);
-	/*
-	 * Surface hierarchy, VS Code Default Light Modern-style:
-	 * Surface 0 is the editor (#FFFFFF). Surfaces 1–2 carry the chrome
-	 * recessed tier (#F8F8F8) — top title bar, sidebar, rail, status bar,
-	 * SectionHeader. Surfaces 3–4 stay one notch deeper for true sub-panel
-	 * separators (diff-results footer, markdown-editor formatting bar,
-	 * network-scanner sub-headers) where the chrome tier itself needs
-	 * further subdivision.
-	 */
-	--surface-0: oklch(1 0 0);
-	--surface-1: oklch(0.973 0 0);
-	--surface-2: oklch(0.973 0 0);
-	--surface-3: oklch(0.94 0 0);
-	--surface-4: oklch(0.92 0 0);
-	/* Panel and accent */
-	--panel: oklch(0.98 0.008 250);
-	--accent-soft: oklch(0.96 0.02 250);
-	--accent-brand: oklch(0.55 0.2 265);
-	/* Subtle borders */
-	--border-subtle: oklch(0 0 0 / 5%);
-	--border-strong: oklch(0 0 0 / 12%);
-	/* Shadows */
-	--shadow-xs: 0 1px 1px oklch(0% 0 0 / 0.03);
-	--shadow-sm: 0 1px 2px oklch(0% 0 0 / 0.05);
-	--shadow-md: 0 4px 12px oklch(0% 0 0 / 0.08), 0 1px 3px oklch(0% 0 0 / 0.04);
-	--shadow-lg: 0 12px 32px oklch(0% 0 0 / 0.12), 0 4px 8px oklch(0% 0 0 / 0.06);
-	/* Motion */
-	--ease-standard: cubic-bezier(0.2, 0, 0, 1);
-	--duration-fast: 120ms;
-	--duration-base: 160ms;
-	--duration-slow: 220ms;
-	/* Layout */
-	--toolbar-h: 3rem;
-	--rail-w: 18rem;
-	--rail-w-wide: 24rem;
-	--rail-w-collapsed: 2.75rem;
-	--status-h: 1.75rem;
-	--editor-header-h: 2rem;
-	/* Interactive states */
-	--interactive-hover: oklch(from var(--muted) l c h / 50%);
-	--interactive-active: oklch(from var(--muted) l c h / 60%);
-	--interactive-selected: oklch(from var(--primary) l c h / 10%);
-	/* Syntax highlighting (TreeView) */
-	--syntax-string: oklch(0.55 0.16 152);
-	--syntax-number: oklch(0.5 0.14 250);
-	--syntax-boolean: oklch(0.5 0.18 300);
-	--syntax-null: oklch(0.55 0.02 250);
-	--syntax-object: oklch(0.55 0.16 75);
-	--syntax-array: oklch(0.5 0.14 195);
-	--syntax-keyword: oklch(0.5 0.18 280);
-	--syntax-property: oklch(0.5 0.14 220);
-	--syntax-root: oklch(0.5 0.18 310);
-	--syntax-statement: oklch(0.55 0.18 10);
-	--syntax-clause: oklch(0.5 0.18 260);
-	--syntax-expression: oklch(0.55 0.16 45);
-	--syntax-identifier: oklch(0.5 0.14 175);
-}
-
-.dark {
-	/*
-	 * Color palette referenced from VS Code Default Dark Modern (2023+):
-	 * editor.background `#1F1F1F`, foreground `#CCCCCC`, side-panel chrome
-	 * `#181818`. The bg and fg are softer than the previous near-black /
-	 * near-white pair so text reads less harsh on extended sessions.
-	 */
-	--background: oklch(0.193 0 0);
-	--foreground: oklch(0.84 0 0);
-	--card: oklch(0.193 0 0);
-	--card-foreground: oklch(0.84 0 0);
-	--popover: oklch(0.22 0 0);
-	--popover-foreground: oklch(0.84 0 0);
-	--primary: oklch(0.985 0 0);
-	--primary-foreground: oklch(0.205 0 0);
-	--secondary: oklch(0.269 0 0);
-	--secondary-foreground: oklch(0.985 0 0);
-	--muted: oklch(0.269 0 0);
-	/*
-	 * Raised from oklch(0.708 0 0) to oklch(0.76 0 0) to meet WCAG AA contrast
-	 * against `--background` (oklch(0.145 0 0)) and `--card` (oklch(0.205 0 0)).
-	 * Approximate luminance ratio: (0.76 + 0.05) / (0.205 + 0.05) ≈ 3.2 in OKLCH
-	 * space; sRGB-mapped contrast is ≈ 5.2:1 (was ≈ 4.3:1).
-	 */
-	--muted-foreground: oklch(0.62 0 0);
-	--accent: oklch(0.27 0 0);
-	--accent-foreground: oklch(0.84 0 0);
-	--destructive: oklch(0.704 0.191 22.216);
-	--destructive-foreground: oklch(0.16 0.02 22);
-	--success: oklch(0.72 0.19 149);
-	--success-foreground: oklch(0.16 0.02 149);
-	--warning: oklch(0.78 0.17 75);
-	--warning-foreground: oklch(0.16 0.02 75);
-	--info: oklch(0.68 0.15 250);
-	--info-foreground: oklch(0.16 0.02 250);
-	--border: oklch(1 0 0 / 12%);
-	--input: oklch(1 0 0 / 15%);
-	--ring: oklch(0.556 0 0);
-	--chart-1: oklch(0.488 0.243 264.376);
-	--chart-2: oklch(0.696 0.17 162.48);
-	--chart-3: oklch(0.769 0.188 70.08);
-	--chart-4: oklch(0.627 0.265 303.9);
-	--chart-5: oklch(0.645 0.246 16.439);
-	/*
-	 * Sidebar / chrome surfaces in dark mode, matching VS Code Default Dark
-	 * Modern's `sideBar.background: #181818`. The editor stays at #1F1F1F;
-	 * chrome is one tonal step deeper so the navigation reads as recessed
-	 * against the work surface.
-	 */
-	--sidebar: oklch(0.165 0 0);
-	--sidebar-foreground: oklch(0.84 0 0);
-	--sidebar-primary: oklch(0.985 0 0);
-	--sidebar-primary-foreground: oklch(0.205 0 0);
-	--sidebar-accent: oklch(0.24 0 0);
-	--sidebar-accent-foreground: oklch(0.84 0 0);
-	--sidebar-border: oklch(1 0 0 / 12%);
-	--sidebar-ring: oklch(0.556 0 0);
-	/*
-	 * Surface hierarchy in dark mode, VS Code Default Dark Modern-style:
-	 * Surface 0 is the editor (#1F1F1F). Surfaces 1–2 carry the chrome
-	 * recessed tier (#181818) — title bar, sidebar, status bar,
-	 * SectionHeader. Surfaces 3–4 are reserved for deeper sub-panels
-	 * (diff-results footer, markdown-editor formatting bar, network-
-	 * scanner sub-headers).
-	 */
-	--surface-0: oklch(0.193 0 0);
-	--surface-1: oklch(0.165 0 0);
-	--surface-2: oklch(0.165 0 0);
-	--surface-3: oklch(0.13 0 0);
-	--surface-4: oklch(0.11 0 0);
-	/* Panel and accent */
-	--panel: oklch(0.2 0.02 260);
-	--accent-soft: oklch(0.25 0.025 260);
-	--accent-brand: oklch(0.65 0.2 265);
-	/* Subtle borders */
-	--border-subtle: oklch(1 0 0 / 8%);
-	--border-strong: oklch(1 0 0 / 18%);
-	/* Shadows */
-	--shadow-xs: 0 1px 1px oklch(0% 0 0 / 0.08);
-	--shadow-sm: 0 1px 2px oklch(0% 0 0 / 0.2);
-	--shadow-md: 0 4px 12px oklch(0% 0 0 / 0.3), 0 1px 3px oklch(0% 0 0 / 0.15);
-	--shadow-lg: 0 12px 32px oklch(0% 0 0 / 0.4), 0 4px 8px oklch(0% 0 0 / 0.2);
-	/* Interactive states (dark) */
-	--interactive-hover: oklch(from var(--muted) l c h / 40%);
-	--interactive-active: oklch(from var(--muted) l c h / 50%);
-	--interactive-selected: oklch(from var(--primary) l c h / 15%);
-	/* Syntax highlighting (dark) */
-	--syntax-string: oklch(0.72 0.16 152);
-	--syntax-number: oklch(0.68 0.14 250);
-	--syntax-boolean: oklch(0.68 0.18 300);
-	--syntax-null: oklch(0.62 0.02 250);
-	--syntax-object: oklch(0.72 0.16 75);
-	--syntax-array: oklch(0.68 0.14 195);
-	--syntax-keyword: oklch(0.68 0.18 280);
-	--syntax-property: oklch(0.68 0.14 220);
-	--syntax-root: oklch(0.68 0.18 310);
-	--syntax-statement: oklch(0.72 0.18 10);
-	--syntax-clause: oklch(0.68 0.18 260);
-	--syntax-expression: oklch(0.72 0.16 45);
-	--syntax-identifier: oklch(0.68 0.14 175);
 }
 
 @theme inline {
@@ -598,4 +386,34 @@
 }
 *::-webkit-scrollbar-thumb:hover {
 	background: oklch(from var(--muted-foreground) l c h / 40%);
+}
+
+/*
+ * Monaco editor decoration classes for line-level diff highlighting.
+ * These classes are attached by Monaco's `IEditorDecorationsCollection`
+ * (see `CodeEditorWrapper`) on a per-line basis. Live in `app.css` rather
+ * than per-component Tailwind arbitrary values so the diff colors are
+ * driven by the `--diff-*` token set (single source of truth).
+ *
+ * The `oklch(from var(--diff-*) l c h / 25%)` form pulls the same hue
+ * and lightness as the solid glyph color, just at lower alpha for the
+ * full-line fill.
+ */
+.highlight-added {
+	background: oklch(from var(--diff-added) l c h / 25%);
+}
+.highlight-changed {
+	background: oklch(from var(--diff-changed) l c h / 25%);
+}
+.highlight-removed {
+	background: oklch(from var(--diff-removed) l c h / 25%);
+}
+.highlight-glyph-added {
+	background: var(--diff-added);
+}
+.highlight-glyph-changed {
+	background: var(--diff-changed);
+}
+.highlight-glyph-removed {
+	background: var(--diff-removed);
 }
