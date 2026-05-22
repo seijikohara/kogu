@@ -431,6 +431,12 @@ pub fn run() {
             let settings_state = settings::SettingsState::load(&config_dir);
             app.manage(settings_state);
 
+            // Warm the system font caches from a background task so the
+            // first Settings open returns instantly. font-kit's `all_families`
+            // + per-family `is_monospace` walk would otherwise block the UI
+            // thread for several seconds on macOS at the cold path.
+            settings::prewarm_font_cache();
+
             // macOS: set up native app menu with "Reset All Settings..."
             #[cfg(target_os = "macos")]
             {

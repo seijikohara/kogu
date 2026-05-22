@@ -42,6 +42,60 @@ export const Route = createFileRoute('/settings')({
 	component: SettingsPage,
 });
 
+interface FontPickerItemProps {
+	// Filter key passed to cmdk so search works on the human-readable name.
+	readonly searchValue: string;
+	// CSS `font-family` token. Empty string flags the "System Default" row.
+	readonly fontName: string;
+	// Optional override (e.g. "System Default"). Defaults to `fontName`.
+	readonly displayName?: string;
+	// Optional leading icon (e.g. Globe for Google Fonts).
+	readonly icon?: typeof Check;
+	readonly isSelected: boolean;
+	// Preview rendered in the target font on the right (e.g. "AaBb あア 123"
+	// for UI, "Aa Bb {} = 123" for code). Skipped when `fontName` is empty.
+	readonly sampleText: string;
+	readonly onSelect: () => void;
+}
+
+// Per-row renderer for the font picker. Three columns: leading check slot
+// (always 16px reserved so selected and unselected rows align), label in
+// the page's default UI font (stays legible for symbol / non-Latin
+// families that would render their own name as glyphs), and a trailing
+// preview in the target font that conveys the typeface's shape without
+// hiding the name.
+function FontPickerItem({
+	searchValue,
+	fontName,
+	displayName,
+	icon: Icon,
+	isSelected,
+	sampleText,
+	onSelect,
+}: FontPickerItemProps) {
+	const label = displayName ?? fontName;
+	return (
+		<CommandItem value={searchValue} onSelect={onSelect}>
+			<span className="flex h-4 w-4 shrink-0 items-center justify-center">
+				{isSelected ? <Check className="h-4 w-4" /> : null}
+			</span>
+			{Icon ? <Icon className="h-3.5 w-3.5 shrink-0 text-muted-foreground" /> : null}
+			<span className="flex-1 truncate">{label}</span>
+			{fontName ? (
+				<span
+					className="ml-2 shrink-0 text-xs text-muted-foreground"
+					style={{ fontFamily: `"${fontName}"` }}
+				>
+					{sampleText}
+				</span>
+			) : null}
+		</CommandItem>
+	);
+}
+
+const UI_SAMPLE_TEXT = 'AaBb あア 123';
+const CODE_SAMPLE_TEXT = 'Aa Bb {} = 123';
+
 function SettingsPage() {
 	const [fontSettings, setFontSettings] = useState<FontSettings>({ ...DEFAULT_SETTINGS.font });
 	const [systemFonts, setSystemFonts] = useState<readonly string[]>([]);
@@ -161,48 +215,45 @@ function SettingsPage() {
 											<CommandList className="max-h-48">
 												<CommandEmpty>No fonts found.</CommandEmpty>
 												<CommandGroup heading="System Fonts">
-													<CommandItem
-														value="System Default"
+													<FontPickerItem
+														searchValue="System Default"
+														fontName=""
+														displayName="System Default"
+														isSelected={!fontSettings.ui_family}
+														sampleText=""
 														onSelect={() => {
 															setFontSettings((prev) => ({ ...prev, ui_family: '' }));
 															setUiFontOpen(false);
 														}}
-													>
-														<span>System Default</span>
-														{!fontSettings.ui_family ? <Check className="ml-auto h-4 w-4" /> : null}
-													</CommandItem>
+													/>
 													{systemFonts.map((font) => (
-														<CommandItem
+														<FontPickerItem
 															key={font}
-															value={font}
+															searchValue={font}
+															fontName={font}
+															isSelected={fontSettings.ui_family === font}
+															sampleText={UI_SAMPLE_TEXT}
 															onSelect={() => {
 																setFontSettings((prev) => ({ ...prev, ui_family: font }));
 																setUiFontOpen(false);
 															}}
-														>
-															<span style={{ fontFamily: `"${font}"` }}>{font}</span>
-															{fontSettings.ui_family === font ? (
-																<Check className="ml-auto h-4 w-4" />
-															) : null}
-														</CommandItem>
+														/>
 													))}
 												</CommandGroup>
 												{fontSettings.google_fonts_enabled ? (
 													<CommandGroup heading="Google Fonts">
 														{googleUiFonts.map((gf) => (
-															<CommandItem
+															<FontPickerItem
 																key={gf.name}
-																value={`Google: ${gf.name}`}
+																searchValue={`Google: ${gf.name}`}
+																fontName={gf.name}
+																icon={Globe}
+																isSelected={fontSettings.ui_family === gf.name}
+																sampleText={UI_SAMPLE_TEXT}
 																onSelect={() =>
 																	selectGoogleFont('ui_family', gf.name, () => setUiFontOpen(false))
 																}
-															>
-																<Globe className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-																<span style={{ fontFamily: `"${gf.name}"` }}>{gf.name}</span>
-																{fontSettings.ui_family === gf.name ? (
-																	<Check className="ml-auto h-4 w-4" />
-																) : null}
-															</CommandItem>
+															/>
 														))}
 													</CommandGroup>
 												) : null}
@@ -249,52 +300,47 @@ function SettingsPage() {
 											<CommandList className="max-h-48">
 												<CommandEmpty>No fonts found.</CommandEmpty>
 												<CommandGroup heading="System Monospace Fonts">
-													<CommandItem
-														value="System Default"
+													<FontPickerItem
+														searchValue="System Default"
+														fontName=""
+														displayName="System Default"
+														isSelected={!fontSettings.code_family}
+														sampleText=""
 														onSelect={() => {
 															setFontSettings((prev) => ({ ...prev, code_family: '' }));
 															setCodeFontOpen(false);
 														}}
-													>
-														<span>System Default</span>
-														{!fontSettings.code_family ? (
-															<Check className="ml-auto h-4 w-4" />
-														) : null}
-													</CommandItem>
+													/>
 													{monospaceFonts.map((font) => (
-														<CommandItem
+														<FontPickerItem
 															key={font}
-															value={font}
+															searchValue={font}
+															fontName={font}
+															isSelected={fontSettings.code_family === font}
+															sampleText={CODE_SAMPLE_TEXT}
 															onSelect={() => {
 																setFontSettings((prev) => ({ ...prev, code_family: font }));
 																setCodeFontOpen(false);
 															}}
-														>
-															<span style={{ fontFamily: `"${font}"` }}>{font}</span>
-															{fontSettings.code_family === font ? (
-																<Check className="ml-auto h-4 w-4" />
-															) : null}
-														</CommandItem>
+														/>
 													))}
 												</CommandGroup>
 												{fontSettings.google_fonts_enabled ? (
 													<CommandGroup heading="Google Fonts">
 														{googleCodeFonts.map((gf) => (
-															<CommandItem
+															<FontPickerItem
 																key={gf.name}
-																value={`Google: ${gf.name}`}
+																searchValue={`Google: ${gf.name}`}
+																fontName={gf.name}
+																icon={Globe}
+																isSelected={fontSettings.code_family === gf.name}
+																sampleText={CODE_SAMPLE_TEXT}
 																onSelect={() =>
 																	selectGoogleFont('code_family', gf.name, () =>
 																		setCodeFontOpen(false)
 																	)
 																}
-															>
-																<Globe className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-																<span style={{ fontFamily: `"${gf.name}"` }}>{gf.name}</span>
-																{fontSettings.code_family === gf.name ? (
-																	<Check className="ml-auto h-4 w-4" />
-																) : null}
-															</CommandItem>
+															/>
 														))}
 													</CommandGroup>
 												) : null}

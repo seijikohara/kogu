@@ -238,16 +238,41 @@ pub fn reset_settings(
     Ok(defaults)
 }
 
-/// Get all available system font families (sorted, cached)
+/// Get all available system font families (sorted, cached).
+///
+/// `font_kit` enumeration touches `CoreText` on macOS and walks ~300+ font
+/// files, which can take seconds on the cold path. Wrap the work in
+/// `spawn_blocking` so the Tauri command runtime can yield the UI thread
+/// while the `OnceLock` primes — subsequent invocations are instant.
 #[tauri::command]
-pub fn get_system_fonts() -> Vec<String> {
-    enumerate_system_fonts().to_vec()
+pub async fn get_system_fonts() -> Vec<String> {
+    tauri::async_runtime::spawn_blocking(|| enumerate_system_fonts().to_vec())
+        .await
+        .unwrap_or_default()
 }
 
-/// Get monospace system font families only (sorted, cached)
+/// Get monospace system font families only (sorted, cached).
+///
+/// Costlier than `get_system_fonts` because every family needs `load()` +
+/// `is_monospace()` to check the metric — same `spawn_blocking` treatment.
 #[tauri::command]
-pub fn get_monospace_system_fonts() -> Vec<String> {
-    enumerate_monospace_fonts().to_vec()
+pub async fn get_monospace_system_fonts() -> Vec<String> {
+    tauri::async_runtime::spawn_blocking(|| enumerate_monospace_fonts().to_vec())
+        .await
+        .unwrap_or_default()
+}
+
+/// Warm the system font caches from a background task at app startup.
+///
+/// Called from `lib::run`'s `setup` hook so the first `get_system_fonts` /
+/// `get_monospace_system_fonts` invocation from the Settings page returns
+/// instantly instead of paying the cold-cache cost. Failure is ignored —
+/// the worst case degrades to the on-demand path that already exists.
+pub fn prewarm_font_cache() {
+    tauri::async_runtime::spawn_blocking(|| {
+        let _ = enumerate_system_fonts();
+        let _ = enumerate_monospace_fonts();
+    });
 }
 
 /// Get the settings file path (for display in the settings page)
