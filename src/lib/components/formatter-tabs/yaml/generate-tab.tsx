@@ -2,7 +2,6 @@ import { Code } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import * as yaml from 'yaml';
 
-import { CodeEditor } from '@/lib/components/editor';
 import {
 	FormCheckbox,
 	FormCheckboxGroup,
@@ -11,9 +10,8 @@ import {
 	FormSection,
 	FormSelect,
 } from '@/lib/components/form';
-import { SplitPane } from '@/lib/components/layout';
+import { InputOutputSplit } from '@/lib/components/layout';
 import { OptionsPanel } from '@/lib/components/panel';
-import { EmptyOutputPane } from '@/lib/components/status';
 import { useClipboardActions } from '@/lib/hooks';
 import {
 	type CSharpOptions,
@@ -823,39 +821,23 @@ export function GenerateTab({ input, onInputChange, onStatsChange }: GenerateTab
 				) : null}
 			</OptionsPanel>
 
-			<SplitPane
+			<InputOutputSplit
 				className="flex-1"
-				left={
-					<CodeEditor
-						title="Input YAML"
-						value={input}
-						onChange={onInputChange}
-						mode="input"
-						editorMode="yaml"
-						placeholder="Enter YAML here..."
-						onPaste={handlePaste}
-						onClear={handleClear}
-					/>
-				}
-				right={
-					input.trim().length === 0 ? (
-						<EmptyOutputPane
-							headerTitle={`Generated Code (${LANGUAGE_INFO[generateLanguage].label})`}
-							icon={Code}
-							title="Enter YAML to generate code"
-							description={`The ${LANGUAGE_INFO[generateLanguage].label} class definitions will appear here.`}
-						/>
-					) : (
-						<CodeEditor
-							title={`Generated Code (${LANGUAGE_INFO[generateLanguage].label})`}
-							value={generatedCode}
-							mode="readonly"
-							editorMode={generateEditorMode}
-							placeholder="Generated code will appear here..."
-							onCopy={handleCopy}
-						/>
-					)
-				}
+				input={input}
+				onInputChange={onInputChange}
+				editorMode="yaml"
+				inputTitle="Input YAML"
+				inputPlaceholder="Enter YAML here..."
+				onPaste={handlePaste}
+				onClear={handleClear}
+				output={generatedCode}
+				outputEditorMode={generateEditorMode}
+				outputTitle={`Generated Code (${LANGUAGE_INFO[generateLanguage].label})`}
+				outputPlaceholder="Generated code will appear here..."
+				onCopy={handleCopy}
+				emptyIcon={Code}
+				emptyTitle="Enter YAML to generate code"
+				emptyDescription={`The ${LANGUAGE_INFO[generateLanguage].label} class definitions will appear here.`}
 			/>
 		</div>
 	);

@@ -1,4 +1,5 @@
 export { AppSidebar, type AppSidebarProps } from './app-sidebar';
+export { InputOutputSplit, type InputOutputSplitProps } from './input-output-split';
 export {
 	KeyboardShortcutsDialog,
 	type KeyboardShortcutsDialogProps,

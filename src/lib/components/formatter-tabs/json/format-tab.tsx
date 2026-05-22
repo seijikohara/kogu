@@ -1,7 +1,7 @@
 import { FileText } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 
-import { CodeEditor, type ContextMenuItem } from '@/lib/components/editor';
+import type { ContextMenuItem } from '@/lib/components/editor';
 import {
 	FormCheckbox,
 	FormCheckboxGroup,
@@ -9,9 +9,8 @@ import {
 	FormSection,
 	FormSelect,
 } from '@/lib/components/form';
-import { SplitPane } from '@/lib/components/layout';
+import { InputOutputSplit } from '@/lib/components/layout';
 import { OptionsPanel } from '@/lib/components/panel';
-import { EmptyOutputPane } from '@/lib/components/status';
 import { useClipboardActions } from '@/lib/hooks';
 import {
 	defaultJsonFormatOptions,
@@ -396,41 +395,21 @@ export function FormatTab({ input, onInputChange, onStatsChange }: FormatTabProp
 				</FormSection>
 			</OptionsPanel>
 
-			<SplitPane
-				className="h-full flex-1"
-				left={
-					<CodeEditor
-						title="Input"
-						value={input}
-						onChange={onInputChange}
-						mode="input"
-						editorMode="json"
-						placeholder="Enter JSON here..."
-						onSample={handleSample}
-						onPaste={handlePaste}
-						onClear={handleClear}
-						contextMenuItems={inputContextMenuItems}
-					/>
-				}
-				right={
-					input.trim().length === 0 ? (
-						<EmptyOutputPane
-							headerTitle="Output"
-							icon={FileText}
-							title="Enter JSON to format"
-							description="The formatted (or minified) document will appear here."
-						/>
-					) : (
-						<CodeEditor
-							title="Output"
-							value={output}
-							mode="readonly"
-							editorMode="json"
-							placeholder="Formatted output..."
-							onCopy={handleCopy}
-						/>
-					)
-				}
+			<InputOutputSplit
+				input={input}
+				onInputChange={onInputChange}
+				editorMode="json"
+				inputPlaceholder="Enter JSON here..."
+				onSample={handleSample}
+				onPaste={handlePaste}
+				onClear={handleClear}
+				inputContextMenuItems={inputContextMenuItems}
+				output={output}
+				outputPlaceholder="Formatted output..."
+				onCopy={handleCopy}
+				emptyIcon={FileText}
+				emptyTitle="Enter JSON to format"
+				emptyDescription="The formatted (or minified) document will appear here."
 			/>
 		</div>
 	);

@@ -1,10 +1,9 @@
 import { ArrowRightLeft } from 'lucide-react';
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
 
-import { CodeEditor, type EditorMode } from '@/lib/components/editor';
-import { SplitPane } from '@/lib/components/layout';
+import type { EditorMode } from '@/lib/components/editor';
+import { InputOutputSplit } from '@/lib/components/layout';
 import { OptionsPanel } from '@/lib/components/panel';
-import { EmptyOutputPane } from '@/lib/components/status';
 
 type ValidationResult = { valid: boolean | null } & Record<string, unknown>;
 type StatsResult = { input: string; valid: boolean | null; error: string } & Record<
@@ -109,39 +108,21 @@ export function ConvertTab({
 				{renderOptions?.()}
 			</OptionsPanel>
 
-			<SplitPane
-				className="h-full flex-1"
-				left={
-					<CodeEditor
-						title="Input"
-						value={input}
-						onChange={onInputChange}
-						mode="input"
-						editorMode={inputEditorMode}
-						placeholder={placeholder}
-						onPaste={handlePaste}
-						onClear={handleClear}
-					/>
-				}
-				right={
-					input.trim().length === 0 ? (
-						<EmptyOutputPane
-							headerTitle={outputTitle ?? 'Output'}
-							icon={ArrowRightLeft}
-							title={`Enter ${inputEditorMode.toUpperCase()} to convert`}
-							description="The converted document will appear here."
-						/>
-					) : (
-						<CodeEditor
-							title={outputTitle}
-							value={output}
-							mode="readonly"
-							editorMode={outputEditorMode}
-							placeholder="Converted output..."
-							onCopy={handleCopyOutput}
-						/>
-					)
-				}
+			<InputOutputSplit
+				input={input}
+				onInputChange={onInputChange}
+				editorMode={inputEditorMode}
+				inputPlaceholder={placeholder}
+				onPaste={handlePaste}
+				onClear={handleClear}
+				output={output}
+				outputEditorMode={outputEditorMode}
+				outputTitle={outputTitle ?? 'Output'}
+				outputPlaceholder="Converted output..."
+				onCopy={handleCopyOutput}
+				emptyIcon={ArrowRightLeft}
+				emptyTitle={`Enter ${inputEditorMode.toUpperCase()} to convert`}
+				emptyDescription="The converted document will appear here."
 			/>
 		</div>
 	);

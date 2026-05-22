@@ -1,7 +1,6 @@
 import { Search } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 
-import { CodeEditor } from '@/lib/components/editor';
 import {
 	FormCheckbox,
 	FormCheckboxGroup,
@@ -9,9 +8,8 @@ import {
 	FormSection,
 	FormSelect,
 } from '@/lib/components/form';
-import { SplitPane } from '@/lib/components/layout';
+import { InputOutputSplit } from '@/lib/components/layout';
 import { OptionsPanel } from '@/lib/components/panel';
-import { EmptyOutputPane } from '@/lib/components/status';
 import { useClipboardActions } from '@/lib/hooks';
 import { executeJsonPath, validateJson } from '@/lib/services/formatters';
 import { useJsonFormatterOptions } from '@/lib/stores';
@@ -221,39 +219,21 @@ export function QueryTab({ input, onInputChange, onStatsChange }: QueryTabProps)
 				</FormSection>
 			</OptionsPanel>
 
-			<SplitPane
+			<InputOutputSplit
 				className="flex-1"
-				left={
-					<CodeEditor
-						title="Input"
-						value={input}
-						onChange={onInputChange}
-						mode="input"
-						editorMode="json"
-						placeholder="Enter JSON here..."
-						onPaste={handlePaste}
-						onClear={handleClear}
-					/>
-				}
-				right={
-					input.trim().length === 0 ? (
-						<EmptyOutputPane
-							headerTitle="Result"
-							icon={Search}
-							title="Enter JSON to query"
-							description="Run a JSONPath expression to see matching values here."
-						/>
-					) : (
-						<CodeEditor
-							title="Result"
-							value={queryResult}
-							mode="readonly"
-							editorMode="json"
-							placeholder="Query result..."
-							onCopy={handleCopy}
-						/>
-					)
-				}
+				input={input}
+				onInputChange={onInputChange}
+				editorMode="json"
+				inputPlaceholder="Enter JSON here..."
+				onPaste={handlePaste}
+				onClear={handleClear}
+				output={queryResult}
+				outputTitle="Result"
+				outputPlaceholder="Query result..."
+				onCopy={handleCopy}
+				emptyIcon={Search}
+				emptyTitle="Enter JSON to query"
+				emptyDescription="Run a JSONPath expression to see matching values here."
 			/>
 		</div>
 	);
