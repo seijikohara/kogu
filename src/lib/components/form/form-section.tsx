@@ -36,7 +36,7 @@ export function FormSection({
 			onOpenChange={handleOpenChange}
 			className="group border-b border-border/30 last:border-b-0"
 		>
-			<CollapsibleTrigger className="flex h-9 w-full items-center justify-between px-4 text-sm font-semibold uppercase tracking-wide text-foreground/70 transition-colors hover:bg-interactive-hover">
+			<CollapsibleTrigger className="flex h-9 w-full items-center justify-between px-4 text-sm font-semibold text-foreground/70 transition-colors hover:bg-interactive-hover">
 				{title}
 				<ChevronDown className="h-4 w-4 text-muted-foreground/50 transition-transform group-data-[state=closed]:-rotate-90" />
 			</CollapsibleTrigger>

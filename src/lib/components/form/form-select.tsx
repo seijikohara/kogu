@@ -51,10 +51,7 @@ export function FormSelect({
 		}
 	};
 
-	const labelClass =
-		size === 'compact'
-			? 'text-xs uppercase tracking-wide text-muted-foreground'
-			: 'text-sm font-medium';
+	const labelClass = size === 'compact' ? 'text-xs text-muted-foreground' : 'text-sm font-medium';
 
 	const triggerClass = cn(
 		'w-full bg-background',

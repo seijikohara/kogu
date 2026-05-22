@@ -92,9 +92,7 @@ export function AppSidebar(_: AppSidebarProps = {}) {
 										)}
 									>
 										<CategoryIcon className="size-4 opacity-70" />
-										<span className="flex-1 text-left text-xs font-semibold uppercase tracking-wider">
-											{category.label}
-										</span>
+										<span className="flex-1 text-left text-xs font-semibold">{category.label}</span>
 										<ChevronRight className="size-4 transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
 									</CollapsibleTrigger>
 								</SidebarGroupLabel>

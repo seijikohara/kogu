@@ -375,9 +375,7 @@ function Header({
 		>
 			<div className="flex items-center gap-2">
 				{title ? (
-					<span className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">
-						{title}
-					</span>
+					<span className="text-xs font-semibold text-muted-foreground">{title}</span>
 				) : null}
 				{isInput ? (
 					<InputActions

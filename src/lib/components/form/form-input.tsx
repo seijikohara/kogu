@@ -46,10 +46,7 @@ export function FormInput({
 		onValueChange?.(e.target.value);
 	};
 
-	const labelClass =
-		size === 'compact'
-			? 'text-xs uppercase tracking-wide text-muted-foreground'
-			: 'text-sm font-medium';
+	const labelClass = size === 'compact' ? 'text-xs text-muted-foreground' : 'text-sm font-medium';
 
 	const inputClass = cn(
 		'bg-background',
