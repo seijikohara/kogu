@@ -50,13 +50,16 @@ function HomePage() {
 												to={tool.url as never}
 												className="group block rounded-xl outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary/30"
 											>
-												<Card className="h-full border-border/50 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-border hover:shadow-md">
-													<CardContent className="flex h-full items-center gap-4 p-5">
-														<div className="shrink-0 rounded-lg bg-accent-soft p-2.5">
-															<ToolIcon className={cn('h-7 w-7', tool.color)} />
+												<Card
+													density="compact"
+													className="h-full border-border/50 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-border hover:shadow-md"
+												>
+													<CardContent className="flex h-full items-center gap-3">
+														<div className="shrink-0 rounded-lg bg-accent-soft p-2">
+															<ToolIcon className={cn('h-6 w-6', tool.color)} />
 														</div>
 														<div className="min-w-0 flex-1">
-															<div className="font-semibold transition-transform duration-150 group-hover:translate-x-0.5">
+															<div className="text-sm font-semibold transition-transform duration-150 group-hover:translate-x-0.5">
 																{tool.title}
 															</div>
 															<p className="line-clamp-2 text-xs text-muted-foreground/80">
