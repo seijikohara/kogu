@@ -69,6 +69,7 @@ export function GeneratedListPanel({
 									<CopyButton
 										text={value}
 										toastLabel={itemToastLabel}
+										variant="ghost"
 										size="sm"
 										showLabel={false}
 									/>

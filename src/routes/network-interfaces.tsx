@@ -419,6 +419,7 @@ function NetworkInterfacesPage() {
 																		</span>
 																		<code className="font-mono text-xs">{iface.macAddress}</code>
 																		<CopyButton
+																			variant="ghost"
 																			text={iface.macAddress}
 																			toastLabel="MAC address"
 																			size="icon"
@@ -440,6 +441,7 @@ function NetworkInterfacesPage() {
 																			{addr.address}/{addr.prefixLen}
 																		</code>
 																		<CopyButton
+																			variant="ghost"
 																			text={addr.address}
 																			toastLabel="IPv4 address"
 																			size="icon"
@@ -476,6 +478,7 @@ function NetworkInterfacesPage() {
 																				</span>
 																			) : null}
 																			<CopyButton
+																				variant="ghost"
 																				text={addr.address}
 																				toastLabel="IPv6 address"
 																				size="icon"
