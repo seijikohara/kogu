@@ -1,5 +1,6 @@
+import { useEffect } from 'react';
 import { Link, useRouterState } from '@tanstack/react-router';
-import { ChevronLeft, ChevronRight, Settings } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Clock, Settings } from 'lucide-react';
 
 import {
 	Collapsible,
@@ -20,16 +21,30 @@ import {
 	SidebarRail,
 	useSidebar,
 } from '@/lib/components/ui/sidebar';
-import { CATEGORIES, getPagesByCategory } from '@/lib/services/pages';
-import { useSidebarStore } from '@/lib/stores';
+import { CATEGORIES, getPageById, getPageByUrl, getPagesByCategory } from '@/lib/services/pages';
+import { useRecentToolsStore, useSidebarStore } from '@/lib/stores';
 import { cn } from '@/lib/utils';
 
 export function AppSidebar(_: AppSidebarProps = {}) {
 	const openGroups = useSidebarStore((s) => s.openGroups);
 	const setGroupOpen = useSidebarStore((s) => s.setGroupOpen);
+	const recent = useRecentToolsStore((s) => s.recent);
+	const recordVisit = useRecentToolsStore((s) => s.recordVisit);
 
 	const pathname = useRouterState({ select: (state) => state.location.pathname });
 	const sidebar = useSidebar();
+
+	// Record visits to tool pages (excludes `/` and `/settings`, which are
+	// filtered out of `getToolPages`'s definition).
+	useEffect(() => {
+		const page = getPageByUrl(pathname);
+		if (!page || page.id === 'dashboard' || page.id === 'settings') return;
+		recordVisit(page.id);
+	}, [pathname, recordVisit]);
+
+	const recentPages = recent
+		.map((entry) => getPageById(entry.toolId))
+		.filter((page): page is NonNullable<typeof page> => page !== undefined);
 
 	return (
 		<Sidebar collapsible="icon">
@@ -51,6 +66,37 @@ export function AppSidebar(_: AppSidebarProps = {}) {
 			</SidebarHeader>
 
 			<SidebarContent>
+				{recentPages.length > 0 ? (
+					<SidebarGroup>
+						<SidebarGroupLabel className="text-sidebar-foreground">
+							<div className="flex items-center gap-2 px-2 py-1.5">
+								<Clock className="size-4 opacity-70" />
+								<span className="flex-1 text-left text-xs font-semibold">Recent</span>
+							</div>
+						</SidebarGroupLabel>
+						<SidebarGroupContent>
+							<SidebarMenu>
+								{recentPages.map((tool) => {
+									const ToolIcon = tool.icon;
+									return (
+										<SidebarMenuItem key={`recent-${tool.id}`}>
+											<SidebarMenuButton
+												isActive={pathname === tool.url}
+												tooltip={tool.title}
+												asChild
+											>
+												<Link to={tool.url as never}>
+													<ToolIcon />
+													<span>{tool.title}</span>
+												</Link>
+											</SidebarMenuButton>
+										</SidebarMenuItem>
+									);
+								})}
+							</SidebarMenu>
+						</SidebarGroupContent>
+					</SidebarGroup>
+				) : null}
 				{CATEGORIES.map((category) => {
 					const CategoryIcon = category.icon;
 					const categoryPages = getPagesByCategory(category.id);
