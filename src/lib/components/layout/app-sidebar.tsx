@@ -1,12 +1,18 @@
 import { useEffect } from 'react';
 import { Link, useRouterState } from '@tanstack/react-router';
-import { ChevronLeft, ChevronRight, Clock, Settings } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Clock, Pin, PinOff, Settings } from 'lucide-react';
 
 import {
 	Collapsible,
 	CollapsibleContent,
 	CollapsibleTrigger,
 } from '@/lib/components/ui/collapsible';
+import {
+	ContextMenu,
+	ContextMenuContent,
+	ContextMenuItem,
+	ContextMenuTrigger,
+} from '@/lib/components/ui/context-menu';
 import {
 	Sidebar,
 	SidebarContent,
@@ -21,15 +27,65 @@ import {
 	SidebarRail,
 	useSidebar,
 } from '@/lib/components/ui/sidebar';
-import { CATEGORIES, getPageById, getPageByUrl, getPagesByCategory } from '@/lib/services/pages';
-import { useRecentToolsStore, useSidebarStore } from '@/lib/stores';
+import {
+	CATEGORIES,
+	getPageById,
+	getPageByUrl,
+	getPagesByCategory,
+	type PageDefinition,
+} from '@/lib/services/pages';
+import { useRecentToolsStore, useSidebarStore, useToolPinsStore } from '@/lib/stores';
 import { cn } from '@/lib/utils';
+
+interface ToolMenuItemProps {
+	readonly tool: PageDefinition;
+	readonly active: boolean;
+	readonly pinned: boolean;
+	readonly onTogglePin: (toolId: string) => void;
+	/** Optional key prefix when the same tool may appear in multiple groups (e.g. Recent vs Categorized). */
+	readonly keyPrefix?: string;
+}
+
+function ToolMenuItem({ tool, active, pinned, onTogglePin, keyPrefix }: ToolMenuItemProps) {
+	const ToolIcon = tool.icon;
+	return (
+		<ContextMenu>
+			<ContextMenuTrigger asChild>
+				<SidebarMenuItem key={keyPrefix ? `${keyPrefix}-${tool.id}` : tool.id}>
+					<SidebarMenuButton isActive={active} tooltip={tool.title} asChild>
+						<Link to={tool.url as never}>
+							<ToolIcon />
+							<span>{tool.title}</span>
+						</Link>
+					</SidebarMenuButton>
+				</SidebarMenuItem>
+			</ContextMenuTrigger>
+			<ContextMenuContent className="w-44">
+				<ContextMenuItem onSelect={() => onTogglePin(tool.id)}>
+					{pinned ? (
+						<>
+							<PinOff className="size-4" />
+							<span>Unpin</span>
+						</>
+					) : (
+						<>
+							<Pin className="size-4" />
+							<span>Pin to top</span>
+						</>
+					)}
+				</ContextMenuItem>
+			</ContextMenuContent>
+		</ContextMenu>
+	);
+}
 
 export function AppSidebar(_: AppSidebarProps = {}) {
 	const openGroups = useSidebarStore((s) => s.openGroups);
 	const setGroupOpen = useSidebarStore((s) => s.setGroupOpen);
 	const recent = useRecentToolsStore((s) => s.recent);
 	const recordVisit = useRecentToolsStore((s) => s.recordVisit);
+	const pinned = useToolPinsStore((s) => s.pinned);
+	const togglePin = useToolPinsStore((s) => s.togglePin);
 
 	const pathname = useRouterState({ select: (state) => state.location.pathname });
 	const sidebar = useSidebar();
@@ -42,9 +98,17 @@ export function AppSidebar(_: AppSidebarProps = {}) {
 		recordVisit(page.id);
 	}, [pathname, recordVisit]);
 
+	const pinnedSet = new Set(pinned);
+
+	const pinnedPages = pinned
+		.map((id) => getPageById(id))
+		.filter((page): page is NonNullable<typeof page> => page !== undefined);
+
+	// Hide pinned tools from Recent — they're already prominent at the top.
 	const recentPages = recent
 		.map((entry) => getPageById(entry.toolId))
-		.filter((page): page is NonNullable<typeof page> => page !== undefined);
+		.filter((page): page is NonNullable<typeof page> => page !== undefined)
+		.filter((page) => !pinnedSet.has(page.id));
 
 	return (
 		<Sidebar collapsible="icon">
@@ -66,6 +130,30 @@ export function AppSidebar(_: AppSidebarProps = {}) {
 			</SidebarHeader>
 
 			<SidebarContent>
+				{pinnedPages.length > 0 ? (
+					<SidebarGroup>
+						<SidebarGroupLabel className="text-sidebar-foreground">
+							<div className="flex items-center gap-2 px-2 py-1.5">
+								<Pin className="size-4 opacity-70" />
+								<span className="flex-1 text-left text-xs font-semibold">Pinned</span>
+							</div>
+						</SidebarGroupLabel>
+						<SidebarGroupContent>
+							<SidebarMenu>
+								{pinnedPages.map((tool) => (
+									<ToolMenuItem
+										key={`pinned-${tool.id}`}
+										tool={tool}
+										active={pathname === tool.url}
+										pinned
+										onTogglePin={togglePin}
+										keyPrefix="pinned"
+									/>
+								))}
+							</SidebarMenu>
+						</SidebarGroupContent>
+					</SidebarGroup>
+				) : null}
 				{recentPages.length > 0 ? (
 					<SidebarGroup>
 						<SidebarGroupLabel className="text-sidebar-foreground">
@@ -76,23 +164,16 @@ export function AppSidebar(_: AppSidebarProps = {}) {
 						</SidebarGroupLabel>
 						<SidebarGroupContent>
 							<SidebarMenu>
-								{recentPages.map((tool) => {
-									const ToolIcon = tool.icon;
-									return (
-										<SidebarMenuItem key={`recent-${tool.id}`}>
-											<SidebarMenuButton
-												isActive={pathname === tool.url}
-												tooltip={tool.title}
-												asChild
-											>
-												<Link to={tool.url as never}>
-													<ToolIcon />
-													<span>{tool.title}</span>
-												</Link>
-											</SidebarMenuButton>
-										</SidebarMenuItem>
-									);
-								})}
+								{recentPages.map((tool) => (
+									<ToolMenuItem
+										key={`recent-${tool.id}`}
+										tool={tool}
+										active={pathname === tool.url}
+										pinned={false}
+										onTogglePin={togglePin}
+										keyPrefix="recent"
+									/>
+								))}
 							</SidebarMenu>
 						</SidebarGroupContent>
 					</SidebarGroup>
@@ -124,23 +205,15 @@ export function AppSidebar(_: AppSidebarProps = {}) {
 								<CollapsibleContent>
 									<SidebarGroupContent>
 										<SidebarMenu>
-											{categoryPages.map((tool) => {
-												const ToolIcon = tool.icon;
-												return (
-													<SidebarMenuItem key={tool.id}>
-														<SidebarMenuButton
-															isActive={pathname === tool.url}
-															tooltip={tool.title}
-															asChild
-														>
-															<Link to={tool.url as never}>
-																<ToolIcon />
-																<span>{tool.title}</span>
-															</Link>
-														</SidebarMenuButton>
-													</SidebarMenuItem>
-												);
-											})}
+											{categoryPages.map((tool) => (
+												<ToolMenuItem
+													key={tool.id}
+													tool={tool}
+													active={pathname === tool.url}
+													pinned={pinnedSet.has(tool.id)}
+													onTogglePin={togglePin}
+												/>
+											))}
 										</SidebarMenu>
 									</SidebarGroupContent>
 								</CollapsibleContent>
