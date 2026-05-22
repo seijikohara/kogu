@@ -231,7 +231,10 @@ fn generate_with_library(options: GpgKeyOptions) -> Result<GpgKeyResult, Generat
     // Build user_id string
     let user_id = build_user_id(&name, &email, comment.as_deref());
 
-    let rng = rand_core::OsRng;
+    // `pgp` 0.19 and `ssh-key` 0.6 both pin `rand_core` 0.6 transitively, so
+    // borrowing the `OsRng` re-export from `ssh-key` keeps a single direct
+    // path to that type without declaring `rand_core` ourselves.
+    let rng = ssh_key::rand_core::OsRng;
 
     let key_type = match algorithm {
         GpgKeyAlgorithm::Rsa2048 => KeyType::Rsa(2048),

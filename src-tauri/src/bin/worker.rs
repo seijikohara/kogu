@@ -445,7 +445,10 @@ fn handle_gpg_keygen(req: GpgRequest) -> String {
         _ => format!("{} <{}>", req.name, req.email),
     };
 
-    let rng = rand_core::OsRng;
+    // `pgp` 0.19 and `ssh-key` 0.6 both pin `rand_core` 0.6 transitively, so
+    // borrowing the `OsRng` re-export from `ssh-key` keeps a single direct
+    // path to that type without declaring `rand_core` ourselves.
+    let rng = ssh_key::rand_core::OsRng;
 
     let key_type = match req.algorithm {
         GpgKeyAlgorithm::Rsa2048 => KeyType::Rsa(2048),
