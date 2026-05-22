@@ -38,7 +38,7 @@ export function FormSlider({
 
 	const labelClass =
 		size === 'compact'
-			? 'min-w-0 truncate text-xs uppercase tracking-wide text-muted-foreground'
+			? 'min-w-0 truncate text-xs text-muted-foreground'
 			: 'min-w-0 truncate text-sm font-medium';
 
 	const valueClass =

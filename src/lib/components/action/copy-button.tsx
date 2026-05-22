@@ -19,7 +19,12 @@ export function CopyButton({
 	text,
 	label = 'Copy',
 	toastLabel,
-	variant = 'ghost',
+	// Default `outline` gives every CopyButton a visible border + subtle hover
+	// fill so it reads as an interactive control in Card headers / list section
+	// headers without competing with surrounding text. Per-row icon-only callers
+	// (`showLabel={false}` in generated lists, network-interfaces rows) opt back
+	// into `ghost` explicitly to stay subtle.
+	variant = 'outline',
 	size = 'sm',
 	className,
 	showLabel = true,

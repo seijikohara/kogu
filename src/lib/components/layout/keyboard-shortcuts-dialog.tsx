@@ -115,9 +115,7 @@ export function KeyboardShortcutsDialog({
 				<div className="max-h-[60vh] space-y-4 overflow-y-auto py-2">
 					{filteredGroups.map((group) => (
 						<div key={group.title}>
-							<h3 className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-								{group.title}
-							</h3>
+							<h3 className="mb-2 text-xs font-semibold text-muted-foreground">{group.title}</h3>
 							<div className="space-y-1">
 								{group.shortcuts.map((shortcut) => (
 									<div

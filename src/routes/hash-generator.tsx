@@ -9,7 +9,7 @@ import { useDocumentTitle } from '@/lib/hooks';
 import { SectionHeader } from '@/lib/components/layout';
 import { ToolShell } from '@/lib/components/shell';
 import { EmbeddedEmptyState, LiveStatusRegion, StatItem } from '@/lib/components/status';
-import { Badge } from '@/lib/components/ui/badge';
+import { ToneBadge } from '@/lib/components/ui/tone-badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/lib/components/ui/card';
 import { CodeBlock } from '@/lib/components/ui/code-block';
 import {
@@ -133,15 +133,13 @@ function HashGeneratorPage() {
 													({result.bits} bits)
 												</span>
 												{isSecure(result.algorithm) ? (
-													<Badge variant="outline" className="gap-1 bg-success/10 text-success">
-														<ShieldCheck className="h-3 w-3" />
+													<ToneBadge tone="success" icon={ShieldCheck}>
 														Secure
-													</Badge>
+													</ToneBadge>
 												) : (
-													<Badge variant="outline" className="gap-1 bg-warning/10 text-warning">
-														<ShieldAlert className="h-3 w-3" />
+													<ToneBadge tone="warning" icon={ShieldAlert}>
 														Weak
-													</Badge>
+													</ToneBadge>
 												)}
 											</div>
 											<CopyButton

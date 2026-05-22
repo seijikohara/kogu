@@ -25,10 +25,7 @@ export function FormTextarea({
 	className,
 	onValueChange,
 }: FormTextareaProps) {
-	const labelClass =
-		size === 'compact'
-			? 'text-xs uppercase tracking-wide text-muted-foreground'
-			: 'text-sm font-medium';
+	const labelClass = size === 'compact' ? 'text-xs text-muted-foreground' : 'text-sm font-medium';
 
 	const textareaClass = cn(
 		'bg-background',

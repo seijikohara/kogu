@@ -3,7 +3,6 @@ import type { LucideIcon } from 'lucide-react';
 import { CopyButton } from '@/lib/components/action';
 import { SectionHeader } from '@/lib/components/layout';
 import { EmbeddedEmptyState, LiveStatusRegion } from '@/lib/components/status';
-import { Card, CardContent } from '@/lib/components/ui/card';
 
 interface GeneratedListPanelProps {
 	// Header title (e.g. "Generated UUIDs", "Generated Passwords").
@@ -61,19 +60,22 @@ export function GeneratedListPanel({
 			/>
 			<LiveStatusRegion className="flex-1 overflow-auto p-4">
 				{results.length > 0 ? (
-					<div key={flashCounter} className="animate-flash-success space-y-2 rounded-md">
+					<div key={flashCounter} className="animate-flash-success rounded-md">
 						{results.map((value) => (
-							<Card key={value} density="compact">
-								<CardContent className="flex items-center gap-2">
-									<code className="flex-1 break-all font-mono text-sm">{value}</code>
-									<CopyButton
-										text={value}
-										toastLabel={itemToastLabel}
-										size="sm"
-										showLabel={false}
-									/>
-								</CardContent>
-							</Card>
+							<div
+								key={value}
+								className="group/row flex items-center gap-2 rounded-md px-3 py-1.5 transition-colors hover:bg-accent"
+							>
+								<code className="flex-1 break-all font-mono text-sm">{value}</code>
+								<CopyButton
+									text={value}
+									toastLabel={itemToastLabel}
+									variant="ghost"
+									size="sm"
+									showLabel={false}
+									className="opacity-0 transition-opacity group-hover/row:opacity-100 focus-visible:opacity-100"
+								/>
+							</div>
 						))}
 					</div>
 				) : (
