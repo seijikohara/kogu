@@ -121,11 +121,19 @@ function RootLayout() {
 			handleResetAllSettings().catch(() => {});
 		}).catch(() => null);
 
-		// Capture-phase suppression of the native context menu, except inside the
-		// code editor wrapper where the system menu (copy / paste) is desirable.
+		// Capture-phase suppression of the native context menu, with two
+		// exceptions:
+		//  - `.code-editor-wrapper`: Monaco needs the system menu for
+		//    copy / paste affordance.
+		//  - `[data-slot=context-menu-trigger]`: Radix `ContextMenu` triggers
+		//    (e.g. the sidebar tool items' Pin/Unpin menu) need the event to
+		//    reach their handler. Without this allowance the capture-phase
+		//    `preventDefault` consumes the event before Radix sees it and the
+		//    custom menu never opens.
 		const handleContextMenu = (e: MouseEvent) => {
 			const target = e.target as HTMLElement;
 			if (target.closest('.code-editor-wrapper')) return;
+			if (target.closest('[data-slot=context-menu-trigger]')) return;
 			e.preventDefault();
 			e.stopPropagation();
 		};
