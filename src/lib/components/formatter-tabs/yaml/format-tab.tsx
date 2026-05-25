@@ -13,7 +13,7 @@ import {
 	FormSelect,
 } from '@/lib/components/form';
 import { InputOutputSplit } from '@/lib/components/layout';
-import { OptionsPanel } from '@/lib/components/panel';
+import { Rail } from '@/lib/components/ui/rail';
 import { useClipboardActions, useReportStats } from '@/lib/hooks';
 import { SAMPLE_YAML, sortKeysDeep, validateYaml } from '@/lib/services/formatters';
 
@@ -171,7 +171,7 @@ export function FormatTab({ input, onInputChange, onStatsChange }: FormatTabProp
 
 	return (
 		<div className="flex flex-1 overflow-hidden">
-			<OptionsPanel
+			<Rail
 				show={showOptions}
 				onClose={() => setShowOptions(false)}
 				onOpen={() => setShowOptions(true)}
@@ -331,7 +331,7 @@ export function FormatTab({ input, onInputChange, onStatsChange }: FormatTabProp
 						size="compact"
 					/>
 				</FormSection>
-			</OptionsPanel>
+			</Rail>
 
 			<InputOutputSplit
 				input={input}

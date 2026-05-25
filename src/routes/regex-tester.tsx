@@ -17,6 +17,7 @@ import { Button } from '@/lib/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/lib/components/ui/card';
 import { ToggleGroup, ToggleGroupItem } from '@/lib/components/ui/toggle-group';
 import { IconTooltip } from '@/lib/components/ui/icon-tooltip';
+import { Rail } from '@/lib/components/ui/rail';
 import { useState } from 'react';
 import { createToolOptionsStore } from '@/lib/stores';
 import { cn } from '@/lib/utils';
@@ -756,18 +757,20 @@ function RegexTesterPage() {
 						/>
 					</div>
 
-					<div className="w-[var(--rail-w-wide)] shrink-0 overflow-auto border-l bg-surface-2 p-4">
-						<Accordion type="multiple" defaultValue={['matches', 'explain']} className="w-full">
-							<MatchesAccordion matches={matches} compiledOk={compiled.ok} />
-							<StructureAccordion visualization={visualization} />
-							<ExplainAccordion
-								flags={flags}
-								flagString={flagString}
-								captureGroupCount={captureGroupCount}
-								features={features}
-							/>
-						</Accordion>
-					</div>
+					<Rail side="right" size="wide" title="Matches">
+						<div className="px-3">
+							<Accordion type="multiple" defaultValue={['matches', 'explain']} className="w-full">
+								<MatchesAccordion matches={matches} compiledOk={compiled.ok} />
+								<StructureAccordion visualization={visualization} />
+								<ExplainAccordion
+									flags={flags}
+									flagString={flagString}
+									captureGroupCount={captureGroupCount}
+									features={features}
+								/>
+							</Accordion>
+						</div>
+					</Rail>
 				</div>
 			</div>
 		</ToolShell>

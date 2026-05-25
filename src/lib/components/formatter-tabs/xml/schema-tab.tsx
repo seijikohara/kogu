@@ -6,7 +6,7 @@ import { useReportStats, useValidation } from '@/lib/hooks';
 import { CodeEditor } from '@/lib/components/editor';
 import { FormCheckbox, FormCheckboxGroup, FormSection } from '@/lib/components/form';
 import { SplitPane } from '@/lib/components/layout';
-import { OptionsPanel } from '@/lib/components/panel';
+import { Rail } from '@/lib/components/ui/rail';
 import { Button } from '@/lib/components/ui/button';
 import { cn } from '@/lib/utils';
 import { getErrorMessage } from '@/lib/utils';
@@ -259,7 +259,7 @@ export function SchemaTab({ input, onInputChange, onStatsChange }: SchemaTabProp
 
 	return (
 		<div className="flex flex-1 overflow-hidden">
-			<OptionsPanel
+			<Rail
 				show={showOptions}
 				onClose={() => setShowOptions(false)}
 				onOpen={() => setShowOptions(true)}
@@ -345,7 +345,7 @@ export function SchemaTab({ input, onInputChange, onStatsChange }: SchemaTabProp
 						</p>
 					</div>
 				</FormSection>
-			</OptionsPanel>
+			</Rail>
 
 			<SplitPane
 				className="flex-1"

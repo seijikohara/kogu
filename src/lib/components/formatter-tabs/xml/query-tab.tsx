@@ -4,7 +4,7 @@ import { useMemo, useState } from 'react';
 import { FormInput, FormSection } from '@/lib/components/form';
 import { getErrorMessage } from '@/lib/utils';
 import { InputOutputSplit } from '@/lib/components/layout';
-import { OptionsPanel } from '@/lib/components/panel';
+import { Rail } from '@/lib/components/ui/rail';
 import { useClipboardActions, useReportStats, useValidation } from '@/lib/hooks';
 import { executeXPath, formatXml } from '@/lib/services/formatters';
 
@@ -82,7 +82,7 @@ export function QueryTab({ input, onInputChange, onStatsChange }: QueryTabProps)
 
 	return (
 		<div className="flex flex-1 overflow-hidden">
-			<OptionsPanel
+			<Rail
 				show={showOptions}
 				onClose={() => setShowOptions(false)}
 				onOpen={() => setShowOptions(true)}
@@ -129,7 +129,7 @@ export function QueryTab({ input, onInputChange, onStatsChange }: QueryTabProps)
 						</div>
 					</div>
 				</FormSection>
-			</OptionsPanel>
+			</Rail>
 
 			<InputOutputSplit
 				className="flex-1"

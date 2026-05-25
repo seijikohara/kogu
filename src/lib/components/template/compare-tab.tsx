@@ -6,7 +6,8 @@ import { CodeEditor } from '@/lib/components/editor';
 import { getErrorMessage } from '@/lib/utils';
 import { FormSection } from '@/lib/components/form';
 import { SplitPane } from '@/lib/components/layout';
-import { DiffLegend, DiffResults, OptionsPanel } from '@/lib/components/panel';
+import { DiffLegend, DiffResults } from '@/lib/components/panel';
+import { Rail } from '@/lib/components/ui/rail';
 import { Button } from '@/lib/components/ui/button';
 import type { GenericDiffItem } from '@/lib/constants/diff';
 
@@ -156,7 +157,7 @@ export function CompareTab({
 
 	return (
 		<div className="flex flex-1 overflow-hidden">
-			<OptionsPanel
+			<Rail
 				show={showOptions}
 				onClose={() => setShowOptions(false)}
 				onOpen={() => setShowOptions(true)}
@@ -183,7 +184,7 @@ export function CompareTab({
 				) : null}
 
 				<DiffLegend />
-			</OptionsPanel>
+			</Rail>
 
 			<div className="flex min-h-0 flex-1 flex-col overflow-hidden">
 				<SplitPane

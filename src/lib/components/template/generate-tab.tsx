@@ -11,7 +11,7 @@ import {
 	FormSelect,
 } from '@/lib/components/form';
 import { InputOutputSplit } from '@/lib/components/layout';
-import { OptionsPanel } from '@/lib/components/panel';
+import { Rail } from '@/lib/components/ui/rail';
 import { useClipboardActions, useReportStats } from '@/lib/hooks';
 import {
 	type CSharpOptions,
@@ -65,7 +65,7 @@ interface GenerateTabTemplateProps {
 	// cleared input still parses; XML / YAML use `''`.
 	readonly emptyClearValue?: string;
 
-	// Optional extra OptionsPanel content rendered above "Target Language".
+	// Optional extra Rail content rendered above "Target Language".
 	// Used by the JSON wrapper to inject `<JsonFormatSection showOutput={false} />`.
 	readonly extraOptions?: ReactNode;
 }
@@ -74,7 +74,7 @@ interface GenerateTabTemplateProps {
 // state that is identical across JSON, XML, and YAML wrappers — the 10
 // per-language sub-option blocks (TypeScript, JavaScript, Go, Python, Rust,
 // Java, C#, Kotlin, Swift, PHP), the `buildLanguageOptions` switch, the
-// `generateCode` dispatch, the stats `useEffect`, and the OptionsPanel +
+// `generateCode` dispatch, the stats `useEffect`, and the Rail +
 // InputOutputSplit render. Each per-format wrapper now hands in 6-8 props
 // describing the input shape and the empty-state copy.
 export function GenerateTabTemplate({
@@ -347,7 +347,7 @@ export function GenerateTabTemplate({
 
 	return (
 		<div className="flex flex-1 overflow-hidden">
-			<OptionsPanel
+			<Rail
 				show={showOptions}
 				onClose={() => setShowOptions(false)}
 				onOpen={() => setShowOptions(true)}
@@ -853,7 +853,7 @@ export function GenerateTabTemplate({
 						</FormCheckboxGroup>
 					</FormSection>
 				) : null}
-			</OptionsPanel>
+			</Rail>
 
 			<InputOutputSplit
 				className="flex-1"
