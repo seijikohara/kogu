@@ -22,6 +22,7 @@ import {
 	FileJson2,
 	FileText,
 	Fingerprint,
+	GitBranch,
 	GitCompare,
 	Globe,
 	Hash,
@@ -45,8 +46,10 @@ import {
 	ShieldCheck,
 	Sparkles,
 	Table,
+	Target,
 	Terminal,
 	TextQuote,
+	TrendingUp,
 } from 'lucide-react';
 
 /**
@@ -334,6 +337,21 @@ export const PAGES: readonly PageDefinition[] = [
 			{ id: 'build', label: 'Build', icon: Pencil },
 			{ id: 'parse', label: 'Parse', icon: Search },
 			{ id: 'code', label: 'Code', icon: CodeXml },
+		],
+	},
+	{
+		id: 'semver-tools',
+		title: 'SemVer Tools',
+		url: '/semver-tools',
+		icon: GitBranch,
+		description: 'Parse, compare, test ranges, and bump semantic versions',
+		color: 'text-green-700',
+		category: 'generators',
+		tabs: [
+			{ id: 'parse', label: 'Parse', icon: Search },
+			{ id: 'compare', label: 'Compare', icon: GitCompare },
+			{ id: 'range', label: 'Range', icon: Target },
+			{ id: 'bump', label: 'Bump', icon: TrendingUp },
 		],
 	},
 	{
