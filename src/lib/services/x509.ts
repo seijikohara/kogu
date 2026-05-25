@@ -8,6 +8,11 @@
  * never performs network I/O.
  */
 
+// `@peculiar/x509` depends on `tsyringe`, which requires the `reflect-metadata`
+// polyfill to be loaded before any decorator metadata is read. Side-effect
+// import — must precede the package import below.
+import 'reflect-metadata';
+
 import {
 	AuthorityInfoAccessExtension,
 	AuthorityKeyIdentifierExtension,

@@ -284,16 +284,19 @@ function X509DecoderPage() {
 								label="SHA-256"
 								checked={prefs.showSha256}
 								onCheckedChange={(c) => patch({ showSha256: c })}
+								size="compact"
 							/>
 							<FormCheckbox
 								label="SHA-1"
 								checked={prefs.showSha1}
 								onCheckedChange={(c) => patch({ showSha1: c })}
+								size="compact"
 							/>
 							<FormCheckbox
 								label="MD5"
 								checked={prefs.showMd5}
 								onCheckedChange={(c) => patch({ showMd5: c })}
+								size="compact"
 							/>
 						</FormCheckboxGroup>
 					</FormSection>
