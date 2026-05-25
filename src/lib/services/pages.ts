@@ -6,6 +6,7 @@ import {
 	ArrowRightLeft,
 	Binary,
 	Braces,
+	Calculator,
 	CalendarClock,
 	CaseSensitive,
 	Clock,
@@ -247,6 +248,16 @@ export const PAGES: readonly PageDefinition[] = [
 		icon: CalendarClock,
 		description: 'Convert between Unix, ISO, RFC formats with multi-timezone support',
 		color: 'text-amber-600',
+		category: 'generators',
+	},
+	{
+		id: 'number-base-converter',
+		title: 'Number Base Converter',
+		url: '/number-base-converter',
+		icon: Calculator,
+		description:
+			'Convert between binary, octal, decimal, and hex with bitwise operations and IEEE 754 view',
+		color: 'text-orange-600',
 		category: 'generators',
 	},
 	{
