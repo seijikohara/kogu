@@ -1,11 +1,22 @@
 name: Setup Tauri Dependencies
 description: Install system dependencies required for Tauri on Ubuntu
 
+# Inlined `apt-get install` instead of awalsh128/cache-apt-pkgs-action so this
+# composite step keeps running on Node.js 24. As of mid-2026, that action's
+# v1.x line still pulls actions/cache/restore@v4 internally, which GitHub
+# Actions deprecated on 2026-06-02. The four Tauri packages install in roughly
+# 10-20 seconds, so the foregone apt-cache restore is acceptable. Switch back
+# to a cached install once awalsh128/cache-apt-pkgs-action#198 (or a v2 release)
+# lands and uses actions/cache@v5.
 runs:
   using: composite
   steps:
     - name: Install system dependencies
-      uses: awalsh128/cache-apt-pkgs-action@v1
-      with:
-        packages: libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
-        version: 1.0
+      shell: bash
+      run: |
+        sudo apt-get update -y
+        sudo apt-get install -y --no-install-recommends \
+          libwebkit2gtk-4.1-dev \
+          libappindicator3-dev \
+          librsvg2-dev \
+          patchelf
