@@ -47,14 +47,14 @@ export type { CardProps };
 
 ## State and computed values
 
-| Svelte rune                    | React equivalent                                                       |
-| ------------------------------ | ---------------------------------------------------------------------- |
-| `let x = $state(0)`            | `const [x, setX] = useState(0)`                                        |
-| `let y = $derived(expr)`       | `const y = useMemo(() => expr, deps)` (omit `useMemo` for cheap reads) |
-| `let z = $derived.by(() => …)` | `const z = useMemo(() => { … }, deps)`                                 |
-| `$effect(() => …)`             | `useEffect(() => …, deps)`                                             |
-| `$effect.pre`                  | `useLayoutEffect`                                                      |
-| `bind:this`                    | `useRef`                                                               |
+| Need                         | Hook                                  |
+| ---------------------------- | ------------------------------------- |
+| Local state                  | `const [x, setX] = useState(0)`       |
+| Derived value (cheap)        | Plain expression — `const y = expr`   |
+| Derived value (expensive)    | `const y = useMemo(() => expr, deps)` |
+| Side effect (sub / DOM / IO) | `useEffect(() => …, deps)`            |
+| Synchronous layout effect    | `useLayoutEffect`                     |
+| DOM / instance handle        | `useRef`                              |
 
 Do not update state inside `useEffect` to "react" to other state changes — derive with `useMemo` instead. `useEffect` is for side effects only (subscriptions, DOM imperative APIs, network calls).
 
@@ -87,20 +87,20 @@ export function Disclosure({
 
 This is the established pattern in `CollapsibleAside`, `FormSection`, `ToolShell`, and others.
 
-## Slots → children / render props
+## Composition (children / render props)
 
-| Svelte                          | React                                                  |
-| ------------------------------- | ------------------------------------------------------ |
-| `<slot />`                      | `children: React.ReactNode`                            |
-| `<slot name="x" />`             | Named `ReactNode` prop (`x?: ReactNode`)               |
-| `Snippet<[args]>`               | Render prop callback (`renderX?: (args) => ReactNode`) |
-| `<svelte:component this={C} />` | Direct conditional render, or polymorphic `as` prop    |
+| Need                                    | Pattern                                                |
+| --------------------------------------- | ------------------------------------------------------ |
+| Single content area                     | `children: React.ReactNode`                            |
+| Named content area                      | Named `ReactNode` prop (`x?: ReactNode`)               |
+| Caller-driven render with internal args | Render prop callback (`renderX?: (args) => ReactNode`) |
+| Dynamic component selection             | Direct conditional render, or polymorphic `as` prop    |
 
 Prefer named `ReactNode` props over sub-component compounds when the slot has fixed semantics. Use a compound (`<Card.Header>` etc.) only when consumers expect a CSS layout slot (header / body / footer).
 
 ## Event handlers
 
-Use camelCase callback props (`onClick`, `onChange`, `onValueChange`) — never the lowercase Svelte event-attribute form (`onclick`).
+Use camelCase callback props (`onClick`, `onChange`, `onValueChange`).
 
 ```tsx
 <button type="button" onClick={handleClick}>Click</button>
@@ -122,7 +122,7 @@ import {
 } from '@/lib/components/ui/select';
 ```
 
-When a Radix primitive needs to render a custom element (Svelte's `child` snippet), use the Radix `asChild` prop:
+When a Radix primitive needs to render a custom element instead of its default, use the Radix `asChild` prop:
 
 ```tsx
 <Tooltip.Trigger asChild>

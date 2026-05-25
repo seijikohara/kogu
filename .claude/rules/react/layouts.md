@@ -120,12 +120,12 @@ Compose tool rails out of `FormSection` containers with `Form*` wrappers inside:
 
 ## Persisted state
 
-| Need                                   | Hook                                                        |
-| -------------------------------------- | ----------------------------------------------------------- |
-| Active tab on a tabbed formatter route | `useActiveTab(key)` / `useTabStore` (`@/lib/stores`)        |
-| Per-route tool options                 | `createToolOptionsStore('<route-id>', defaults)` factory    |
-| Sidebar collapsed / group open state   | `useSidebarStore` (`@/lib/stores/sidebar`)                  |
-| Cross-device user settings (TOML)      | Tauri `settings.ts` service (unchanged from the Svelte era) |
+| Need                                   | Hook                                                     |
+| -------------------------------------- | -------------------------------------------------------- |
+| Active tab on a tabbed formatter route | `useActiveTab(key)` / `useTabStore` (`@/lib/stores`)     |
+| Per-route tool options                 | `createToolOptionsStore('<route-id>', defaults)` factory |
+| Sidebar collapsed / group open state   | `useSidebarStore` (`@/lib/stores/sidebar`)               |
+| Cross-device user settings (TOML)      | Tauri `settings.ts` service                              |
 
 Per-session state (input value, results, transient flash counters) stays local with `useState`.
 

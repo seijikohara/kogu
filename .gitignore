@@ -2,8 +2,6 @@
 node_modules
 /build
 /dist
-/.svelte-kit
-src-tauri/.svelte-kit/
 /package
 .env
 .env.*
@@ -17,14 +15,8 @@ vite.config.ts.timestamp-*
 .mcp.json
 CLAUDE.local.md
 
-# Superpowers brainstorming (local-only working artifacts);
-# implementation plans are kept under docs/superpowers/plans/ and
-# checked in so PR reviewers can follow the migration narrative.
-docs/superpowers/brainstorming/
-
 # Playwright MCP
 .playwright-mcp/
 
 # Swift build artifacts
 src-tauri/swift/**/.build/
-.svelte-kit/

@@ -2,7 +2,7 @@
  * Railroad diagram layout engine for regex visualization.
  *
  * Converts a `VizNode` tree (from regex-viz.ts) into a positioned
- * `RailroadNode` tree that a Svelte renderer can walk to emit SVG.
+ * `RailroadNode` tree that a renderer can walk to emit SVG.
  * Layout is conventional railroad geometry:
  *
  * - Each laid-out node exposes its bounding box (width, height) and the

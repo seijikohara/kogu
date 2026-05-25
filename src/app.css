@@ -269,10 +269,8 @@
 
 /*
  * Accordion height keyframes. The CSS variable on the `to`/`from` side is
- * populated by the underlying accordion primitive at runtime. radix-ui
- * (used in this React port) exposes `--radix-accordion-content-height`;
- * bits-ui (the Svelte port lineage) exposes `--bits-accordion-content-height`.
- * Both are listed so the same stylesheet works against either runtime.
+ * populated by the underlying accordion primitive at runtime: radix-ui
+ * exposes `--radix-accordion-content-height`.
  */
 @keyframes accordion-down {
 	from {

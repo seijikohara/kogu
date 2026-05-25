@@ -44,11 +44,10 @@ const PAGES = pagesModule.PAGES as readonly PageDefinition[];
 
 /** Get all tab IDs from a page's tabs directory.
  *
- * TODO(Phase 5): re-enable tab discovery once tabs are migrated to
- * src/routes/<pageId>/tabs/<tab>.tsx. For Phases 1-4, tabs are absent
- * from the routes tree (deleted along with SvelteKit route dirs in
- * Phase 1 / Task 8), so we short-circuit to keep the page-existence
- * check meaningful without producing false positives. */
+ * Tabs are not yet expressed as discrete files under
+ * src/routes/<pageId>/tabs/. Until they are, return an empty list so
+ * the page-existence check stays meaningful without producing false
+ * positives for tabs that live inline inside a page route. */
 const getActualTabIds = (_pageId: string): readonly string[] => {
 	return [];
 };
@@ -205,7 +204,7 @@ const printFailureReport = (errors: readonly ValidationError[]): void => {
 		missingFiles,
 		'📁',
 		'Tab files missing (create these files or remove from pages.ts)',
-		(e) => `src/routes/${e.pageId}/tabs/${e.tabId}-tab.svelte`
+		(e) => `src/routes/${e.pageId}/tabs/${e.tabId}-tab.tsx`
 	);
 
 	printErrorSection(
