@@ -8,6 +8,7 @@ import {
 	BadgeCheck,
 	Binary,
 	Braces,
+	Aperture,
 	Calculator,
 	CalendarClock,
 	CaseSensitive,
@@ -300,6 +301,15 @@ export const PAGES: readonly PageDefinition[] = [
 		description:
 			'Convert between binary, octal, decimal, and hex with bitwise operations and IEEE 754 view',
 		color: 'text-orange-600',
+		category: 'generators',
+	},
+	{
+		id: 'image-converter',
+		title: 'Image Converter',
+		url: '/image-converter',
+		icon: Aperture,
+		description: 'Convert and compress images (PNG / JPEG / WebP) with resize and rotation',
+		color: 'text-pink-600',
 		category: 'generators',
 	},
 	{
