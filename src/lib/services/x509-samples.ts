@@ -6,6 +6,10 @@
  * source tree (which would otherwise grow stale and bloat the bundle).
  */
 
+// Required polyfill for `tsyringe` (transitive dep of `@peculiar/x509`).
+// Side-effect import — must precede the package import below.
+import 'reflect-metadata';
+
 import {
 	BasicConstraintsExtension,
 	cryptoProvider,
