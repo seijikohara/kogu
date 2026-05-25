@@ -6,7 +6,6 @@ import {
 	ArrowUp,
 	Check,
 	FlaskConical,
-	GitBranch,
 	GitCompare,
 	History,
 	ListChecks,
@@ -958,12 +957,6 @@ function SemverToolsPage() {
 			onTabChange={handleTabChange}
 			valid={currentValid}
 			rail={rail}
-			toolbarLeading={
-				<div className="flex items-center gap-2 text-sm text-muted-foreground">
-					<GitBranch className="h-4 w-4" />
-					<span>SemVer Tools</span>
-				</div>
-			}
 			statusContent={statusContent}
 			renderTabContent={(tab) => {
 				if (tab === 'parse') return renderParseTab();
