@@ -20,6 +20,7 @@ import { Route as SettingsRouteImport } from './routes/settings';
 import { Route as RegexTesterRouteImport } from './routes/regex-tester';
 import { Route as QrCodeGeneratorRouteImport } from './routes/qr-code-generator';
 import { Route as PasswordGeneratorRouteImport } from './routes/password-generator';
+import { Route as NumberBaseConverterRouteImport } from './routes/number-base-converter';
 import { Route as NetworkScannerRouteImport } from './routes/network-scanner';
 import { Route as NetworkInterfacesRouteImport } from './routes/network-interfaces';
 import { Route as MarkdownEditorRouteImport } from './routes/markdown-editor';
@@ -88,6 +89,11 @@ const QrCodeGeneratorRoute = QrCodeGeneratorRouteImport.update({
 const PasswordGeneratorRoute = PasswordGeneratorRouteImport.update({
 	id: '/password-generator',
 	path: '/password-generator',
+	getParentRoute: () => rootRouteImport,
+} as any);
+const NumberBaseConverterRoute = NumberBaseConverterRouteImport.update({
+	id: '/number-base-converter',
+	path: '/number-base-converter',
 	getParentRoute: () => rootRouteImport,
 } as any);
 const NetworkScannerRoute = NetworkScannerRouteImport.update({
@@ -176,6 +182,7 @@ export interface FileRoutesByFullPath {
 	'/markdown-editor': typeof MarkdownEditorRoute;
 	'/network-interfaces': typeof NetworkInterfacesRoute;
 	'/network-scanner': typeof NetworkScannerRoute;
+	'/number-base-converter': typeof NumberBaseConverterRoute;
 	'/password-generator': typeof PasswordGeneratorRoute;
 	'/qr-code-generator': typeof QrCodeGeneratorRoute;
 	'/regex-tester': typeof RegexTesterRoute;
@@ -203,6 +210,7 @@ export interface FileRoutesByTo {
 	'/markdown-editor': typeof MarkdownEditorRoute;
 	'/network-interfaces': typeof NetworkInterfacesRoute;
 	'/network-scanner': typeof NetworkScannerRoute;
+	'/number-base-converter': typeof NumberBaseConverterRoute;
 	'/password-generator': typeof PasswordGeneratorRoute;
 	'/qr-code-generator': typeof QrCodeGeneratorRoute;
 	'/regex-tester': typeof RegexTesterRoute;
@@ -231,6 +239,7 @@ export interface FileRoutesById {
 	'/markdown-editor': typeof MarkdownEditorRoute;
 	'/network-interfaces': typeof NetworkInterfacesRoute;
 	'/network-scanner': typeof NetworkScannerRoute;
+	'/number-base-converter': typeof NumberBaseConverterRoute;
 	'/password-generator': typeof PasswordGeneratorRoute;
 	'/qr-code-generator': typeof QrCodeGeneratorRoute;
 	'/regex-tester': typeof RegexTesterRoute;
@@ -260,6 +269,7 @@ export interface FileRouteTypes {
 		| '/markdown-editor'
 		| '/network-interfaces'
 		| '/network-scanner'
+		| '/number-base-converter'
 		| '/password-generator'
 		| '/qr-code-generator'
 		| '/regex-tester'
@@ -287,6 +297,7 @@ export interface FileRouteTypes {
 		| '/markdown-editor'
 		| '/network-interfaces'
 		| '/network-scanner'
+		| '/number-base-converter'
 		| '/password-generator'
 		| '/qr-code-generator'
 		| '/regex-tester'
@@ -314,6 +325,7 @@ export interface FileRouteTypes {
 		| '/markdown-editor'
 		| '/network-interfaces'
 		| '/network-scanner'
+		| '/number-base-converter'
 		| '/password-generator'
 		| '/qr-code-generator'
 		| '/regex-tester'
@@ -342,6 +354,7 @@ export interface RootRouteChildren {
 	MarkdownEditorRoute: typeof MarkdownEditorRoute;
 	NetworkInterfacesRoute: typeof NetworkInterfacesRoute;
 	NetworkScannerRoute: typeof NetworkScannerRoute;
+	NumberBaseConverterRoute: typeof NumberBaseConverterRoute;
 	PasswordGeneratorRoute: typeof PasswordGeneratorRoute;
 	QrCodeGeneratorRoute: typeof QrCodeGeneratorRoute;
 	RegexTesterRoute: typeof RegexTesterRoute;
@@ -432,6 +445,13 @@ declare module '@tanstack/react-router' {
 			path: '/password-generator';
 			fullPath: '/password-generator';
 			preLoaderRoute: typeof PasswordGeneratorRouteImport;
+			parentRoute: typeof rootRouteImport;
+		};
+		'/number-base-converter': {
+			id: '/number-base-converter';
+			path: '/number-base-converter';
+			fullPath: '/number-base-converter';
+			preLoaderRoute: typeof NumberBaseConverterRouteImport;
 			parentRoute: typeof rootRouteImport;
 		};
 		'/network-scanner': {
@@ -550,6 +570,7 @@ const rootRouteChildren: RootRouteChildren = {
 	MarkdownEditorRoute: MarkdownEditorRoute,
 	NetworkInterfacesRoute: NetworkInterfacesRoute,
 	NetworkScannerRoute: NetworkScannerRoute,
+	NumberBaseConverterRoute: NumberBaseConverterRoute,
 	PasswordGeneratorRoute: PasswordGeneratorRoute,
 	QrCodeGeneratorRoute: QrCodeGeneratorRoute,
 	RegexTesterRoute: RegexTesterRoute,
