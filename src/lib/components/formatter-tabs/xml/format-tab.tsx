@@ -1,18 +1,9 @@
 import { FileText } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import type { ReactNode } from 'react';
 
 import type { ContextMenuItem } from '@/lib/components/editor';
-import { getErrorMessage } from '@/lib/utils';
-import {
-	FormCheckbox,
-	FormCheckboxGroup,
-	FormMode,
-	FormSection,
-	FormSelect,
-} from '@/lib/components/form';
-import { InputOutputSplit } from '@/lib/components/layout';
-import { Rail } from '@/lib/components/ui/rail';
-import { useClipboardActions, useReportStats } from '@/lib/hooks';
+import { FormCheckbox, FormCheckboxGroup, FormSection, FormSelect } from '@/lib/components/form';
+import { FormatTabTemplate, type FormatMode } from '@/lib/components/template';
 import {
 	defaultXmlFormatOptions,
 	formatXml,
@@ -20,107 +11,77 @@ import {
 	SAMPLE_XML,
 	type XmlFormatOptions,
 } from '@/lib/services/formatters';
+import { getErrorMessage } from '@/lib/utils';
 
-type FormatMode = 'format' | 'minify';
 type IndentType = 'spaces' | 'tabs';
 
-interface TabStats {
-	readonly input: string;
-	readonly valid: boolean | null;
-	readonly error: string;
+interface XmlFormatTabOptions {
+	readonly indentSizeStr: string;
+	readonly indentType: IndentType;
+	readonly collapseContent: boolean;
+	readonly whiteSpaceAtEndOfSelfclosingTag: boolean;
+	readonly excludeComments: boolean;
+	readonly preserveWhitespace: boolean;
+	readonly forceSelfClosingEmptyTag: boolean;
+	readonly sortAttributes: boolean;
 }
+
+const DEFAULT_OPTIONS: XmlFormatTabOptions = {
+	indentSizeStr: String(defaultXmlFormatOptions.indentSize),
+	indentType: defaultXmlFormatOptions.indentType,
+	collapseContent: defaultXmlFormatOptions.collapseContent,
+	whiteSpaceAtEndOfSelfclosingTag: defaultXmlFormatOptions.whiteSpaceAtEndOfSelfclosingTag,
+	excludeComments: defaultXmlFormatOptions.excludeComments,
+	preserveWhitespace: defaultXmlFormatOptions.preserveWhitespace,
+	forceSelfClosingEmptyTag: defaultXmlFormatOptions.forceSelfClosingEmptyTag,
+	sortAttributes: defaultXmlFormatOptions.sortAttributes,
+};
+
+const toXmlFormatOptions = (tab: XmlFormatTabOptions): Partial<XmlFormatOptions> => ({
+	indentSize: Number.parseInt(tab.indentSizeStr, 10) || 2,
+	indentType: tab.indentType,
+	collapseContent: tab.collapseContent,
+	whiteSpaceAtEndOfSelfclosingTag: tab.whiteSpaceAtEndOfSelfclosingTag,
+	excludeComments: tab.excludeComments,
+	preserveWhitespace: tab.preserveWhitespace,
+	forceSelfClosingEmptyTag: tab.forceSelfClosingEmptyTag,
+	sortAttributes: tab.sortAttributes,
+});
+
+const computeOutput = (input: string, mode: FormatMode, tab: XmlFormatTabOptions) => {
+	if (!input.trim()) return { output: '', error: '' };
+	try {
+		const result = mode === 'minify' ? minifyXml(input) : formatXml(input, toXmlFormatOptions(tab));
+		return { output: result, error: '' };
+	} catch (e) {
+		return { output: '', error: getErrorMessage(e, 'Invalid XML') };
+	}
+};
+
+const validate = (input: string): boolean | null => {
+	if (!input.trim()) return null;
+	try {
+		const doc = new DOMParser().parseFromString(input, 'application/xml');
+		return doc.querySelector('parsererror') === null;
+	} catch {
+		return false;
+	}
+};
 
 interface FormatTabProps {
 	readonly input: string;
 	readonly onInputChange: (value: string) => void;
-	readonly onStatsChange?: (stats: TabStats) => void;
+	readonly onStatsChange?: (stats: {
+		readonly input: string;
+		readonly valid: boolean | null;
+		readonly error: string;
+	}) => void;
 }
 
 export function FormatTab({ input, onInputChange, onStatsChange }: FormatTabProps) {
-	const [formatMode, setFormatMode] = useState<FormatMode>('format');
-	const [showOptions, setShowOptions] = useState(true);
-
-	// Indentation options.
-	const [indentSizeStr, setIndentSizeStr] = useState<string>(
-		String(defaultXmlFormatOptions.indentSize)
-	);
-	const [indentType, setIndentType] = useState<IndentType>(defaultXmlFormatOptions.indentType);
-
-	// Tag options.
-	const [whiteSpaceAtEndOfSelfclosingTag, setWhiteSpaceAtEndOfSelfclosingTag] = useState<boolean>(
-		defaultXmlFormatOptions.whiteSpaceAtEndOfSelfclosingTag
-	);
-	const [forceSelfClosingEmptyTag, setForceSelfClosingEmptyTag] = useState<boolean>(
-		defaultXmlFormatOptions.forceSelfClosingEmptyTag
-	);
-
-	// Content options.
-	const [collapseContent, setCollapseContent] = useState<boolean>(
-		defaultXmlFormatOptions.collapseContent
-	);
-	const [preserveWhitespace, setPreserveWhitespace] = useState<boolean>(
-		defaultXmlFormatOptions.preserveWhitespace
-	);
-	const [excludeComments, setExcludeComments] = useState<boolean>(
-		defaultXmlFormatOptions.excludeComments
-	);
-
-	// Attribute options.
-	const [sortAttributes, setSortAttributes] = useState<boolean>(
-		defaultXmlFormatOptions.sortAttributes
-	);
-
-	const indentSize = Number.parseInt(indentSizeStr, 10) || 2;
-
-	const formatOptions: Partial<XmlFormatOptions> = {
-		indentSize,
-		indentType,
-		collapseContent,
-		whiteSpaceAtEndOfSelfclosingTag,
-		excludeComments,
-		preserveWhitespace,
-		forceSelfClosingEmptyTag,
-		sortAttributes,
-	};
-
-	const validation = useMemo<{ valid: boolean | null }>(() => {
-		if (!input.trim()) return { valid: null };
-		try {
-			const parser = new DOMParser();
-			const doc = parser.parseFromString(input, 'application/xml');
-			const parserError = doc.querySelector('parsererror');
-			return { valid: parserError === null };
-		} catch {
-			return { valid: false };
-		}
-	}, [input]);
-
-	const { output, error: formatError } = ((): { output: string; error: string } => {
-		if (!input.trim()) return { output: '', error: '' };
-		try {
-			const result = formatMode === 'minify' ? minifyXml(input) : formatXml(input, formatOptions);
-			return { output: result, error: '' };
-		} catch (e) {
-			return { output: '', error: getErrorMessage(e, 'Invalid XML') };
-		}
-	})();
-
-	// Report stats to parent.
-	useReportStats(onStatsChange, input, validation.valid, formatError);
-
-	const { handlePaste, handleClear, handleCopy } = useClipboardActions({
-		onInputChange,
-		output,
-	});
-
-	const handleSample = () => {
-		onInputChange(SAMPLE_XML);
-	};
-
 	const handleFormatInput = () => {
 		try {
-			const formatted = formatXml(input, { indentSize: 2, indentType: 'spaces' });
-			onInputChange(formatted);
+			onInputChange(formatXml(input, { indentSize: 2, indentType: 'spaces' }));
 		} catch {
 			// Invalid XML.
 		}
@@ -128,57 +89,39 @@ export function FormatTab({ input, onInputChange, onStatsChange }: FormatTabProp
 
 	const handleMinifyInput = () => {
 		try {
-			const minified = minifyXml(input);
-			onInputChange(minified);
+			onInputChange(minifyXml(input));
 		} catch {
 			// Invalid XML.
 		}
 	};
 
 	const inputContextMenuItems: readonly ContextMenuItem[] = [
-		{
-			text: 'Format XML',
-			enabled: input.trim().length > 0,
-			action: handleFormatInput,
-		},
-		{
-			text: 'Minify XML',
-			enabled: input.trim().length > 0,
-			action: handleMinifyInput,
-		},
+		{ text: 'Format XML', enabled: input.trim().length > 0, action: handleFormatInput },
+		{ text: 'Minify XML', enabled: input.trim().length > 0, action: handleMinifyInput },
 	];
 
-	return (
-		<div className="flex flex-1 overflow-hidden">
-			<Rail
-				show={showOptions}
-				onClose={() => setShowOptions(false)}
-				onOpen={() => setShowOptions(true)}
-			>
-				<FormSection title="Mode">
-					<FormMode
-						value={formatMode}
-						onValueChange={setFormatMode}
-						options={[
-							{ value: 'format', label: 'Format' },
-							{ value: 'minify', label: 'Minify' },
-						]}
-					/>
-				</FormSection>
+	const renderOptions = (
+		options: XmlFormatTabOptions,
+		setOptions: (next: XmlFormatTabOptions) => void
+	): ReactNode => {
+		const update = <K extends keyof XmlFormatTabOptions>(key: K, value: XmlFormatTabOptions[K]) =>
+			setOptions({ ...options, [key]: value });
 
+		return (
+			<>
 				<FormSection title="Indentation">
 					<div className="grid grid-cols-2 gap-2">
 						<FormSelect
 							label="Size"
-							value={indentSizeStr}
-							onValueChange={setIndentSizeStr}
+							value={options.indentSizeStr}
+							onValueChange={(v) => update('indentSizeStr', v)}
 							options={['1', '2', '4', '8']}
 							size="compact"
 						/>
 						<FormSelect
 							label="Type"
-							value={indentType}
-							onValueChange={(v) => setIndentType(v as IndentType)}
+							value={options.indentType}
+							onValueChange={(v) => update('indentType', v as IndentType)}
 							options={[
 								{ value: 'spaces', label: 'Spaces' },
 								{ value: 'tabs', label: 'Tabs' },
@@ -191,14 +134,14 @@ export function FormatTab({ input, onInputChange, onStatsChange }: FormatTabProp
 				<FormSection title="Tags">
 					<FormCheckbox
 						label="Space before self-closing />"
-						checked={whiteSpaceAtEndOfSelfclosingTag}
-						onCheckedChange={setWhiteSpaceAtEndOfSelfclosingTag}
+						checked={options.whiteSpaceAtEndOfSelfclosingTag}
+						onCheckedChange={(v) => update('whiteSpaceAtEndOfSelfclosingTag', v)}
 						size="compact"
 					/>
 					<FormCheckbox
 						label="Force self-closing empty tags"
-						checked={forceSelfClosingEmptyTag}
-						onCheckedChange={setForceSelfClosingEmptyTag}
+						checked={options.forceSelfClosingEmptyTag}
+						onCheckedChange={(v) => update('forceSelfClosingEmptyTag', v)}
 						size="compact"
 					/>
 				</FormSection>
@@ -207,20 +150,20 @@ export function FormatTab({ input, onInputChange, onStatsChange }: FormatTabProp
 					<FormCheckboxGroup>
 						<FormCheckbox
 							label="Collapse content on single line"
-							checked={collapseContent}
-							onCheckedChange={setCollapseContent}
+							checked={options.collapseContent}
+							onCheckedChange={(v) => update('collapseContent', v)}
 							size="compact"
 						/>
 						<FormCheckbox
 							label="Preserve whitespace"
-							checked={preserveWhitespace}
-							onCheckedChange={setPreserveWhitespace}
+							checked={options.preserveWhitespace}
+							onCheckedChange={(v) => update('preserveWhitespace', v)}
 							size="compact"
 						/>
 						<FormCheckbox
 							label="Remove comments"
-							checked={excludeComments}
-							onCheckedChange={setExcludeComments}
+							checked={options.excludeComments}
+							onCheckedChange={(v) => update('excludeComments', v)}
 							size="compact"
 						/>
 					</FormCheckboxGroup>
@@ -229,30 +172,33 @@ export function FormatTab({ input, onInputChange, onStatsChange }: FormatTabProp
 				<FormSection title="Attributes">
 					<FormCheckbox
 						label="Sort attributes alphabetically"
-						checked={sortAttributes}
-						onCheckedChange={setSortAttributes}
+						checked={options.sortAttributes}
+						onCheckedChange={(v) => update('sortAttributes', v)}
 						size="compact"
 					/>
 				</FormSection>
-			</Rail>
+			</>
+		);
+	};
 
-			<InputOutputSplit
-				input={input}
-				onInputChange={onInputChange}
-				editorMode="xml"
-				inputPlaceholder="Enter XML here..."
-				onSample={handleSample}
-				onPaste={handlePaste}
-				onClear={handleClear}
-				inputContextMenuItems={inputContextMenuItems}
-				output={output}
-				outputPlaceholder="Formatted output..."
-				onCopy={handleCopy}
-				emptyIcon={FileText}
-				emptyTitle="Enter XML to format"
-				emptyDescription="The formatted (or minified) document will appear here."
-			/>
-		</div>
+	return (
+		<FormatTabTemplate<XmlFormatTabOptions>
+			input={input}
+			onInputChange={onInputChange}
+			onStatsChange={onStatsChange}
+			inputEditorMode="xml"
+			inputPlaceholder="Enter XML here..."
+			outputPlaceholder="Formatted output..."
+			emptyIcon={FileText}
+			emptyTitle="Enter XML to format"
+			emptyDescription="The formatted (or minified) document will appear here."
+			sampleText={SAMPLE_XML}
+			validate={validate}
+			computeOutput={computeOutput}
+			defaultOptions={DEFAULT_OPTIONS}
+			renderOptions={renderOptions}
+			inputContextMenuItems={inputContextMenuItems}
+		/>
 	);
 }
 

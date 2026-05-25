@@ -18,5 +18,8 @@ CLAUDE.local.md
 # Playwright MCP
 .playwright-mcp/
 
+# Superpowers brainstorming (local-only working artifacts)
+.superpowers/
+
 # Swift build artifacts
 src-tauri/swift/**/.build/

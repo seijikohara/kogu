@@ -1,146 +1,130 @@
 import { FileText } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import type { ReactNode } from 'react';
 import * as yaml from 'yaml';
 
 import type { ContextMenuItem } from '@/lib/components/editor';
-import { getErrorMessage } from '@/lib/utils';
 import {
 	FormCheckbox,
 	FormCheckboxGroup,
 	FormInput,
-	FormMode,
 	FormSection,
 	FormSelect,
 } from '@/lib/components/form';
-import { InputOutputSplit } from '@/lib/components/layout';
-import { Rail } from '@/lib/components/ui/rail';
-import { useClipboardActions, useReportStats } from '@/lib/hooks';
+import { FormatTabTemplate, type FormatMode } from '@/lib/components/template';
 import { SAMPLE_YAML, sortKeysDeep, validateYaml } from '@/lib/services/formatters';
+import { getErrorMessage } from '@/lib/utils';
 
-type FormatMode = 'format' | 'minify';
 type YamlStringType = 'PLAIN' | 'QUOTE_SINGLE' | 'QUOTE_DOUBLE' | 'BLOCK_LITERAL' | 'BLOCK_FOLDED';
 type YamlCollectionStyle = 'any' | 'block' | 'flow';
 type YamlKeyType = 'PLAIN' | 'QUOTE_SINGLE' | 'QUOTE_DOUBLE';
 
-interface TabStats {
-	readonly input: string;
-	readonly valid: boolean | null;
-	readonly error: string;
+interface YamlFormatTabOptions {
+	readonly indentSizeStr: string;
+	readonly lineWidthStr: string;
+	readonly stringType: YamlStringType;
+	readonly singleQuote: boolean;
+	readonly forceQuotes: boolean;
+	readonly doubleQuotedAsJSON: boolean;
+	readonly collectionStyle: YamlCollectionStyle;
+	readonly flowCollectionPadding: boolean;
+	readonly indentSeq: boolean;
+	readonly keyType: YamlKeyType;
+	readonly sortKeys: boolean;
+	readonly noRefs: boolean;
+	readonly nullStr: string;
+	readonly trueStr: string;
+	readonly falseStr: string;
 }
+
+const DEFAULT_OPTIONS: YamlFormatTabOptions = {
+	indentSizeStr: '2',
+	lineWidthStr: '80',
+	stringType: 'PLAIN',
+	singleQuote: false,
+	forceQuotes: false,
+	doubleQuotedAsJSON: false,
+	collectionStyle: 'block',
+	flowCollectionPadding: false,
+	indentSeq: true,
+	keyType: 'PLAIN',
+	sortKeys: false,
+	noRefs: true,
+	nullStr: 'null',
+	trueStr: 'true',
+	falseStr: 'false',
+};
+
+const MIN_CONTENT_WIDTH = 20;
+
+const computeOutput = (input: string, mode: FormatMode, tab: YamlFormatTabOptions) => {
+	if (!input.trim()) return { output: '', error: '' };
+
+	const validation = validateYaml(input);
+	if (!validation.valid) {
+		return { output: '', error: validation.error ?? 'Invalid YAML' };
+	}
+
+	try {
+		if (mode === 'minify') {
+			return {
+				output: yaml.stringify(yaml.parse(input), { indent: 1, indentSeq: false }),
+				error: '',
+			};
+		}
+
+		const parsed = yaml.parse(input);
+		const data = tab.sortKeys ? sortKeysDeep(parsed) : parsed;
+
+		const defaultStringType: YamlStringType = tab.singleQuote
+			? 'QUOTE_SINGLE'
+			: tab.forceQuotes && tab.stringType === 'PLAIN'
+				? 'QUOTE_DOUBLE'
+				: tab.stringType;
+
+		const indent = Number.parseInt(tab.indentSizeStr, 10) || 2;
+		const lineWidth = Number.parseInt(tab.lineWidthStr, 10) || 80;
+
+		const result = yaml.stringify(data, {
+			indent,
+			lineWidth: lineWidth === 0 ? 0 : lineWidth,
+			minContentWidth: MIN_CONTENT_WIDTH,
+			defaultStringType,
+			doubleQuotedAsJSON: tab.doubleQuotedAsJSON,
+			collectionStyle: tab.collectionStyle,
+			flowCollectionPadding: tab.flowCollectionPadding,
+			indentSeq: tab.indentSeq,
+			defaultKeyType: tab.keyType,
+			aliasDuplicateObjects: !tab.noRefs,
+			nullStr: tab.nullStr,
+			trueStr: tab.trueStr,
+			falseStr: tab.falseStr,
+		});
+
+		return { output: result, error: '' };
+	} catch (e) {
+		return { output: '', error: getErrorMessage(e, 'Invalid YAML') };
+	}
+};
+
+const validate = (input: string): boolean | null => {
+	if (!input.trim()) return null;
+	return validateYaml(input).valid;
+};
 
 interface FormatTabProps {
 	readonly input: string;
 	readonly onInputChange: (value: string) => void;
-	readonly onStatsChange?: (stats: TabStats) => void;
+	readonly onStatsChange?: (stats: {
+		readonly input: string;
+		readonly valid: boolean | null;
+		readonly error: string;
+	}) => void;
 }
 
 export function FormatTab({ input, onInputChange, onStatsChange }: FormatTabProps) {
-	const [formatMode, setFormatMode] = useState<FormatMode>('format');
-	const [showOptions, setShowOptions] = useState(true);
-
-	// Basic formatting options.
-	const [indentSizeStr, setIndentSizeStr] = useState<string>('2');
-	const [lineWidthStr, setLineWidthStr] = useState<string>('80');
-	const [minContentWidthStr] = useState<string>('20');
-
-	// String handling options.
-	const [stringType, setStringType] = useState<YamlStringType>('PLAIN');
-	const [singleQuote, setSingleQuote] = useState<boolean>(false);
-	const [forceQuotes, setForceQuotes] = useState<boolean>(false);
-	const [doubleQuotedAsJSON, setDoubleQuotedAsJSON] = useState<boolean>(false);
-
-	// Collection style options.
-	const [collectionStyle, setCollectionStyle] = useState<YamlCollectionStyle>('block');
-	const [flowCollectionPadding, setFlowCollectionPadding] = useState<boolean>(false);
-	const [indentSeq, setIndentSeq] = useState<boolean>(true);
-
-	// Key handling options.
-	const [keyType, setKeyType] = useState<YamlKeyType>('PLAIN');
-	const [sortKeys, setSortKeys] = useState<boolean>(false);
-
-	// Reference handling options.
-	const [noRefs, setNoRefs] = useState<boolean>(true);
-
-	// Null / boolean formatting options.
-	const [nullStr, setNullStr] = useState<string>('null');
-	const [trueStr, setTrueStr] = useState<string>('true');
-	const [falseStr, setFalseStr] = useState<string>('false');
-
-	const indentSize = Number.parseInt(indentSizeStr, 10) || 2;
-	const lineWidth = Number.parseInt(lineWidthStr, 10) || 80;
-	const minContentWidth = Number.parseInt(minContentWidthStr, 10) || 20;
-
-	const validation = useMemo<{ valid: boolean | null }>(() => {
-		if (!input.trim()) return { valid: null };
-		const result = validateYaml(input);
-		return { valid: result.valid };
-	}, [input]);
-
-	const { output, error: formatError } = ((): { output: string; error: string } => {
-		if (!input.trim()) return { output: '', error: '' };
-
-		// Validate first to reject non-YAML input.
-		const validationResult = validateYaml(input);
-		if (!validationResult.valid) {
-			return { output: '', error: validationResult.error ?? 'Invalid YAML' };
-		}
-
-		try {
-			if (formatMode === 'minify') {
-				return {
-					output: yaml.stringify(yaml.parse(input), { indent: 1, indentSeq: false }),
-					error: '',
-				};
-			}
-
-			const parsed = yaml.parse(input);
-			const data = sortKeys ? sortKeysDeep(parsed) : parsed;
-
-			// Determine string type.
-			const defaultStringType: YamlStringType = singleQuote
-				? 'QUOTE_SINGLE'
-				: forceQuotes && stringType === 'PLAIN'
-					? 'QUOTE_DOUBLE'
-					: stringType;
-
-			const result = yaml.stringify(data, {
-				indent: indentSize,
-				lineWidth: lineWidth === 0 ? 0 : lineWidth,
-				minContentWidth,
-				defaultStringType,
-				doubleQuotedAsJSON,
-				collectionStyle,
-				flowCollectionPadding,
-				indentSeq,
-				defaultKeyType: keyType,
-				aliasDuplicateObjects: !noRefs,
-				nullStr,
-				trueStr,
-				falseStr,
-			});
-
-			return { output: result, error: '' };
-		} catch (e) {
-			return { output: '', error: getErrorMessage(e, 'Invalid YAML') };
-		}
-	})();
-
-	useReportStats(onStatsChange, input, validation.valid, formatError);
-
-	const { handlePaste, handleClear, handleCopy } = useClipboardActions({
-		onInputChange,
-		output,
-	});
-
-	const handleSample = () => {
-		onInputChange(SAMPLE_YAML);
-	};
-
 	const handleFormatInput = () => {
 		try {
-			const parsed = yaml.parse(input);
-			const formatted = yaml.stringify(parsed, { indent: 2 });
-			onInputChange(formatted);
+			onInputChange(yaml.stringify(yaml.parse(input), { indent: 2 }));
 		} catch {
 			// Invalid YAML.
 		}
@@ -148,58 +132,39 @@ export function FormatTab({ input, onInputChange, onStatsChange }: FormatTabProp
 
 	const handleMinifyInput = () => {
 		try {
-			const parsed = yaml.parse(input);
-			const minified = yaml.stringify(parsed, { indent: 1, indentSeq: false });
-			onInputChange(minified);
+			onInputChange(yaml.stringify(yaml.parse(input), { indent: 1, indentSeq: false }));
 		} catch {
 			// Invalid YAML.
 		}
 	};
 
 	const inputContextMenuItems: readonly ContextMenuItem[] = [
-		{
-			text: 'Format YAML',
-			enabled: input.trim().length > 0,
-			action: handleFormatInput,
-		},
-		{
-			text: 'Minify YAML',
-			enabled: input.trim().length > 0,
-			action: handleMinifyInput,
-		},
+		{ text: 'Format YAML', enabled: input.trim().length > 0, action: handleFormatInput },
+		{ text: 'Minify YAML', enabled: input.trim().length > 0, action: handleMinifyInput },
 	];
 
-	return (
-		<div className="flex flex-1 overflow-hidden">
-			<Rail
-				show={showOptions}
-				onClose={() => setShowOptions(false)}
-				onOpen={() => setShowOptions(true)}
-			>
-				<FormSection title="Mode">
-					<FormMode
-						value={formatMode}
-						onValueChange={setFormatMode}
-						options={[
-							{ value: 'format', label: 'Format' },
-							{ value: 'minify', label: 'Minify' },
-						]}
-					/>
-				</FormSection>
+	const renderOptions = (
+		options: YamlFormatTabOptions,
+		setOptions: (next: YamlFormatTabOptions) => void
+	): ReactNode => {
+		const update = <K extends keyof YamlFormatTabOptions>(key: K, value: YamlFormatTabOptions[K]) =>
+			setOptions({ ...options, [key]: value });
 
+		return (
+			<>
 				<FormSection title="Formatting">
 					<div className="grid grid-cols-2 gap-2">
 						<FormSelect
 							label="Indent"
-							value={indentSizeStr}
-							onValueChange={setIndentSizeStr}
+							value={options.indentSizeStr}
+							onValueChange={(v) => update('indentSizeStr', v)}
 							options={['2', '4', '8']}
 							size="compact"
 						/>
 						<FormSelect
 							label="Line Width"
-							value={lineWidthStr}
-							onValueChange={setLineWidthStr}
+							value={options.lineWidthStr}
+							onValueChange={(v) => update('lineWidthStr', v)}
 							options={[
 								{ value: '40', label: '40' },
 								{ value: '80', label: '80' },
@@ -211,8 +176,8 @@ export function FormatTab({ input, onInputChange, onStatsChange }: FormatTabProp
 					</div>
 					<FormSelect
 						label="Collection Style"
-						value={collectionStyle}
-						onValueChange={(v) => setCollectionStyle(v as YamlCollectionStyle)}
+						value={options.collectionStyle}
+						onValueChange={(v) => update('collectionStyle', v as YamlCollectionStyle)}
 						options={[
 							{ value: 'block', label: 'Block' },
 							{ value: 'flow', label: 'Flow ({...})' },
@@ -223,14 +188,14 @@ export function FormatTab({ input, onInputChange, onStatsChange }: FormatTabProp
 					<FormCheckboxGroup className="pt-1">
 						<FormCheckbox
 							label="Indent sequences"
-							checked={indentSeq}
-							onCheckedChange={setIndentSeq}
+							checked={options.indentSeq}
+							onCheckedChange={(v) => update('indentSeq', v)}
 							size="compact"
 						/>
 						<FormCheckbox
 							label="Flow collection padding"
-							checked={flowCollectionPadding}
-							onCheckedChange={setFlowCollectionPadding}
+							checked={options.flowCollectionPadding}
+							onCheckedChange={(v) => update('flowCollectionPadding', v)}
 							size="compact"
 						/>
 					</FormCheckboxGroup>
@@ -239,8 +204,8 @@ export function FormatTab({ input, onInputChange, onStatsChange }: FormatTabProp
 				<FormSection title="Strings">
 					<FormSelect
 						label="String Style"
-						value={stringType}
-						onValueChange={(v) => setStringType(v as YamlStringType)}
+						value={options.stringType}
+						onValueChange={(v) => update('stringType', v as YamlStringType)}
 						options={[
 							{ value: 'PLAIN', label: 'Plain' },
 							{ value: 'QUOTE_SINGLE', label: "Single Quote (')" },
@@ -253,20 +218,20 @@ export function FormatTab({ input, onInputChange, onStatsChange }: FormatTabProp
 					<FormCheckboxGroup className="pt-1">
 						<FormCheckbox
 							label="Force quotes on all strings"
-							checked={forceQuotes}
-							onCheckedChange={setForceQuotes}
+							checked={options.forceQuotes}
+							onCheckedChange={(v) => update('forceQuotes', v)}
 							size="compact"
 						/>
 						<FormCheckbox
 							label="Prefer single quotes"
-							checked={singleQuote}
-							onCheckedChange={setSingleQuote}
+							checked={options.singleQuote}
+							onCheckedChange={(v) => update('singleQuote', v)}
 							size="compact"
 						/>
 						<FormCheckbox
 							label="Double-quoted as JSON style"
-							checked={doubleQuotedAsJSON}
-							onCheckedChange={setDoubleQuotedAsJSON}
+							checked={options.doubleQuotedAsJSON}
+							onCheckedChange={(v) => update('doubleQuotedAsJSON', v)}
 							size="compact"
 						/>
 					</FormCheckboxGroup>
@@ -275,8 +240,8 @@ export function FormatTab({ input, onInputChange, onStatsChange }: FormatTabProp
 				<FormSection title="Keys">
 					<FormSelect
 						label="Key Style"
-						value={keyType}
-						onValueChange={(v) => setKeyType(v as YamlKeyType)}
+						value={options.keyType}
+						onValueChange={(v) => update('keyType', v as YamlKeyType)}
 						options={[
 							{ value: 'PLAIN', label: 'Plain' },
 							{ value: 'QUOTE_SINGLE', label: "Single Quote (')" },
@@ -287,8 +252,8 @@ export function FormatTab({ input, onInputChange, onStatsChange }: FormatTabProp
 					<FormCheckboxGroup className="pt-1">
 						<FormCheckbox
 							label="Sort keys alphabetically"
-							checked={sortKeys}
-							onCheckedChange={setSortKeys}
+							checked={options.sortKeys}
+							onCheckedChange={(v) => update('sortKeys', v)}
 							size="compact"
 						/>
 					</FormCheckboxGroup>
@@ -298,24 +263,24 @@ export function FormatTab({ input, onInputChange, onStatsChange }: FormatTabProp
 					<div className="grid grid-cols-3 gap-2">
 						<FormInput
 							label="Null"
-							value={nullStr}
-							onValueChange={setNullStr}
+							value={options.nullStr}
+							onValueChange={(v) => update('nullStr', v)}
 							placeholder="null"
 							size="compact"
 							className="font-mono"
 						/>
 						<FormInput
 							label="True"
-							value={trueStr}
-							onValueChange={setTrueStr}
+							value={options.trueStr}
+							onValueChange={(v) => update('trueStr', v)}
 							placeholder="true"
 							size="compact"
 							className="font-mono"
 						/>
 						<FormInput
 							label="False"
-							value={falseStr}
-							onValueChange={setFalseStr}
+							value={options.falseStr}
+							onValueChange={(v) => update('falseStr', v)}
 							placeholder="false"
 							size="compact"
 							className="font-mono"
@@ -326,30 +291,33 @@ export function FormatTab({ input, onInputChange, onStatsChange }: FormatTabProp
 				<FormSection title="Advanced">
 					<FormCheckbox
 						label="Disable YAML references/aliases"
-						checked={noRefs}
-						onCheckedChange={setNoRefs}
+						checked={options.noRefs}
+						onCheckedChange={(v) => update('noRefs', v)}
 						size="compact"
 					/>
 				</FormSection>
-			</Rail>
+			</>
+		);
+	};
 
-			<InputOutputSplit
-				input={input}
-				onInputChange={onInputChange}
-				editorMode="yaml"
-				inputPlaceholder="Enter YAML here..."
-				onSample={handleSample}
-				onPaste={handlePaste}
-				onClear={handleClear}
-				inputContextMenuItems={inputContextMenuItems}
-				output={output}
-				outputPlaceholder="Formatted output..."
-				onCopy={handleCopy}
-				emptyIcon={FileText}
-				emptyTitle="Enter YAML to format"
-				emptyDescription="The formatted (or minified) document will appear here."
-			/>
-		</div>
+	return (
+		<FormatTabTemplate<YamlFormatTabOptions>
+			input={input}
+			onInputChange={onInputChange}
+			onStatsChange={onStatsChange}
+			inputEditorMode="yaml"
+			inputPlaceholder="Enter YAML here..."
+			outputPlaceholder="Formatted output..."
+			emptyIcon={FileText}
+			emptyTitle="Enter YAML to format"
+			emptyDescription="The formatted (or minified) document will appear here."
+			sampleText={SAMPLE_YAML}
+			validate={validate}
+			computeOutput={computeOutput}
+			defaultOptions={DEFAULT_OPTIONS}
+			renderOptions={renderOptions}
+			inputContextMenuItems={inputContextMenuItems}
+		/>
 	);
 }
 
