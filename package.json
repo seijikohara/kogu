@@ -71,6 +71,7 @@
 		"@xml-tools/parser": "^1.0.11",
 		"ajv": "^8.20.0",
 		"ajv-formats": "^3.0.1",
+		"brotli-wasm": "^3.0.1",
 		"class-variance-authority": "^0.7.1",
 		"cmdk": "^1.1.1",
 		"cron-parser": "^5.5.0",
