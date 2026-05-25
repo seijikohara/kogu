@@ -4,6 +4,7 @@
  */
 import {
 	ArrowRightLeft,
+	BadgeCheck,
 	Binary,
 	Braces,
 	Calculator,
@@ -163,6 +164,15 @@ export const PAGES: readonly PageDefinition[] = [
 		icon: Key,
 		description: 'Decode and inspect JWT tokens',
 		color: 'text-purple-500',
+		category: 'encoders',
+	},
+	{
+		id: 'x509-decoder',
+		title: 'X.509 Certificate Decoder',
+		url: '/x509-decoder',
+		icon: BadgeCheck,
+		description: 'Decode X.509 / PEM certificates with chain visualization and fingerprints',
+		color: 'text-teal-600',
 		category: 'encoders',
 	},
 	{

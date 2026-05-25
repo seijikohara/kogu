@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root';
 import { Route as YamlFormatterRouteImport } from './routes/yaml-formatter';
 import { Route as XmlFormatterRouteImport } from './routes/xml-formatter';
+import { Route as X509DecoderRouteImport } from './routes/x509-decoder';
 import { Route as UuidGeneratorRouteImport } from './routes/uuid-generator';
 import { Route as UrlEncoderRouteImport } from './routes/url-encoder';
 import { Route as StringCaseConverterRouteImport } from './routes/string-case-converter';
@@ -44,6 +45,11 @@ const YamlFormatterRoute = YamlFormatterRouteImport.update({
 const XmlFormatterRoute = XmlFormatterRouteImport.update({
 	id: '/xml-formatter',
 	path: '/xml-formatter',
+	getParentRoute: () => rootRouteImport,
+} as any);
+const X509DecoderRoute = X509DecoderRouteImport.update({
+	id: '/x509-decoder',
+	path: '/x509-decoder',
 	getParentRoute: () => rootRouteImport,
 } as any);
 const UuidGeneratorRoute = UuidGeneratorRouteImport.update({
@@ -192,6 +198,7 @@ export interface FileRoutesByFullPath {
 	'/string-case-converter': typeof StringCaseConverterRoute;
 	'/url-encoder': typeof UrlEncoderRoute;
 	'/uuid-generator': typeof UuidGeneratorRoute;
+	'/x509-decoder': typeof X509DecoderRoute;
 	'/xml-formatter': typeof XmlFormatterRoute;
 	'/yaml-formatter': typeof YamlFormatterRoute;
 }
@@ -220,6 +227,7 @@ export interface FileRoutesByTo {
 	'/string-case-converter': typeof StringCaseConverterRoute;
 	'/url-encoder': typeof UrlEncoderRoute;
 	'/uuid-generator': typeof UuidGeneratorRoute;
+	'/x509-decoder': typeof X509DecoderRoute;
 	'/xml-formatter': typeof XmlFormatterRoute;
 	'/yaml-formatter': typeof YamlFormatterRoute;
 }
@@ -249,6 +257,7 @@ export interface FileRoutesById {
 	'/string-case-converter': typeof StringCaseConverterRoute;
 	'/url-encoder': typeof UrlEncoderRoute;
 	'/uuid-generator': typeof UuidGeneratorRoute;
+	'/x509-decoder': typeof X509DecoderRoute;
 	'/xml-formatter': typeof XmlFormatterRoute;
 	'/yaml-formatter': typeof YamlFormatterRoute;
 }
@@ -279,6 +288,7 @@ export interface FileRouteTypes {
 		| '/string-case-converter'
 		| '/url-encoder'
 		| '/uuid-generator'
+		| '/x509-decoder'
 		| '/xml-formatter'
 		| '/yaml-formatter';
 	fileRoutesByTo: FileRoutesByTo;
@@ -307,6 +317,7 @@ export interface FileRouteTypes {
 		| '/string-case-converter'
 		| '/url-encoder'
 		| '/uuid-generator'
+		| '/x509-decoder'
 		| '/xml-formatter'
 		| '/yaml-formatter';
 	id:
@@ -335,6 +346,7 @@ export interface FileRouteTypes {
 		| '/string-case-converter'
 		| '/url-encoder'
 		| '/uuid-generator'
+		| '/x509-decoder'
 		| '/xml-formatter'
 		| '/yaml-formatter';
 	fileRoutesById: FileRoutesById;
@@ -364,6 +376,7 @@ export interface RootRouteChildren {
 	StringCaseConverterRoute: typeof StringCaseConverterRoute;
 	UrlEncoderRoute: typeof UrlEncoderRoute;
 	UuidGeneratorRoute: typeof UuidGeneratorRoute;
+	X509DecoderRoute: typeof X509DecoderRoute;
 	XmlFormatterRoute: typeof XmlFormatterRoute;
 	YamlFormatterRoute: typeof YamlFormatterRoute;
 }
@@ -382,6 +395,13 @@ declare module '@tanstack/react-router' {
 			path: '/xml-formatter';
 			fullPath: '/xml-formatter';
 			preLoaderRoute: typeof XmlFormatterRouteImport;
+			parentRoute: typeof rootRouteImport;
+		};
+		'/x509-decoder': {
+			id: '/x509-decoder';
+			path: '/x509-decoder';
+			fullPath: '/x509-decoder';
+			preLoaderRoute: typeof X509DecoderRouteImport;
 			parentRoute: typeof rootRouteImport;
 		};
 		'/uuid-generator': {
@@ -580,6 +600,7 @@ const rootRouteChildren: RootRouteChildren = {
 	StringCaseConverterRoute: StringCaseConverterRoute,
 	UrlEncoderRoute: UrlEncoderRoute,
 	UuidGeneratorRoute: UuidGeneratorRoute,
+	X509DecoderRoute: X509DecoderRoute,
 	XmlFormatterRoute: XmlFormatterRoute,
 	YamlFormatterRoute: YamlFormatterRoute,
 };
