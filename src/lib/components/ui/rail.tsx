@@ -60,7 +60,7 @@ export function Rail({
 	return (
 		<aside
 			className={cn(
-				'relative flex h-full shrink-0 flex-col border-border bg-sidebar',
+				'relative flex h-full shrink-0 flex-col border-border bg-surface-2',
 				'data-[side=left]:border-r data-[side=right]:border-l',
 				show ? cn(SIZE_CLASS[size], 'overflow-hidden') : 'w-[var(--rail-w-collapsed)]'
 			)}
