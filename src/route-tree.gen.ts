@@ -8,728 +8,749 @@
 // You should NOT make any changes in this file as it will be overwritten.
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
-import { Route as rootRouteImport } from './routes/__root'
-import { Route as YamlFormatterRouteImport } from './routes/yaml-formatter'
-import { Route as XmlFormatterRouteImport } from './routes/xml-formatter'
-import { Route as X509DecoderRouteImport } from './routes/x509-decoder'
-import { Route as UuidGeneratorRouteImport } from './routes/uuid-generator'
-import { Route as UrlEncoderRouteImport } from './routes/url-encoder'
-import { Route as StringCompressorRouteImport } from './routes/string-compressor'
-import { Route as StringCaseConverterRouteImport } from './routes/string-case-converter'
-import { Route as SshKeyGeneratorRouteImport } from './routes/ssh-key-generator'
-import { Route as SqlFormatterRouteImport } from './routes/sql-formatter'
-import { Route as SettingsRouteImport } from './routes/settings'
-import { Route as SemverToolsRouteImport } from './routes/semver-tools'
-import { Route as RegexTesterRouteImport } from './routes/regex-tester'
-import { Route as QrCodeGeneratorRouteImport } from './routes/qr-code-generator'
-import { Route as PasswordGeneratorRouteImport } from './routes/password-generator'
-import { Route as NumberBaseConverterRouteImport } from './routes/number-base-converter'
-import { Route as NetworkScannerRouteImport } from './routes/network-scanner'
-import { Route as NetworkInterfacesRouteImport } from './routes/network-interfaces'
-import { Route as MarkdownEditorRouteImport } from './routes/markdown-editor'
-import { Route as LoremIpsumRouteImport } from './routes/lorem-ipsum'
-import { Route as ListComparerRouteImport } from './routes/list-comparer'
-import { Route as JwtDecoderRouteImport } from './routes/jwt-decoder'
-import { Route as JsonFormatterRouteImport } from './routes/json-formatter'
-import { Route as ImageConverterRouteImport } from './routes/image-converter'
-import { Route as HashGeneratorRouteImport } from './routes/hash-generator'
-import { Route as GpgKeyGeneratorRouteImport } from './routes/gpg-key-generator'
-import { Route as EscapeToolRouteImport } from './routes/escape-tool'
-import { Route as DiffViewerRouteImport } from './routes/diff-viewer'
-import { Route as DateTimestampConverterRouteImport } from './routes/date-timestamp-converter'
-import { Route as CurlBuilderRouteImport } from './routes/curl-builder'
-import { Route as CronExpressionBuilderRouteImport } from './routes/cron-expression-builder'
-import { Route as BcryptGeneratorRouteImport } from './routes/bcrypt-generator'
-import { Route as Base64EncoderRouteImport } from './routes/base64-encoder'
-import { Route as IndexRouteImport } from './routes/index'
+import { Route as rootRouteImport } from './routes/__root';
+import { Route as YamlFormatterRouteImport } from './routes/yaml-formatter';
+import { Route as XmlFormatterRouteImport } from './routes/xml-formatter';
+import { Route as X509DecoderRouteImport } from './routes/x509-decoder';
+import { Route as UuidGeneratorRouteImport } from './routes/uuid-generator';
+import { Route as UrlEncoderRouteImport } from './routes/url-encoder';
+import { Route as StringCompressorRouteImport } from './routes/string-compressor';
+import { Route as StringCaseConverterRouteImport } from './routes/string-case-converter';
+import { Route as SshKeyGeneratorRouteImport } from './routes/ssh-key-generator';
+import { Route as SqlFormatterRouteImport } from './routes/sql-formatter';
+import { Route as SettingsRouteImport } from './routes/settings';
+import { Route as SemverToolsRouteImport } from './routes/semver-tools';
+import { Route as RsaToolsRouteImport } from './routes/rsa-tools';
+import { Route as RegexTesterRouteImport } from './routes/regex-tester';
+import { Route as QrCodeGeneratorRouteImport } from './routes/qr-code-generator';
+import { Route as PasswordGeneratorRouteImport } from './routes/password-generator';
+import { Route as NumberBaseConverterRouteImport } from './routes/number-base-converter';
+import { Route as NetworkScannerRouteImport } from './routes/network-scanner';
+import { Route as NetworkInterfacesRouteImport } from './routes/network-interfaces';
+import { Route as MarkdownEditorRouteImport } from './routes/markdown-editor';
+import { Route as LoremIpsumRouteImport } from './routes/lorem-ipsum';
+import { Route as ListComparerRouteImport } from './routes/list-comparer';
+import { Route as JwtDecoderRouteImport } from './routes/jwt-decoder';
+import { Route as JsonFormatterRouteImport } from './routes/json-formatter';
+import { Route as ImageConverterRouteImport } from './routes/image-converter';
+import { Route as HashGeneratorRouteImport } from './routes/hash-generator';
+import { Route as GpgKeyGeneratorRouteImport } from './routes/gpg-key-generator';
+import { Route as EscapeToolRouteImport } from './routes/escape-tool';
+import { Route as DiffViewerRouteImport } from './routes/diff-viewer';
+import { Route as DateTimestampConverterRouteImport } from './routes/date-timestamp-converter';
+import { Route as CurlBuilderRouteImport } from './routes/curl-builder';
+import { Route as CronExpressionBuilderRouteImport } from './routes/cron-expression-builder';
+import { Route as BcryptGeneratorRouteImport } from './routes/bcrypt-generator';
+import { Route as Base64EncoderRouteImport } from './routes/base64-encoder';
+import { Route as IndexRouteImport } from './routes/index';
 
 const YamlFormatterRoute = YamlFormatterRouteImport.update({
-  id: '/yaml-formatter',
-  path: '/yaml-formatter',
-  getParentRoute: () => rootRouteImport,
-} as any)
+	id: '/yaml-formatter',
+	path: '/yaml-formatter',
+	getParentRoute: () => rootRouteImport,
+} as any);
 const XmlFormatterRoute = XmlFormatterRouteImport.update({
-  id: '/xml-formatter',
-  path: '/xml-formatter',
-  getParentRoute: () => rootRouteImport,
-} as any)
+	id: '/xml-formatter',
+	path: '/xml-formatter',
+	getParentRoute: () => rootRouteImport,
+} as any);
 const X509DecoderRoute = X509DecoderRouteImport.update({
-  id: '/x509-decoder',
-  path: '/x509-decoder',
-  getParentRoute: () => rootRouteImport,
-} as any)
+	id: '/x509-decoder',
+	path: '/x509-decoder',
+	getParentRoute: () => rootRouteImport,
+} as any);
 const UuidGeneratorRoute = UuidGeneratorRouteImport.update({
-  id: '/uuid-generator',
-  path: '/uuid-generator',
-  getParentRoute: () => rootRouteImport,
-} as any)
+	id: '/uuid-generator',
+	path: '/uuid-generator',
+	getParentRoute: () => rootRouteImport,
+} as any);
 const UrlEncoderRoute = UrlEncoderRouteImport.update({
-  id: '/url-encoder',
-  path: '/url-encoder',
-  getParentRoute: () => rootRouteImport,
-} as any)
+	id: '/url-encoder',
+	path: '/url-encoder',
+	getParentRoute: () => rootRouteImport,
+} as any);
 const StringCompressorRoute = StringCompressorRouteImport.update({
-  id: '/string-compressor',
-  path: '/string-compressor',
-  getParentRoute: () => rootRouteImport,
-} as any)
+	id: '/string-compressor',
+	path: '/string-compressor',
+	getParentRoute: () => rootRouteImport,
+} as any);
 const StringCaseConverterRoute = StringCaseConverterRouteImport.update({
-  id: '/string-case-converter',
-  path: '/string-case-converter',
-  getParentRoute: () => rootRouteImport,
-} as any)
+	id: '/string-case-converter',
+	path: '/string-case-converter',
+	getParentRoute: () => rootRouteImport,
+} as any);
 const SshKeyGeneratorRoute = SshKeyGeneratorRouteImport.update({
-  id: '/ssh-key-generator',
-  path: '/ssh-key-generator',
-  getParentRoute: () => rootRouteImport,
-} as any)
+	id: '/ssh-key-generator',
+	path: '/ssh-key-generator',
+	getParentRoute: () => rootRouteImport,
+} as any);
 const SqlFormatterRoute = SqlFormatterRouteImport.update({
-  id: '/sql-formatter',
-  path: '/sql-formatter',
-  getParentRoute: () => rootRouteImport,
-} as any)
+	id: '/sql-formatter',
+	path: '/sql-formatter',
+	getParentRoute: () => rootRouteImport,
+} as any);
 const SettingsRoute = SettingsRouteImport.update({
-  id: '/settings',
-  path: '/settings',
-  getParentRoute: () => rootRouteImport,
-} as any)
+	id: '/settings',
+	path: '/settings',
+	getParentRoute: () => rootRouteImport,
+} as any);
 const SemverToolsRoute = SemverToolsRouteImport.update({
-  id: '/semver-tools',
-  path: '/semver-tools',
-  getParentRoute: () => rootRouteImport,
-} as any)
+	id: '/semver-tools',
+	path: '/semver-tools',
+	getParentRoute: () => rootRouteImport,
+} as any);
+const RsaToolsRoute = RsaToolsRouteImport.update({
+	id: '/rsa-tools',
+	path: '/rsa-tools',
+	getParentRoute: () => rootRouteImport,
+} as any);
 const RegexTesterRoute = RegexTesterRouteImport.update({
-  id: '/regex-tester',
-  path: '/regex-tester',
-  getParentRoute: () => rootRouteImport,
-} as any)
+	id: '/regex-tester',
+	path: '/regex-tester',
+	getParentRoute: () => rootRouteImport,
+} as any);
 const QrCodeGeneratorRoute = QrCodeGeneratorRouteImport.update({
-  id: '/qr-code-generator',
-  path: '/qr-code-generator',
-  getParentRoute: () => rootRouteImport,
-} as any)
+	id: '/qr-code-generator',
+	path: '/qr-code-generator',
+	getParentRoute: () => rootRouteImport,
+} as any);
 const PasswordGeneratorRoute = PasswordGeneratorRouteImport.update({
-  id: '/password-generator',
-  path: '/password-generator',
-  getParentRoute: () => rootRouteImport,
-} as any)
+	id: '/password-generator',
+	path: '/password-generator',
+	getParentRoute: () => rootRouteImport,
+} as any);
 const NumberBaseConverterRoute = NumberBaseConverterRouteImport.update({
-  id: '/number-base-converter',
-  path: '/number-base-converter',
-  getParentRoute: () => rootRouteImport,
-} as any)
+	id: '/number-base-converter',
+	path: '/number-base-converter',
+	getParentRoute: () => rootRouteImport,
+} as any);
 const NetworkScannerRoute = NetworkScannerRouteImport.update({
-  id: '/network-scanner',
-  path: '/network-scanner',
-  getParentRoute: () => rootRouteImport,
-} as any)
+	id: '/network-scanner',
+	path: '/network-scanner',
+	getParentRoute: () => rootRouteImport,
+} as any);
 const NetworkInterfacesRoute = NetworkInterfacesRouteImport.update({
-  id: '/network-interfaces',
-  path: '/network-interfaces',
-  getParentRoute: () => rootRouteImport,
-} as any)
+	id: '/network-interfaces',
+	path: '/network-interfaces',
+	getParentRoute: () => rootRouteImport,
+} as any);
 const MarkdownEditorRoute = MarkdownEditorRouteImport.update({
-  id: '/markdown-editor',
-  path: '/markdown-editor',
-  getParentRoute: () => rootRouteImport,
-} as any)
+	id: '/markdown-editor',
+	path: '/markdown-editor',
+	getParentRoute: () => rootRouteImport,
+} as any);
 const LoremIpsumRoute = LoremIpsumRouteImport.update({
-  id: '/lorem-ipsum',
-  path: '/lorem-ipsum',
-  getParentRoute: () => rootRouteImport,
-} as any)
+	id: '/lorem-ipsum',
+	path: '/lorem-ipsum',
+	getParentRoute: () => rootRouteImport,
+} as any);
 const ListComparerRoute = ListComparerRouteImport.update({
-  id: '/list-comparer',
-  path: '/list-comparer',
-  getParentRoute: () => rootRouteImport,
-} as any)
+	id: '/list-comparer',
+	path: '/list-comparer',
+	getParentRoute: () => rootRouteImport,
+} as any);
 const JwtDecoderRoute = JwtDecoderRouteImport.update({
-  id: '/jwt-decoder',
-  path: '/jwt-decoder',
-  getParentRoute: () => rootRouteImport,
-} as any)
+	id: '/jwt-decoder',
+	path: '/jwt-decoder',
+	getParentRoute: () => rootRouteImport,
+} as any);
 const JsonFormatterRoute = JsonFormatterRouteImport.update({
-  id: '/json-formatter',
-  path: '/json-formatter',
-  getParentRoute: () => rootRouteImport,
-} as any)
+	id: '/json-formatter',
+	path: '/json-formatter',
+	getParentRoute: () => rootRouteImport,
+} as any);
 const ImageConverterRoute = ImageConverterRouteImport.update({
-  id: '/image-converter',
-  path: '/image-converter',
-  getParentRoute: () => rootRouteImport,
-} as any)
+	id: '/image-converter',
+	path: '/image-converter',
+	getParentRoute: () => rootRouteImport,
+} as any);
 const HashGeneratorRoute = HashGeneratorRouteImport.update({
-  id: '/hash-generator',
-  path: '/hash-generator',
-  getParentRoute: () => rootRouteImport,
-} as any)
+	id: '/hash-generator',
+	path: '/hash-generator',
+	getParentRoute: () => rootRouteImport,
+} as any);
 const GpgKeyGeneratorRoute = GpgKeyGeneratorRouteImport.update({
-  id: '/gpg-key-generator',
-  path: '/gpg-key-generator',
-  getParentRoute: () => rootRouteImport,
-} as any)
+	id: '/gpg-key-generator',
+	path: '/gpg-key-generator',
+	getParentRoute: () => rootRouteImport,
+} as any);
 const EscapeToolRoute = EscapeToolRouteImport.update({
-  id: '/escape-tool',
-  path: '/escape-tool',
-  getParentRoute: () => rootRouteImport,
-} as any)
+	id: '/escape-tool',
+	path: '/escape-tool',
+	getParentRoute: () => rootRouteImport,
+} as any);
 const DiffViewerRoute = DiffViewerRouteImport.update({
-  id: '/diff-viewer',
-  path: '/diff-viewer',
-  getParentRoute: () => rootRouteImport,
-} as any)
+	id: '/diff-viewer',
+	path: '/diff-viewer',
+	getParentRoute: () => rootRouteImport,
+} as any);
 const DateTimestampConverterRoute = DateTimestampConverterRouteImport.update({
-  id: '/date-timestamp-converter',
-  path: '/date-timestamp-converter',
-  getParentRoute: () => rootRouteImport,
-} as any)
+	id: '/date-timestamp-converter',
+	path: '/date-timestamp-converter',
+	getParentRoute: () => rootRouteImport,
+} as any);
 const CurlBuilderRoute = CurlBuilderRouteImport.update({
-  id: '/curl-builder',
-  path: '/curl-builder',
-  getParentRoute: () => rootRouteImport,
-} as any)
+	id: '/curl-builder',
+	path: '/curl-builder',
+	getParentRoute: () => rootRouteImport,
+} as any);
 const CronExpressionBuilderRoute = CronExpressionBuilderRouteImport.update({
-  id: '/cron-expression-builder',
-  path: '/cron-expression-builder',
-  getParentRoute: () => rootRouteImport,
-} as any)
+	id: '/cron-expression-builder',
+	path: '/cron-expression-builder',
+	getParentRoute: () => rootRouteImport,
+} as any);
 const BcryptGeneratorRoute = BcryptGeneratorRouteImport.update({
-  id: '/bcrypt-generator',
-  path: '/bcrypt-generator',
-  getParentRoute: () => rootRouteImport,
-} as any)
+	id: '/bcrypt-generator',
+	path: '/bcrypt-generator',
+	getParentRoute: () => rootRouteImport,
+} as any);
 const Base64EncoderRoute = Base64EncoderRouteImport.update({
-  id: '/base64-encoder',
-  path: '/base64-encoder',
-  getParentRoute: () => rootRouteImport,
-} as any)
+	id: '/base64-encoder',
+	path: '/base64-encoder',
+	getParentRoute: () => rootRouteImport,
+} as any);
 const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => rootRouteImport,
-} as any)
+	id: '/',
+	path: '/',
+	getParentRoute: () => rootRouteImport,
+} as any);
 
 export interface FileRoutesByFullPath {
-  '/': typeof IndexRoute
-  '/base64-encoder': typeof Base64EncoderRoute
-  '/bcrypt-generator': typeof BcryptGeneratorRoute
-  '/cron-expression-builder': typeof CronExpressionBuilderRoute
-  '/curl-builder': typeof CurlBuilderRoute
-  '/date-timestamp-converter': typeof DateTimestampConverterRoute
-  '/diff-viewer': typeof DiffViewerRoute
-  '/escape-tool': typeof EscapeToolRoute
-  '/gpg-key-generator': typeof GpgKeyGeneratorRoute
-  '/hash-generator': typeof HashGeneratorRoute
-  '/image-converter': typeof ImageConverterRoute
-  '/json-formatter': typeof JsonFormatterRoute
-  '/jwt-decoder': typeof JwtDecoderRoute
-  '/list-comparer': typeof ListComparerRoute
-  '/lorem-ipsum': typeof LoremIpsumRoute
-  '/markdown-editor': typeof MarkdownEditorRoute
-  '/network-interfaces': typeof NetworkInterfacesRoute
-  '/network-scanner': typeof NetworkScannerRoute
-  '/number-base-converter': typeof NumberBaseConverterRoute
-  '/password-generator': typeof PasswordGeneratorRoute
-  '/qr-code-generator': typeof QrCodeGeneratorRoute
-  '/regex-tester': typeof RegexTesterRoute
-  '/semver-tools': typeof SemverToolsRoute
-  '/settings': typeof SettingsRoute
-  '/sql-formatter': typeof SqlFormatterRoute
-  '/ssh-key-generator': typeof SshKeyGeneratorRoute
-  '/string-case-converter': typeof StringCaseConverterRoute
-  '/string-compressor': typeof StringCompressorRoute
-  '/url-encoder': typeof UrlEncoderRoute
-  '/uuid-generator': typeof UuidGeneratorRoute
-  '/x509-decoder': typeof X509DecoderRoute
-  '/xml-formatter': typeof XmlFormatterRoute
-  '/yaml-formatter': typeof YamlFormatterRoute
+	'/': typeof IndexRoute;
+	'/base64-encoder': typeof Base64EncoderRoute;
+	'/bcrypt-generator': typeof BcryptGeneratorRoute;
+	'/cron-expression-builder': typeof CronExpressionBuilderRoute;
+	'/curl-builder': typeof CurlBuilderRoute;
+	'/date-timestamp-converter': typeof DateTimestampConverterRoute;
+	'/diff-viewer': typeof DiffViewerRoute;
+	'/escape-tool': typeof EscapeToolRoute;
+	'/gpg-key-generator': typeof GpgKeyGeneratorRoute;
+	'/hash-generator': typeof HashGeneratorRoute;
+	'/image-converter': typeof ImageConverterRoute;
+	'/json-formatter': typeof JsonFormatterRoute;
+	'/jwt-decoder': typeof JwtDecoderRoute;
+	'/list-comparer': typeof ListComparerRoute;
+	'/lorem-ipsum': typeof LoremIpsumRoute;
+	'/markdown-editor': typeof MarkdownEditorRoute;
+	'/network-interfaces': typeof NetworkInterfacesRoute;
+	'/network-scanner': typeof NetworkScannerRoute;
+	'/number-base-converter': typeof NumberBaseConverterRoute;
+	'/password-generator': typeof PasswordGeneratorRoute;
+	'/qr-code-generator': typeof QrCodeGeneratorRoute;
+	'/regex-tester': typeof RegexTesterRoute;
+	'/rsa-tools': typeof RsaToolsRoute;
+	'/semver-tools': typeof SemverToolsRoute;
+	'/settings': typeof SettingsRoute;
+	'/sql-formatter': typeof SqlFormatterRoute;
+	'/ssh-key-generator': typeof SshKeyGeneratorRoute;
+	'/string-case-converter': typeof StringCaseConverterRoute;
+	'/string-compressor': typeof StringCompressorRoute;
+	'/url-encoder': typeof UrlEncoderRoute;
+	'/uuid-generator': typeof UuidGeneratorRoute;
+	'/x509-decoder': typeof X509DecoderRoute;
+	'/xml-formatter': typeof XmlFormatterRoute;
+	'/yaml-formatter': typeof YamlFormatterRoute;
 }
 export interface FileRoutesByTo {
-  '/': typeof IndexRoute
-  '/base64-encoder': typeof Base64EncoderRoute
-  '/bcrypt-generator': typeof BcryptGeneratorRoute
-  '/cron-expression-builder': typeof CronExpressionBuilderRoute
-  '/curl-builder': typeof CurlBuilderRoute
-  '/date-timestamp-converter': typeof DateTimestampConverterRoute
-  '/diff-viewer': typeof DiffViewerRoute
-  '/escape-tool': typeof EscapeToolRoute
-  '/gpg-key-generator': typeof GpgKeyGeneratorRoute
-  '/hash-generator': typeof HashGeneratorRoute
-  '/image-converter': typeof ImageConverterRoute
-  '/json-formatter': typeof JsonFormatterRoute
-  '/jwt-decoder': typeof JwtDecoderRoute
-  '/list-comparer': typeof ListComparerRoute
-  '/lorem-ipsum': typeof LoremIpsumRoute
-  '/markdown-editor': typeof MarkdownEditorRoute
-  '/network-interfaces': typeof NetworkInterfacesRoute
-  '/network-scanner': typeof NetworkScannerRoute
-  '/number-base-converter': typeof NumberBaseConverterRoute
-  '/password-generator': typeof PasswordGeneratorRoute
-  '/qr-code-generator': typeof QrCodeGeneratorRoute
-  '/regex-tester': typeof RegexTesterRoute
-  '/semver-tools': typeof SemverToolsRoute
-  '/settings': typeof SettingsRoute
-  '/sql-formatter': typeof SqlFormatterRoute
-  '/ssh-key-generator': typeof SshKeyGeneratorRoute
-  '/string-case-converter': typeof StringCaseConverterRoute
-  '/string-compressor': typeof StringCompressorRoute
-  '/url-encoder': typeof UrlEncoderRoute
-  '/uuid-generator': typeof UuidGeneratorRoute
-  '/x509-decoder': typeof X509DecoderRoute
-  '/xml-formatter': typeof XmlFormatterRoute
-  '/yaml-formatter': typeof YamlFormatterRoute
+	'/': typeof IndexRoute;
+	'/base64-encoder': typeof Base64EncoderRoute;
+	'/bcrypt-generator': typeof BcryptGeneratorRoute;
+	'/cron-expression-builder': typeof CronExpressionBuilderRoute;
+	'/curl-builder': typeof CurlBuilderRoute;
+	'/date-timestamp-converter': typeof DateTimestampConverterRoute;
+	'/diff-viewer': typeof DiffViewerRoute;
+	'/escape-tool': typeof EscapeToolRoute;
+	'/gpg-key-generator': typeof GpgKeyGeneratorRoute;
+	'/hash-generator': typeof HashGeneratorRoute;
+	'/image-converter': typeof ImageConverterRoute;
+	'/json-formatter': typeof JsonFormatterRoute;
+	'/jwt-decoder': typeof JwtDecoderRoute;
+	'/list-comparer': typeof ListComparerRoute;
+	'/lorem-ipsum': typeof LoremIpsumRoute;
+	'/markdown-editor': typeof MarkdownEditorRoute;
+	'/network-interfaces': typeof NetworkInterfacesRoute;
+	'/network-scanner': typeof NetworkScannerRoute;
+	'/number-base-converter': typeof NumberBaseConverterRoute;
+	'/password-generator': typeof PasswordGeneratorRoute;
+	'/qr-code-generator': typeof QrCodeGeneratorRoute;
+	'/regex-tester': typeof RegexTesterRoute;
+	'/rsa-tools': typeof RsaToolsRoute;
+	'/semver-tools': typeof SemverToolsRoute;
+	'/settings': typeof SettingsRoute;
+	'/sql-formatter': typeof SqlFormatterRoute;
+	'/ssh-key-generator': typeof SshKeyGeneratorRoute;
+	'/string-case-converter': typeof StringCaseConverterRoute;
+	'/string-compressor': typeof StringCompressorRoute;
+	'/url-encoder': typeof UrlEncoderRoute;
+	'/uuid-generator': typeof UuidGeneratorRoute;
+	'/x509-decoder': typeof X509DecoderRoute;
+	'/xml-formatter': typeof XmlFormatterRoute;
+	'/yaml-formatter': typeof YamlFormatterRoute;
 }
 export interface FileRoutesById {
-  __root__: typeof rootRouteImport
-  '/': typeof IndexRoute
-  '/base64-encoder': typeof Base64EncoderRoute
-  '/bcrypt-generator': typeof BcryptGeneratorRoute
-  '/cron-expression-builder': typeof CronExpressionBuilderRoute
-  '/curl-builder': typeof CurlBuilderRoute
-  '/date-timestamp-converter': typeof DateTimestampConverterRoute
-  '/diff-viewer': typeof DiffViewerRoute
-  '/escape-tool': typeof EscapeToolRoute
-  '/gpg-key-generator': typeof GpgKeyGeneratorRoute
-  '/hash-generator': typeof HashGeneratorRoute
-  '/image-converter': typeof ImageConverterRoute
-  '/json-formatter': typeof JsonFormatterRoute
-  '/jwt-decoder': typeof JwtDecoderRoute
-  '/list-comparer': typeof ListComparerRoute
-  '/lorem-ipsum': typeof LoremIpsumRoute
-  '/markdown-editor': typeof MarkdownEditorRoute
-  '/network-interfaces': typeof NetworkInterfacesRoute
-  '/network-scanner': typeof NetworkScannerRoute
-  '/number-base-converter': typeof NumberBaseConverterRoute
-  '/password-generator': typeof PasswordGeneratorRoute
-  '/qr-code-generator': typeof QrCodeGeneratorRoute
-  '/regex-tester': typeof RegexTesterRoute
-  '/semver-tools': typeof SemverToolsRoute
-  '/settings': typeof SettingsRoute
-  '/sql-formatter': typeof SqlFormatterRoute
-  '/ssh-key-generator': typeof SshKeyGeneratorRoute
-  '/string-case-converter': typeof StringCaseConverterRoute
-  '/string-compressor': typeof StringCompressorRoute
-  '/url-encoder': typeof UrlEncoderRoute
-  '/uuid-generator': typeof UuidGeneratorRoute
-  '/x509-decoder': typeof X509DecoderRoute
-  '/xml-formatter': typeof XmlFormatterRoute
-  '/yaml-formatter': typeof YamlFormatterRoute
+	__root__: typeof rootRouteImport;
+	'/': typeof IndexRoute;
+	'/base64-encoder': typeof Base64EncoderRoute;
+	'/bcrypt-generator': typeof BcryptGeneratorRoute;
+	'/cron-expression-builder': typeof CronExpressionBuilderRoute;
+	'/curl-builder': typeof CurlBuilderRoute;
+	'/date-timestamp-converter': typeof DateTimestampConverterRoute;
+	'/diff-viewer': typeof DiffViewerRoute;
+	'/escape-tool': typeof EscapeToolRoute;
+	'/gpg-key-generator': typeof GpgKeyGeneratorRoute;
+	'/hash-generator': typeof HashGeneratorRoute;
+	'/image-converter': typeof ImageConverterRoute;
+	'/json-formatter': typeof JsonFormatterRoute;
+	'/jwt-decoder': typeof JwtDecoderRoute;
+	'/list-comparer': typeof ListComparerRoute;
+	'/lorem-ipsum': typeof LoremIpsumRoute;
+	'/markdown-editor': typeof MarkdownEditorRoute;
+	'/network-interfaces': typeof NetworkInterfacesRoute;
+	'/network-scanner': typeof NetworkScannerRoute;
+	'/number-base-converter': typeof NumberBaseConverterRoute;
+	'/password-generator': typeof PasswordGeneratorRoute;
+	'/qr-code-generator': typeof QrCodeGeneratorRoute;
+	'/regex-tester': typeof RegexTesterRoute;
+	'/rsa-tools': typeof RsaToolsRoute;
+	'/semver-tools': typeof SemverToolsRoute;
+	'/settings': typeof SettingsRoute;
+	'/sql-formatter': typeof SqlFormatterRoute;
+	'/ssh-key-generator': typeof SshKeyGeneratorRoute;
+	'/string-case-converter': typeof StringCaseConverterRoute;
+	'/string-compressor': typeof StringCompressorRoute;
+	'/url-encoder': typeof UrlEncoderRoute;
+	'/uuid-generator': typeof UuidGeneratorRoute;
+	'/x509-decoder': typeof X509DecoderRoute;
+	'/xml-formatter': typeof XmlFormatterRoute;
+	'/yaml-formatter': typeof YamlFormatterRoute;
 }
 export interface FileRouteTypes {
-  fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths:
-    | '/'
-    | '/base64-encoder'
-    | '/bcrypt-generator'
-    | '/cron-expression-builder'
-    | '/curl-builder'
-    | '/date-timestamp-converter'
-    | '/diff-viewer'
-    | '/escape-tool'
-    | '/gpg-key-generator'
-    | '/hash-generator'
-    | '/image-converter'
-    | '/json-formatter'
-    | '/jwt-decoder'
-    | '/list-comparer'
-    | '/lorem-ipsum'
-    | '/markdown-editor'
-    | '/network-interfaces'
-    | '/network-scanner'
-    | '/number-base-converter'
-    | '/password-generator'
-    | '/qr-code-generator'
-    | '/regex-tester'
-    | '/semver-tools'
-    | '/settings'
-    | '/sql-formatter'
-    | '/ssh-key-generator'
-    | '/string-case-converter'
-    | '/string-compressor'
-    | '/url-encoder'
-    | '/uuid-generator'
-    | '/x509-decoder'
-    | '/xml-formatter'
-    | '/yaml-formatter'
-  fileRoutesByTo: FileRoutesByTo
-  to:
-    | '/'
-    | '/base64-encoder'
-    | '/bcrypt-generator'
-    | '/cron-expression-builder'
-    | '/curl-builder'
-    | '/date-timestamp-converter'
-    | '/diff-viewer'
-    | '/escape-tool'
-    | '/gpg-key-generator'
-    | '/hash-generator'
-    | '/image-converter'
-    | '/json-formatter'
-    | '/jwt-decoder'
-    | '/list-comparer'
-    | '/lorem-ipsum'
-    | '/markdown-editor'
-    | '/network-interfaces'
-    | '/network-scanner'
-    | '/number-base-converter'
-    | '/password-generator'
-    | '/qr-code-generator'
-    | '/regex-tester'
-    | '/semver-tools'
-    | '/settings'
-    | '/sql-formatter'
-    | '/ssh-key-generator'
-    | '/string-case-converter'
-    | '/string-compressor'
-    | '/url-encoder'
-    | '/uuid-generator'
-    | '/x509-decoder'
-    | '/xml-formatter'
-    | '/yaml-formatter'
-  id:
-    | '__root__'
-    | '/'
-    | '/base64-encoder'
-    | '/bcrypt-generator'
-    | '/cron-expression-builder'
-    | '/curl-builder'
-    | '/date-timestamp-converter'
-    | '/diff-viewer'
-    | '/escape-tool'
-    | '/gpg-key-generator'
-    | '/hash-generator'
-    | '/image-converter'
-    | '/json-formatter'
-    | '/jwt-decoder'
-    | '/list-comparer'
-    | '/lorem-ipsum'
-    | '/markdown-editor'
-    | '/network-interfaces'
-    | '/network-scanner'
-    | '/number-base-converter'
-    | '/password-generator'
-    | '/qr-code-generator'
-    | '/regex-tester'
-    | '/semver-tools'
-    | '/settings'
-    | '/sql-formatter'
-    | '/ssh-key-generator'
-    | '/string-case-converter'
-    | '/string-compressor'
-    | '/url-encoder'
-    | '/uuid-generator'
-    | '/x509-decoder'
-    | '/xml-formatter'
-    | '/yaml-formatter'
-  fileRoutesById: FileRoutesById
+	fileRoutesByFullPath: FileRoutesByFullPath;
+	fullPaths:
+		| '/'
+		| '/base64-encoder'
+		| '/bcrypt-generator'
+		| '/cron-expression-builder'
+		| '/curl-builder'
+		| '/date-timestamp-converter'
+		| '/diff-viewer'
+		| '/escape-tool'
+		| '/gpg-key-generator'
+		| '/hash-generator'
+		| '/image-converter'
+		| '/json-formatter'
+		| '/jwt-decoder'
+		| '/list-comparer'
+		| '/lorem-ipsum'
+		| '/markdown-editor'
+		| '/network-interfaces'
+		| '/network-scanner'
+		| '/number-base-converter'
+		| '/password-generator'
+		| '/qr-code-generator'
+		| '/regex-tester'
+		| '/rsa-tools'
+		| '/semver-tools'
+		| '/settings'
+		| '/sql-formatter'
+		| '/ssh-key-generator'
+		| '/string-case-converter'
+		| '/string-compressor'
+		| '/url-encoder'
+		| '/uuid-generator'
+		| '/x509-decoder'
+		| '/xml-formatter'
+		| '/yaml-formatter';
+	fileRoutesByTo: FileRoutesByTo;
+	to:
+		| '/'
+		| '/base64-encoder'
+		| '/bcrypt-generator'
+		| '/cron-expression-builder'
+		| '/curl-builder'
+		| '/date-timestamp-converter'
+		| '/diff-viewer'
+		| '/escape-tool'
+		| '/gpg-key-generator'
+		| '/hash-generator'
+		| '/image-converter'
+		| '/json-formatter'
+		| '/jwt-decoder'
+		| '/list-comparer'
+		| '/lorem-ipsum'
+		| '/markdown-editor'
+		| '/network-interfaces'
+		| '/network-scanner'
+		| '/number-base-converter'
+		| '/password-generator'
+		| '/qr-code-generator'
+		| '/regex-tester'
+		| '/rsa-tools'
+		| '/semver-tools'
+		| '/settings'
+		| '/sql-formatter'
+		| '/ssh-key-generator'
+		| '/string-case-converter'
+		| '/string-compressor'
+		| '/url-encoder'
+		| '/uuid-generator'
+		| '/x509-decoder'
+		| '/xml-formatter'
+		| '/yaml-formatter';
+	id:
+		| '__root__'
+		| '/'
+		| '/base64-encoder'
+		| '/bcrypt-generator'
+		| '/cron-expression-builder'
+		| '/curl-builder'
+		| '/date-timestamp-converter'
+		| '/diff-viewer'
+		| '/escape-tool'
+		| '/gpg-key-generator'
+		| '/hash-generator'
+		| '/image-converter'
+		| '/json-formatter'
+		| '/jwt-decoder'
+		| '/list-comparer'
+		| '/lorem-ipsum'
+		| '/markdown-editor'
+		| '/network-interfaces'
+		| '/network-scanner'
+		| '/number-base-converter'
+		| '/password-generator'
+		| '/qr-code-generator'
+		| '/regex-tester'
+		| '/rsa-tools'
+		| '/semver-tools'
+		| '/settings'
+		| '/sql-formatter'
+		| '/ssh-key-generator'
+		| '/string-case-converter'
+		| '/string-compressor'
+		| '/url-encoder'
+		| '/uuid-generator'
+		| '/x509-decoder'
+		| '/xml-formatter'
+		| '/yaml-formatter';
+	fileRoutesById: FileRoutesById;
 }
 export interface RootRouteChildren {
-  IndexRoute: typeof IndexRoute
-  Base64EncoderRoute: typeof Base64EncoderRoute
-  BcryptGeneratorRoute: typeof BcryptGeneratorRoute
-  CronExpressionBuilderRoute: typeof CronExpressionBuilderRoute
-  CurlBuilderRoute: typeof CurlBuilderRoute
-  DateTimestampConverterRoute: typeof DateTimestampConverterRoute
-  DiffViewerRoute: typeof DiffViewerRoute
-  EscapeToolRoute: typeof EscapeToolRoute
-  GpgKeyGeneratorRoute: typeof GpgKeyGeneratorRoute
-  HashGeneratorRoute: typeof HashGeneratorRoute
-  ImageConverterRoute: typeof ImageConverterRoute
-  JsonFormatterRoute: typeof JsonFormatterRoute
-  JwtDecoderRoute: typeof JwtDecoderRoute
-  ListComparerRoute: typeof ListComparerRoute
-  LoremIpsumRoute: typeof LoremIpsumRoute
-  MarkdownEditorRoute: typeof MarkdownEditorRoute
-  NetworkInterfacesRoute: typeof NetworkInterfacesRoute
-  NetworkScannerRoute: typeof NetworkScannerRoute
-  NumberBaseConverterRoute: typeof NumberBaseConverterRoute
-  PasswordGeneratorRoute: typeof PasswordGeneratorRoute
-  QrCodeGeneratorRoute: typeof QrCodeGeneratorRoute
-  RegexTesterRoute: typeof RegexTesterRoute
-  SemverToolsRoute: typeof SemverToolsRoute
-  SettingsRoute: typeof SettingsRoute
-  SqlFormatterRoute: typeof SqlFormatterRoute
-  SshKeyGeneratorRoute: typeof SshKeyGeneratorRoute
-  StringCaseConverterRoute: typeof StringCaseConverterRoute
-  StringCompressorRoute: typeof StringCompressorRoute
-  UrlEncoderRoute: typeof UrlEncoderRoute
-  UuidGeneratorRoute: typeof UuidGeneratorRoute
-  X509DecoderRoute: typeof X509DecoderRoute
-  XmlFormatterRoute: typeof XmlFormatterRoute
-  YamlFormatterRoute: typeof YamlFormatterRoute
+	IndexRoute: typeof IndexRoute;
+	Base64EncoderRoute: typeof Base64EncoderRoute;
+	BcryptGeneratorRoute: typeof BcryptGeneratorRoute;
+	CronExpressionBuilderRoute: typeof CronExpressionBuilderRoute;
+	CurlBuilderRoute: typeof CurlBuilderRoute;
+	DateTimestampConverterRoute: typeof DateTimestampConverterRoute;
+	DiffViewerRoute: typeof DiffViewerRoute;
+	EscapeToolRoute: typeof EscapeToolRoute;
+	GpgKeyGeneratorRoute: typeof GpgKeyGeneratorRoute;
+	HashGeneratorRoute: typeof HashGeneratorRoute;
+	ImageConverterRoute: typeof ImageConverterRoute;
+	JsonFormatterRoute: typeof JsonFormatterRoute;
+	JwtDecoderRoute: typeof JwtDecoderRoute;
+	ListComparerRoute: typeof ListComparerRoute;
+	LoremIpsumRoute: typeof LoremIpsumRoute;
+	MarkdownEditorRoute: typeof MarkdownEditorRoute;
+	NetworkInterfacesRoute: typeof NetworkInterfacesRoute;
+	NetworkScannerRoute: typeof NetworkScannerRoute;
+	NumberBaseConverterRoute: typeof NumberBaseConverterRoute;
+	PasswordGeneratorRoute: typeof PasswordGeneratorRoute;
+	QrCodeGeneratorRoute: typeof QrCodeGeneratorRoute;
+	RegexTesterRoute: typeof RegexTesterRoute;
+	RsaToolsRoute: typeof RsaToolsRoute;
+	SemverToolsRoute: typeof SemverToolsRoute;
+	SettingsRoute: typeof SettingsRoute;
+	SqlFormatterRoute: typeof SqlFormatterRoute;
+	SshKeyGeneratorRoute: typeof SshKeyGeneratorRoute;
+	StringCaseConverterRoute: typeof StringCaseConverterRoute;
+	StringCompressorRoute: typeof StringCompressorRoute;
+	UrlEncoderRoute: typeof UrlEncoderRoute;
+	UuidGeneratorRoute: typeof UuidGeneratorRoute;
+	X509DecoderRoute: typeof X509DecoderRoute;
+	XmlFormatterRoute: typeof XmlFormatterRoute;
+	YamlFormatterRoute: typeof YamlFormatterRoute;
 }
 
 declare module '@tanstack/react-router' {
-  interface FileRoutesByPath {
-    '/yaml-formatter': {
-      id: '/yaml-formatter'
-      path: '/yaml-formatter'
-      fullPath: '/yaml-formatter'
-      preLoaderRoute: typeof YamlFormatterRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/xml-formatter': {
-      id: '/xml-formatter'
-      path: '/xml-formatter'
-      fullPath: '/xml-formatter'
-      preLoaderRoute: typeof XmlFormatterRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/x509-decoder': {
-      id: '/x509-decoder'
-      path: '/x509-decoder'
-      fullPath: '/x509-decoder'
-      preLoaderRoute: typeof X509DecoderRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/uuid-generator': {
-      id: '/uuid-generator'
-      path: '/uuid-generator'
-      fullPath: '/uuid-generator'
-      preLoaderRoute: typeof UuidGeneratorRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/url-encoder': {
-      id: '/url-encoder'
-      path: '/url-encoder'
-      fullPath: '/url-encoder'
-      preLoaderRoute: typeof UrlEncoderRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/string-compressor': {
-      id: '/string-compressor'
-      path: '/string-compressor'
-      fullPath: '/string-compressor'
-      preLoaderRoute: typeof StringCompressorRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/string-case-converter': {
-      id: '/string-case-converter'
-      path: '/string-case-converter'
-      fullPath: '/string-case-converter'
-      preLoaderRoute: typeof StringCaseConverterRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/ssh-key-generator': {
-      id: '/ssh-key-generator'
-      path: '/ssh-key-generator'
-      fullPath: '/ssh-key-generator'
-      preLoaderRoute: typeof SshKeyGeneratorRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/sql-formatter': {
-      id: '/sql-formatter'
-      path: '/sql-formatter'
-      fullPath: '/sql-formatter'
-      preLoaderRoute: typeof SqlFormatterRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/settings': {
-      id: '/settings'
-      path: '/settings'
-      fullPath: '/settings'
-      preLoaderRoute: typeof SettingsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/semver-tools': {
-      id: '/semver-tools'
-      path: '/semver-tools'
-      fullPath: '/semver-tools'
-      preLoaderRoute: typeof SemverToolsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/regex-tester': {
-      id: '/regex-tester'
-      path: '/regex-tester'
-      fullPath: '/regex-tester'
-      preLoaderRoute: typeof RegexTesterRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/qr-code-generator': {
-      id: '/qr-code-generator'
-      path: '/qr-code-generator'
-      fullPath: '/qr-code-generator'
-      preLoaderRoute: typeof QrCodeGeneratorRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/password-generator': {
-      id: '/password-generator'
-      path: '/password-generator'
-      fullPath: '/password-generator'
-      preLoaderRoute: typeof PasswordGeneratorRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/number-base-converter': {
-      id: '/number-base-converter'
-      path: '/number-base-converter'
-      fullPath: '/number-base-converter'
-      preLoaderRoute: typeof NumberBaseConverterRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/network-scanner': {
-      id: '/network-scanner'
-      path: '/network-scanner'
-      fullPath: '/network-scanner'
-      preLoaderRoute: typeof NetworkScannerRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/network-interfaces': {
-      id: '/network-interfaces'
-      path: '/network-interfaces'
-      fullPath: '/network-interfaces'
-      preLoaderRoute: typeof NetworkInterfacesRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/markdown-editor': {
-      id: '/markdown-editor'
-      path: '/markdown-editor'
-      fullPath: '/markdown-editor'
-      preLoaderRoute: typeof MarkdownEditorRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/lorem-ipsum': {
-      id: '/lorem-ipsum'
-      path: '/lorem-ipsum'
-      fullPath: '/lorem-ipsum'
-      preLoaderRoute: typeof LoremIpsumRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/list-comparer': {
-      id: '/list-comparer'
-      path: '/list-comparer'
-      fullPath: '/list-comparer'
-      preLoaderRoute: typeof ListComparerRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/jwt-decoder': {
-      id: '/jwt-decoder'
-      path: '/jwt-decoder'
-      fullPath: '/jwt-decoder'
-      preLoaderRoute: typeof JwtDecoderRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/json-formatter': {
-      id: '/json-formatter'
-      path: '/json-formatter'
-      fullPath: '/json-formatter'
-      preLoaderRoute: typeof JsonFormatterRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/image-converter': {
-      id: '/image-converter'
-      path: '/image-converter'
-      fullPath: '/image-converter'
-      preLoaderRoute: typeof ImageConverterRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/hash-generator': {
-      id: '/hash-generator'
-      path: '/hash-generator'
-      fullPath: '/hash-generator'
-      preLoaderRoute: typeof HashGeneratorRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/gpg-key-generator': {
-      id: '/gpg-key-generator'
-      path: '/gpg-key-generator'
-      fullPath: '/gpg-key-generator'
-      preLoaderRoute: typeof GpgKeyGeneratorRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/escape-tool': {
-      id: '/escape-tool'
-      path: '/escape-tool'
-      fullPath: '/escape-tool'
-      preLoaderRoute: typeof EscapeToolRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/diff-viewer': {
-      id: '/diff-viewer'
-      path: '/diff-viewer'
-      fullPath: '/diff-viewer'
-      preLoaderRoute: typeof DiffViewerRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/date-timestamp-converter': {
-      id: '/date-timestamp-converter'
-      path: '/date-timestamp-converter'
-      fullPath: '/date-timestamp-converter'
-      preLoaderRoute: typeof DateTimestampConverterRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/curl-builder': {
-      id: '/curl-builder'
-      path: '/curl-builder'
-      fullPath: '/curl-builder'
-      preLoaderRoute: typeof CurlBuilderRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/cron-expression-builder': {
-      id: '/cron-expression-builder'
-      path: '/cron-expression-builder'
-      fullPath: '/cron-expression-builder'
-      preLoaderRoute: typeof CronExpressionBuilderRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/bcrypt-generator': {
-      id: '/bcrypt-generator'
-      path: '/bcrypt-generator'
-      fullPath: '/bcrypt-generator'
-      preLoaderRoute: typeof BcryptGeneratorRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/base64-encoder': {
-      id: '/base64-encoder'
-      path: '/base64-encoder'
-      fullPath: '/base64-encoder'
-      preLoaderRoute: typeof Base64EncoderRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-  }
+	interface FileRoutesByPath {
+		'/yaml-formatter': {
+			id: '/yaml-formatter';
+			path: '/yaml-formatter';
+			fullPath: '/yaml-formatter';
+			preLoaderRoute: typeof YamlFormatterRouteImport;
+			parentRoute: typeof rootRouteImport;
+		};
+		'/xml-formatter': {
+			id: '/xml-formatter';
+			path: '/xml-formatter';
+			fullPath: '/xml-formatter';
+			preLoaderRoute: typeof XmlFormatterRouteImport;
+			parentRoute: typeof rootRouteImport;
+		};
+		'/x509-decoder': {
+			id: '/x509-decoder';
+			path: '/x509-decoder';
+			fullPath: '/x509-decoder';
+			preLoaderRoute: typeof X509DecoderRouteImport;
+			parentRoute: typeof rootRouteImport;
+		};
+		'/uuid-generator': {
+			id: '/uuid-generator';
+			path: '/uuid-generator';
+			fullPath: '/uuid-generator';
+			preLoaderRoute: typeof UuidGeneratorRouteImport;
+			parentRoute: typeof rootRouteImport;
+		};
+		'/url-encoder': {
+			id: '/url-encoder';
+			path: '/url-encoder';
+			fullPath: '/url-encoder';
+			preLoaderRoute: typeof UrlEncoderRouteImport;
+			parentRoute: typeof rootRouteImport;
+		};
+		'/string-compressor': {
+			id: '/string-compressor';
+			path: '/string-compressor';
+			fullPath: '/string-compressor';
+			preLoaderRoute: typeof StringCompressorRouteImport;
+			parentRoute: typeof rootRouteImport;
+		};
+		'/string-case-converter': {
+			id: '/string-case-converter';
+			path: '/string-case-converter';
+			fullPath: '/string-case-converter';
+			preLoaderRoute: typeof StringCaseConverterRouteImport;
+			parentRoute: typeof rootRouteImport;
+		};
+		'/ssh-key-generator': {
+			id: '/ssh-key-generator';
+			path: '/ssh-key-generator';
+			fullPath: '/ssh-key-generator';
+			preLoaderRoute: typeof SshKeyGeneratorRouteImport;
+			parentRoute: typeof rootRouteImport;
+		};
+		'/sql-formatter': {
+			id: '/sql-formatter';
+			path: '/sql-formatter';
+			fullPath: '/sql-formatter';
+			preLoaderRoute: typeof SqlFormatterRouteImport;
+			parentRoute: typeof rootRouteImport;
+		};
+		'/settings': {
+			id: '/settings';
+			path: '/settings';
+			fullPath: '/settings';
+			preLoaderRoute: typeof SettingsRouteImport;
+			parentRoute: typeof rootRouteImport;
+		};
+		'/semver-tools': {
+			id: '/semver-tools';
+			path: '/semver-tools';
+			fullPath: '/semver-tools';
+			preLoaderRoute: typeof SemverToolsRouteImport;
+			parentRoute: typeof rootRouteImport;
+		};
+		'/rsa-tools': {
+			id: '/rsa-tools';
+			path: '/rsa-tools';
+			fullPath: '/rsa-tools';
+			preLoaderRoute: typeof RsaToolsRouteImport;
+			parentRoute: typeof rootRouteImport;
+		};
+		'/regex-tester': {
+			id: '/regex-tester';
+			path: '/regex-tester';
+			fullPath: '/regex-tester';
+			preLoaderRoute: typeof RegexTesterRouteImport;
+			parentRoute: typeof rootRouteImport;
+		};
+		'/qr-code-generator': {
+			id: '/qr-code-generator';
+			path: '/qr-code-generator';
+			fullPath: '/qr-code-generator';
+			preLoaderRoute: typeof QrCodeGeneratorRouteImport;
+			parentRoute: typeof rootRouteImport;
+		};
+		'/password-generator': {
+			id: '/password-generator';
+			path: '/password-generator';
+			fullPath: '/password-generator';
+			preLoaderRoute: typeof PasswordGeneratorRouteImport;
+			parentRoute: typeof rootRouteImport;
+		};
+		'/number-base-converter': {
+			id: '/number-base-converter';
+			path: '/number-base-converter';
+			fullPath: '/number-base-converter';
+			preLoaderRoute: typeof NumberBaseConverterRouteImport;
+			parentRoute: typeof rootRouteImport;
+		};
+		'/network-scanner': {
+			id: '/network-scanner';
+			path: '/network-scanner';
+			fullPath: '/network-scanner';
+			preLoaderRoute: typeof NetworkScannerRouteImport;
+			parentRoute: typeof rootRouteImport;
+		};
+		'/network-interfaces': {
+			id: '/network-interfaces';
+			path: '/network-interfaces';
+			fullPath: '/network-interfaces';
+			preLoaderRoute: typeof NetworkInterfacesRouteImport;
+			parentRoute: typeof rootRouteImport;
+		};
+		'/markdown-editor': {
+			id: '/markdown-editor';
+			path: '/markdown-editor';
+			fullPath: '/markdown-editor';
+			preLoaderRoute: typeof MarkdownEditorRouteImport;
+			parentRoute: typeof rootRouteImport;
+		};
+		'/lorem-ipsum': {
+			id: '/lorem-ipsum';
+			path: '/lorem-ipsum';
+			fullPath: '/lorem-ipsum';
+			preLoaderRoute: typeof LoremIpsumRouteImport;
+			parentRoute: typeof rootRouteImport;
+		};
+		'/list-comparer': {
+			id: '/list-comparer';
+			path: '/list-comparer';
+			fullPath: '/list-comparer';
+			preLoaderRoute: typeof ListComparerRouteImport;
+			parentRoute: typeof rootRouteImport;
+		};
+		'/jwt-decoder': {
+			id: '/jwt-decoder';
+			path: '/jwt-decoder';
+			fullPath: '/jwt-decoder';
+			preLoaderRoute: typeof JwtDecoderRouteImport;
+			parentRoute: typeof rootRouteImport;
+		};
+		'/json-formatter': {
+			id: '/json-formatter';
+			path: '/json-formatter';
+			fullPath: '/json-formatter';
+			preLoaderRoute: typeof JsonFormatterRouteImport;
+			parentRoute: typeof rootRouteImport;
+		};
+		'/image-converter': {
+			id: '/image-converter';
+			path: '/image-converter';
+			fullPath: '/image-converter';
+			preLoaderRoute: typeof ImageConverterRouteImport;
+			parentRoute: typeof rootRouteImport;
+		};
+		'/hash-generator': {
+			id: '/hash-generator';
+			path: '/hash-generator';
+			fullPath: '/hash-generator';
+			preLoaderRoute: typeof HashGeneratorRouteImport;
+			parentRoute: typeof rootRouteImport;
+		};
+		'/gpg-key-generator': {
+			id: '/gpg-key-generator';
+			path: '/gpg-key-generator';
+			fullPath: '/gpg-key-generator';
+			preLoaderRoute: typeof GpgKeyGeneratorRouteImport;
+			parentRoute: typeof rootRouteImport;
+		};
+		'/escape-tool': {
+			id: '/escape-tool';
+			path: '/escape-tool';
+			fullPath: '/escape-tool';
+			preLoaderRoute: typeof EscapeToolRouteImport;
+			parentRoute: typeof rootRouteImport;
+		};
+		'/diff-viewer': {
+			id: '/diff-viewer';
+			path: '/diff-viewer';
+			fullPath: '/diff-viewer';
+			preLoaderRoute: typeof DiffViewerRouteImport;
+			parentRoute: typeof rootRouteImport;
+		};
+		'/date-timestamp-converter': {
+			id: '/date-timestamp-converter';
+			path: '/date-timestamp-converter';
+			fullPath: '/date-timestamp-converter';
+			preLoaderRoute: typeof DateTimestampConverterRouteImport;
+			parentRoute: typeof rootRouteImport;
+		};
+		'/curl-builder': {
+			id: '/curl-builder';
+			path: '/curl-builder';
+			fullPath: '/curl-builder';
+			preLoaderRoute: typeof CurlBuilderRouteImport;
+			parentRoute: typeof rootRouteImport;
+		};
+		'/cron-expression-builder': {
+			id: '/cron-expression-builder';
+			path: '/cron-expression-builder';
+			fullPath: '/cron-expression-builder';
+			preLoaderRoute: typeof CronExpressionBuilderRouteImport;
+			parentRoute: typeof rootRouteImport;
+		};
+		'/bcrypt-generator': {
+			id: '/bcrypt-generator';
+			path: '/bcrypt-generator';
+			fullPath: '/bcrypt-generator';
+			preLoaderRoute: typeof BcryptGeneratorRouteImport;
+			parentRoute: typeof rootRouteImport;
+		};
+		'/base64-encoder': {
+			id: '/base64-encoder';
+			path: '/base64-encoder';
+			fullPath: '/base64-encoder';
+			preLoaderRoute: typeof Base64EncoderRouteImport;
+			parentRoute: typeof rootRouteImport;
+		};
+		'/': {
+			id: '/';
+			path: '/';
+			fullPath: '/';
+			preLoaderRoute: typeof IndexRouteImport;
+			parentRoute: typeof rootRouteImport;
+		};
+	}
 }
 
 const rootRouteChildren: RootRouteChildren = {
-  IndexRoute: IndexRoute,
-  Base64EncoderRoute: Base64EncoderRoute,
-  BcryptGeneratorRoute: BcryptGeneratorRoute,
-  CronExpressionBuilderRoute: CronExpressionBuilderRoute,
-  CurlBuilderRoute: CurlBuilderRoute,
-  DateTimestampConverterRoute: DateTimestampConverterRoute,
-  DiffViewerRoute: DiffViewerRoute,
-  EscapeToolRoute: EscapeToolRoute,
-  GpgKeyGeneratorRoute: GpgKeyGeneratorRoute,
-  HashGeneratorRoute: HashGeneratorRoute,
-  ImageConverterRoute: ImageConverterRoute,
-  JsonFormatterRoute: JsonFormatterRoute,
-  JwtDecoderRoute: JwtDecoderRoute,
-  ListComparerRoute: ListComparerRoute,
-  LoremIpsumRoute: LoremIpsumRoute,
-  MarkdownEditorRoute: MarkdownEditorRoute,
-  NetworkInterfacesRoute: NetworkInterfacesRoute,
-  NetworkScannerRoute: NetworkScannerRoute,
-  NumberBaseConverterRoute: NumberBaseConverterRoute,
-  PasswordGeneratorRoute: PasswordGeneratorRoute,
-  QrCodeGeneratorRoute: QrCodeGeneratorRoute,
-  RegexTesterRoute: RegexTesterRoute,
-  SemverToolsRoute: SemverToolsRoute,
-  SettingsRoute: SettingsRoute,
-  SqlFormatterRoute: SqlFormatterRoute,
-  SshKeyGeneratorRoute: SshKeyGeneratorRoute,
-  StringCaseConverterRoute: StringCaseConverterRoute,
-  StringCompressorRoute: StringCompressorRoute,
-  UrlEncoderRoute: UrlEncoderRoute,
-  UuidGeneratorRoute: UuidGeneratorRoute,
-  X509DecoderRoute: X509DecoderRoute,
-  XmlFormatterRoute: XmlFormatterRoute,
-  YamlFormatterRoute: YamlFormatterRoute,
-}
+	IndexRoute: IndexRoute,
+	Base64EncoderRoute: Base64EncoderRoute,
+	BcryptGeneratorRoute: BcryptGeneratorRoute,
+	CronExpressionBuilderRoute: CronExpressionBuilderRoute,
+	CurlBuilderRoute: CurlBuilderRoute,
+	DateTimestampConverterRoute: DateTimestampConverterRoute,
+	DiffViewerRoute: DiffViewerRoute,
+	EscapeToolRoute: EscapeToolRoute,
+	GpgKeyGeneratorRoute: GpgKeyGeneratorRoute,
+	HashGeneratorRoute: HashGeneratorRoute,
+	ImageConverterRoute: ImageConverterRoute,
+	JsonFormatterRoute: JsonFormatterRoute,
+	JwtDecoderRoute: JwtDecoderRoute,
+	ListComparerRoute: ListComparerRoute,
+	LoremIpsumRoute: LoremIpsumRoute,
+	MarkdownEditorRoute: MarkdownEditorRoute,
+	NetworkInterfacesRoute: NetworkInterfacesRoute,
+	NetworkScannerRoute: NetworkScannerRoute,
+	NumberBaseConverterRoute: NumberBaseConverterRoute,
+	PasswordGeneratorRoute: PasswordGeneratorRoute,
+	QrCodeGeneratorRoute: QrCodeGeneratorRoute,
+	RegexTesterRoute: RegexTesterRoute,
+	RsaToolsRoute: RsaToolsRoute,
+	SemverToolsRoute: SemverToolsRoute,
+	SettingsRoute: SettingsRoute,
+	SqlFormatterRoute: SqlFormatterRoute,
+	SshKeyGeneratorRoute: SshKeyGeneratorRoute,
+	StringCaseConverterRoute: StringCaseConverterRoute,
+	StringCompressorRoute: StringCompressorRoute,
+	UrlEncoderRoute: UrlEncoderRoute,
+	UuidGeneratorRoute: UuidGeneratorRoute,
+	X509DecoderRoute: X509DecoderRoute,
+	XmlFormatterRoute: XmlFormatterRoute,
+	YamlFormatterRoute: YamlFormatterRoute,
+};
 export const routeTree = rootRouteImport
-  ._addFileChildren(rootRouteChildren)
-  ._addFileTypes<FileRouteTypes>()
+	._addFileChildren(rootRouteChildren)
+	._addFileTypes<FileRouteTypes>();
