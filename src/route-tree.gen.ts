@@ -26,6 +26,7 @@ import { Route as NumberBaseConverterRouteImport } from './routes/number-base-co
 import { Route as NetworkScannerRouteImport } from './routes/network-scanner'
 import { Route as NetworkInterfacesRouteImport } from './routes/network-interfaces'
 import { Route as MarkdownEditorRouteImport } from './routes/markdown-editor'
+import { Route as LoremIpsumRouteImport } from './routes/lorem-ipsum'
 import { Route as ListComparerRouteImport } from './routes/list-comparer'
 import { Route as JwtDecoderRouteImport } from './routes/jwt-decoder'
 import { Route as JsonFormatterRouteImport } from './routes/json-formatter'
@@ -126,6 +127,11 @@ const MarkdownEditorRoute = MarkdownEditorRouteImport.update({
   path: '/markdown-editor',
   getParentRoute: () => rootRouteImport,
 } as any)
+const LoremIpsumRoute = LoremIpsumRouteImport.update({
+  id: '/lorem-ipsum',
+  path: '/lorem-ipsum',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ListComparerRoute = ListComparerRouteImport.update({
   id: '/list-comparer',
   path: '/list-comparer',
@@ -212,6 +218,7 @@ export interface FileRoutesByFullPath {
   '/json-formatter': typeof JsonFormatterRoute
   '/jwt-decoder': typeof JwtDecoderRoute
   '/list-comparer': typeof ListComparerRoute
+  '/lorem-ipsum': typeof LoremIpsumRoute
   '/markdown-editor': typeof MarkdownEditorRoute
   '/network-interfaces': typeof NetworkInterfacesRoute
   '/network-scanner': typeof NetworkScannerRoute
@@ -245,6 +252,7 @@ export interface FileRoutesByTo {
   '/json-formatter': typeof JsonFormatterRoute
   '/jwt-decoder': typeof JwtDecoderRoute
   '/list-comparer': typeof ListComparerRoute
+  '/lorem-ipsum': typeof LoremIpsumRoute
   '/markdown-editor': typeof MarkdownEditorRoute
   '/network-interfaces': typeof NetworkInterfacesRoute
   '/network-scanner': typeof NetworkScannerRoute
@@ -279,6 +287,7 @@ export interface FileRoutesById {
   '/json-formatter': typeof JsonFormatterRoute
   '/jwt-decoder': typeof JwtDecoderRoute
   '/list-comparer': typeof ListComparerRoute
+  '/lorem-ipsum': typeof LoremIpsumRoute
   '/markdown-editor': typeof MarkdownEditorRoute
   '/network-interfaces': typeof NetworkInterfacesRoute
   '/network-scanner': typeof NetworkScannerRoute
@@ -314,6 +323,7 @@ export interface FileRouteTypes {
     | '/json-formatter'
     | '/jwt-decoder'
     | '/list-comparer'
+    | '/lorem-ipsum'
     | '/markdown-editor'
     | '/network-interfaces'
     | '/network-scanner'
@@ -347,6 +357,7 @@ export interface FileRouteTypes {
     | '/json-formatter'
     | '/jwt-decoder'
     | '/list-comparer'
+    | '/lorem-ipsum'
     | '/markdown-editor'
     | '/network-interfaces'
     | '/network-scanner'
@@ -380,6 +391,7 @@ export interface FileRouteTypes {
     | '/json-formatter'
     | '/jwt-decoder'
     | '/list-comparer'
+    | '/lorem-ipsum'
     | '/markdown-editor'
     | '/network-interfaces'
     | '/network-scanner'
@@ -414,6 +426,7 @@ export interface RootRouteChildren {
   JsonFormatterRoute: typeof JsonFormatterRoute
   JwtDecoderRoute: typeof JwtDecoderRoute
   ListComparerRoute: typeof ListComparerRoute
+  LoremIpsumRoute: typeof LoremIpsumRoute
   MarkdownEditorRoute: typeof MarkdownEditorRoute
   NetworkInterfacesRoute: typeof NetworkInterfacesRoute
   NetworkScannerRoute: typeof NetworkScannerRoute
@@ -554,6 +567,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof MarkdownEditorRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/lorem-ipsum': {
+      id: '/lorem-ipsum'
+      path: '/lorem-ipsum'
+      fullPath: '/lorem-ipsum'
+      preLoaderRoute: typeof LoremIpsumRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/list-comparer': {
       id: '/list-comparer'
       path: '/list-comparer'
@@ -670,6 +690,7 @@ const rootRouteChildren: RootRouteChildren = {
   JsonFormatterRoute: JsonFormatterRoute,
   JwtDecoderRoute: JwtDecoderRoute,
   ListComparerRoute: ListComparerRoute,
+  LoremIpsumRoute: LoremIpsumRoute,
   MarkdownEditorRoute: MarkdownEditorRoute,
   NetworkInterfacesRoute: NetworkInterfacesRoute,
   NetworkScannerRoute: NetworkScannerRoute,

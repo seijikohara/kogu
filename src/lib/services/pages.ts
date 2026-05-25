@@ -3,12 +3,12 @@
  * Update this file when adding new pages or tabs.
  */
 import {
+	Aperture,
 	ArchiveRestore,
 	ArrowRightLeft,
 	BadgeCheck,
 	Binary,
 	Braces,
-	Aperture,
 	Calculator,
 	CalendarClock,
 	CaseSensitive,
@@ -46,6 +46,7 @@ import {
 	Sparkles,
 	Table,
 	Terminal,
+	TextQuote,
 } from 'lucide-react';
 
 /**
@@ -310,6 +311,15 @@ export const PAGES: readonly PageDefinition[] = [
 		icon: Aperture,
 		description: 'Convert and compress images (PNG / JPEG / WebP) with resize and rotation',
 		color: 'text-pink-600',
+		category: 'generators',
+	},
+	{
+		id: 'lorem-ipsum',
+		title: 'Lorem Ipsum',
+		url: '/lorem-ipsum',
+		icon: TextQuote,
+		description: 'Generate placeholder text in multiple flavors with structure and format controls',
+		color: 'text-amber-700',
 		category: 'generators',
 	},
 	{
