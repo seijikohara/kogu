@@ -264,6 +264,7 @@ function EscapeToolPage() {
 							{ value: 'named', label: 'Named (&amp;)' },
 							{ value: 'numeric', label: 'Numeric (&#38;)' },
 						]}
+						layout="stacked"
 					/>
 					<FormCheckboxGroup>
 						<FormCheckbox
@@ -334,6 +335,7 @@ function EscapeToolPage() {
 							{ value: ';', label: 'Semicolon' },
 							{ value: '\t', label: 'Tab' },
 						]}
+						layout="stacked"
 					/>
 					<FormMode<CsvEscapeOptions['quoteStyle']>
 						label="Quote style"
@@ -351,6 +353,7 @@ function EscapeToolPage() {
 								description: 'Always wrap in quotes',
 							},
 						]}
+						layout="stacked"
 					/>
 				</div>
 			);

@@ -63,10 +63,10 @@ export function FormMode<T extends string>({
 				aria-labelledby={label ? `${uid}-label` : undefined}
 				className={cn(
 					// Choice Card layout: each option is its own card with full
-					// rounding regardless of orientation. Drop the horizontal
-					// segmented-control language so vertical groups read as a
-					// list of independent radio cards rather than a connected
-					// segmented switch.
+					// rounding regardless of orientation. Horizontal grids work for
+					// short single-word labels (e.g. "On" / "Off"). For longer or
+					// mixed-length labels, pass `layout="stacked"` so the cards
+					// flow vertically and labels never need to wrap.
 					'gap-2',
 					layout === 'horizontal' ? `grid ${gridColsClass}` : 'flex flex-col'
 				)}
@@ -95,10 +95,10 @@ export function FormMode<T extends string>({
 							<div className="flex min-w-0 flex-1 flex-col gap-0.5">
 								<div className="flex items-center gap-1.5">
 									{Icon ? <Icon className="h-3.5 w-3.5 shrink-0 text-muted-foreground" /> : null}
-									<span className="leading-snug">{option.label}</span>
+									<span className="min-w-0 break-words leading-snug">{option.label}</span>
 								</div>
 								{showDescription ? (
-									<span className="text-2xs leading-snug font-normal text-muted-foreground">
+									<span className="text-2xs min-w-0 break-words leading-snug font-normal text-muted-foreground">
 										{option.description}
 									</span>
 								) : null}

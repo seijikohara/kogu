@@ -301,6 +301,7 @@ function StringCompressorPage() {
 						<FormMode<Direction>
 							value={direction}
 							onValueChange={handleDirectionChange}
+							layout="stacked"
 							options={[
 								{ value: 'compress', label: 'Compress', description: 'Text -> bytes' },
 								{ value: 'decompress', label: 'Decompress', description: 'Bytes -> text' },
@@ -312,6 +313,7 @@ function StringCompressorPage() {
 						<FormMode<CompressionAlgorithm>
 							value={algorithm}
 							onValueChange={handleAlgorithmChange}
+							layout="stacked"
 							options={[
 								{ value: 'gzip', label: 'GZIP', description: 'RFC 1952' },
 								{ value: 'brotli', label: 'Brotli', description: 'RFC 7932' },

@@ -351,17 +351,7 @@ function ListComparerPage() {
 	);
 
 	return (
-		<ToolShell
-			valid={validity}
-			rail={rail}
-			statusContent={statusContent}
-			toolbarLeading={
-				<div className="flex items-center gap-2 text-sm font-semibold">
-					<ListChecks className="h-4 w-4 text-cyan-600" />
-					<span>List Comparer</span>
-				</div>
-			}
-		>
+		<ToolShell valid={validity} rail={rail} statusContent={statusContent}>
 			<div className="flex h-full flex-col gap-3 overflow-hidden p-3">
 				<div className="grid h-1/3 min-h-44 shrink-0 gap-3 sm:grid-cols-2">
 					<ListInputCard
