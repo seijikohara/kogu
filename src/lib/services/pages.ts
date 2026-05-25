@@ -6,6 +6,7 @@ import {
 	ArrowRightLeft,
 	Binary,
 	Braces,
+	CalendarClock,
 	CaseSensitive,
 	Clock,
 	CodeXml,
@@ -238,6 +239,15 @@ export const PAGES: readonly PageDefinition[] = [
 			{ id: 'build', label: 'Build', icon: Pencil },
 			{ id: 'parse', label: 'Parse', icon: Search },
 		],
+	},
+	{
+		id: 'date-timestamp-converter',
+		title: 'Date / Timestamp Converter',
+		url: '/date-timestamp-converter',
+		icon: CalendarClock,
+		description: 'Convert between Unix, ISO, RFC formats with multi-timezone support',
+		color: 'text-amber-600',
+		category: 'generators',
 	},
 	{
 		id: 'curl-builder',
