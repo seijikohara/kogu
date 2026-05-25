@@ -30,6 +30,7 @@ import { Route as JwtDecoderRouteImport } from './routes/jwt-decoder';
 import { Route as JsonFormatterRouteImport } from './routes/json-formatter';
 import { Route as HashGeneratorRouteImport } from './routes/hash-generator';
 import { Route as GpgKeyGeneratorRouteImport } from './routes/gpg-key-generator';
+import { Route as EscapeToolRouteImport } from './routes/escape-tool';
 import { Route as DiffViewerRouteImport } from './routes/diff-viewer';
 import { Route as DateTimestampConverterRouteImport } from './routes/date-timestamp-converter';
 import { Route as CurlBuilderRouteImport } from './routes/curl-builder';
@@ -143,6 +144,11 @@ const GpgKeyGeneratorRoute = GpgKeyGeneratorRouteImport.update({
 	path: '/gpg-key-generator',
 	getParentRoute: () => rootRouteImport,
 } as any);
+const EscapeToolRoute = EscapeToolRouteImport.update({
+	id: '/escape-tool',
+	path: '/escape-tool',
+	getParentRoute: () => rootRouteImport,
+} as any);
 const DiffViewerRoute = DiffViewerRouteImport.update({
 	id: '/diff-viewer',
 	path: '/diff-viewer',
@@ -187,6 +193,7 @@ export interface FileRoutesByFullPath {
 	'/curl-builder': typeof CurlBuilderRoute;
 	'/date-timestamp-converter': typeof DateTimestampConverterRoute;
 	'/diff-viewer': typeof DiffViewerRoute;
+	'/escape-tool': typeof EscapeToolRoute;
 	'/gpg-key-generator': typeof GpgKeyGeneratorRoute;
 	'/hash-generator': typeof HashGeneratorRoute;
 	'/json-formatter': typeof JsonFormatterRoute;
@@ -217,6 +224,7 @@ export interface FileRoutesByTo {
 	'/curl-builder': typeof CurlBuilderRoute;
 	'/date-timestamp-converter': typeof DateTimestampConverterRoute;
 	'/diff-viewer': typeof DiffViewerRoute;
+	'/escape-tool': typeof EscapeToolRoute;
 	'/gpg-key-generator': typeof GpgKeyGeneratorRoute;
 	'/hash-generator': typeof HashGeneratorRoute;
 	'/json-formatter': typeof JsonFormatterRoute;
@@ -248,6 +256,7 @@ export interface FileRoutesById {
 	'/curl-builder': typeof CurlBuilderRoute;
 	'/date-timestamp-converter': typeof DateTimestampConverterRoute;
 	'/diff-viewer': typeof DiffViewerRoute;
+	'/escape-tool': typeof EscapeToolRoute;
 	'/gpg-key-generator': typeof GpgKeyGeneratorRoute;
 	'/hash-generator': typeof HashGeneratorRoute;
 	'/json-formatter': typeof JsonFormatterRoute;
@@ -280,6 +289,7 @@ export interface FileRouteTypes {
 		| '/curl-builder'
 		| '/date-timestamp-converter'
 		| '/diff-viewer'
+		| '/escape-tool'
 		| '/gpg-key-generator'
 		| '/hash-generator'
 		| '/json-formatter'
@@ -310,6 +320,7 @@ export interface FileRouteTypes {
 		| '/curl-builder'
 		| '/date-timestamp-converter'
 		| '/diff-viewer'
+		| '/escape-tool'
 		| '/gpg-key-generator'
 		| '/hash-generator'
 		| '/json-formatter'
@@ -340,6 +351,7 @@ export interface FileRouteTypes {
 		| '/curl-builder'
 		| '/date-timestamp-converter'
 		| '/diff-viewer'
+		| '/escape-tool'
 		| '/gpg-key-generator'
 		| '/hash-generator'
 		| '/json-formatter'
@@ -371,6 +383,7 @@ export interface RootRouteChildren {
 	CurlBuilderRoute: typeof CurlBuilderRoute;
 	DateTimestampConverterRoute: typeof DateTimestampConverterRoute;
 	DiffViewerRoute: typeof DiffViewerRoute;
+	EscapeToolRoute: typeof EscapeToolRoute;
 	GpgKeyGeneratorRoute: typeof GpgKeyGeneratorRoute;
 	HashGeneratorRoute: typeof HashGeneratorRoute;
 	JsonFormatterRoute: typeof JsonFormatterRoute;
@@ -543,6 +556,13 @@ declare module '@tanstack/react-router' {
 			preLoaderRoute: typeof GpgKeyGeneratorRouteImport;
 			parentRoute: typeof rootRouteImport;
 		};
+		'/escape-tool': {
+			id: '/escape-tool';
+			path: '/escape-tool';
+			fullPath: '/escape-tool';
+			preLoaderRoute: typeof EscapeToolRouteImport;
+			parentRoute: typeof rootRouteImport;
+		};
 		'/diff-viewer': {
 			id: '/diff-viewer';
 			path: '/diff-viewer';
@@ -603,6 +623,7 @@ const rootRouteChildren: RootRouteChildren = {
 	CurlBuilderRoute: CurlBuilderRoute,
 	DateTimestampConverterRoute: DateTimestampConverterRoute,
 	DiffViewerRoute: DiffViewerRoute,
+	EscapeToolRoute: EscapeToolRoute,
 	GpgKeyGeneratorRoute: GpgKeyGeneratorRoute,
 	HashGeneratorRoute: HashGeneratorRoute,
 	JsonFormatterRoute: JsonFormatterRoute,

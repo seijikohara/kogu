@@ -21,6 +21,7 @@ import {
 	FileText,
 	Fingerprint,
 	GitCompare,
+	Globe,
 	Hash,
 	House,
 	Key,
@@ -33,6 +34,7 @@ import {
 	Pencil,
 	Play,
 	QrCode,
+	Quote,
 	Radar,
 	Regex,
 	Search,
@@ -40,6 +42,7 @@ import {
 	Shield,
 	ShieldCheck,
 	Sparkles,
+	Table,
 	Terminal,
 } from 'lucide-react';
 
@@ -175,6 +178,23 @@ export const PAGES: readonly PageDefinition[] = [
 		description: 'Decode X.509 / PEM certificates with chain visualization and fingerprints',
 		color: 'text-teal-600',
 		category: 'encoders',
+	},
+	{
+		id: 'escape-tool',
+		title: 'Escape / Unescape',
+		url: '/escape-tool',
+		icon: Quote,
+		description: 'Multi-flavor escape and unescape for JSON / JS / HTML / XML / CSV / Shell',
+		color: 'text-rose-600',
+		category: 'encoders',
+		tabs: [
+			{ id: 'json', label: 'JSON', icon: Braces },
+			{ id: 'javascript', label: 'JS', icon: FileCode },
+			{ id: 'html', label: 'HTML', icon: Globe },
+			{ id: 'xml', label: 'XML', icon: FileCode },
+			{ id: 'csv', label: 'CSV', icon: Table },
+			{ id: 'shell', label: 'Shell', icon: Terminal },
+		],
 	},
 	{
 		id: 'uuid-generator',
