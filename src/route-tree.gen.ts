@@ -14,6 +14,7 @@ import { Route as XmlFormatterRouteImport } from './routes/xml-formatter';
 import { Route as X509DecoderRouteImport } from './routes/x509-decoder';
 import { Route as UuidGeneratorRouteImport } from './routes/uuid-generator';
 import { Route as UrlEncoderRouteImport } from './routes/url-encoder';
+import { Route as StringCompressorRouteImport } from './routes/string-compressor';
 import { Route as StringCaseConverterRouteImport } from './routes/string-case-converter';
 import { Route as SshKeyGeneratorRouteImport } from './routes/ssh-key-generator';
 import { Route as SqlFormatterRouteImport } from './routes/sql-formatter';
@@ -62,6 +63,11 @@ const UuidGeneratorRoute = UuidGeneratorRouteImport.update({
 const UrlEncoderRoute = UrlEncoderRouteImport.update({
 	id: '/url-encoder',
 	path: '/url-encoder',
+	getParentRoute: () => rootRouteImport,
+} as any);
+const StringCompressorRoute = StringCompressorRouteImport.update({
+	id: '/string-compressor',
+	path: '/string-compressor',
 	getParentRoute: () => rootRouteImport,
 } as any);
 const StringCaseConverterRoute = StringCaseConverterRouteImport.update({
@@ -210,6 +216,7 @@ export interface FileRoutesByFullPath {
 	'/sql-formatter': typeof SqlFormatterRoute;
 	'/ssh-key-generator': typeof SshKeyGeneratorRoute;
 	'/string-case-converter': typeof StringCaseConverterRoute;
+	'/string-compressor': typeof StringCompressorRoute;
 	'/url-encoder': typeof UrlEncoderRoute;
 	'/uuid-generator': typeof UuidGeneratorRoute;
 	'/x509-decoder': typeof X509DecoderRoute;
@@ -241,6 +248,7 @@ export interface FileRoutesByTo {
 	'/sql-formatter': typeof SqlFormatterRoute;
 	'/ssh-key-generator': typeof SshKeyGeneratorRoute;
 	'/string-case-converter': typeof StringCaseConverterRoute;
+	'/string-compressor': typeof StringCompressorRoute;
 	'/url-encoder': typeof UrlEncoderRoute;
 	'/uuid-generator': typeof UuidGeneratorRoute;
 	'/x509-decoder': typeof X509DecoderRoute;
@@ -273,6 +281,7 @@ export interface FileRoutesById {
 	'/sql-formatter': typeof SqlFormatterRoute;
 	'/ssh-key-generator': typeof SshKeyGeneratorRoute;
 	'/string-case-converter': typeof StringCaseConverterRoute;
+	'/string-compressor': typeof StringCompressorRoute;
 	'/url-encoder': typeof UrlEncoderRoute;
 	'/uuid-generator': typeof UuidGeneratorRoute;
 	'/x509-decoder': typeof X509DecoderRoute;
@@ -306,6 +315,7 @@ export interface FileRouteTypes {
 		| '/sql-formatter'
 		| '/ssh-key-generator'
 		| '/string-case-converter'
+		| '/string-compressor'
 		| '/url-encoder'
 		| '/uuid-generator'
 		| '/x509-decoder'
@@ -337,6 +347,7 @@ export interface FileRouteTypes {
 		| '/sql-formatter'
 		| '/ssh-key-generator'
 		| '/string-case-converter'
+		| '/string-compressor'
 		| '/url-encoder'
 		| '/uuid-generator'
 		| '/x509-decoder'
@@ -368,6 +379,7 @@ export interface FileRouteTypes {
 		| '/sql-formatter'
 		| '/ssh-key-generator'
 		| '/string-case-converter'
+		| '/string-compressor'
 		| '/url-encoder'
 		| '/uuid-generator'
 		| '/x509-decoder'
@@ -400,6 +412,7 @@ export interface RootRouteChildren {
 	SqlFormatterRoute: typeof SqlFormatterRoute;
 	SshKeyGeneratorRoute: typeof SshKeyGeneratorRoute;
 	StringCaseConverterRoute: typeof StringCaseConverterRoute;
+	StringCompressorRoute: typeof StringCompressorRoute;
 	UrlEncoderRoute: typeof UrlEncoderRoute;
 	UuidGeneratorRoute: typeof UuidGeneratorRoute;
 	X509DecoderRoute: typeof X509DecoderRoute;
@@ -442,6 +455,13 @@ declare module '@tanstack/react-router' {
 			path: '/url-encoder';
 			fullPath: '/url-encoder';
 			preLoaderRoute: typeof UrlEncoderRouteImport;
+			parentRoute: typeof rootRouteImport;
+		};
+		'/string-compressor': {
+			id: '/string-compressor';
+			path: '/string-compressor';
+			fullPath: '/string-compressor';
+			preLoaderRoute: typeof StringCompressorRouteImport;
 			parentRoute: typeof rootRouteImport;
 		};
 		'/string-case-converter': {
@@ -640,6 +660,7 @@ const rootRouteChildren: RootRouteChildren = {
 	SqlFormatterRoute: SqlFormatterRoute,
 	SshKeyGeneratorRoute: SshKeyGeneratorRoute,
 	StringCaseConverterRoute: StringCaseConverterRoute,
+	StringCompressorRoute: StringCompressorRoute,
 	UrlEncoderRoute: UrlEncoderRoute,
 	UuidGeneratorRoute: UuidGeneratorRoute,
 	X509DecoderRoute: X509DecoderRoute,

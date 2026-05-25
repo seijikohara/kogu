@@ -3,6 +3,7 @@
  * Update this file when adding new pages or tabs.
  */
 import {
+	ArchiveRestore,
 	ArrowRightLeft,
 	BadgeCheck,
 	Binary,
@@ -195,6 +196,16 @@ export const PAGES: readonly PageDefinition[] = [
 			{ id: 'csv', label: 'CSV', icon: Table },
 			{ id: 'shell', label: 'Shell', icon: Terminal },
 		],
+	},
+	{
+		id: 'string-compressor',
+		title: 'String Compressor',
+		url: '/string-compressor',
+		icon: ArchiveRestore,
+		description:
+			'Compress and decompress text with GZIP and Brotli, with live compression-ratio visualization',
+		color: 'text-emerald-600',
+		category: 'encoders',
 	},
 	{
 		id: 'uuid-generator',
