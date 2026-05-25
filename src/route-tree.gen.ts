@@ -19,6 +19,7 @@ import { Route as StringCaseConverterRouteImport } from './routes/string-case-co
 import { Route as SshKeyGeneratorRouteImport } from './routes/ssh-key-generator'
 import { Route as SqlFormatterRouteImport } from './routes/sql-formatter'
 import { Route as SettingsRouteImport } from './routes/settings'
+import { Route as SemverToolsRouteImport } from './routes/semver-tools'
 import { Route as RegexTesterRouteImport } from './routes/regex-tester'
 import { Route as QrCodeGeneratorRouteImport } from './routes/qr-code-generator'
 import { Route as PasswordGeneratorRouteImport } from './routes/password-generator'
@@ -90,6 +91,11 @@ const SqlFormatterRoute = SqlFormatterRouteImport.update({
 const SettingsRoute = SettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SemverToolsRoute = SemverToolsRouteImport.update({
+  id: '/semver-tools',
+  path: '/semver-tools',
   getParentRoute: () => rootRouteImport,
 } as any)
 const RegexTesterRoute = RegexTesterRouteImport.update({
@@ -226,6 +232,7 @@ export interface FileRoutesByFullPath {
   '/password-generator': typeof PasswordGeneratorRoute
   '/qr-code-generator': typeof QrCodeGeneratorRoute
   '/regex-tester': typeof RegexTesterRoute
+  '/semver-tools': typeof SemverToolsRoute
   '/settings': typeof SettingsRoute
   '/sql-formatter': typeof SqlFormatterRoute
   '/ssh-key-generator': typeof SshKeyGeneratorRoute
@@ -260,6 +267,7 @@ export interface FileRoutesByTo {
   '/password-generator': typeof PasswordGeneratorRoute
   '/qr-code-generator': typeof QrCodeGeneratorRoute
   '/regex-tester': typeof RegexTesterRoute
+  '/semver-tools': typeof SemverToolsRoute
   '/settings': typeof SettingsRoute
   '/sql-formatter': typeof SqlFormatterRoute
   '/ssh-key-generator': typeof SshKeyGeneratorRoute
@@ -295,6 +303,7 @@ export interface FileRoutesById {
   '/password-generator': typeof PasswordGeneratorRoute
   '/qr-code-generator': typeof QrCodeGeneratorRoute
   '/regex-tester': typeof RegexTesterRoute
+  '/semver-tools': typeof SemverToolsRoute
   '/settings': typeof SettingsRoute
   '/sql-formatter': typeof SqlFormatterRoute
   '/ssh-key-generator': typeof SshKeyGeneratorRoute
@@ -331,6 +340,7 @@ export interface FileRouteTypes {
     | '/password-generator'
     | '/qr-code-generator'
     | '/regex-tester'
+    | '/semver-tools'
     | '/settings'
     | '/sql-formatter'
     | '/ssh-key-generator'
@@ -365,6 +375,7 @@ export interface FileRouteTypes {
     | '/password-generator'
     | '/qr-code-generator'
     | '/regex-tester'
+    | '/semver-tools'
     | '/settings'
     | '/sql-formatter'
     | '/ssh-key-generator'
@@ -399,6 +410,7 @@ export interface FileRouteTypes {
     | '/password-generator'
     | '/qr-code-generator'
     | '/regex-tester'
+    | '/semver-tools'
     | '/settings'
     | '/sql-formatter'
     | '/ssh-key-generator'
@@ -434,6 +446,7 @@ export interface RootRouteChildren {
   PasswordGeneratorRoute: typeof PasswordGeneratorRoute
   QrCodeGeneratorRoute: typeof QrCodeGeneratorRoute
   RegexTesterRoute: typeof RegexTesterRoute
+  SemverToolsRoute: typeof SemverToolsRoute
   SettingsRoute: typeof SettingsRoute
   SqlFormatterRoute: typeof SqlFormatterRoute
   SshKeyGeneratorRoute: typeof SshKeyGeneratorRoute
@@ -516,6 +529,13 @@ declare module '@tanstack/react-router' {
       path: '/settings'
       fullPath: '/settings'
       preLoaderRoute: typeof SettingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/semver-tools': {
+      id: '/semver-tools'
+      path: '/semver-tools'
+      fullPath: '/semver-tools'
+      preLoaderRoute: typeof SemverToolsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/regex-tester': {
@@ -698,6 +718,7 @@ const rootRouteChildren: RootRouteChildren = {
   PasswordGeneratorRoute: PasswordGeneratorRoute,
   QrCodeGeneratorRoute: QrCodeGeneratorRoute,
   RegexTesterRoute: RegexTesterRoute,
+  SemverToolsRoute: SemverToolsRoute,
   SettingsRoute: SettingsRoute,
   SqlFormatterRoute: SqlFormatterRoute,
   SshKeyGeneratorRoute: SshKeyGeneratorRoute,
