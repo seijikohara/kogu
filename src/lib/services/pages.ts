@@ -427,6 +427,16 @@ export const PAGES: readonly PageDefinition[] = [
 		category: 'network',
 	},
 	{
+		id: 'ip-converter',
+		title: 'IP Address Converter',
+		url: '/ip-converter',
+		icon: Globe,
+		description:
+			'Convert between IPv4 and IPv6 with IPv4-mapped / 6to4 / Teredo embeddings and notation normalizer',
+		color: 'text-sky-600',
+		category: 'network',
+	},
+	{
 		id: 'network-interfaces',
 		title: 'Network Interfaces',
 		url: '/network-interfaces',
