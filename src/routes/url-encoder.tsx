@@ -16,7 +16,7 @@ import {
 	FormSlider,
 } from '@/lib/components/form';
 import { SplitPane } from '@/lib/components/layout';
-import { OptionsPanel } from '@/lib/components/panel';
+import { Rail } from '@/lib/components/ui/rail';
 import { ToolShell } from '@/lib/components/shell';
 import { StatItem } from '@/lib/components/status';
 import { Button } from '@/lib/components/ui/button';
@@ -178,7 +178,7 @@ function UrlEncoderPage() {
 
 	const renderEncodeTab = () => (
 		<div className="flex flex-1 overflow-hidden">
-			<OptionsPanel
+			<Rail
 				show={showOptions}
 				onClose={() => setShowOptions(false)}
 				onOpen={() => setShowOptions(true)}
@@ -379,7 +379,7 @@ function UrlEncoderPage() {
 						</FormSection>
 					</>
 				)}
-			</OptionsPanel>
+			</Rail>
 
 			<SplitPane
 				className="h-full flex-1"

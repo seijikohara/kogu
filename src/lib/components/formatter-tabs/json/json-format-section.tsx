@@ -14,7 +14,7 @@ interface JsonFormatSectionProps {
 
 /**
  * Persistent JSON input / output variant selector. Rendered at the top
- * of every JSON tab's OptionsPanel so the user can toggle JSON / JSON5 /
+ * of every JSON tab's Rail so the user can toggle JSON / JSON5 /
  * JSONC / NDJSON without losing the rest of their per-tab options.
  */
 export function JsonFormatSection({ showOutput = true }: JsonFormatSectionProps) {

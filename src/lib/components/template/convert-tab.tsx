@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState, type ReactNode } from 'react';
 
 import type { EditorMode } from '@/lib/components/editor';
 import { InputOutputSplit } from '@/lib/components/layout';
-import { OptionsPanel } from '@/lib/components/panel';
+import { Rail } from '@/lib/components/ui/rail';
 
 type ValidationResult = { valid: boolean | null } & Record<string, unknown>;
 type StatsResult = { input: string; valid: boolean | null; error: string } & Record<
@@ -99,14 +99,14 @@ export function ConvertTab({
 
 	return (
 		<div className="flex flex-1 overflow-hidden">
-			<OptionsPanel
+			<Rail
 				show={showOptions}
 				onClose={() => setShowOptions(false)}
 				onOpen={() => setShowOptions(true)}
 			>
 				{renderFormatSection?.()}
 				{renderOptions?.()}
-			</OptionsPanel>
+			</Rail>
 
 			<InputOutputSplit
 				input={input}

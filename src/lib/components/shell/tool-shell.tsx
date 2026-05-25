@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import type { LucideIcon } from 'lucide-react';
 
+import { Rail, type RailSize } from '@/lib/components/ui/rail';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/lib/components/ui/tabs';
 import { isModKey } from '@/lib/utils/keyboard';
 
-import { OptionsRail } from './options-rail';
 import { StatusBar } from './status-bar';
 import { ToolBar } from './tool-bar';
 
@@ -33,6 +33,7 @@ interface ToolShellProps {
 	readonly defaultShowRail?: boolean;
 	readonly onShowRailChange?: (show: boolean) => void;
 	readonly railTitle?: string;
+	readonly railSize?: RailSize;
 	readonly rail?: ReactNode;
 
 	readonly valid?: boolean | null;
@@ -56,6 +57,7 @@ export function ToolShell({
 	defaultShowRail = true,
 	onShowRailChange,
 	railTitle = 'Options',
+	railSize = 'default',
 	rail,
 	valid,
 	error,
@@ -110,7 +112,13 @@ export function ToolShell({
 	}, [rail, showRail, setShowRail, tabs, onTabChange]);
 
 	const shell = (
-		<div ref={shellRef} className="tool-shell" data-layout={layout} data-rail={railState}>
+		<div
+			ref={shellRef}
+			className="tool-shell"
+			data-layout={layout}
+			data-rail={railState}
+			data-rail-size={railSize}
+		>
 			<div className="tool-toolbar">
 				<ToolBar
 					title={title}
@@ -141,15 +149,16 @@ export function ToolShell({
 
 			{rail ? (
 				<div className="tool-rail">
-					<OptionsRail
+					<Rail
 						show={showRail}
 						title={railTitle}
+						size={railSize}
 						onShowChange={setShowRail}
 						onClose={() => setShowRail(false)}
 						onOpen={() => setShowRail(true)}
 					>
 						{rail}
-					</OptionsRail>
+					</Rail>
 				</div>
 			) : null}
 
@@ -180,8 +189,15 @@ export function ToolShell({
 					overflow: hidden;
 					grid-template-rows: var(--toolbar-h) 1fr var(--status-h);
 				}
-				.tool-shell[data-rail='open'] {
+				.tool-shell[data-rail='open'][data-rail-size='default'] {
 					grid-template-columns: var(--rail-w) 1fr;
+					grid-template-areas:
+						'toolbar toolbar'
+						'rail content'
+						'status status';
+				}
+				.tool-shell[data-rail='open'][data-rail-size='wide'] {
+					grid-template-columns: var(--rail-w-wide) 1fr;
 					grid-template-areas:
 						'toolbar toolbar'
 						'rail content'

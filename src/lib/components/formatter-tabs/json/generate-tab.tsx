@@ -12,7 +12,7 @@ interface GenerateTabProps {
 
 // JSON wrapper for the shared `GenerateTabTemplate`. Threads the project-wide
 // JSON input-format option through `parseJson` / `validateJson`, injects the
-// `JsonFormatSection` rail at the top of the OptionsPanel, and resets cleared
+// `JsonFormatSection` rail at the top of the Rail, and resets cleared
 // input to `'{}'` so an empty editor still parses.
 export function GenerateTab({ input, onInputChange, onStatsChange }: GenerateTabProps) {
 	const { value: jsonOptions } = useJsonFormatterOptions();
