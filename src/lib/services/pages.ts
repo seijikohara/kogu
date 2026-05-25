@@ -26,6 +26,7 @@ import {
 	Key,
 	KeyRound,
 	Link,
+	ListChecks,
 	type LucideIcon,
 	Lock,
 	Network,
@@ -318,6 +319,15 @@ export const PAGES: readonly PageDefinition[] = [
 		icon: Regex,
 		description: 'Test, replace, visualize, and explain regular expressions',
 		color: 'text-neutral-500',
+		category: 'text',
+	},
+	{
+		id: 'list-comparer',
+		title: 'List Comparer',
+		url: '/list-comparer',
+		icon: ListChecks,
+		description: 'Set operations and Venn diagram on two newline-separated lists',
+		color: 'text-cyan-600',
 		category: 'text',
 	},
 	{
