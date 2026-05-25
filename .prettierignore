@@ -1,6 +1,5 @@
 # Build outputs
 build/
-.svelte-kit/
 dist/
 target/
 

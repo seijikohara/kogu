@@ -1,7 +1,7 @@
 ---
 description: Start Kogu in Tauri dev mode. If a Tauri dev session is already running, stop it (with its Vite child) and clear stale build caches before starting a fresh instance. Use when the user asks to start, restart, relaunch, or reboot Tauri, or when Vite SSR errors point to stale module caches.
 disable-model-invocation: true
-allowed-tools: Bash(pgrep *), Bash(pkill *), Bash(ps *), Bash(lsof *), Bash(rm -rf .vite), Bash(rm -rf .svelte-kit/cache), Bash(bun run tauri:dev *), Bash(sleep *)
+allowed-tools: Bash(pgrep *), Bash(pkill *), Bash(ps *), Bash(lsof *), Bash(rm -rf .vite), Bash(bun run tauri:dev *), Bash(sleep *)
 ---
 
 # Tauri Dev Restart
@@ -56,10 +56,9 @@ Do not use `kill -9` as the first move — it leaves the Cargo build lockfile an
 
 ```bash
 rm -rf .vite
-rm -rf .svelte-kit/cache
 ```
 
-Do **not** delete `.svelte-kit` wholesale or `src-tauri/target` — those caches are expensive to rebuild and rarely cause SSR errors.
+Do **not** delete `src-tauri/target` — that cache is expensive to rebuild and rarely causes SSR errors.
 
 ### 4. Start a fresh dev session
 
@@ -94,14 +93,12 @@ If the loop times out (180 seconds), inspect the background task output for the 
 
 ## Why clear caches
 
-Vite's SSR module-runner keeps a per-route dependency graph in `.vite/`. When a long-lived dev session straddles multiple PR cycles that touch shadcn primitives or shell components (e.g., `OptionsRail` → `CollapsibleAside`), the cached graph diverges from disk. The symptom is `Preloading data for /<route> failed with the following error: Internal Error` in Tauri logs — these are warnings from SvelteKit's `data-sveltekit-preload-data="hover"`, not real navigation failures, but they still poison subsequent navigations. Wiping `.vite` forces a clean transform pass.
-
-`.svelte-kit/cache` is wiped for the same reason: SvelteKit memoizes route manifests there and can hold references to deleted exports.
+Vite's SSR module-runner keeps a per-route dependency graph in `.vite/`. When a long-lived dev session straddles multiple PR cycles that touch shadcn primitives or shell components (e.g., `OptionsRail` → `CollapsibleAside`), the cached graph diverges from disk. Stale entries can surface as `500 Internal Error` for routes that pass `bun run check`, or as HMR updates that the webview silently ignores. Wiping `.vite` forces a clean transform pass.
 
 ## Safety rules
 
 - Never `kill -9` as the first move. `SIGTERM` first, `SIGKILL` only after a 5-second grace period.
-- Never delete `src-tauri/target` or `.svelte-kit` wholesale to "fix" cache issues. They are not the source of dev-mode SSR cache bugs and rebuilding them takes minutes.
+- Never delete `src-tauri/target` to "fix" cache issues. It is not the source of dev-mode SSR cache bugs and rebuilding it takes minutes.
 - Do not start a second `tauri:dev` if one is already running. Two Vite instances will fight over port 1420 and produce confusing logs.
 - Do not run this skill while a Cargo / Vite build is finishing — wait for the previous start to settle (Vite listening on 1420) before issuing another restart, otherwise the sidecar build can corrupt the target directory.
 

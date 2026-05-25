@@ -246,7 +246,7 @@ Prefer Tailwind utilities. When a style cannot be expressed with utilities, add 
 }
 ```
 
-React does not have a scoped-style block equivalent to Svelte's `<style>` — colocate component-specific overrides in `app.css` or use CSS Modules if isolation is required.
+React has no built-in scoped-style mechanism — colocate component-specific overrides in `app.css` or use CSS Modules if isolation is required.
 
 ## Best Practices
 
