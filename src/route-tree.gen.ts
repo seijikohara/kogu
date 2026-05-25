@@ -25,6 +25,7 @@ import { Route as NumberBaseConverterRouteImport } from './routes/number-base-co
 import { Route as NetworkScannerRouteImport } from './routes/network-scanner';
 import { Route as NetworkInterfacesRouteImport } from './routes/network-interfaces';
 import { Route as MarkdownEditorRouteImport } from './routes/markdown-editor';
+import { Route as ListComparerRouteImport } from './routes/list-comparer';
 import { Route as JwtDecoderRouteImport } from './routes/jwt-decoder';
 import { Route as JsonFormatterRouteImport } from './routes/json-formatter';
 import { Route as HashGeneratorRouteImport } from './routes/hash-generator';
@@ -117,6 +118,11 @@ const MarkdownEditorRoute = MarkdownEditorRouteImport.update({
 	path: '/markdown-editor',
 	getParentRoute: () => rootRouteImport,
 } as any);
+const ListComparerRoute = ListComparerRouteImport.update({
+	id: '/list-comparer',
+	path: '/list-comparer',
+	getParentRoute: () => rootRouteImport,
+} as any);
 const JwtDecoderRoute = JwtDecoderRouteImport.update({
 	id: '/jwt-decoder',
 	path: '/jwt-decoder',
@@ -185,6 +191,7 @@ export interface FileRoutesByFullPath {
 	'/hash-generator': typeof HashGeneratorRoute;
 	'/json-formatter': typeof JsonFormatterRoute;
 	'/jwt-decoder': typeof JwtDecoderRoute;
+	'/list-comparer': typeof ListComparerRoute;
 	'/markdown-editor': typeof MarkdownEditorRoute;
 	'/network-interfaces': typeof NetworkInterfacesRoute;
 	'/network-scanner': typeof NetworkScannerRoute;
@@ -214,6 +221,7 @@ export interface FileRoutesByTo {
 	'/hash-generator': typeof HashGeneratorRoute;
 	'/json-formatter': typeof JsonFormatterRoute;
 	'/jwt-decoder': typeof JwtDecoderRoute;
+	'/list-comparer': typeof ListComparerRoute;
 	'/markdown-editor': typeof MarkdownEditorRoute;
 	'/network-interfaces': typeof NetworkInterfacesRoute;
 	'/network-scanner': typeof NetworkScannerRoute;
@@ -244,6 +252,7 @@ export interface FileRoutesById {
 	'/hash-generator': typeof HashGeneratorRoute;
 	'/json-formatter': typeof JsonFormatterRoute;
 	'/jwt-decoder': typeof JwtDecoderRoute;
+	'/list-comparer': typeof ListComparerRoute;
 	'/markdown-editor': typeof MarkdownEditorRoute;
 	'/network-interfaces': typeof NetworkInterfacesRoute;
 	'/network-scanner': typeof NetworkScannerRoute;
@@ -275,6 +284,7 @@ export interface FileRouteTypes {
 		| '/hash-generator'
 		| '/json-formatter'
 		| '/jwt-decoder'
+		| '/list-comparer'
 		| '/markdown-editor'
 		| '/network-interfaces'
 		| '/network-scanner'
@@ -304,6 +314,7 @@ export interface FileRouteTypes {
 		| '/hash-generator'
 		| '/json-formatter'
 		| '/jwt-decoder'
+		| '/list-comparer'
 		| '/markdown-editor'
 		| '/network-interfaces'
 		| '/network-scanner'
@@ -333,6 +344,7 @@ export interface FileRouteTypes {
 		| '/hash-generator'
 		| '/json-formatter'
 		| '/jwt-decoder'
+		| '/list-comparer'
 		| '/markdown-editor'
 		| '/network-interfaces'
 		| '/network-scanner'
@@ -363,6 +375,7 @@ export interface RootRouteChildren {
 	HashGeneratorRoute: typeof HashGeneratorRoute;
 	JsonFormatterRoute: typeof JsonFormatterRoute;
 	JwtDecoderRoute: typeof JwtDecoderRoute;
+	ListComparerRoute: typeof ListComparerRoute;
 	MarkdownEditorRoute: typeof MarkdownEditorRoute;
 	NetworkInterfacesRoute: typeof NetworkInterfacesRoute;
 	NetworkScannerRoute: typeof NetworkScannerRoute;
@@ -495,6 +508,13 @@ declare module '@tanstack/react-router' {
 			preLoaderRoute: typeof MarkdownEditorRouteImport;
 			parentRoute: typeof rootRouteImport;
 		};
+		'/list-comparer': {
+			id: '/list-comparer';
+			path: '/list-comparer';
+			fullPath: '/list-comparer';
+			preLoaderRoute: typeof ListComparerRouteImport;
+			parentRoute: typeof rootRouteImport;
+		};
 		'/jwt-decoder': {
 			id: '/jwt-decoder';
 			path: '/jwt-decoder';
@@ -587,6 +607,7 @@ const rootRouteChildren: RootRouteChildren = {
 	HashGeneratorRoute: HashGeneratorRoute,
 	JsonFormatterRoute: JsonFormatterRoute,
 	JwtDecoderRoute: JwtDecoderRoute,
+	ListComparerRoute: ListComparerRoute,
 	MarkdownEditorRoute: MarkdownEditorRoute,
 	NetworkInterfacesRoute: NetworkInterfacesRoute,
 	NetworkScannerRoute: NetworkScannerRoute,
