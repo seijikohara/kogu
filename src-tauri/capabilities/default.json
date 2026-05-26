@@ -22,6 +22,7 @@
 		"fs:allow-read-text-file",
 		"fs:allow-read-file",
 		"fs:allow-write-text-file",
+		"fs:allow-write-file",
 		"decorum:allow-show-snap-overlay",
 		"mcp-bridge:default",
 		{

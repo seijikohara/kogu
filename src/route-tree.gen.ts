@@ -41,6 +41,7 @@ import { Route as JsonFormatterRouteImport } from './routes/json-formatter';
 import { Route as IpConverterRouteImport } from './routes/ip-converter';
 import { Route as ImageConverterRouteImport } from './routes/image-converter';
 import { Route as HttpStatusCodesRouteImport } from './routes/http-status-codes';
+import { Route as HexEditorRouteImport } from './routes/hex-editor';
 import { Route as HashGeneratorRouteImport } from './routes/hash-generator';
 import { Route as GpgKeyGeneratorRouteImport } from './routes/gpg-key-generator';
 import { Route as FileInspectorRouteImport } from './routes/file-inspector';
@@ -215,6 +216,11 @@ const HttpStatusCodesRoute = HttpStatusCodesRouteImport.update({
 	path: '/http-status-codes',
 	getParentRoute: () => rootRouteImport,
 } as any);
+const HexEditorRoute = HexEditorRouteImport.update({
+	id: '/hex-editor',
+	path: '/hex-editor',
+	getParentRoute: () => rootRouteImport,
+} as any);
 const HashGeneratorRoute = HashGeneratorRouteImport.update({
 	id: '/hash-generator',
 	path: '/hash-generator',
@@ -295,6 +301,7 @@ export interface FileRoutesByFullPath {
 	'/file-inspector': typeof FileInspectorRoute;
 	'/gpg-key-generator': typeof GpgKeyGeneratorRoute;
 	'/hash-generator': typeof HashGeneratorRoute;
+	'/hex-editor': typeof HexEditorRoute;
 	'/http-status-codes': typeof HttpStatusCodesRoute;
 	'/image-converter': typeof ImageConverterRoute;
 	'/ip-converter': typeof IpConverterRoute;
@@ -342,6 +349,7 @@ export interface FileRoutesByTo {
 	'/file-inspector': typeof FileInspectorRoute;
 	'/gpg-key-generator': typeof GpgKeyGeneratorRoute;
 	'/hash-generator': typeof HashGeneratorRoute;
+	'/hex-editor': typeof HexEditorRoute;
 	'/http-status-codes': typeof HttpStatusCodesRoute;
 	'/image-converter': typeof ImageConverterRoute;
 	'/ip-converter': typeof IpConverterRoute;
@@ -390,6 +398,7 @@ export interface FileRoutesById {
 	'/file-inspector': typeof FileInspectorRoute;
 	'/gpg-key-generator': typeof GpgKeyGeneratorRoute;
 	'/hash-generator': typeof HashGeneratorRoute;
+	'/hex-editor': typeof HexEditorRoute;
 	'/http-status-codes': typeof HttpStatusCodesRoute;
 	'/image-converter': typeof ImageConverterRoute;
 	'/ip-converter': typeof IpConverterRoute;
@@ -439,6 +448,7 @@ export interface FileRouteTypes {
 		| '/file-inspector'
 		| '/gpg-key-generator'
 		| '/hash-generator'
+		| '/hex-editor'
 		| '/http-status-codes'
 		| '/image-converter'
 		| '/ip-converter'
@@ -486,6 +496,7 @@ export interface FileRouteTypes {
 		| '/file-inspector'
 		| '/gpg-key-generator'
 		| '/hash-generator'
+		| '/hex-editor'
 		| '/http-status-codes'
 		| '/image-converter'
 		| '/ip-converter'
@@ -533,6 +544,7 @@ export interface FileRouteTypes {
 		| '/file-inspector'
 		| '/gpg-key-generator'
 		| '/hash-generator'
+		| '/hex-editor'
 		| '/http-status-codes'
 		| '/image-converter'
 		| '/ip-converter'
@@ -581,6 +593,7 @@ export interface RootRouteChildren {
 	FileInspectorRoute: typeof FileInspectorRoute;
 	GpgKeyGeneratorRoute: typeof GpgKeyGeneratorRoute;
 	HashGeneratorRoute: typeof HashGeneratorRoute;
+	HexEditorRoute: typeof HexEditorRoute;
 	HttpStatusCodesRoute: typeof HttpStatusCodesRoute;
 	ImageConverterRoute: typeof ImageConverterRoute;
 	IpConverterRoute: typeof IpConverterRoute;
@@ -841,6 +854,13 @@ declare module '@tanstack/react-router' {
 			preLoaderRoute: typeof HttpStatusCodesRouteImport;
 			parentRoute: typeof rootRouteImport;
 		};
+		'/hex-editor': {
+			id: '/hex-editor';
+			path: '/hex-editor';
+			fullPath: '/hex-editor';
+			preLoaderRoute: typeof HexEditorRouteImport;
+			parentRoute: typeof rootRouteImport;
+		};
 		'/hash-generator': {
 			id: '/hash-generator';
 			path: '/hash-generator';
@@ -949,6 +969,7 @@ const rootRouteChildren: RootRouteChildren = {
 	FileInspectorRoute: FileInspectorRoute,
 	GpgKeyGeneratorRoute: GpgKeyGeneratorRoute,
 	HashGeneratorRoute: HashGeneratorRoute,
+	HexEditorRoute: HexEditorRoute,
 	HttpStatusCodesRoute: HttpStatusCodesRoute,
 	ImageConverterRoute: ImageConverterRoute,
 	IpConverterRoute: IpConverterRoute,

@@ -21,6 +21,7 @@ import {
 	FileCheck,
 	FileCode,
 	FileDiff,
+	FileDigit,
 	FileJson2,
 	FileSearch,
 	FileText,
@@ -550,6 +551,15 @@ export const PAGES: readonly PageDefinition[] = [
 		icon: FileSearch,
 		description: 'Inspect file metadata, MIME, hashes, EXIF, and preview content',
 		color: 'text-amber-600',
+		category: 'files',
+	},
+	{
+		id: 'hex-editor',
+		title: 'Hex Editor',
+		url: '/hex-editor',
+		icon: FileDigit,
+		description: 'View and edit binary files as hex with search, jump, and per-byte selection',
+		color: 'text-amber-700',
 		category: 'files',
 	},
 	{
