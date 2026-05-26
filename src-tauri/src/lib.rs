@@ -51,6 +51,7 @@ mod generators;
 #[cfg(target_os = "macos")]
 mod menu;
 mod network;
+mod rest_client;
 mod settings;
 
 use tauri::Manager;
@@ -468,6 +469,7 @@ pub fn run() {
             check_discovery_privilege,
             network::oui::lookup_oui_vendor,
             network::oui::get_oui_database_info,
+            rest_client::rest_client_send,
             settings::get_settings,
             settings::update_settings,
             settings::reset_settings,
