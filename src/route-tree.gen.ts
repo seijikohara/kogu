@@ -13,6 +13,7 @@ import { Route as YamlFormatterRouteImport } from './routes/yaml-formatter'
 import { Route as XmlFormatterRouteImport } from './routes/xml-formatter'
 import { Route as X509DecoderRouteImport } from './routes/x509-decoder'
 import { Route as WebsocketTesterRouteImport } from './routes/websocket-tester'
+import { Route as WebhookReceiverRouteImport } from './routes/webhook-receiver'
 import { Route as UuidGeneratorRouteImport } from './routes/uuid-generator'
 import { Route as UrlEncoderRouteImport } from './routes/url-encoder'
 import { Route as TlsInspectorRouteImport } from './routes/tls-inspector'
@@ -71,6 +72,11 @@ const X509DecoderRoute = X509DecoderRouteImport.update({
 const WebsocketTesterRoute = WebsocketTesterRouteImport.update({
   id: '/websocket-tester',
   path: '/websocket-tester',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const WebhookReceiverRoute = WebhookReceiverRouteImport.update({
+  id: '/webhook-receiver',
+  path: '/webhook-receiver',
   getParentRoute: () => rootRouteImport,
 } as any)
 const UuidGeneratorRoute = UuidGeneratorRouteImport.update({
@@ -309,6 +315,7 @@ export interface FileRoutesByFullPath {
   '/tls-inspector': typeof TlsInspectorRoute
   '/url-encoder': typeof UrlEncoderRoute
   '/uuid-generator': typeof UuidGeneratorRoute
+  '/webhook-receiver': typeof WebhookReceiverRoute
   '/websocket-tester': typeof WebsocketTesterRoute
   '/x509-decoder': typeof X509DecoderRoute
   '/xml-formatter': typeof XmlFormatterRoute
@@ -354,6 +361,7 @@ export interface FileRoutesByTo {
   '/tls-inspector': typeof TlsInspectorRoute
   '/url-encoder': typeof UrlEncoderRoute
   '/uuid-generator': typeof UuidGeneratorRoute
+  '/webhook-receiver': typeof WebhookReceiverRoute
   '/websocket-tester': typeof WebsocketTesterRoute
   '/x509-decoder': typeof X509DecoderRoute
   '/xml-formatter': typeof XmlFormatterRoute
@@ -400,6 +408,7 @@ export interface FileRoutesById {
   '/tls-inspector': typeof TlsInspectorRoute
   '/url-encoder': typeof UrlEncoderRoute
   '/uuid-generator': typeof UuidGeneratorRoute
+  '/webhook-receiver': typeof WebhookReceiverRoute
   '/websocket-tester': typeof WebsocketTesterRoute
   '/x509-decoder': typeof X509DecoderRoute
   '/xml-formatter': typeof XmlFormatterRoute
@@ -447,6 +456,7 @@ export interface FileRouteTypes {
     | '/tls-inspector'
     | '/url-encoder'
     | '/uuid-generator'
+    | '/webhook-receiver'
     | '/websocket-tester'
     | '/x509-decoder'
     | '/xml-formatter'
@@ -492,6 +502,7 @@ export interface FileRouteTypes {
     | '/tls-inspector'
     | '/url-encoder'
     | '/uuid-generator'
+    | '/webhook-receiver'
     | '/websocket-tester'
     | '/x509-decoder'
     | '/xml-formatter'
@@ -537,6 +548,7 @@ export interface FileRouteTypes {
     | '/tls-inspector'
     | '/url-encoder'
     | '/uuid-generator'
+    | '/webhook-receiver'
     | '/websocket-tester'
     | '/x509-decoder'
     | '/xml-formatter'
@@ -583,6 +595,7 @@ export interface RootRouteChildren {
   TlsInspectorRoute: typeof TlsInspectorRoute
   UrlEncoderRoute: typeof UrlEncoderRoute
   UuidGeneratorRoute: typeof UuidGeneratorRoute
+  WebhookReceiverRoute: typeof WebhookReceiverRoute
   WebsocketTesterRoute: typeof WebsocketTesterRoute
   X509DecoderRoute: typeof X509DecoderRoute
   XmlFormatterRoute: typeof XmlFormatterRoute
@@ -617,6 +630,13 @@ declare module '@tanstack/react-router' {
       path: '/websocket-tester'
       fullPath: '/websocket-tester'
       preLoaderRoute: typeof WebsocketTesterRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/webhook-receiver': {
+      id: '/webhook-receiver'
+      path: '/webhook-receiver'
+      fullPath: '/webhook-receiver'
+      preLoaderRoute: typeof WebhookReceiverRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/uuid-generator': {
@@ -935,6 +955,7 @@ const rootRouteChildren: RootRouteChildren = {
   TlsInspectorRoute: TlsInspectorRoute,
   UrlEncoderRoute: UrlEncoderRoute,
   UuidGeneratorRoute: UuidGeneratorRoute,
+  WebhookReceiverRoute: WebhookReceiverRoute,
   WebsocketTesterRoute: WebsocketTesterRoute,
   X509DecoderRoute: X509DecoderRoute,
   XmlFormatterRoute: XmlFormatterRoute,

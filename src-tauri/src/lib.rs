@@ -55,6 +55,7 @@ mod network;
 mod rest_client;
 mod settings;
 mod tls_inspect;
+mod webhook;
 mod websocket;
 
 use tauri::Manager;
@@ -404,6 +405,7 @@ pub fn run() {
         .manage(WorkerProcessState::new())
         .manage(NetworkScannerState::new())
         .manage(websocket::WebSocketState::new())
+        .manage(webhook::WebhookState::new())
         .setup(|app| {
             // Windows: enable Snap Layout support via the decorum overlay titlebar.
             // The same call on macOS injects transparent <div data-tauri-drag-region>
@@ -479,6 +481,9 @@ pub fn run() {
             websocket::ws_close,
             dns_lookup::dns_lookup,
             tls_inspect::tls_inspect,
+            webhook::webhook_start,
+            webhook::webhook_stop,
+            webhook::webhook_status,
             settings::get_settings,
             settings::update_settings,
             settings::reset_settings,

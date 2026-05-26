@@ -31,6 +31,7 @@ import {
 	Globe2,
 	Hash,
 	House,
+	Inbox,
 	Key,
 	KeyRound,
 	KeySquare,
@@ -522,6 +523,15 @@ export const PAGES: readonly PageDefinition[] = [
 		icon: Plug,
 		description: 'Connect to ws:// or wss:// endpoints with a chat-style frame log',
 		color: 'text-fuchsia-700',
+		category: 'network',
+	},
+	{
+		id: 'webhook-receiver',
+		title: 'Webhook Receiver',
+		url: '/webhook-receiver',
+		icon: Inbox,
+		description: 'Local HTTP listener for inspecting incoming webhook requests',
+		color: 'text-orange-700',
 		category: 'network',
 	},
 	{
