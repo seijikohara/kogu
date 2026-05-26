@@ -48,6 +48,7 @@
 
 mod ast;
 mod dns_lookup;
+mod file_inspect;
 mod generators;
 #[cfg(target_os = "macos")]
 mod menu;
@@ -480,6 +481,7 @@ pub fn run() {
             websocket::ws_send,
             websocket::ws_close,
             dns_lookup::dns_lookup,
+            file_inspect::file_inspect,
             tls_inspect::tls_inspect,
             webhook::webhook_start,
             webhook::webhook_stop,
