@@ -79,6 +79,7 @@ quick-xml = "0.40"
 rustls = { version = "0.23", features = ["ring"] }
 tokio-rustls = "0.26"
 x509-parser = "0.18"
+base64 = "0.22"
 
 # DNS PTR Reverse Lookup
 hickory-resolver = { version = "0.26", features = ["tokio", "system-config"] }

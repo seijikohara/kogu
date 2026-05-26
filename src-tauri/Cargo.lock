@@ -3277,6 +3277,7 @@ dependencies = [
 name = "kogu"
 version = "0.0.6"
 dependencies = [
+ "base64 0.22.1",
  "bcrypt",
  "csnmp",
  "dns-lookup",

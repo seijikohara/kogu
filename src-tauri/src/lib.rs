@@ -54,6 +54,7 @@ mod menu;
 mod network;
 mod rest_client;
 mod settings;
+mod tls_inspect;
 mod websocket;
 
 use tauri::Manager;
@@ -477,6 +478,7 @@ pub fn run() {
             websocket::ws_send,
             websocket::ws_close,
             dns_lookup::dns_lookup,
+            tls_inspect::tls_inspect,
             settings::get_settings,
             settings::update_settings,
             settings::reset_settings,
