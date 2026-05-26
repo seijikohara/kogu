@@ -157,8 +157,7 @@ pub async fn tls_inspect(req: TlsInspectRequest) -> Result<TlsInspectResult, Str
     let config = build_client_config()?;
     let connector = TlsConnector::from(Arc::new(config));
 
-    let server_name = ServerName::try_from(sni.clone())
-        .map_err(|e| format!("Invalid SNI: {e}"))?;
+    let server_name = ServerName::try_from(sni.clone()).map_err(|e| format!("Invalid SNI: {e}"))?;
 
     let addr = format!("{}:{}", req.host, req.port);
     let stream = timeout(timeout_duration, TcpStream::connect(&addr))
@@ -228,6 +227,9 @@ mod tests {
 
     #[test]
     fn resolve_sni_prefers_override_when_present() {
-        assert_eq!(resolve_sni(Some("alt.example.com"), "example.com"), "alt.example.com");
+        assert_eq!(
+            resolve_sni(Some("alt.example.com"), "example.com"),
+            "alt.example.com"
+        );
     }
 }
