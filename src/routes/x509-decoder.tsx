@@ -20,7 +20,7 @@ import {
 	FormSlider,
 	FormTextarea,
 } from '@/lib/components/form';
-import { SectionLabel } from '@/lib/components/layout';
+import { RelatedTools, SectionLabel } from '@/lib/components/layout';
 import { ToolShell } from '@/lib/components/shell';
 import { EmbeddedEmptyState, StatItem } from '@/lib/components/status';
 import {
@@ -299,6 +299,15 @@ function X509DecoderPage() {
 								size="compact"
 							/>
 						</FormCheckboxGroup>
+					</FormSection>
+
+					<FormSection title="Related">
+						<RelatedTools
+							items={[
+								{ id: 'tls-inspector', reason: 'Fetch a live cert chain from a host' },
+								{ id: 'rsa-tools', reason: 'Verify a signature with the public key' },
+							]}
+						/>
 					</FormSection>
 
 					<FormSection title="About">

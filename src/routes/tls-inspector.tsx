@@ -13,7 +13,7 @@ import { toast } from 'sonner';
 
 import { CopyButton } from '@/lib/components/action';
 import { FormError, FormInfo, FormInput, FormSection, FormSlider } from '@/lib/components/form';
-import { SectionLabel } from '@/lib/components/layout';
+import { RelatedTools, SectionLabel } from '@/lib/components/layout';
 import { ToolShell } from '@/lib/components/shell';
 import { EmbeddedEmptyState, StatItem } from '@/lib/components/status';
 import { Badge } from '@/lib/components/ui/badge';
@@ -257,6 +257,15 @@ function TlsInspectorPage() {
 						>
 							Copy full chain as PEM
 						</Button>
+					</FormSection>
+
+					<FormSection title="Related">
+						<RelatedTools
+							items={[
+								{ id: 'x509-decoder', reason: 'Drill into a chain certificate' },
+								{ id: 'dns-lookup', reason: 'Resolve a host before handshake' },
+							]}
+						/>
 					</FormSection>
 
 					<FormSection title="About">

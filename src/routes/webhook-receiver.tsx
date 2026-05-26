@@ -15,6 +15,7 @@ import { toast } from 'sonner';
 
 import { CopyButton } from '@/lib/components/action';
 import { FormInfo, FormInput, FormSection, FormTextarea } from '@/lib/components/form';
+import { RelatedTools } from '@/lib/components/layout';
 import { ToolShell } from '@/lib/components/shell';
 import { EmbeddedEmptyState, StatItem } from '@/lib/components/status';
 import { Button } from '@/lib/components/ui/button';
@@ -345,6 +346,10 @@ function WebhookRail({
 					<Eraser className="h-3.5 w-3.5" />
 					Clear log
 				</Button>
+			</FormSection>
+
+			<FormSection title="Related">
+				<RelatedTools items={[{ id: 'rest-client', reason: 'Replay a captured request' }]} />
 			</FormSection>
 
 			<FormSection title="About">
