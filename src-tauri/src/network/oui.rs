@@ -1514,6 +1514,69 @@ pub fn lookup_vendor(mac: &str) -> Option<&'static str> {
     OUI_DATABASE.get(prefix).copied()
 }
 
+/// Vendor lookup result for the frontend OUI tool.
+///
+/// `prefix` is the matched 3-octet OUI in colon-uppercase form (e.g. `00:1B:63`),
+/// or `None` when no match was found.
+#[derive(serde::Serialize)]
+pub struct OuiLookupResult {
+    pub vendor: Option<String>,
+    pub prefix: Option<String>,
+}
+
+/// Metadata about the bundled OUI database surfaced in the UI.
+#[derive(serde::Serialize)]
+pub struct OuiDatabaseInfo {
+    /// Number of OUI prefixes contained in the database.
+    pub entries: usize,
+    /// Last-updated marker for the bundled snapshot (UTC date in `YYYY-MM-DD`).
+    pub updated: &'static str,
+    /// Short human-readable source description.
+    pub source: &'static str,
+}
+
+/// Bundled snapshot date for the OUI database. Bump when the dataset is
+/// refreshed against the IEEE registry.
+const OUI_UPDATED: &str = "2025-09-01";
+const OUI_SOURCE: &str = "IEEE OUI registry (curated subset)";
+
+/// Look up the vendor for a MAC address from the bundled IEEE OUI database.
+///
+/// Returns the vendor name and matched 3-octet prefix when found.
+#[tauri::command]
+pub fn lookup_oui_vendor(mac: String) -> OuiLookupResult {
+    let normalized = mac.to_uppercase();
+    let prefix = if normalized.len() >= 8 {
+        normalized[..8].to_string()
+    } else {
+        return OuiLookupResult {
+            vendor: None,
+            prefix: None,
+        };
+    };
+
+    OUI_DATABASE.get(prefix.as_str()).map_or_else(
+        || OuiLookupResult {
+            vendor: None,
+            prefix: None,
+        },
+        |vendor| OuiLookupResult {
+            vendor: Some((*vendor).to_string()),
+            prefix: Some(prefix),
+        },
+    )
+}
+
+/// Return metadata about the bundled OUI database for the freshness badge.
+#[tauri::command]
+pub fn get_oui_database_info() -> OuiDatabaseInfo {
+    OuiDatabaseInfo {
+        entries: OUI_DATABASE.len(),
+        updated: OUI_UPDATED,
+        source: OUI_SOURCE,
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
