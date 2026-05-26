@@ -46,6 +46,7 @@ import {
 	Radar,
 	Regex,
 	Search,
+	SearchCode,
 	Send,
 	Settings,
 	Shield,
@@ -474,6 +475,16 @@ export const PAGES: readonly PageDefinition[] = [
 		icon: FileType,
 		description: 'Bidirectional MIME type / extension lookup with magic bytes and charset info',
 		color: 'text-emerald-700',
+		category: 'network',
+	},
+	{
+		id: 'dns-lookup',
+		title: 'DNS Lookup',
+		url: '/dns-lookup',
+		icon: SearchCode,
+		description:
+			'Query DNS records (A / AAAA / MX / TXT / NS / SOA / CNAME / PTR) against selectable resolvers',
+		color: 'text-cyan-700',
 		category: 'network',
 	},
 	{

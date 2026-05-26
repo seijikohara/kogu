@@ -47,6 +47,7 @@
 //! including AST parsing functionality for JSON, YAML, XML, and SQL.
 
 mod ast;
+mod dns_lookup;
 mod generators;
 #[cfg(target_os = "macos")]
 mod menu;
@@ -470,6 +471,7 @@ pub fn run() {
             network::oui::lookup_oui_vendor,
             network::oui::get_oui_database_info,
             rest_client::rest_client_send,
+            dns_lookup::dns_lookup,
             settings::get_settings,
             settings::update_settings,
             settings::reset_settings,
