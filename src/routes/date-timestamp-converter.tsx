@@ -17,7 +17,7 @@ import { toast } from 'sonner';
 
 import { ActionButton, CopyButton } from '@/lib/components/action';
 import { FormError, FormInfo, FormInput, FormSection, FormSelect } from '@/lib/components/form';
-import { SectionLabel } from '@/lib/components/layout';
+import { RelatedTools, SectionLabel } from '@/lib/components/layout';
 import { ToolShell } from '@/lib/components/shell';
 import { EmbeddedEmptyState, StatItem } from '@/lib/components/status';
 import { Badge } from '@/lib/components/ui/badge';
@@ -303,6 +303,12 @@ function DateTimestampConverterPage() {
 					<ExternalLink className="h-3 w-3" />
 					Open in Cron Builder
 				</Button>
+			</FormSection>
+
+			<FormSection title="Related">
+				<RelatedTools
+					items={[{ id: 'cron-expression-builder', reason: 'Edit the cron expression' }]}
+				/>
 			</FormSection>
 
 			<FormSection title="About">

@@ -4,6 +4,7 @@ import { type CSSProperties, type ReactNode, useMemo, useState } from 'react';
 
 import { ActionButton, CopyButton } from '@/lib/components/action';
 import { FormCheckbox, FormError, FormInfo, FormInput, FormSection } from '@/lib/components/form';
+import { RelatedTools } from '@/lib/components/layout';
 import { ToolShell } from '@/lib/components/shell';
 import { EmbeddedEmptyState, StatItem } from '@/lib/components/status';
 import { Button } from '@/lib/components/ui/button';
@@ -208,6 +209,15 @@ function IpConverterRail({
 					label="Use mixed form for IPv4-mapped (::ffff:a.b.c.d)"
 					checked={favorMixedForMapped}
 					onCheckedChange={(checked) => onPatch({ favorMixedForMapped: checked })}
+				/>
+			</FormSection>
+
+			<FormSection title="Related">
+				<RelatedTools
+					items={[
+						{ id: 'cidr-calculator', reason: 'Compute subnets and ranges' },
+						{ id: 'dns-lookup', reason: 'Resolve a name to an IP' },
+					]}
 				/>
 			</FormSection>
 

@@ -23,6 +23,7 @@ import {
 	FormSelect,
 	FormSlider,
 } from '@/lib/components/form';
+import { RelatedTools } from '@/lib/components/layout';
 import { ToolShell } from '@/lib/components/shell';
 import { EmbeddedEmptyState, StatItem } from '@/lib/components/status';
 import { Badge } from '@/lib/components/ui/badge';
@@ -328,6 +329,16 @@ function RestClientRail({
 					<Code2 className="h-3.5 w-3.5" />
 					Copy as cURL
 				</Button>
+			</FormSection>
+
+			<FormSection title="Related">
+				<RelatedTools
+					items={[
+						{ id: 'http-status-codes', reason: 'Look up a response status code' },
+						{ id: 'mime-types', reason: 'Find a Content-Type or extension' },
+						{ id: 'curl-builder', reason: 'Build or parse a cURL command' },
+					]}
+				/>
 			</FormSection>
 
 			<FormSection title="About">

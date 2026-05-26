@@ -13,6 +13,7 @@ import {
 	FormSelect,
 	FormSlider,
 } from '@/lib/components/form';
+import { RelatedTools } from '@/lib/components/layout';
 import { ToolShell } from '@/lib/components/shell';
 import { EmbeddedEmptyState, StatItem } from '@/lib/components/status';
 import { Button } from '@/lib/components/ui/button';
@@ -328,6 +329,16 @@ function DnsLookupRail({
 					<Terminal className="mr-1.5 h-3.5 w-3.5" />
 					Copy as dig
 				</Button>
+			</FormSection>
+
+			<FormSection title="Related">
+				<RelatedTools
+					items={[
+						{ id: 'tls-inspector', reason: 'Inspect TLS of a resolved host' },
+						{ id: 'rest-client', reason: 'Send HTTP request to a resolved host' },
+						{ id: 'cidr-calculator', reason: 'Analyse a resolved IP address' },
+					]}
+				/>
 			</FormSection>
 
 			<FormSection title="About">

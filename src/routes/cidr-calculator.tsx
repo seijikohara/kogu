@@ -5,6 +5,7 @@ import { toast } from 'sonner';
 
 import { ActionButton, CopyButton } from '@/lib/components/action';
 import { FormInfo, FormInput, FormMode, FormSection } from '@/lib/components/form';
+import { RelatedTools } from '@/lib/components/layout';
 import { ToolShell } from '@/lib/components/shell';
 import { EmbeddedEmptyState, StatItem } from '@/lib/components/status';
 import {
@@ -201,6 +202,15 @@ function CidrCalculatorPage() {
 							value={exportFormat}
 							options={EXPORT_OPTIONS}
 							onValueChange={(v) => patch({ exportFormat: v })}
+						/>
+					</FormSection>
+
+					<FormSection title="Related">
+						<RelatedTools
+							items={[
+								{ id: 'ip-converter', reason: 'Convert IPv4 ↔ IPv6' },
+								{ id: 'dns-lookup', reason: 'Resolve a name to an IP' },
+							]}
 						/>
 					</FormSection>
 

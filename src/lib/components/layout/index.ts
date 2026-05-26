@@ -5,6 +5,7 @@ export {
 	type KeyboardShortcutsDialogProps,
 } from './keyboard-shortcuts-dialog';
 export { NavButtons, type NavButtonsProps } from './nav-buttons';
+export { RelatedTools, type RelatedToolItem, type RelatedToolsProps } from './related-tools';
 export { SectionHeader, type SectionHeaderProps } from './section-header';
 export { SectionLabel, type SectionLabelProps } from './section-label';
 export { SplitPane, type SplitPaneProps } from './split-pane';
