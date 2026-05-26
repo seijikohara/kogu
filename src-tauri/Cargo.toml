@@ -88,6 +88,12 @@ csnmp = "0.6.0"
 # WebSocket Client
 tokio-tungstenite = { version = "0.29", features = ["rustls-tls-native-roots"] }
 
+# Webhook Receiver — local HTTP listener
+axum = { version = "0.8", default-features = false, features = ["tokio", "http1"] }
+hyper = { version = "1", features = ["server", "http1"] }
+http-body-util = "0.1"
+bytes = "1"
+
 # Note: no direct `rand_core` dependency.
 #
 # The codebase only needs `OsRng` for `ssh-key` and `pgp` key generation,
