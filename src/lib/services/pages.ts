@@ -64,7 +64,13 @@ import {
 /**
  * Page categories for sidebar grouping.
  */
-export type PageCategory = 'formatters' | 'encoders' | 'generators' | 'text' | 'network';
+export type PageCategory =
+	| 'formatters'
+	| 'encoders'
+	| 'converters'
+	| 'generators'
+	| 'text'
+	| 'network';
 
 export interface PageTab {
 	readonly id: string;
@@ -319,7 +325,7 @@ export const PAGES: readonly PageDefinition[] = [
 		icon: CalendarClock,
 		description: 'Convert between Unix, ISO, RFC formats with multi-timezone support',
 		color: 'text-amber-600',
-		category: 'generators',
+		category: 'converters',
 	},
 	{
 		id: 'number-base-converter',
@@ -329,7 +335,7 @@ export const PAGES: readonly PageDefinition[] = [
 		description:
 			'Convert between binary, octal, decimal, and hex with bitwise operations and IEEE 754 view',
 		color: 'text-orange-600',
-		category: 'generators',
+		category: 'converters',
 	},
 	{
 		id: 'image-converter',
@@ -338,7 +344,7 @@ export const PAGES: readonly PageDefinition[] = [
 		icon: Aperture,
 		description: 'Convert and compress images (PNG / JPEG / WebP) with resize and rotation',
 		color: 'text-pink-600',
-		category: 'generators',
+		category: 'converters',
 	},
 	{
 		id: 'lorem-ipsum',
@@ -441,7 +447,7 @@ export const PAGES: readonly PageDefinition[] = [
 		description:
 			'Convert between IPv4 and IPv6 with IPv4-mapped / 6to4 / Teredo embeddings and notation normalizer',
 		color: 'text-sky-600',
-		category: 'network',
+		category: 'converters',
 	},
 	{
 		id: 'mac-lookup',
@@ -509,7 +515,7 @@ export const PAGES: readonly PageDefinition[] = [
 	},
 	{
 		id: 'tls-inspector',
-		title: 'SSL / TLS Inspector',
+		title: 'TLS Inspector',
 		url: '/tls-inspector',
 		icon: Lock,
 		description: 'Inspect TLS handshake details and certificate chain for any host:port',
@@ -598,6 +604,14 @@ export const CATEGORIES: readonly CategoryInfo[] = [
 		defaultOpen: true,
 		borderClass: 'border-success/40',
 		iconClass: 'text-success',
+	},
+	{
+		id: 'converters',
+		label: 'Converters',
+		icon: ArrowRightLeft,
+		defaultOpen: true,
+		borderClass: 'border-violet-500/40',
+		iconClass: 'text-violet-500',
 	},
 	{
 		id: 'generators',
