@@ -50,6 +50,7 @@ mod ast;
 mod dns_lookup;
 mod file_inspect;
 mod generators;
+mod hex_editor;
 #[cfg(target_os = "macos")]
 mod menu;
 mod network;
@@ -482,6 +483,9 @@ pub fn run() {
             websocket::ws_close,
             dns_lookup::dns_lookup,
             file_inspect::file_inspect,
+            hex_editor::hex_open,
+            hex_editor::hex_read,
+            hex_editor::hex_save,
             tls_inspect::tls_inspect,
             webhook::webhook_start,
             webhook::webhook_stop,
