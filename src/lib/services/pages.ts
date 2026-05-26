@@ -22,6 +22,7 @@ import {
 	FileCode,
 	FileDiff,
 	FileJson2,
+	FileSearch,
 	FileText,
 	FileType,
 	Fingerprint,
@@ -29,6 +30,7 @@ import {
 	GitCompare,
 	Globe,
 	Globe2,
+	HardDrive,
 	Hash,
 	House,
 	Inbox,
@@ -70,7 +72,8 @@ export type PageCategory =
 	| 'converters'
 	| 'generators'
 	| 'text'
-	| 'network';
+	| 'network'
+	| 'files';
 
 export interface PageTab {
 	readonly id: string;
@@ -541,6 +544,15 @@ export const PAGES: readonly PageDefinition[] = [
 		category: 'network',
 	},
 	{
+		id: 'file-inspector',
+		title: 'File Inspector',
+		url: '/file-inspector',
+		icon: FileSearch,
+		description: 'Inspect file metadata, MIME, hashes, EXIF, and preview content',
+		color: 'text-amber-600',
+		category: 'files',
+	},
+	{
 		id: 'settings',
 		title: 'Settings',
 		url: '/settings',
@@ -636,6 +648,14 @@ export const CATEGORIES: readonly CategoryInfo[] = [
 		defaultOpen: true,
 		borderClass: 'border-destructive/40',
 		iconClass: 'text-destructive',
+	},
+	{
+		id: 'files',
+		label: 'Files',
+		icon: HardDrive,
+		defaultOpen: true,
+		borderClass: 'border-amber-500/40',
+		iconClass: 'text-amber-500',
 	},
 ];
 
