@@ -21,6 +21,7 @@ import {
 	FileDiff,
 	FileJson2,
 	FileText,
+	FileType,
 	Fingerprint,
 	GitBranch,
 	GitCompare,
@@ -452,6 +453,15 @@ export const PAGES: readonly PageDefinition[] = [
 		icon: Radar,
 		description: 'Scan networks for open ports and services',
 		color: 'text-rose-500',
+		category: 'network',
+	},
+	{
+		id: 'mime-types',
+		title: 'MIME Type Explorer',
+		url: '/mime-types',
+		icon: FileType,
+		description: 'Bidirectional MIME type / extension lookup with magic bytes and charset info',
+		color: 'text-emerald-700',
 		category: 'network',
 	},
 	{
