@@ -121,7 +121,7 @@ export const Route = createFileRoute('/tls-inspector')({
 });
 
 function TlsInspectorPage() {
-	useDocumentTitle('SSL / TLS Inspector');
+	useDocumentTitle('TLS Inspector');
 
 	const { value: options, patch } = useTlsInspectorOptions();
 	const { host, port, sni, timeoutMs } = options;
