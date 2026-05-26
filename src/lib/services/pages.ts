@@ -507,6 +507,15 @@ export const PAGES: readonly PageDefinition[] = [
 		category: 'network',
 	},
 	{
+		id: 'tls-inspector',
+		title: 'SSL / TLS Inspector',
+		url: '/tls-inspector',
+		icon: Lock,
+		description: 'Inspect TLS handshake details and certificate chain for any host:port',
+		color: 'text-purple-700',
+		category: 'network',
+	},
+	{
 		id: 'websocket-tester',
 		title: 'WebSocket Tester',
 		url: '/websocket-tester',
