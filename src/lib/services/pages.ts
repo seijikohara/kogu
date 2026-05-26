@@ -46,6 +46,7 @@ import {
 	Radar,
 	Regex,
 	Search,
+	Send,
 	Settings,
 	Shield,
 	ShieldCheck,
@@ -480,9 +481,17 @@ export const PAGES: readonly PageDefinition[] = [
 		title: 'HTTP Status Codes',
 		url: '/http-status-codes',
 		icon: BookOpen,
-		description:
-			'Searchable HTTP status code reference with RFC citations and misuse warnings',
+		description: 'Searchable HTTP status code reference with RFC citations and misuse warnings',
 		color: 'text-violet-600',
+		category: 'network',
+	},
+	{
+		id: 'rest-client',
+		title: 'HTTP REST Client',
+		url: '/rest-client',
+		icon: Send,
+		description: 'Build and send HTTP requests; view formatted responses',
+		color: 'text-blue-700',
 		category: 'network',
 	},
 	{

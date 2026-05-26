@@ -21,6 +21,7 @@ import { Route as SqlFormatterRouteImport } from './routes/sql-formatter'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as SemverToolsRouteImport } from './routes/semver-tools'
 import { Route as RsaToolsRouteImport } from './routes/rsa-tools'
+import { Route as RestClientRouteImport } from './routes/rest-client'
 import { Route as RegexTesterRouteImport } from './routes/regex-tester'
 import { Route as QrCodeGeneratorRouteImport } from './routes/qr-code-generator'
 import { Route as PasswordGeneratorRouteImport } from './routes/password-generator'
@@ -107,6 +108,11 @@ const SemverToolsRoute = SemverToolsRouteImport.update({
 const RsaToolsRoute = RsaToolsRouteImport.update({
   id: '/rsa-tools',
   path: '/rsa-tools',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RestClientRoute = RestClientRouteImport.update({
+  id: '/rest-client',
+  path: '/rest-client',
   getParentRoute: () => rootRouteImport,
 } as any)
 const RegexTesterRoute = RegexTesterRouteImport.update({
@@ -273,6 +279,7 @@ export interface FileRoutesByFullPath {
   '/password-generator': typeof PasswordGeneratorRoute
   '/qr-code-generator': typeof QrCodeGeneratorRoute
   '/regex-tester': typeof RegexTesterRoute
+  '/rest-client': typeof RestClientRoute
   '/rsa-tools': typeof RsaToolsRoute
   '/semver-tools': typeof SemverToolsRoute
   '/settings': typeof SettingsRoute
@@ -314,6 +321,7 @@ export interface FileRoutesByTo {
   '/password-generator': typeof PasswordGeneratorRoute
   '/qr-code-generator': typeof QrCodeGeneratorRoute
   '/regex-tester': typeof RegexTesterRoute
+  '/rest-client': typeof RestClientRoute
   '/rsa-tools': typeof RsaToolsRoute
   '/semver-tools': typeof SemverToolsRoute
   '/settings': typeof SettingsRoute
@@ -356,6 +364,7 @@ export interface FileRoutesById {
   '/password-generator': typeof PasswordGeneratorRoute
   '/qr-code-generator': typeof QrCodeGeneratorRoute
   '/regex-tester': typeof RegexTesterRoute
+  '/rest-client': typeof RestClientRoute
   '/rsa-tools': typeof RsaToolsRoute
   '/semver-tools': typeof SemverToolsRoute
   '/settings': typeof SettingsRoute
@@ -399,6 +408,7 @@ export interface FileRouteTypes {
     | '/password-generator'
     | '/qr-code-generator'
     | '/regex-tester'
+    | '/rest-client'
     | '/rsa-tools'
     | '/semver-tools'
     | '/settings'
@@ -440,6 +450,7 @@ export interface FileRouteTypes {
     | '/password-generator'
     | '/qr-code-generator'
     | '/regex-tester'
+    | '/rest-client'
     | '/rsa-tools'
     | '/semver-tools'
     | '/settings'
@@ -481,6 +492,7 @@ export interface FileRouteTypes {
     | '/password-generator'
     | '/qr-code-generator'
     | '/regex-tester'
+    | '/rest-client'
     | '/rsa-tools'
     | '/semver-tools'
     | '/settings'
@@ -523,6 +535,7 @@ export interface RootRouteChildren {
   PasswordGeneratorRoute: typeof PasswordGeneratorRoute
   QrCodeGeneratorRoute: typeof QrCodeGeneratorRoute
   RegexTesterRoute: typeof RegexTesterRoute
+  RestClientRoute: typeof RestClientRoute
   RsaToolsRoute: typeof RsaToolsRoute
   SemverToolsRoute: typeof SemverToolsRoute
   SettingsRoute: typeof SettingsRoute
@@ -621,6 +634,13 @@ declare module '@tanstack/react-router' {
       path: '/rsa-tools'
       fullPath: '/rsa-tools'
       preLoaderRoute: typeof RsaToolsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/rest-client': {
+      id: '/rest-client'
+      path: '/rest-client'
+      fullPath: '/rest-client'
+      preLoaderRoute: typeof RestClientRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/regex-tester': {
@@ -843,6 +863,7 @@ const rootRouteChildren: RootRouteChildren = {
   PasswordGeneratorRoute: PasswordGeneratorRoute,
   QrCodeGeneratorRoute: QrCodeGeneratorRoute,
   RegexTesterRoute: RegexTesterRoute,
+  RestClientRoute: RestClientRoute,
   RsaToolsRoute: RsaToolsRoute,
   SemverToolsRoute: SemverToolsRoute,
   SettingsRoute: SettingsRoute,
