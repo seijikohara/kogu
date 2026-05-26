@@ -27,6 +27,7 @@ import { Route as PasswordGeneratorRouteImport } from './routes/password-generat
 import { Route as NumberBaseConverterRouteImport } from './routes/number-base-converter';
 import { Route as NetworkScannerRouteImport } from './routes/network-scanner';
 import { Route as NetworkInterfacesRouteImport } from './routes/network-interfaces';
+import { Route as MimeTypesRouteImport } from './routes/mime-types';
 import { Route as MarkdownEditorRouteImport } from './routes/markdown-editor';
 import { Route as LoremIpsumRouteImport } from './routes/lorem-ipsum';
 import { Route as ListComparerRouteImport } from './routes/list-comparer';
@@ -134,6 +135,11 @@ const NetworkScannerRoute = NetworkScannerRouteImport.update({
 const NetworkInterfacesRoute = NetworkInterfacesRouteImport.update({
 	id: '/network-interfaces',
 	path: '/network-interfaces',
+	getParentRoute: () => rootRouteImport,
+} as any);
+const MimeTypesRoute = MimeTypesRouteImport.update({
+	id: '/mime-types',
+	path: '/mime-types',
 	getParentRoute: () => rootRouteImport,
 } as any);
 const MarkdownEditorRoute = MarkdownEditorRouteImport.update({
@@ -246,6 +252,7 @@ export interface FileRoutesByFullPath {
 	'/list-comparer': typeof ListComparerRoute;
 	'/lorem-ipsum': typeof LoremIpsumRoute;
 	'/markdown-editor': typeof MarkdownEditorRoute;
+	'/mime-types': typeof MimeTypesRoute;
 	'/network-interfaces': typeof NetworkInterfacesRoute;
 	'/network-scanner': typeof NetworkScannerRoute;
 	'/number-base-converter': typeof NumberBaseConverterRoute;
@@ -284,6 +291,7 @@ export interface FileRoutesByTo {
 	'/list-comparer': typeof ListComparerRoute;
 	'/lorem-ipsum': typeof LoremIpsumRoute;
 	'/markdown-editor': typeof MarkdownEditorRoute;
+	'/mime-types': typeof MimeTypesRoute;
 	'/network-interfaces': typeof NetworkInterfacesRoute;
 	'/network-scanner': typeof NetworkScannerRoute;
 	'/number-base-converter': typeof NumberBaseConverterRoute;
@@ -323,6 +331,7 @@ export interface FileRoutesById {
 	'/list-comparer': typeof ListComparerRoute;
 	'/lorem-ipsum': typeof LoremIpsumRoute;
 	'/markdown-editor': typeof MarkdownEditorRoute;
+	'/mime-types': typeof MimeTypesRoute;
 	'/network-interfaces': typeof NetworkInterfacesRoute;
 	'/network-scanner': typeof NetworkScannerRoute;
 	'/number-base-converter': typeof NumberBaseConverterRoute;
@@ -363,6 +372,7 @@ export interface FileRouteTypes {
 		| '/list-comparer'
 		| '/lorem-ipsum'
 		| '/markdown-editor'
+		| '/mime-types'
 		| '/network-interfaces'
 		| '/network-scanner'
 		| '/number-base-converter'
@@ -401,6 +411,7 @@ export interface FileRouteTypes {
 		| '/list-comparer'
 		| '/lorem-ipsum'
 		| '/markdown-editor'
+		| '/mime-types'
 		| '/network-interfaces'
 		| '/network-scanner'
 		| '/number-base-converter'
@@ -439,6 +450,7 @@ export interface FileRouteTypes {
 		| '/list-comparer'
 		| '/lorem-ipsum'
 		| '/markdown-editor'
+		| '/mime-types'
 		| '/network-interfaces'
 		| '/network-scanner'
 		| '/number-base-converter'
@@ -478,6 +490,7 @@ export interface RootRouteChildren {
 	ListComparerRoute: typeof ListComparerRoute;
 	LoremIpsumRoute: typeof LoremIpsumRoute;
 	MarkdownEditorRoute: typeof MarkdownEditorRoute;
+	MimeTypesRoute: typeof MimeTypesRoute;
 	NetworkInterfacesRoute: typeof NetworkInterfacesRoute;
 	NetworkScannerRoute: typeof NetworkScannerRoute;
 	NumberBaseConverterRoute: typeof NumberBaseConverterRoute;
@@ -624,6 +637,13 @@ declare module '@tanstack/react-router' {
 			path: '/network-interfaces';
 			fullPath: '/network-interfaces';
 			preLoaderRoute: typeof NetworkInterfacesRouteImport;
+			parentRoute: typeof rootRouteImport;
+		};
+		'/mime-types': {
+			id: '/mime-types';
+			path: '/mime-types';
+			fullPath: '/mime-types';
+			preLoaderRoute: typeof MimeTypesRouteImport;
 			parentRoute: typeof rootRouteImport;
 		};
 		'/markdown-editor': {
@@ -774,6 +794,7 @@ const rootRouteChildren: RootRouteChildren = {
 	ListComparerRoute: ListComparerRoute,
 	LoremIpsumRoute: LoremIpsumRoute,
 	MarkdownEditorRoute: MarkdownEditorRoute,
+	MimeTypesRoute: MimeTypesRoute,
 	NetworkInterfacesRoute: NetworkInterfacesRoute,
 	NetworkScannerRoute: NetworkScannerRoute,
 	NumberBaseConverterRoute: NumberBaseConverterRoute,
