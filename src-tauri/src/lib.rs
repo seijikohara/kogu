@@ -466,6 +466,8 @@ pub fn run() {
             cancel_discovery,
             get_discovery_methods,
             check_discovery_privilege,
+            network::oui::lookup_oui_vendor,
+            network::oui::get_oui_database_info,
             settings::get_settings,
             settings::update_settings,
             settings::reset_settings,

@@ -60,7 +60,7 @@ pub mod discovery;
 pub mod interfaces;
 mod llmnr;
 mod netbios;
-mod oui;
+pub mod oui;
 mod ports;
 pub mod scanner;
 mod snmp;

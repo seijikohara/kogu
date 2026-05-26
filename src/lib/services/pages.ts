@@ -10,6 +10,7 @@ import {
 	Binary,
 	BookOpen,
 	Braces,
+	Cable,
 	Calculator,
 	CalendarClock,
 	CaseSensitive,
@@ -436,6 +437,15 @@ export const PAGES: readonly PageDefinition[] = [
 		description:
 			'Convert between IPv4 and IPv6 with IPv4-mapped / 6to4 / Teredo embeddings and notation normalizer',
 		color: 'text-sky-600',
+		category: 'network',
+	},
+	{
+		id: 'mac-lookup',
+		title: 'MAC Address Lookup',
+		url: '/mac-lookup',
+		icon: Cable,
+		description: 'Identify MAC address vendor (OUI) and convert between notations',
+		color: 'text-stone-700',
 		category: 'network',
 	},
 	{
