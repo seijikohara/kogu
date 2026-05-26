@@ -8,6 +8,7 @@ import {
 	ArrowRightLeft,
 	BadgeCheck,
 	Binary,
+	BookOpen,
 	Braces,
 	Calculator,
 	CalendarClock,
@@ -462,6 +463,16 @@ export const PAGES: readonly PageDefinition[] = [
 		icon: FileType,
 		description: 'Bidirectional MIME type / extension lookup with magic bytes and charset info',
 		color: 'text-emerald-700',
+		category: 'network',
+	},
+	{
+		id: 'http-status-codes',
+		title: 'HTTP Status Codes',
+		url: '/http-status-codes',
+		icon: BookOpen,
+		description:
+			'Searchable HTTP status code reference with RFC citations and misuse warnings',
+		color: 'text-violet-600',
 		category: 'network',
 	},
 	{
