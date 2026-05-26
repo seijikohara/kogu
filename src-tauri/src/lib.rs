@@ -54,6 +54,7 @@ mod menu;
 mod network;
 mod rest_client;
 mod settings;
+mod websocket;
 
 use tauri::Manager;
 #[cfg(any(target_os = "macos", target_os = "windows"))]
@@ -401,6 +402,7 @@ pub fn run() {
     builder
         .manage(WorkerProcessState::new())
         .manage(NetworkScannerState::new())
+        .manage(websocket::WebSocketState::new())
         .setup(|app| {
             // Windows: enable Snap Layout support via the decorum overlay titlebar.
             // The same call on macOS injects transparent <div data-tauri-drag-region>
@@ -471,6 +473,9 @@ pub fn run() {
             network::oui::lookup_oui_vendor,
             network::oui::get_oui_database_info,
             rest_client::rest_client_send,
+            websocket::ws_connect,
+            websocket::ws_send,
+            websocket::ws_close,
             dns_lookup::dns_lookup,
             settings::get_settings,
             settings::update_settings,

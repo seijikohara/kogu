@@ -41,6 +41,7 @@ import {
 	Network,
 	Pencil,
 	Play,
+	Plug,
 	QrCode,
 	Quote,
 	Radar,
@@ -503,6 +504,15 @@ export const PAGES: readonly PageDefinition[] = [
 		icon: Send,
 		description: 'Build and send HTTP requests; view formatted responses',
 		color: 'text-blue-700',
+		category: 'network',
+	},
+	{
+		id: 'websocket-tester',
+		title: 'WebSocket Tester',
+		url: '/websocket-tester',
+		icon: Plug,
+		description: 'Connect to ws:// or wss:// endpoints with a chat-style frame log',
+		color: 'text-fuchsia-700',
 		category: 'network',
 	},
 	{

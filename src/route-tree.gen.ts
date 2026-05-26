@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root';
 import { Route as YamlFormatterRouteImport } from './routes/yaml-formatter';
 import { Route as XmlFormatterRouteImport } from './routes/xml-formatter';
 import { Route as X509DecoderRouteImport } from './routes/x509-decoder';
+import { Route as WebsocketTesterRouteImport } from './routes/websocket-tester';
 import { Route as UuidGeneratorRouteImport } from './routes/uuid-generator';
 import { Route as UrlEncoderRouteImport } from './routes/url-encoder';
 import { Route as StringCompressorRouteImport } from './routes/string-compressor';
@@ -64,6 +65,11 @@ const XmlFormatterRoute = XmlFormatterRouteImport.update({
 const X509DecoderRoute = X509DecoderRouteImport.update({
 	id: '/x509-decoder',
 	path: '/x509-decoder',
+	getParentRoute: () => rootRouteImport,
+} as any);
+const WebsocketTesterRoute = WebsocketTesterRouteImport.update({
+	id: '/websocket-tester',
+	path: '/websocket-tester',
 	getParentRoute: () => rootRouteImport,
 } as any);
 const UuidGeneratorRoute = UuidGeneratorRouteImport.update({
@@ -296,6 +302,7 @@ export interface FileRoutesByFullPath {
 	'/string-compressor': typeof StringCompressorRoute;
 	'/url-encoder': typeof UrlEncoderRoute;
 	'/uuid-generator': typeof UuidGeneratorRoute;
+	'/websocket-tester': typeof WebsocketTesterRoute;
 	'/x509-decoder': typeof X509DecoderRoute;
 	'/xml-formatter': typeof XmlFormatterRoute;
 	'/yaml-formatter': typeof YamlFormatterRoute;
@@ -339,6 +346,7 @@ export interface FileRoutesByTo {
 	'/string-compressor': typeof StringCompressorRoute;
 	'/url-encoder': typeof UrlEncoderRoute;
 	'/uuid-generator': typeof UuidGeneratorRoute;
+	'/websocket-tester': typeof WebsocketTesterRoute;
 	'/x509-decoder': typeof X509DecoderRoute;
 	'/xml-formatter': typeof XmlFormatterRoute;
 	'/yaml-formatter': typeof YamlFormatterRoute;
@@ -383,6 +391,7 @@ export interface FileRoutesById {
 	'/string-compressor': typeof StringCompressorRoute;
 	'/url-encoder': typeof UrlEncoderRoute;
 	'/uuid-generator': typeof UuidGeneratorRoute;
+	'/websocket-tester': typeof WebsocketTesterRoute;
 	'/x509-decoder': typeof X509DecoderRoute;
 	'/xml-formatter': typeof XmlFormatterRoute;
 	'/yaml-formatter': typeof YamlFormatterRoute;
@@ -428,6 +437,7 @@ export interface FileRouteTypes {
 		| '/string-compressor'
 		| '/url-encoder'
 		| '/uuid-generator'
+		| '/websocket-tester'
 		| '/x509-decoder'
 		| '/xml-formatter'
 		| '/yaml-formatter';
@@ -471,6 +481,7 @@ export interface FileRouteTypes {
 		| '/string-compressor'
 		| '/url-encoder'
 		| '/uuid-generator'
+		| '/websocket-tester'
 		| '/x509-decoder'
 		| '/xml-formatter'
 		| '/yaml-formatter';
@@ -514,6 +525,7 @@ export interface FileRouteTypes {
 		| '/string-compressor'
 		| '/url-encoder'
 		| '/uuid-generator'
+		| '/websocket-tester'
 		| '/x509-decoder'
 		| '/xml-formatter'
 		| '/yaml-formatter';
@@ -558,6 +570,7 @@ export interface RootRouteChildren {
 	StringCompressorRoute: typeof StringCompressorRoute;
 	UrlEncoderRoute: typeof UrlEncoderRoute;
 	UuidGeneratorRoute: typeof UuidGeneratorRoute;
+	WebsocketTesterRoute: typeof WebsocketTesterRoute;
 	X509DecoderRoute: typeof X509DecoderRoute;
 	XmlFormatterRoute: typeof XmlFormatterRoute;
 	YamlFormatterRoute: typeof YamlFormatterRoute;
@@ -584,6 +597,13 @@ declare module '@tanstack/react-router' {
 			path: '/x509-decoder';
 			fullPath: '/x509-decoder';
 			preLoaderRoute: typeof X509DecoderRouteImport;
+			parentRoute: typeof rootRouteImport;
+		};
+		'/websocket-tester': {
+			id: '/websocket-tester';
+			path: '/websocket-tester';
+			fullPath: '/websocket-tester';
+			preLoaderRoute: typeof WebsocketTesterRouteImport;
 			parentRoute: typeof rootRouteImport;
 		};
 		'/uuid-generator': {
@@ -894,6 +914,7 @@ const rootRouteChildren: RootRouteChildren = {
 	StringCompressorRoute: StringCompressorRoute,
 	UrlEncoderRoute: UrlEncoderRoute,
 	UuidGeneratorRoute: UuidGeneratorRoute,
+	WebsocketTesterRoute: WebsocketTesterRoute,
 	X509DecoderRoute: X509DecoderRoute,
 	XmlFormatterRoute: XmlFormatterRoute,
 	YamlFormatterRoute: YamlFormatterRoute,
