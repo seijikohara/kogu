@@ -52,6 +52,7 @@ mod dns_lookup;
 mod duplicate_finder;
 mod file_inspect;
 mod file_watch;
+mod folder_tree;
 mod generators;
 mod hash_batch;
 mod hex_editor;
@@ -496,6 +497,8 @@ pub fn run() {
             hash_batch::hash_file_batch,
             file_watch::file_watch_start,
             file_watch::file_watch_stop,
+            folder_tree::folder_walk,
+            folder_tree::folder_largest_files,
             hex_editor::hex_open,
             hex_editor::hex_read,
             hex_editor::hex_save,
