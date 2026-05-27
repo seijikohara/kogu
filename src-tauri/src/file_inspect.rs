@@ -71,12 +71,14 @@ fn unix_mode_bits(metadata: &fs::Metadata) -> u32 {
     metadata.permissions().mode()
 }
 
+#[cfg(unix)]
 fn format_octal(mode: u32) -> String {
     // Strip file-type bits and keep the permission triplet plus the
     // sticky / setuid / setgid bits in the leading digit.
     format!("0{:o}", mode & 0o7777)
 }
 
+#[cfg(unix)]
 fn format_rwx(mode: u32) -> String {
     let triplet = |bits: u32,
                    exec_bit: u32,
@@ -192,7 +194,7 @@ pub fn file_inspect(path: String) -> Result<FileInspectResult, String> {
     })
 }
 
-#[cfg(test)]
+#[cfg(all(test, unix))]
 mod tests {
     use super::*;
 
