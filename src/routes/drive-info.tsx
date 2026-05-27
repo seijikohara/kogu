@@ -127,8 +127,15 @@ function DriveInfoPage() {
 			onShowRailChange={setShowRail}
 			valid={loaded ? true : null}
 			error={error ?? undefined}
-			toolbarLeading={
-				<Button variant="outline" size="sm" onClick={refresh} disabled={loading}>
+			toolbarTrailing={
+				<Button
+					variant="ghost"
+					size="sm"
+					className="h-8 gap-1.5 px-2.5 text-xs"
+					onClick={refresh}
+					disabled={loading}
+					aria-label="Refresh drives"
+				>
 					{loading ? (
 						<Loader2 className="h-3.5 w-3.5 animate-spin" />
 					) : (

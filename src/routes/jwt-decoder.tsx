@@ -197,7 +197,10 @@ function JwtDecoderPage() {
 
 								<Card density="compact">
 									<CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
-										<CardTitle className="text-sm font-medium text-destructive">Header</CardTitle>
+										<CardTitle className="flex items-center gap-2 text-sm font-medium">
+											<span className="h-2 w-2 rounded-full bg-destructive" aria-hidden="true" />
+											Header
+										</CardTitle>
 										<CopyButton
 											text={formatJson(decoded.header)}
 											toastLabel="Header"
@@ -234,7 +237,10 @@ function JwtDecoderPage() {
 
 								<Card density="compact">
 									<CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
-										<CardTitle className="text-sm font-medium text-primary">Payload</CardTitle>
+										<CardTitle className="flex items-center gap-2 text-sm font-medium">
+											<span className="h-2 w-2 rounded-full bg-primary" aria-hidden="true" />
+											Payload
+										</CardTitle>
 										<CopyButton
 											text={formatJson(decoded.payload)}
 											toastLabel="Payload"
@@ -288,7 +294,10 @@ function JwtDecoderPage() {
 
 								<Card density="compact">
 									<CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
-										<CardTitle className="text-sm font-medium text-info">Signature</CardTitle>
+										<CardTitle className="flex items-center gap-2 text-sm font-medium">
+											<span className="h-2 w-2 rounded-full bg-info" aria-hidden="true" />
+											Signature
+										</CardTitle>
 										<CopyButton
 											text={decoded.signature}
 											toastLabel="Signature"
