@@ -27,7 +27,7 @@ import {
 	humanSize,
 	onScanProgress,
 	pickKeeper,
-	replaceWithSymlink,
+	replaceWithLink,
 	scanForDuplicates,
 	selectDeletablePaths,
 	type DuplicateEntry,
@@ -37,7 +37,7 @@ import {
 	type ScanProgress,
 	type ScanResult,
 } from '@/lib/services/duplicate-finder';
-import { getPlatform } from '@/lib/services/platform';
+import { getPlatform, type Platform } from '@/lib/services/platform';
 import { createToolOptionsStore, usePersistedRail } from '@/lib/stores';
 
 // Size threshold sliders use a log-style mapping so the user can pick a
@@ -129,13 +129,15 @@ function dropDeletedFromResult(prev: ScanResult, deletedPaths: readonly string[]
 }
 
 /**
- * Replace every `selected` path with a symlink pointing at the keeper
- * for its duplicate group. The keeper is the first entry whose path is
- * not in `selected`, which mirrors the backend's shortest-path-first
- * ordering. Returns the number of successful replacements and a list of
- * per-path error messages so the caller can surface both.
+ * Replace every `selected` path with a link pointing at the keeper for
+ * its duplicate group. The link kind is platform-dependent (symlink on
+ * Unix, hard link on Windows) and resolved entirely on the Rust side.
+ * The keeper is the first entry whose path is not in `selected`, which
+ * mirrors the backend's shortest-path-first ordering. Returns the
+ * number of successful replacements and a list of per-path error
+ * messages so the caller can surface both.
  */
-async function runSymlinkReplacement(
+async function runLinkReplacement(
 	groups: readonly DuplicateGroup[],
 	selected: ReadonlySet<string>
 ): Promise<{ readonly replaced: number; readonly errors: readonly string[] }> {
@@ -157,7 +159,7 @@ async function runSymlinkReplacement(
 			continue;
 		}
 		try {
-			await replaceWithSymlink(source, keeper.path);
+			await replaceWithLink(source, keeper.path);
 			replaced += 1;
 		} catch (e) {
 			const message = e instanceof Error ? e.message : String(e);
@@ -179,18 +181,20 @@ function DuplicateFinderPage() {
 	const [progress, setProgress] = useState<ScanProgress | null>(null);
 	const [selected, setSelected] = useState<ReadonlySet<string>>(new Set());
 	const [showRail, setShowRail] = usePersistedRail('duplicate-finder');
-	const [supportsSymlink, setSupportsSymlink] = useState(true);
+	const [platform, setPlatform] = useState<Platform>('unknown');
 
 	const minSize = MIN_SIZE_STEPS[prefs.minSizeIdx] ?? MIN_SIZE_STEPS[3] ?? 1024;
 	const maxSize = MAX_SIZE_STEPS[prefs.maxSizeIdx] ?? MAX_SIZE_STEPS[4] ?? 1024 * 1024 * 1024;
 
-	// Decide symlink support once at mount; Windows shows the action as
-	// disabled with a tooltip explaining why.
+	// Resolve platform once at mount so the link action uses an
+	// OS-appropriate verb (symlink on Unix, hard link on Windows).
 	useEffect(() => {
 		getPlatform()
-			.then((p) => setSupportsSymlink(p !== 'windows'))
-			.catch(() => setSupportsSymlink(true));
+			.then(setPlatform)
+			.catch(() => undefined);
 	}, []);
+
+	const linkKind: 'symlink' | 'hardlink' = platform === 'windows' ? 'hardlink' : 'symlink';
 
 	// Subscribe to progress events for the duration of the page. The
 	// unlisten function is captured in a ref so it remains stable across
@@ -310,14 +314,15 @@ function DuplicateFinderPage() {
 		}
 	}, [selected]);
 
-	const handleReplaceWithSymlink = useCallback(async () => {
+	const handleReplaceWithLink = useCallback(async () => {
 		if (!result || selected.size === 0) {
 			toast.error('No files selected');
 			return;
 		}
-		const { replaced, errors } = await runSymlinkReplacement(result.groups, selected);
+		const { replaced, errors } = await runLinkReplacement(result.groups, selected);
+		const linkNoun = linkKind === 'hardlink' ? 'hard links' : 'symlinks';
 		if (replaced > 0) {
-			toast.success(`Replaced ${replaced} file${replaced === 1 ? '' : 's'} with symlinks`);
+			toast.success(`Replaced ${replaced} file${replaced === 1 ? '' : 's'} with ${linkNoun}`);
 		}
 		if (errors.length > 0) {
 			toast.error(`${errors.length} failure${errors.length === 1 ? '' : 's'}`, {
@@ -325,7 +330,7 @@ function DuplicateFinderPage() {
 			});
 		}
 		setSelected(new Set());
-	}, [result, selected]);
+	}, [result, selected, linkKind]);
 
 	const handleClear = useCallback(() => {
 		setResult(null);
@@ -475,16 +480,16 @@ function DuplicateFinderPage() {
 							<Button
 								variant="outline"
 								size="sm"
-								onClick={handleReplaceWithSymlink}
-								disabled={!supportsSymlink || selected.size === 0}
+								onClick={handleReplaceWithLink}
+								disabled={selected.size === 0}
 								title={
-									supportsSymlink
-										? 'Replace selected duplicates with symlinks to the kept file'
-										: 'Symlinks are not supported on Windows'
+									linkKind === 'hardlink'
+										? 'Replace selected duplicates with hard links to the kept file (same volume only)'
+										: 'Replace selected duplicates with symlinks to the kept file'
 								}
 							>
 								<Link2 className="h-3.5 w-3.5" />
-								Replace with symlink
+								{linkKind === 'hardlink' ? 'Replace with hard link' : 'Replace with symlink'}
 							</Button>
 						</div>
 					</FormSection>
@@ -504,7 +509,9 @@ function DuplicateFinderPage() {
 						<FormInfo>
 							Files are bucketed by size, then by the SHA-256 / BLAKE3 hash of the first 8 KiB, then
 							by their full-content hash. Scanning, partial hashing, and full hashing all run
-							locally; nothing leaves your machine. Symlink replacement is Unix-only.
+							locally; nothing leaves your machine. Replace-with-link uses a symbolic link on macOS
+							and Linux and a hard link on Windows. Hard links cannot span volumes, so the source
+							and kept file must share the same drive.
 						</FormInfo>
 					</FormSection>
 				</>

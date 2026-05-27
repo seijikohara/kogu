@@ -493,7 +493,7 @@ pub fn run() {
             dns_lookup::dns_lookup,
             duplicate_finder::duplicate_scan,
             duplicate_finder::duplicate_delete,
-            duplicate_finder::duplicate_replace_with_symlink,
+            duplicate_finder::duplicate_replace_with_link,
             drive_info::drives_list,
             drive_info::folder_size_scan,
             file_inspect::file_inspect,
