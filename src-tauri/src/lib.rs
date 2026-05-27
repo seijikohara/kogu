@@ -49,6 +49,7 @@
 mod archive_inspect;
 mod ast;
 mod dns_lookup;
+mod duplicate_finder;
 mod file_inspect;
 mod file_watch;
 mod generators;
@@ -488,6 +489,9 @@ pub fn run() {
             websocket::ws_send,
             websocket::ws_close,
             dns_lookup::dns_lookup,
+            duplicate_finder::duplicate_scan,
+            duplicate_finder::duplicate_delete,
+            duplicate_finder::duplicate_replace_with_symlink,
             file_inspect::file_inspect,
             hash_batch::hash_file_batch,
             file_watch::file_watch_start,
