@@ -13,6 +13,8 @@ import {
 import { InputOutputSplit } from '@/lib/components/layout';
 import { Rail } from '@/lib/components/ui/rail';
 import { useClipboardActions, useReportStats } from '@/lib/hooks';
+
+import { FormatterAboutFooter } from './formatter-about';
 import {
 	type CSharpOptions,
 	generateCode,
@@ -853,6 +855,8 @@ export function GenerateTabTemplate({
 						</FormCheckboxGroup>
 					</FormSection>
 				) : null}
+
+				<FormatterAboutFooter />
 			</Rail>
 
 			<InputOutputSplit

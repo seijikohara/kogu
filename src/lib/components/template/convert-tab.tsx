@@ -5,6 +5,8 @@ import type { EditorMode } from '@/lib/components/editor';
 import { InputOutputSplit } from '@/lib/components/layout';
 import { Rail } from '@/lib/components/ui/rail';
 
+import { FormatterAboutFooter } from './formatter-about';
+
 type ValidationResult = { valid: boolean | null } & Record<string, unknown>;
 type StatsResult = { input: string; valid: boolean | null; error: string } & Record<
 	string,
@@ -106,6 +108,7 @@ export function ConvertTab({
 			>
 				{renderFormatSection?.()}
 				{renderOptions?.()}
+				<FormatterAboutFooter />
 			</Rail>
 
 			<InputOutputSplit

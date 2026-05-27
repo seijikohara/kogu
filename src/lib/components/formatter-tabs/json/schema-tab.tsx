@@ -9,6 +9,8 @@ import { CodeEditor } from '@/lib/components/editor';
 import { FormCheckbox, FormCheckboxGroup, FormSection } from '@/lib/components/form';
 import { SplitPane } from '@/lib/components/layout';
 import { Rail } from '@/lib/components/ui/rail';
+
+import { FormatterAboutFooter } from '@/lib/components/template';
 import { Button } from '@/lib/components/ui/button';
 import { inferJsonSchema, parseJson, validateJson } from '@/lib/services/formatters';
 import { useJsonFormatterOptions } from '@/lib/stores';
@@ -280,6 +282,7 @@ export function SchemaTab({ input, onInputChange, onStatsChange }: SchemaTabProp
 						</p>
 					</div>
 				</FormSection>
+				<FormatterAboutFooter />
 			</Rail>
 
 			<SplitPane

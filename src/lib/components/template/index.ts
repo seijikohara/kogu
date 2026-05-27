@@ -17,3 +17,6 @@ export type { GenerateTabTemplateProps, TabStats as GenerateTabStats } from './g
 
 export { TabbedFormatterPage } from './tabbed-formatter-page';
 export type { TabbedFormatterPageProps, TabContentProps } from './tabbed-formatter-page';
+
+export { FormatterAboutFooter, FormatterAboutProvider } from './formatter-about';
+export type { FormatterAboutProviderProps, FormatterAboutValue } from './formatter-about';

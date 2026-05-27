@@ -1,6 +1,7 @@
 import { ArrowRightLeft, Code2, FileCheck, GitCompare, Play, Search } from 'lucide-react';
 import type { ReactNode } from 'react';
 
+import type { RelatedToolItem } from '@/lib/components/layout';
 import { ToolShell } from '@/lib/components/shell';
 import { useDocumentTitle } from '@/lib/hooks';
 import {
@@ -8,6 +9,8 @@ import {
 	type FormatterTabType,
 	type TabStats,
 } from '@/lib/hooks/use-formatter-page';
+
+import { FormatterAboutProvider } from './formatter-about';
 
 /**
  * Tab content props passed to renderTabContent.
@@ -49,6 +52,17 @@ interface TabbedFormatterPageProps<TStats> {
 	readonly renderStatusContent?: (liveStats: TStats | null) => ReactNode;
 	/** Render prop for tab content - receives tab props */
 	readonly renderTabContent: (props: TabContentProps) => ReactNode;
+	/**
+	 * Optional About text shown at the bottom of every tab's rail via the
+	 * shared `FormatterAboutFooter`. Skip if the formatter is too domain-
+	 * specific to summarize concisely.
+	 */
+	readonly aboutText?: ReactNode;
+	/**
+	 * Optional list of related tool routes shown above the About block.
+	 * Empty / omitted → no Related section is rendered.
+	 */
+	readonly relatedItems?: readonly RelatedToolItem[];
 }
 
 export function TabbedFormatterPage<TStats>({
@@ -57,6 +71,8 @@ export function TabbedFormatterPage<TStats>({
 	persistKey,
 	renderStatusContent,
 	renderTabContent,
+	aboutText,
+	relatedItems,
 }: TabbedFormatterPageProps<TStats>) {
 	const page = useFormatterPage<TStats>({ calculateStats, persistKey });
 
@@ -67,23 +83,25 @@ export function TabbedFormatterPage<TStats>({
 	};
 
 	return (
-		<ToolShell
-			layout="tabbed"
-			tabs={TABS}
-			activeTab={page.tabSync.activeTab}
-			onTabChange={handleTabChange}
-			valid={page.currentStats.valid}
-			error={page.currentStats.error}
-			statusContent={renderStatusContent ? renderStatusContent(page.liveStats) : null}
-			renderTabContent={(tab) =>
-				renderTabContent({
-					tab: tab as FormatterTabType,
-					input: page.sharedInput,
-					onInputChange: page.setSharedInput,
-					onStatsChange: page.handleStatsChange(tab as FormatterTabType),
-				})
-			}
-		/>
+		<FormatterAboutProvider value={{ aboutText, relatedItems }}>
+			<ToolShell
+				layout="tabbed"
+				tabs={TABS}
+				activeTab={page.tabSync.activeTab}
+				onTabChange={handleTabChange}
+				valid={page.currentStats.valid}
+				error={page.currentStats.error}
+				statusContent={renderStatusContent ? renderStatusContent(page.liveStats) : null}
+				renderTabContent={(tab) =>
+					renderTabContent({
+						tab: tab as FormatterTabType,
+						input: page.sharedInput,
+						onInputChange: page.setSharedInput,
+						onStatsChange: page.handleStatsChange(tab as FormatterTabType),
+					})
+				}
+			/>
+		</FormatterAboutProvider>
 	);
 }
 

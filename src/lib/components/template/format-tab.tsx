@@ -7,6 +7,8 @@ import { InputOutputSplit } from '@/lib/components/layout';
 import { Rail } from '@/lib/components/ui/rail';
 import { useClipboardActions, useReportStats } from '@/lib/hooks';
 
+import { FormatterAboutFooter } from './formatter-about';
+
 type FormatMode = 'format' | 'minify';
 
 interface TabStats {
@@ -105,6 +107,7 @@ export function FormatTabTemplate<TOptions>({
 					/>
 				</FormSection>
 				{renderOptions(options, setOptions)}
+				<FormatterAboutFooter />
 			</Rail>
 
 			<InputOutputSplit
