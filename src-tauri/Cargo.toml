@@ -94,6 +94,13 @@ hyper = { version = "1", features = ["server", "http1"] }
 http-body-util = "0.1"
 bytes = "1"
 
+# Archive Inspector
+zip = { version = "8", default-features = false, features = ["deflate", "bzip2"] }
+tar = "0.4"
+flate2 = "1"
+bzip2 = "0.6"
+xz2 = "0.1"
+
 # Note: no direct `rand_core` dependency.
 #
 # The codebase only needs `OsRng` for `ssh-key` and `pgp` key generation,

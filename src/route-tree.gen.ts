@@ -54,6 +54,7 @@ import { Route as CronExpressionBuilderRouteImport } from './routes/cron-express
 import { Route as CidrCalculatorRouteImport } from './routes/cidr-calculator';
 import { Route as BcryptGeneratorRouteImport } from './routes/bcrypt-generator';
 import { Route as Base64EncoderRouteImport } from './routes/base64-encoder';
+import { Route as ArchiveInspectorRouteImport } from './routes/archive-inspector';
 import { Route as IndexRouteImport } from './routes/index';
 
 const YamlFormatterRoute = YamlFormatterRouteImport.update({
@@ -281,6 +282,11 @@ const Base64EncoderRoute = Base64EncoderRouteImport.update({
 	path: '/base64-encoder',
 	getParentRoute: () => rootRouteImport,
 } as any);
+const ArchiveInspectorRoute = ArchiveInspectorRouteImport.update({
+	id: '/archive-inspector',
+	path: '/archive-inspector',
+	getParentRoute: () => rootRouteImport,
+} as any);
 const IndexRoute = IndexRouteImport.update({
 	id: '/',
 	path: '/',
@@ -289,6 +295,7 @@ const IndexRoute = IndexRouteImport.update({
 
 export interface FileRoutesByFullPath {
 	'/': typeof IndexRoute;
+	'/archive-inspector': typeof ArchiveInspectorRoute;
 	'/base64-encoder': typeof Base64EncoderRoute;
 	'/bcrypt-generator': typeof BcryptGeneratorRoute;
 	'/cidr-calculator': typeof CidrCalculatorRoute;
@@ -337,6 +344,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
 	'/': typeof IndexRoute;
+	'/archive-inspector': typeof ArchiveInspectorRoute;
 	'/base64-encoder': typeof Base64EncoderRoute;
 	'/bcrypt-generator': typeof BcryptGeneratorRoute;
 	'/cidr-calculator': typeof CidrCalculatorRoute;
@@ -386,6 +394,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
 	__root__: typeof rootRouteImport;
 	'/': typeof IndexRoute;
+	'/archive-inspector': typeof ArchiveInspectorRoute;
 	'/base64-encoder': typeof Base64EncoderRoute;
 	'/bcrypt-generator': typeof BcryptGeneratorRoute;
 	'/cidr-calculator': typeof CidrCalculatorRoute;
@@ -436,6 +445,7 @@ export interface FileRouteTypes {
 	fileRoutesByFullPath: FileRoutesByFullPath;
 	fullPaths:
 		| '/'
+		| '/archive-inspector'
 		| '/base64-encoder'
 		| '/bcrypt-generator'
 		| '/cidr-calculator'
@@ -484,6 +494,7 @@ export interface FileRouteTypes {
 	fileRoutesByTo: FileRoutesByTo;
 	to:
 		| '/'
+		| '/archive-inspector'
 		| '/base64-encoder'
 		| '/bcrypt-generator'
 		| '/cidr-calculator'
@@ -532,6 +543,7 @@ export interface FileRouteTypes {
 	id:
 		| '__root__'
 		| '/'
+		| '/archive-inspector'
 		| '/base64-encoder'
 		| '/bcrypt-generator'
 		| '/cidr-calculator'
@@ -581,6 +593,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
 	IndexRoute: typeof IndexRoute;
+	ArchiveInspectorRoute: typeof ArchiveInspectorRoute;
 	Base64EncoderRoute: typeof Base64EncoderRoute;
 	BcryptGeneratorRoute: typeof BcryptGeneratorRoute;
 	CidrCalculatorRoute: typeof CidrCalculatorRoute;
@@ -945,6 +958,13 @@ declare module '@tanstack/react-router' {
 			preLoaderRoute: typeof Base64EncoderRouteImport;
 			parentRoute: typeof rootRouteImport;
 		};
+		'/archive-inspector': {
+			id: '/archive-inspector';
+			path: '/archive-inspector';
+			fullPath: '/archive-inspector';
+			preLoaderRoute: typeof ArchiveInspectorRouteImport;
+			parentRoute: typeof rootRouteImport;
+		};
 		'/': {
 			id: '/';
 			path: '/';
@@ -957,6 +977,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
 	IndexRoute: IndexRoute,
+	ArchiveInspectorRoute: ArchiveInspectorRoute,
 	Base64EncoderRoute: Base64EncoderRoute,
 	BcryptGeneratorRoute: BcryptGeneratorRoute,
 	CidrCalculatorRoute: CidrCalculatorRoute,

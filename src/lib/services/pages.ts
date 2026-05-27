@@ -43,6 +43,7 @@ import {
 	Lock,
 	type LucideIcon,
 	Network,
+	Package,
 	Pencil,
 	Play,
 	Plug,
@@ -560,6 +561,15 @@ export const PAGES: readonly PageDefinition[] = [
 		icon: FileDigit,
 		description: 'View and edit binary files as hex with search, jump, and per-byte selection',
 		color: 'text-amber-700',
+		category: 'files',
+	},
+	{
+		id: 'archive-inspector',
+		title: 'Archive Inspector',
+		url: '/archive-inspector',
+		icon: Package,
+		description: 'Browse and extract .zip / .tar / .gz / .bz2 / .xz / .7z archives',
+		color: 'text-amber-800',
 		category: 'files',
 	},
 	{

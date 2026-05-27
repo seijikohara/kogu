@@ -46,6 +46,7 @@
 //! This library provides the Rust backend for the Kogu desktop application,
 //! including AST parsing functionality for JSON, YAML, XML, and SQL.
 
+mod archive_inspect;
 mod ast;
 mod dns_lookup;
 mod file_inspect;
@@ -486,6 +487,10 @@ pub fn run() {
             hex_editor::hex_open,
             hex_editor::hex_read,
             hex_editor::hex_save,
+            archive_inspect::archive_open,
+            archive_inspect::archive_read_entry,
+            archive_inspect::archive_extract,
+            archive_inspect::archive_extract_entry,
             tls_inspect::tls_inspect,
             webhook::webhook_start,
             webhook::webhook_stop,
