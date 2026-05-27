@@ -25,6 +25,9 @@ path = "src/bin/worker.rs"
 [build-dependencies]
 tauri-build = { version = "2", features = [] }
 
+[dev-dependencies]
+tempfile = "3"
+
 [dependencies]
 tauri = { version = "2", features = [] }
 tauri-plugin-opener = "2"
@@ -51,7 +54,7 @@ toml = "1.1"
 font-kit = "0.14"
 
 # Async Runtime (for cancellable operations and network)
-tokio = { version = "1", features = ["sync", "net", "time", "rt", "macros"] }
+tokio = { version = "1", features = ["sync", "net", "time", "rt", "rt-multi-thread", "macros"] }
 tokio-util = { version = "0.7", default-features = false }
 
 # Cryptographic Generators
@@ -80,6 +83,12 @@ rustls = { version = "0.23", features = ["ring"] }
 tokio-rustls = "0.26"
 x509-parser = "0.18"
 base64 = "0.22"
+
+# Cryptographic Hash Algorithms (file batch hashing)
+md-5 = "0.10"
+sha1 = "0.10"
+sha2 = "0.10"
+hex = "0.4"
 
 # DNS PTR Reverse Lookup
 hickory-resolver = { version = "0.26", features = ["tokio", "system-config"] }

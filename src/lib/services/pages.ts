@@ -66,6 +66,7 @@ import {
 	TestTube,
 	TextQuote,
 	TrendingUp,
+	Type,
 } from 'lucide-react';
 
 /**
@@ -267,6 +268,10 @@ export const PAGES: readonly PageDefinition[] = [
 		description: 'Generate MD5, SHA1, SHA256, SHA512 hashes for text and files',
 		color: 'text-pink-500',
 		category: 'generators',
+		tabs: [
+			{ id: 'text', label: 'Text', icon: Type },
+			{ id: 'batch', label: 'Batch', icon: FileDigit },
+		],
 	},
 	{
 		id: 'bcrypt-generator',
