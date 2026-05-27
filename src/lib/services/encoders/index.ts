@@ -2,6 +2,13 @@
  * Encoder/Decoder services for Base64, URL, JWT, and Hash operations.
  */
 
+export type {
+	Base64DecodeOptions,
+	Base64EncodeOptions,
+	Base64LineBreak,
+	Base64Stats,
+	Base64Variant,
+} from './base64';
 export {
 	BASE64_MIME_TYPES,
 	base64ToBlob,
@@ -18,14 +25,41 @@ export {
 	SAMPLE_TEXT_FOR_BASE64,
 	validateBase64,
 } from './base64';
+export type { HashAlgorithm, HashResult } from './hash';
+export {
+	compareHashes,
+	generateAllFileHashes,
+	generateAllHashes,
+	generateFileHash,
+	generateHash,
+	HASH_ALGORITHMS,
+	SAMPLE_TEXT_FOR_HASH,
+} from './hash';
+export type { BatchHashAlgo, FileHashResult, ShasumEntry, VerifyOutcome } from './hash-batch';
+export {
+	BATCH_HASH_ALGO_LABELS,
+	BATCH_HASH_ALGO_SECURE,
+	BATCH_HASH_ALGOS,
+	basename,
+	buildShasumBlock,
+	hashFileBatch,
+	humanSize,
+	parseShasumBlock,
+	verifyShasum,
+} from './hash-batch';
+export type { JwtDecoded, JwtHeader, JwtPayload } from './jwt';
+export { base64UrlDecode, decodeJwt, JWT_STANDARD_CLAIMS, SAMPLE_JWT, validateJwt } from './jwt';
 export type {
-	Base64DecodeOptions,
-	Base64EncodeOptions,
-	Base64LineBreak,
-	Base64Stats,
-	Base64Variant,
-} from './base64';
-
+	QueryParameter,
+	UrlComponents,
+	UrlDecodeOptions,
+	UrlEncodeMode,
+	UrlEncodeOptions,
+	UrlHexCase,
+	UrlInvalidHandling,
+	UrlNewlineHandling,
+	UrlSpaceEncoding,
+} from './url';
 export {
 	buildUrl,
 	decodeUrl,
@@ -44,28 +78,3 @@ export {
 	URL_ENCODING_EXAMPLES,
 	URL_MODE_PRESERVED_CHARS,
 } from './url';
-export type {
-	QueryParameter,
-	UrlComponents,
-	UrlDecodeOptions,
-	UrlEncodeMode,
-	UrlEncodeOptions,
-	UrlHexCase,
-	UrlInvalidHandling,
-	UrlNewlineHandling,
-	UrlSpaceEncoding,
-} from './url';
-
-export { base64UrlDecode, decodeJwt, JWT_STANDARD_CLAIMS, SAMPLE_JWT, validateJwt } from './jwt';
-export type { JwtDecoded, JwtHeader, JwtPayload } from './jwt';
-
-export {
-	compareHashes,
-	generateAllFileHashes,
-	generateAllHashes,
-	generateFileHash,
-	generateHash,
-	HASH_ALGORITHMS,
-	SAMPLE_TEXT_FOR_HASH,
-} from './hash';
-export type { HashAlgorithm, HashResult } from './hash';
