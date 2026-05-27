@@ -51,6 +51,7 @@ import { Route as DnsLookupRouteImport } from './routes/dns-lookup';
 import { Route as DiffViewerRouteImport } from './routes/diff-viewer';
 import { Route as DateTimestampConverterRouteImport } from './routes/date-timestamp-converter';
 import { Route as CurlBuilderRouteImport } from './routes/curl-builder';
+import { Route as CsvToolRouteImport } from './routes/csv-tool';
 import { Route as CronExpressionBuilderRouteImport } from './routes/cron-expression-builder';
 import { Route as CidrCalculatorRouteImport } from './routes/cidr-calculator';
 import { Route as BcryptGeneratorRouteImport } from './routes/bcrypt-generator';
@@ -268,6 +269,11 @@ const CurlBuilderRoute = CurlBuilderRouteImport.update({
 	path: '/curl-builder',
 	getParentRoute: () => rootRouteImport,
 } as any);
+const CsvToolRoute = CsvToolRouteImport.update({
+	id: '/csv-tool',
+	path: '/csv-tool',
+	getParentRoute: () => rootRouteImport,
+} as any);
 const CronExpressionBuilderRoute = CronExpressionBuilderRouteImport.update({
 	id: '/cron-expression-builder',
 	path: '/cron-expression-builder',
@@ -306,6 +312,7 @@ export interface FileRoutesByFullPath {
 	'/bcrypt-generator': typeof BcryptGeneratorRoute;
 	'/cidr-calculator': typeof CidrCalculatorRoute;
 	'/cron-expression-builder': typeof CronExpressionBuilderRoute;
+	'/csv-tool': typeof CsvToolRoute;
 	'/curl-builder': typeof CurlBuilderRoute;
 	'/date-timestamp-converter': typeof DateTimestampConverterRoute;
 	'/diff-viewer': typeof DiffViewerRoute;
@@ -356,6 +363,7 @@ export interface FileRoutesByTo {
 	'/bcrypt-generator': typeof BcryptGeneratorRoute;
 	'/cidr-calculator': typeof CidrCalculatorRoute;
 	'/cron-expression-builder': typeof CronExpressionBuilderRoute;
+	'/csv-tool': typeof CsvToolRoute;
 	'/curl-builder': typeof CurlBuilderRoute;
 	'/date-timestamp-converter': typeof DateTimestampConverterRoute;
 	'/diff-viewer': typeof DiffViewerRoute;
@@ -407,6 +415,7 @@ export interface FileRoutesById {
 	'/bcrypt-generator': typeof BcryptGeneratorRoute;
 	'/cidr-calculator': typeof CidrCalculatorRoute;
 	'/cron-expression-builder': typeof CronExpressionBuilderRoute;
+	'/csv-tool': typeof CsvToolRoute;
 	'/curl-builder': typeof CurlBuilderRoute;
 	'/date-timestamp-converter': typeof DateTimestampConverterRoute;
 	'/diff-viewer': typeof DiffViewerRoute;
@@ -459,6 +468,7 @@ export interface FileRouteTypes {
 		| '/bcrypt-generator'
 		| '/cidr-calculator'
 		| '/cron-expression-builder'
+		| '/csv-tool'
 		| '/curl-builder'
 		| '/date-timestamp-converter'
 		| '/diff-viewer'
@@ -509,6 +519,7 @@ export interface FileRouteTypes {
 		| '/bcrypt-generator'
 		| '/cidr-calculator'
 		| '/cron-expression-builder'
+		| '/csv-tool'
 		| '/curl-builder'
 		| '/date-timestamp-converter'
 		| '/diff-viewer'
@@ -559,6 +570,7 @@ export interface FileRouteTypes {
 		| '/bcrypt-generator'
 		| '/cidr-calculator'
 		| '/cron-expression-builder'
+		| '/csv-tool'
 		| '/curl-builder'
 		| '/date-timestamp-converter'
 		| '/diff-viewer'
@@ -610,6 +622,7 @@ export interface RootRouteChildren {
 	BcryptGeneratorRoute: typeof BcryptGeneratorRoute;
 	CidrCalculatorRoute: typeof CidrCalculatorRoute;
 	CronExpressionBuilderRoute: typeof CronExpressionBuilderRoute;
+	CsvToolRoute: typeof CsvToolRoute;
 	CurlBuilderRoute: typeof CurlBuilderRoute;
 	DateTimestampConverterRoute: typeof DateTimestampConverterRoute;
 	DiffViewerRoute: typeof DiffViewerRoute;
@@ -950,6 +963,13 @@ declare module '@tanstack/react-router' {
 			preLoaderRoute: typeof CurlBuilderRouteImport;
 			parentRoute: typeof rootRouteImport;
 		};
+		'/csv-tool': {
+			id: '/csv-tool';
+			path: '/csv-tool';
+			fullPath: '/csv-tool';
+			preLoaderRoute: typeof CsvToolRouteImport;
+			parentRoute: typeof rootRouteImport;
+		};
 		'/cron-expression-builder': {
 			id: '/cron-expression-builder';
 			path: '/cron-expression-builder';
@@ -1002,6 +1022,7 @@ const rootRouteChildren: RootRouteChildren = {
 	BcryptGeneratorRoute: BcryptGeneratorRoute,
 	CidrCalculatorRoute: CidrCalculatorRoute,
 	CronExpressionBuilderRoute: CronExpressionBuilderRoute,
+	CsvToolRoute: CsvToolRoute,
 	CurlBuilderRoute: CurlBuilderRoute,
 	DateTimestampConverterRoute: DateTimestampConverterRoute,
 	DiffViewerRoute: DiffViewerRoute,
