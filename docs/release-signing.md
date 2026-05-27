@@ -25,6 +25,11 @@ to the Tauri bundler. All values are case-sensitive.
 When any one of these is missing, the bundler skips both signing and
 notarization for that build and falls back to ad-hoc signing.
 
+The secrets are gated on the macOS matrix legs in the workflow, so
+they are never forwarded to the Linux or Windows runners. This limits
+the credentials' reachable surface to the job that actually consumes
+them.
+
 ## Preparing the certificate
 
 1. In Xcode or via the Apple Developer portal, create a **Developer ID
