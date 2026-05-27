@@ -13,7 +13,7 @@ import { toast } from 'sonner';
 
 import { CopyButton } from '@/lib/components/action';
 import { FormError, FormInfo, FormInput, FormSection, FormSlider } from '@/lib/components/form';
-import { RelatedTools, SectionLabel } from '@/lib/components/layout';
+import { DefinitionList, RelatedTools, SectionLabel } from '@/lib/components/layout';
 import { ToolShell } from '@/lib/components/shell';
 import { EmbeddedEmptyState, StatItem } from '@/lib/components/status';
 import { Badge } from '@/lib/components/ui/badge';
@@ -413,30 +413,19 @@ function HandshakeSummaryCard({ result }: HandshakeSummaryCardProps) {
 				</CardTitle>
 			</CardHeader>
 			<CardContent>
-				<dl className="grid grid-cols-[140px_1fr] gap-x-3 gap-y-1 text-xs">
-					<SummaryRow label="Negotiated version" value={result.negotiatedVersion} />
-					<SummaryRow label="Cipher suite" value={result.cipherSuite} />
-					<SummaryRow label="ALPN" value={result.alpn ?? '(none)'} />
-					<SummaryRow label="SNI" value={result.sni} />
-					<SummaryRow label="Peer chain" value={`${result.peerChainBase64.length} certs`} />
-					<SummaryRow label="Elapsed" value={`${result.elapsedMs} ms`} />
-				</dl>
+				<DefinitionList
+					keyColumn="140px"
+					items={[
+						{ key: 'Negotiated version', value: result.negotiatedVersion, break: true },
+						{ key: 'Cipher suite', value: result.cipherSuite, break: true },
+						{ key: 'ALPN', value: result.alpn ?? '(none)', break: true },
+						{ key: 'SNI', value: result.sni, break: true },
+						{ key: 'Peer chain', value: `${result.peerChainBase64.length} certs`, break: true },
+						{ key: 'Elapsed', value: `${result.elapsedMs} ms`, break: true },
+					]}
+				/>
 			</CardContent>
 		</Card>
-	);
-}
-
-interface SummaryRowProps {
-	readonly label: string;
-	readonly value: string;
-}
-
-function SummaryRow({ label, value }: SummaryRowProps) {
-	return (
-		<>
-			<dt className="font-mono text-muted-foreground">{label}</dt>
-			<dd className="break-all font-mono">{value}</dd>
-		</>
 	);
 }
 
@@ -520,14 +509,17 @@ function ChainCertificateCard({ cert, base64Der, role, now }: ChainCertificateCa
 				</div>
 			</CardHeader>
 			<CardContent className="space-y-3">
-				<dl className="grid grid-cols-[80px_1fr] gap-x-3 gap-y-1 text-xs">
-					<SummaryRow label="Subject" value={subjectLabel} />
-					<SummaryRow label="Issuer" value={issuerLabel} />
-					<SummaryRow label="Not Before" value={formatDate(cert.notBefore)} />
-					<SummaryRow label="Not After" value={formatDate(cert.notAfter)} />
-					<SummaryRow label="Serial" value={cert.serialNumber} />
-					<SummaryRow label="Signature" value={cert.signatureAlgorithm} />
-				</dl>
+				<DefinitionList
+					keyColumn="80px"
+					items={[
+						{ key: 'Subject', value: subjectLabel, break: true },
+						{ key: 'Issuer', value: issuerLabel, break: true },
+						{ key: 'Not Before', value: formatDate(cert.notBefore), break: true },
+						{ key: 'Not After', value: formatDate(cert.notAfter), break: true },
+						{ key: 'Serial', value: cert.serialNumber, break: true },
+						{ key: 'Signature', value: cert.signatureAlgorithm, break: true },
+					]}
+				/>
 				{cert.subjectAlternativeNames.length > 0 ? (
 					<SanBadgeList entries={cert.subjectAlternativeNames} />
 				) : null}

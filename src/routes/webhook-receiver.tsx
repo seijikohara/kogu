@@ -15,7 +15,7 @@ import { toast } from 'sonner';
 
 import { CopyButton } from '@/lib/components/action';
 import { FormInfo, FormInput, FormSection, FormTextarea } from '@/lib/components/form';
-import { RelatedTools } from '@/lib/components/layout';
+import { RelatedTools, SubsectionLabel } from '@/lib/components/layout';
 import { ToolShell } from '@/lib/components/shell';
 import { EmbeddedEmptyState, StatItem } from '@/lib/components/status';
 import { Button } from '@/lib/components/ui/button';
@@ -585,9 +585,7 @@ interface DetailSectionProps {
 function DetailSection({ title, children }: DetailSectionProps) {
 	return (
 		<section className="space-y-2">
-			<h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-				{title}
-			</h3>
+			<SubsectionLabel>{title}</SubsectionLabel>
 			{children}
 		</section>
 	);

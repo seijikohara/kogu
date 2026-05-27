@@ -28,7 +28,7 @@ import {
 	FormSlider,
 	FormTextarea,
 } from '@/lib/components/form';
-import { SectionHeader } from '@/lib/components/layout';
+import { RelatedTools, SectionHeader } from '@/lib/components/layout';
 import { ToolShell } from '@/lib/components/shell';
 import { EmbeddedEmptyState, LiveStatusRegion, StatItem } from '@/lib/components/status';
 import { Button } from '@/lib/components/ui/button';
@@ -668,6 +668,22 @@ function QrCodeGeneratorPage() {
 							}}
 							size="compact"
 						/>
+					</FormSection>
+
+					<FormSection title="Related">
+						<RelatedTools
+							items={[
+								{ id: 'image-converter', reason: 'Re-encode the exported PNG' },
+								{ id: 'url-encoder', reason: 'Encode complex payloads before generation' },
+							]}
+						/>
+					</FormSection>
+
+					<FormSection title="About">
+						<FormInfo>
+							Generates QR codes locally with configurable dot, corner, and logo styling. Output is
+							rendered as SVG with PNG export — nothing is uploaded.
+						</FormInfo>
 					</FormSection>
 				</>
 			}

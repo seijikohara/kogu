@@ -1,5 +1,12 @@
 export { AppSidebar, type AppSidebarProps } from './app-sidebar';
+export {
+	DefinitionList,
+	type DefinitionItem,
+	type DefinitionListProps,
+	type DefinitionTone,
+} from './definition-list';
 export { InputOutputSplit, type InputOutputSplitProps } from './input-output-split';
+export { MasterDetailLayout, type MasterDetailLayoutProps } from './master-detail-layout';
 export {
 	KeyboardShortcutsDialog,
 	type KeyboardShortcutsDialogProps,
@@ -9,6 +16,7 @@ export { RelatedTools, type RelatedToolItem, type RelatedToolsProps } from './re
 export { SectionHeader, type SectionHeaderProps } from './section-header';
 export { SectionLabel, type SectionLabelProps } from './section-label';
 export { SplitPane, type SplitPaneProps } from './split-pane';
+export { SubsectionLabel, type SubsectionLabelProps } from './subsection-label';
 export { TitleBar, type TitleBarProps } from './title-bar';
 export {
 	TitleBarCommand,

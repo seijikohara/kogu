@@ -20,7 +20,12 @@ import {
 	FormSlider,
 	FormTextarea,
 } from '@/lib/components/form';
-import { RelatedTools, SectionLabel } from '@/lib/components/layout';
+import {
+	DefinitionList,
+	type DefinitionItem,
+	RelatedTools,
+	SectionLabel,
+} from '@/lib/components/layout';
 import { ToolShell } from '@/lib/components/shell';
 import { EmbeddedEmptyState, StatItem } from '@/lib/components/status';
 import {
@@ -518,28 +523,13 @@ function DnPanel({ title, components }: DnPanelProps) {
 				{components.length === 0 ? (
 					<p className="text-xs text-muted-foreground">(empty)</p>
 				) : (
-					<dl className="grid grid-cols-[80px_1fr] gap-x-3 gap-y-1 text-xs">
-						{components.map((c) => (
-							<DnRow key={`${c.shortName}-${c.value}`} shortName={c.shortName} value={c.value} />
-						))}
-					</dl>
+					<DefinitionList
+						keyColumn="80px"
+						items={components.map((c) => ({ key: c.shortName, value: c.value, break: true }))}
+					/>
 				)}
 			</CardContent>
 		</Card>
-	);
-}
-
-interface DnRowProps {
-	readonly shortName: string;
-	readonly value: string;
-}
-
-function DnRow({ shortName, value }: DnRowProps) {
-	return (
-		<>
-			<dt className="font-mono text-muted-foreground">{shortName}</dt>
-			<dd className="break-all font-mono">{value}</dd>
-		</>
 	);
 }
 
@@ -549,6 +539,12 @@ interface PublicKeySummaryProps {
 
 function PublicKeySummary({ cert }: PublicKeySummaryProps) {
 	const pk = cert.publicKey;
+	const items: DefinitionItem[] = [{ key: 'Algorithm', value: pk.algorithm, break: true }];
+	if (pk.bitLength) items.push({ key: 'Bit length', value: `${pk.bitLength} bit` });
+	if (pk.curve) items.push({ key: 'Curve', value: pk.curve, break: true });
+	if (pk.modulusPreview) items.push({ key: 'Modulus', value: pk.modulusPreview, break: true });
+	if (pk.exponent) items.push({ key: 'Exponent', value: pk.exponent, break: true });
+	items.push({ key: 'Signature', value: cert.signatureAlgorithm, break: true });
 	return (
 		<Card density="compact">
 			<CardHeader>
@@ -558,14 +554,7 @@ function PublicKeySummary({ cert }: PublicKeySummaryProps) {
 				</CardTitle>
 			</CardHeader>
 			<CardContent>
-				<dl className="grid grid-cols-[120px_1fr] gap-x-3 gap-y-1 text-xs">
-					<DnRow shortName="Algorithm" value={pk.algorithm} />
-					{pk.bitLength ? <DnRow shortName="Bit length" value={`${pk.bitLength} bit`} /> : null}
-					{pk.curve ? <DnRow shortName="Curve" value={pk.curve} /> : null}
-					{pk.modulusPreview ? <DnRow shortName="Modulus" value={pk.modulusPreview} /> : null}
-					{pk.exponent ? <DnRow shortName="Exponent" value={pk.exponent} /> : null}
-					<DnRow shortName="Signature" value={cert.signatureAlgorithm} />
-				</dl>
+				<DefinitionList keyColumn="120px" items={items} />
 			</CardContent>
 		</Card>
 	);
@@ -728,14 +717,11 @@ function BasicConstraintsBody({
 	readonly ca: boolean;
 	readonly pathLenConstraint?: number;
 }) {
-	return (
-		<dl className="grid grid-cols-[100px_1fr] gap-x-3 gap-y-1 text-2xs">
-			<DnRow shortName="CA" value={ca ? 'true' : 'false'} />
-			{typeof pathLenConstraint === 'number' ? (
-				<DnRow shortName="Path length" value={String(pathLenConstraint)} />
-			) : null}
-		</dl>
-	);
+	const items: DefinitionItem[] = [{ key: 'CA', value: ca ? 'true' : 'false' }];
+	if (typeof pathLenConstraint === 'number') {
+		items.push({ key: 'Path length', value: String(pathLenConstraint) });
+	}
+	return <DefinitionList keyColumn="100px" size="2xs" items={items} />;
 }
 
 function AuthorityKeyIdBody({
@@ -745,12 +731,10 @@ function AuthorityKeyIdBody({
 	readonly keyId?: string;
 	readonly issuerSerial?: string;
 }) {
-	return (
-		<dl className="grid grid-cols-[100px_1fr] gap-x-3 gap-y-1 text-2xs">
-			{keyId ? <DnRow shortName="Key ID" value={keyId} /> : null}
-			{issuerSerial ? <DnRow shortName="Serial" value={issuerSerial} /> : null}
-		</dl>
-	);
+	const items: DefinitionItem[] = [];
+	if (keyId) items.push({ key: 'Key ID', value: keyId, break: true });
+	if (issuerSerial) items.push({ key: 'Serial', value: issuerSerial, break: true });
+	return <DefinitionList keyColumn="100px" size="2xs" items={items} />;
 }
 
 function CrlUrlsBody({ urls }: { readonly urls: readonly string[] }) {
@@ -775,14 +759,11 @@ function AuthorityInfoBody({
 	readonly ocspUrls: readonly string[];
 	readonly caIssuerUrls: readonly string[];
 }) {
-	return (
-		<dl className="grid grid-cols-[80px_1fr] gap-x-3 gap-y-1 text-2xs">
-			{ocspUrls.length > 0 ? <DnRow shortName="OCSP" value={ocspUrls.join(', ')} /> : null}
-			{caIssuerUrls.length > 0 ? (
-				<DnRow shortName="CA Issuer" value={caIssuerUrls.join(', ')} />
-			) : null}
-		</dl>
-	);
+	const items: DefinitionItem[] = [];
+	if (ocspUrls.length > 0) items.push({ key: 'OCSP', value: ocspUrls.join(', '), break: true });
+	if (caIssuerUrls.length > 0)
+		items.push({ key: 'CA Issuer', value: caIssuerUrls.join(', '), break: true });
+	return <DefinitionList keyColumn="80px" size="2xs" items={items} />;
 }
 
 function ExtensionBody({ extension }: ExtensionBodyProps) {

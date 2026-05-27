@@ -5,7 +5,7 @@ import { AlertTriangle, CheckCircle, Clock, Info, KeyRound } from 'lucide-react'
 import { CopyButton } from '@/lib/components/action';
 import { CodeEditor } from '@/lib/components/editor';
 import { FormInfo, FormSection } from '@/lib/components/form';
-import { SectionHeader } from '@/lib/components/layout';
+import { SectionHeader, SplitPane } from '@/lib/components/layout';
 import { ToolShell } from '@/lib/components/shell';
 import { EmptyState, LiveStatusRegion } from '@/lib/components/status';
 import { Card, CardContent, CardHeader, CardTitle } from '@/lib/components/ui/card';
@@ -162,8 +162,11 @@ function JwtDecoderPage() {
 				</>
 			}
 		>
-			<div className="flex h-full flex-col overflow-hidden">
-				<div className="h-1/4 shrink-0 border-b">
+			<SplitPane
+				direction="horizontal"
+				defaultSizes={[42, 58]}
+				minSizes={[25, 30]}
+				left={
 					<CodeEditor
 						title="JWT Token"
 						value={input}
@@ -176,147 +179,150 @@ function JwtDecoderPage() {
 						onClear={handleClear}
 						onSample={handleSample}
 					/>
-				</div>
+				}
+				right={
+					<div className="flex flex-1 flex-col overflow-hidden">
+						<SectionHeader title="Decoded Token" />
+						{decoded ? (
+							<LiveStatusRegion className="flex-1 space-y-4 overflow-auto p-4">
+								{decoded.isExpired ? (
+									<div className="flex items-center gap-2 rounded-lg border border-destructive/50 bg-destructive/10 p-3 text-sm text-destructive">
+										<AlertTriangle className="h-4 w-4" />
+										<span>
+											This token has expired
+											{decoded.expiresAt ? ` on ${formatDate(decoded.expiresAt)}` : ''}
+										</span>
+									</div>
+								) : null}
 
-				<div className="flex flex-1 flex-col overflow-hidden">
-					<SectionHeader title="Decoded Token" />
-					{decoded ? (
-						<LiveStatusRegion className="flex-1 space-y-4 overflow-auto p-4">
-							{decoded.isExpired ? (
-								<div className="flex items-center gap-2 rounded-lg border border-destructive/50 bg-destructive/10 p-3 text-sm text-destructive">
-									<AlertTriangle className="h-4 w-4" />
-									<span>
-										This token has expired
-										{decoded.expiresAt ? ` on ${formatDate(decoded.expiresAt)}` : ''}
-									</span>
-								</div>
-							) : null}
-
-							<Card density="compact">
-								<CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
-									<CardTitle className="text-sm font-medium text-destructive">Header</CardTitle>
-									<CopyButton
-										text={formatJson(decoded.header)}
-										toastLabel="Header"
-										size="sm"
-										showLabel
-										className="h-7"
-									/>
-								</CardHeader>
-								<CardContent>
-									{headerAlg ? (
-										<div className="mb-2 flex items-center gap-2 text-xs">
-											<span className="font-mono font-medium text-muted-foreground">alg:</span>
-											<code className="rounded bg-muted px-1.5 py-0.5 font-mono">{headerAlg}</code>
-											{algDescription ? (
-												<IconTooltip label={algDescription}>
-													<button
-														type="button"
-														className="inline-flex h-4 w-4 items-center justify-center rounded text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-													>
-														<Info className="h-3.5 w-3.5" />
-														<span className="sr-only">Algorithm details</span>
-													</button>
-												</IconTooltip>
-											) : null}
-										</div>
-									) : null}
-									<CodeBlock as="pre" padding="md">
-										{formatJson(decoded.header)}
-									</CodeBlock>
-								</CardContent>
-							</Card>
-
-							<Card density="compact">
-								<CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
-									<CardTitle className="text-sm font-medium text-primary">Payload</CardTitle>
-									<CopyButton
-										text={formatJson(decoded.payload)}
-										toastLabel="Payload"
-										size="sm"
-										showLabel
-										className="h-7"
-									/>
-								</CardHeader>
-								<CardContent>
-									<CodeBlock as="pre" padding="md">
-										{formatJson(decoded.payload)}
-									</CodeBlock>
-								</CardContent>
-							</Card>
-
-							{Object.keys(decoded.payload).some((k) =>
-								JWT_STANDARD_CLAIMS.some((c) => c.claim === k)
-							) ? (
 								<Card density="compact">
-									<CardHeader className="pb-3">
-										<CardTitle className="text-sm font-medium">Standard Claims</CardTitle>
+									<CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+										<CardTitle className="text-sm font-medium text-destructive">Header</CardTitle>
+										<CopyButton
+											text={formatJson(decoded.header)}
+											toastLabel="Header"
+											size="sm"
+											showLabel
+											className="h-7"
+										/>
 									</CardHeader>
-									<CardContent className="p-0">
-										<div className="divide-y border-t">
-											{Object.entries(decoded.payload)
-												.filter(([k]) => JWT_STANDARD_CLAIMS.some((c) => c.claim === k))
-												.map(([key, value]) => (
-													<div key={key} className="flex items-center gap-4 px-4 py-2 text-xs">
-														<span className="w-20 font-mono font-medium text-primary">{key}</span>
-														<span className="w-32 text-muted-foreground">
-															{getClaimDescription(key)}
-														</span>
-														<span className="flex-1 font-mono">
-															{key === 'exp' || key === 'iat' || key === 'nbf' ? (
-																<>
-																	{formatDate(new Date(Number(value) * 1000))}
-																	<span className="ml-2 text-muted-foreground">
-																		({String(value)})
-																	</span>
-																</>
-															) : (
-																JSON.stringify(value)
-															)}
-														</span>
-													</div>
-												))}
-										</div>
+									<CardContent>
+										{headerAlg ? (
+											<div className="mb-2 flex items-center gap-2 text-xs">
+												<span className="font-mono font-medium text-muted-foreground">alg:</span>
+												<code className="rounded bg-muted px-1.5 py-0.5 font-mono">
+													{headerAlg}
+												</code>
+												{algDescription ? (
+													<IconTooltip label={algDescription}>
+														<button
+															type="button"
+															className="inline-flex h-4 w-4 items-center justify-center rounded text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+														>
+															<Info className="h-3.5 w-3.5" />
+															<span className="sr-only">Algorithm details</span>
+														</button>
+													</IconTooltip>
+												) : null}
+											</div>
+										) : null}
+										<CodeBlock as="pre" padding="md">
+											{formatJson(decoded.header)}
+										</CodeBlock>
 									</CardContent>
 								</Card>
-							) : null}
 
-							<Card density="compact">
-								<CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
-									<CardTitle className="text-sm font-medium text-info">Signature</CardTitle>
-									<CopyButton
-										text={decoded.signature}
-										toastLabel="Signature"
-										size="sm"
-										showLabel
-										className="h-7"
-									/>
-								</CardHeader>
-								<CardContent>
-									<CodeBlock padding="md">{decoded.signature}</CodeBlock>
-									<p className="mt-2 text-xs text-muted-foreground">
-										Note: Signature verification requires the secret key and is not performed
-										client-side.
-									</p>
-								</CardContent>
-							</Card>
-						</LiveStatusRegion>
-					) : (
-						<div className="flex-1">
-							{error ? (
-								<div className="flex h-full items-center justify-center text-muted-foreground">
-									<div className="text-center">
-										<AlertTriangle className="mx-auto mb-2 h-8 w-8 text-destructive" />
-										<p className="text-sm">{error}</p>
+								<Card density="compact">
+									<CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+										<CardTitle className="text-sm font-medium text-primary">Payload</CardTitle>
+										<CopyButton
+											text={formatJson(decoded.payload)}
+											toastLabel="Payload"
+											size="sm"
+											showLabel
+											className="h-7"
+										/>
+									</CardHeader>
+									<CardContent>
+										<CodeBlock as="pre" padding="md">
+											{formatJson(decoded.payload)}
+										</CodeBlock>
+									</CardContent>
+								</Card>
+
+								{Object.keys(decoded.payload).some((k) =>
+									JWT_STANDARD_CLAIMS.some((c) => c.claim === k)
+								) ? (
+									<Card density="compact">
+										<CardHeader className="pb-3">
+											<CardTitle className="text-sm font-medium">Standard Claims</CardTitle>
+										</CardHeader>
+										<CardContent className="p-0">
+											<div className="divide-y border-t">
+												{Object.entries(decoded.payload)
+													.filter(([k]) => JWT_STANDARD_CLAIMS.some((c) => c.claim === k))
+													.map(([key, value]) => (
+														<div key={key} className="flex items-center gap-4 px-4 py-2 text-xs">
+															<span className="w-20 font-mono font-medium text-primary">{key}</span>
+															<span className="w-32 text-muted-foreground">
+																{getClaimDescription(key)}
+															</span>
+															<span className="flex-1 font-mono">
+																{key === 'exp' || key === 'iat' || key === 'nbf' ? (
+																	<>
+																		{formatDate(new Date(Number(value) * 1000))}
+																		<span className="ml-2 text-muted-foreground">
+																			({String(value)})
+																		</span>
+																	</>
+																) : (
+																	JSON.stringify(value)
+																)}
+															</span>
+														</div>
+													))}
+											</div>
+										</CardContent>
+									</Card>
+								) : null}
+
+								<Card density="compact">
+									<CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+										<CardTitle className="text-sm font-medium text-info">Signature</CardTitle>
+										<CopyButton
+											text={decoded.signature}
+											toastLabel="Signature"
+											size="sm"
+											showLabel
+											className="h-7"
+										/>
+									</CardHeader>
+									<CardContent>
+										<CodeBlock padding="md">{decoded.signature}</CodeBlock>
+										<p className="mt-2 text-xs text-muted-foreground">
+											Note: Signature verification requires the secret key and is not performed
+											client-side.
+										</p>
+									</CardContent>
+								</Card>
+							</LiveStatusRegion>
+						) : (
+							<div className="flex-1">
+								{error ? (
+									<div className="flex h-full items-center justify-center text-muted-foreground">
+										<div className="text-center">
+											<AlertTriangle className="mx-auto mb-2 h-8 w-8 text-destructive" />
+											<p className="text-sm">{error}</p>
+										</div>
 									</div>
-								</div>
-							) : (
-								<EmptyState icon={KeyRound} title="Enter a JWT token to decode" />
-							)}
-						</div>
-					)}
-				</div>
-			</div>
+								) : (
+									<EmptyState icon={KeyRound} title="Enter a JWT token to decode" />
+								)}
+							</div>
+						)}
+					</div>
+				}
+			/>
 		</ToolShell>
 	);
 }

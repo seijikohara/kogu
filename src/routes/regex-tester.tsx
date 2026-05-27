@@ -3,6 +3,7 @@ import { Eye, FlaskConical, GitBranch, Info, Search, Sparkles, Workflow } from '
 
 import { CopyButton } from '@/lib/components/action';
 import { FormError, FormInfo, FormSection, FormTextarea } from '@/lib/components/form';
+import { RelatedTools } from '@/lib/components/layout';
 import { PatternEditor, RailroadView } from '@/lib/components/regex';
 import { ToolShell } from '@/lib/components/shell';
 import { EmbeddedEmptyState, StatItem, ValidityBadge } from '@/lib/components/status';
@@ -629,6 +630,24 @@ function RegexTesterPage() {
 									<code className="font-mono">y</code> — sticky, match only at lastIndex
 								</li>
 							</ul>
+						</FormInfo>
+					</FormSection>
+
+					<FormSection title="Related">
+						<RelatedTools
+							items={[
+								{ id: 'string-case-converter', reason: 'Normalize text before matching' },
+								{ id: 'list-comparer', reason: 'Compare sets of matched strings' },
+								{ id: 'diff-viewer', reason: 'Diff the replacement output' },
+							]}
+						/>
+					</FormSection>
+
+					<FormSection title="About">
+						<FormInfo>
+							Tests JavaScript regular expressions against arbitrary input. The railroad diagram
+							visualizes the pattern; matches, capture groups, and replacement previews are computed
+							locally on every keystroke.
 						</FormInfo>
 					</FormSection>
 				</>
