@@ -596,7 +596,7 @@ function MainPane({
 				<div className="flex items-center justify-between gap-2">
 					<SectionLabel icon={TableIcon}>Input</SectionLabel>
 					<span className="text-2xs text-muted-foreground">
-						Drag a file here, paste, or type below.
+						Drop a file here, paste, or type below.
 					</span>
 				</div>
 				<Textarea
