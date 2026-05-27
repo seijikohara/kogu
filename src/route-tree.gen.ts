@@ -52,6 +52,7 @@ import { Route as FileInspectorRouteImport } from './routes/file-inspector'
 import { Route as EscapeToolRouteImport } from './routes/escape-tool'
 import { Route as EncodingConverterRouteImport } from './routes/encoding-converter'
 import { Route as DuplicateFinderRouteImport } from './routes/duplicate-finder'
+import { Route as DriveInfoRouteImport } from './routes/drive-info'
 import { Route as DnsLookupRouteImport } from './routes/dns-lookup'
 import { Route as DiffViewerRouteImport } from './routes/diff-viewer'
 import { Route as DateTimestampConverterRouteImport } from './routes/date-timestamp-converter'
@@ -279,6 +280,11 @@ const DuplicateFinderRoute = DuplicateFinderRouteImport.update({
   path: '/duplicate-finder',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DriveInfoRoute = DriveInfoRouteImport.update({
+  id: '/drive-info',
+  path: '/drive-info',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const DnsLookupRoute = DnsLookupRouteImport.update({
   id: '/dns-lookup',
   path: '/dns-lookup',
@@ -347,6 +353,7 @@ export interface FileRoutesByFullPath {
   '/date-timestamp-converter': typeof DateTimestampConverterRoute
   '/diff-viewer': typeof DiffViewerRoute
   '/dns-lookup': typeof DnsLookupRoute
+  '/drive-info': typeof DriveInfoRoute
   '/duplicate-finder': typeof DuplicateFinderRoute
   '/encoding-converter': typeof EncodingConverterRoute
   '/escape-tool': typeof EscapeToolRoute
@@ -403,6 +410,7 @@ export interface FileRoutesByTo {
   '/date-timestamp-converter': typeof DateTimestampConverterRoute
   '/diff-viewer': typeof DiffViewerRoute
   '/dns-lookup': typeof DnsLookupRoute
+  '/drive-info': typeof DriveInfoRoute
   '/duplicate-finder': typeof DuplicateFinderRoute
   '/encoding-converter': typeof EncodingConverterRoute
   '/escape-tool': typeof EscapeToolRoute
@@ -460,6 +468,7 @@ export interface FileRoutesById {
   '/date-timestamp-converter': typeof DateTimestampConverterRoute
   '/diff-viewer': typeof DiffViewerRoute
   '/dns-lookup': typeof DnsLookupRoute
+  '/drive-info': typeof DriveInfoRoute
   '/duplicate-finder': typeof DuplicateFinderRoute
   '/encoding-converter': typeof EncodingConverterRoute
   '/escape-tool': typeof EscapeToolRoute
@@ -518,6 +527,7 @@ export interface FileRouteTypes {
     | '/date-timestamp-converter'
     | '/diff-viewer'
     | '/dns-lookup'
+    | '/drive-info'
     | '/duplicate-finder'
     | '/encoding-converter'
     | '/escape-tool'
@@ -574,6 +584,7 @@ export interface FileRouteTypes {
     | '/date-timestamp-converter'
     | '/diff-viewer'
     | '/dns-lookup'
+    | '/drive-info'
     | '/duplicate-finder'
     | '/encoding-converter'
     | '/escape-tool'
@@ -630,6 +641,7 @@ export interface FileRouteTypes {
     | '/date-timestamp-converter'
     | '/diff-viewer'
     | '/dns-lookup'
+    | '/drive-info'
     | '/duplicate-finder'
     | '/encoding-converter'
     | '/escape-tool'
@@ -687,6 +699,7 @@ export interface RootRouteChildren {
   DateTimestampConverterRoute: typeof DateTimestampConverterRoute
   DiffViewerRoute: typeof DiffViewerRoute
   DnsLookupRoute: typeof DnsLookupRoute
+  DriveInfoRoute: typeof DriveInfoRoute
   DuplicateFinderRoute: typeof DuplicateFinderRoute
   EncodingConverterRoute: typeof EncodingConverterRoute
   EscapeToolRoute: typeof EscapeToolRoute
@@ -1035,6 +1048,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DuplicateFinderRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/drive-info': {
+      id: '/drive-info'
+      path: '/drive-info'
+      fullPath: '/drive-info'
+      preLoaderRoute: typeof DriveInfoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/dns-lookup': {
       id: '/dns-lookup'
       path: '/dns-lookup'
@@ -1127,6 +1147,7 @@ const rootRouteChildren: RootRouteChildren = {
   DateTimestampConverterRoute: DateTimestampConverterRoute,
   DiffViewerRoute: DiffViewerRoute,
   DnsLookupRoute: DnsLookupRoute,
+  DriveInfoRoute: DriveInfoRoute,
   DuplicateFinderRoute: DuplicateFinderRoute,
   EncodingConverterRoute: EncodingConverterRoute,
   EscapeToolRoute: EscapeToolRoute,
