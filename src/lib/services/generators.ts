@@ -184,6 +184,10 @@ export interface CliAvailability {
 	readonly gpg: boolean;
 	readonly ssh_keygen_version?: string;
 	readonly gpg_version?: string;
+	/** Resolved path of ssh-keygen, surfaced to the user when the binary is not on PATH. */
+	readonly ssh_keygen_path?: string;
+	/** Resolved path of gpg, surfaced to the user when the binary is not on PATH. */
+	readonly gpg_path?: string;
 }
 
 // =============================================================================
