@@ -22,6 +22,12 @@ function YamlFormatterPage() {
 			title="YAML Formatter"
 			calculateStats={calculateYamlStats}
 			persistKey="yaml-formatter"
+			aboutText="Format, minify, query, compare, convert, generate schemas, or emit code from YAML. All transforms run locally in the browser."
+			relatedItems={[
+				{ id: 'json-formatter', reason: 'Same actions in JSON' },
+				{ id: 'xml-formatter', reason: 'Same actions in XML' },
+				{ id: 'diff-viewer', reason: 'Compare arbitrary text' },
+			]}
 			renderStatusContent={(liveStats) =>
 				liveStats ? (
 					<>

@@ -11,6 +11,8 @@ import {
 import { getErrorMessage } from '@/lib/utils';
 import { InputOutputSplit } from '@/lib/components/layout';
 import { Rail } from '@/lib/components/ui/rail';
+
+import { FormatterAboutFooter } from '@/lib/components/template';
 import { useClipboardActions, useReportStats, useValidation } from '@/lib/hooks';
 import { executeJsonPath, validateJson } from '@/lib/services/formatters';
 import { useJsonFormatterOptions } from '@/lib/stores';
@@ -208,6 +210,7 @@ export function QueryTab({ input, onInputChange, onStatsChange }: QueryTabProps)
 						</div>
 					</div>
 				</FormSection>
+				<FormatterAboutFooter />
 			</Rail>
 
 			<InputOutputSplit

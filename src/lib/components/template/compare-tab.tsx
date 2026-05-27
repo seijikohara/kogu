@@ -11,6 +11,8 @@ import { Rail } from '@/lib/components/ui/rail';
 import { Button } from '@/lib/components/ui/button';
 import type { GenericDiffItem } from '@/lib/constants/diff';
 
+import { FormatterAboutFooter } from './formatter-about';
+
 type EditorMode = 'json' | 'xml' | 'yaml';
 
 interface TabStats {
@@ -184,6 +186,7 @@ export function CompareTab({
 				) : null}
 
 				<DiffLegend />
+				<FormatterAboutFooter />
 			</Rail>
 
 			<div className="flex min-h-0 flex-1 flex-col overflow-hidden">

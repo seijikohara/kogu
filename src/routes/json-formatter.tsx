@@ -27,6 +27,13 @@ function JsonFormatterPage() {
 			title="JSON Formatter"
 			calculateStats={(input) => calculateJsonStats(input, inputFormat)}
 			persistKey="json-formatter"
+			aboutText="Format, minify, query, compare, convert, generate schemas, or emit code from JSON. All transforms run locally in the browser."
+			relatedItems={[
+				{ id: 'yaml-formatter', reason: 'Same actions in YAML' },
+				{ id: 'xml-formatter', reason: 'Same actions in XML' },
+				{ id: 'diff-viewer', reason: 'Compare arbitrary text' },
+				{ id: 'jwt-decoder', reason: 'Decode JWT payloads as JSON' },
+			]}
 			renderStatusContent={(liveStats) =>
 				liveStats ? (
 					<>

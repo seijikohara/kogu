@@ -5,6 +5,8 @@ import { FormInput, FormSection } from '@/lib/components/form';
 import { getErrorMessage } from '@/lib/utils';
 import { InputOutputSplit } from '@/lib/components/layout';
 import { Rail } from '@/lib/components/ui/rail';
+
+import { FormatterAboutFooter } from '@/lib/components/template';
 import { useClipboardActions, useReportStats, useValidation } from '@/lib/hooks';
 import { executeXPath, formatXml } from '@/lib/services/formatters';
 
@@ -129,6 +131,7 @@ export function QueryTab({ input, onInputChange, onStatsChange }: QueryTabProps)
 						</div>
 					</div>
 				</FormSection>
+				<FormatterAboutFooter />
 			</Rail>
 
 			<InputOutputSplit

@@ -22,6 +22,13 @@ function XmlFormatterPage() {
 			title="XML Formatter"
 			calculateStats={calculateXmlStats}
 			persistKey="xml-formatter"
+			aboutText="Format, minify, query (XPath), compare, convert, generate schemas, or emit code from XML. All transforms run locally in the browser."
+			relatedItems={[
+				{ id: 'json-formatter', reason: 'Same actions in JSON' },
+				{ id: 'yaml-formatter', reason: 'Same actions in YAML' },
+				{ id: 'diff-viewer', reason: 'Compare arbitrary text' },
+				{ id: 'x509-decoder', reason: 'Inspect certificates as XML/ASN.1' },
+			]}
 			renderStatusContent={(liveStats) =>
 				liveStats ? (
 					<>
