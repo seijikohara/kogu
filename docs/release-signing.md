@@ -99,9 +99,8 @@ export APPLE_TEAM_ID="ABCD123456"
 bun run tauri build --target aarch64-apple-darwin
 ```
 
-## Scope and follow-ups
+## Scope
 
-This wiring covers DMG distribution outside the Mac App Store. The
-App-Store path requires additional sandbox entitlements and a separate
-installer; see `docs/app-store-readiness.md` (added in a later
-follow-up PR).
+This wiring covers DMG distribution outside the Mac App Store. App
+Store distribution would require additional sandbox entitlements and
+a separate installer pipeline; that path is not currently planned.

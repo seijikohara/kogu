@@ -1,4 +1,0 @@
-module KoguHelperC {
-    header "KoguHelper.h"
-    export *
-}
