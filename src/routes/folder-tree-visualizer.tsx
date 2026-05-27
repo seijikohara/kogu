@@ -387,8 +387,9 @@ function FolderTreeVisualizerPage() {
 					<FormSection title="Related">
 						<RelatedTools
 							items={[
+								{ id: 'duplicate-finder', reason: 'Eliminate duplicates inside the tree' },
+								{ id: 'drive-info', reason: 'See total drive capacity and usage' },
 								{ id: 'file-inspector', reason: 'Drill into a single file' },
-								{ id: 'hex-editor', reason: 'Open bytes for any file in the tree' },
 							]}
 						/>
 					</FormSection>

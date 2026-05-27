@@ -163,8 +163,9 @@ function DriveInfoPage() {
 					<FormSection title="Related">
 						<RelatedTools
 							items={[
+								{ id: 'duplicate-finder', reason: 'Reclaim space by removing duplicates' },
+								{ id: 'folder-tree-visualizer', reason: 'Find the largest folders on a drive' },
 								{ id: 'file-inspector', reason: 'Inspect a file on a drive' },
-								{ id: 'hex-editor', reason: 'Open a binary file from disk' },
 							]}
 						/>
 					</FormSection>
