@@ -8,1148 +8,1169 @@
 // You should NOT make any changes in this file as it will be overwritten.
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
-import { Route as rootRouteImport } from './routes/__root';
-import { Route as YamlFormatterRouteImport } from './routes/yaml-formatter';
-import { Route as XmlFormatterRouteImport } from './routes/xml-formatter';
-import { Route as X509DecoderRouteImport } from './routes/x509-decoder';
-import { Route as WebsocketTesterRouteImport } from './routes/websocket-tester';
-import { Route as WebhookReceiverRouteImport } from './routes/webhook-receiver';
-import { Route as UuidGeneratorRouteImport } from './routes/uuid-generator';
-import { Route as UrlEncoderRouteImport } from './routes/url-encoder';
-import { Route as TlsInspectorRouteImport } from './routes/tls-inspector';
-import { Route as TestDataGeneratorRouteImport } from './routes/test-data-generator';
-import { Route as StringCompressorRouteImport } from './routes/string-compressor';
-import { Route as StringCaseConverterRouteImport } from './routes/string-case-converter';
-import { Route as SshKeyGeneratorRouteImport } from './routes/ssh-key-generator';
-import { Route as SqlFormatterRouteImport } from './routes/sql-formatter';
-import { Route as SettingsRouteImport } from './routes/settings';
-import { Route as SemverToolsRouteImport } from './routes/semver-tools';
-import { Route as RsaToolsRouteImport } from './routes/rsa-tools';
-import { Route as RestClientRouteImport } from './routes/rest-client';
-import { Route as RegexTesterRouteImport } from './routes/regex-tester';
-import { Route as QrCodeGeneratorRouteImport } from './routes/qr-code-generator';
-import { Route as PathToolRouteImport } from './routes/path-tool';
-import { Route as PasswordGeneratorRouteImport } from './routes/password-generator';
-import { Route as NumberBaseConverterRouteImport } from './routes/number-base-converter';
-import { Route as NetworkScannerRouteImport } from './routes/network-scanner';
-import { Route as NetworkInterfacesRouteImport } from './routes/network-interfaces';
-import { Route as MimeTypesRouteImport } from './routes/mime-types';
-import { Route as MarkdownEditorRouteImport } from './routes/markdown-editor';
-import { Route as MacLookupRouteImport } from './routes/mac-lookup';
-import { Route as LoremIpsumRouteImport } from './routes/lorem-ipsum';
-import { Route as ListComparerRouteImport } from './routes/list-comparer';
-import { Route as JwtDecoderRouteImport } from './routes/jwt-decoder';
-import { Route as JsonFormatterRouteImport } from './routes/json-formatter';
-import { Route as IpConverterRouteImport } from './routes/ip-converter';
-import { Route as ImageConverterRouteImport } from './routes/image-converter';
-import { Route as HttpStatusCodesRouteImport } from './routes/http-status-codes';
-import { Route as HexEditorRouteImport } from './routes/hex-editor';
-import { Route as HashGeneratorRouteImport } from './routes/hash-generator';
-import { Route as GpgKeyGeneratorRouteImport } from './routes/gpg-key-generator';
-import { Route as FileWatchRouteImport } from './routes/file-watch';
-import { Route as FileInspectorRouteImport } from './routes/file-inspector';
-import { Route as EscapeToolRouteImport } from './routes/escape-tool';
-import { Route as EncodingConverterRouteImport } from './routes/encoding-converter';
-import { Route as DuplicateFinderRouteImport } from './routes/duplicate-finder';
-import { Route as DnsLookupRouteImport } from './routes/dns-lookup';
-import { Route as DiffViewerRouteImport } from './routes/diff-viewer';
-import { Route as DateTimestampConverterRouteImport } from './routes/date-timestamp-converter';
-import { Route as CurlBuilderRouteImport } from './routes/curl-builder';
-import { Route as CsvToolRouteImport } from './routes/csv-tool';
-import { Route as CronExpressionBuilderRouteImport } from './routes/cron-expression-builder';
-import { Route as CidrCalculatorRouteImport } from './routes/cidr-calculator';
-import { Route as BcryptGeneratorRouteImport } from './routes/bcrypt-generator';
-import { Route as Base64EncoderRouteImport } from './routes/base64-encoder';
-import { Route as ArchiveInspectorRouteImport } from './routes/archive-inspector';
-import { Route as IndexRouteImport } from './routes/index';
+import { Route as rootRouteImport } from './routes/__root'
+import { Route as YamlFormatterRouteImport } from './routes/yaml-formatter'
+import { Route as XmlFormatterRouteImport } from './routes/xml-formatter'
+import { Route as X509DecoderRouteImport } from './routes/x509-decoder'
+import { Route as WebsocketTesterRouteImport } from './routes/websocket-tester'
+import { Route as WebhookReceiverRouteImport } from './routes/webhook-receiver'
+import { Route as UuidGeneratorRouteImport } from './routes/uuid-generator'
+import { Route as UrlEncoderRouteImport } from './routes/url-encoder'
+import { Route as TlsInspectorRouteImport } from './routes/tls-inspector'
+import { Route as TestDataGeneratorRouteImport } from './routes/test-data-generator'
+import { Route as StringCompressorRouteImport } from './routes/string-compressor'
+import { Route as StringCaseConverterRouteImport } from './routes/string-case-converter'
+import { Route as SshKeyGeneratorRouteImport } from './routes/ssh-key-generator'
+import { Route as SqlFormatterRouteImport } from './routes/sql-formatter'
+import { Route as SettingsRouteImport } from './routes/settings'
+import { Route as SemverToolsRouteImport } from './routes/semver-tools'
+import { Route as RsaToolsRouteImport } from './routes/rsa-tools'
+import { Route as RestClientRouteImport } from './routes/rest-client'
+import { Route as RegexTesterRouteImport } from './routes/regex-tester'
+import { Route as QrCodeGeneratorRouteImport } from './routes/qr-code-generator'
+import { Route as PathToolRouteImport } from './routes/path-tool'
+import { Route as PasswordGeneratorRouteImport } from './routes/password-generator'
+import { Route as NumberBaseConverterRouteImport } from './routes/number-base-converter'
+import { Route as NetworkScannerRouteImport } from './routes/network-scanner'
+import { Route as NetworkInterfacesRouteImport } from './routes/network-interfaces'
+import { Route as MimeTypesRouteImport } from './routes/mime-types'
+import { Route as MarkdownEditorRouteImport } from './routes/markdown-editor'
+import { Route as MacLookupRouteImport } from './routes/mac-lookup'
+import { Route as LoremIpsumRouteImport } from './routes/lorem-ipsum'
+import { Route as ListComparerRouteImport } from './routes/list-comparer'
+import { Route as JwtDecoderRouteImport } from './routes/jwt-decoder'
+import { Route as JsonFormatterRouteImport } from './routes/json-formatter'
+import { Route as IpConverterRouteImport } from './routes/ip-converter'
+import { Route as ImageConverterRouteImport } from './routes/image-converter'
+import { Route as HttpStatusCodesRouteImport } from './routes/http-status-codes'
+import { Route as HexEditorRouteImport } from './routes/hex-editor'
+import { Route as HashGeneratorRouteImport } from './routes/hash-generator'
+import { Route as GpgKeyGeneratorRouteImport } from './routes/gpg-key-generator'
+import { Route as FolderTreeVisualizerRouteImport } from './routes/folder-tree-visualizer'
+import { Route as FileWatchRouteImport } from './routes/file-watch'
+import { Route as FileInspectorRouteImport } from './routes/file-inspector'
+import { Route as EscapeToolRouteImport } from './routes/escape-tool'
+import { Route as EncodingConverterRouteImport } from './routes/encoding-converter'
+import { Route as DuplicateFinderRouteImport } from './routes/duplicate-finder'
+import { Route as DnsLookupRouteImport } from './routes/dns-lookup'
+import { Route as DiffViewerRouteImport } from './routes/diff-viewer'
+import { Route as DateTimestampConverterRouteImport } from './routes/date-timestamp-converter'
+import { Route as CurlBuilderRouteImport } from './routes/curl-builder'
+import { Route as CsvToolRouteImport } from './routes/csv-tool'
+import { Route as CronExpressionBuilderRouteImport } from './routes/cron-expression-builder'
+import { Route as CidrCalculatorRouteImport } from './routes/cidr-calculator'
+import { Route as BcryptGeneratorRouteImport } from './routes/bcrypt-generator'
+import { Route as Base64EncoderRouteImport } from './routes/base64-encoder'
+import { Route as ArchiveInspectorRouteImport } from './routes/archive-inspector'
+import { Route as IndexRouteImport } from './routes/index'
 
 const YamlFormatterRoute = YamlFormatterRouteImport.update({
-	id: '/yaml-formatter',
-	path: '/yaml-formatter',
-	getParentRoute: () => rootRouteImport,
-} as any);
+  id: '/yaml-formatter',
+  path: '/yaml-formatter',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const XmlFormatterRoute = XmlFormatterRouteImport.update({
-	id: '/xml-formatter',
-	path: '/xml-formatter',
-	getParentRoute: () => rootRouteImport,
-} as any);
+  id: '/xml-formatter',
+  path: '/xml-formatter',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const X509DecoderRoute = X509DecoderRouteImport.update({
-	id: '/x509-decoder',
-	path: '/x509-decoder',
-	getParentRoute: () => rootRouteImport,
-} as any);
+  id: '/x509-decoder',
+  path: '/x509-decoder',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const WebsocketTesterRoute = WebsocketTesterRouteImport.update({
-	id: '/websocket-tester',
-	path: '/websocket-tester',
-	getParentRoute: () => rootRouteImport,
-} as any);
+  id: '/websocket-tester',
+  path: '/websocket-tester',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const WebhookReceiverRoute = WebhookReceiverRouteImport.update({
-	id: '/webhook-receiver',
-	path: '/webhook-receiver',
-	getParentRoute: () => rootRouteImport,
-} as any);
+  id: '/webhook-receiver',
+  path: '/webhook-receiver',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const UuidGeneratorRoute = UuidGeneratorRouteImport.update({
-	id: '/uuid-generator',
-	path: '/uuid-generator',
-	getParentRoute: () => rootRouteImport,
-} as any);
+  id: '/uuid-generator',
+  path: '/uuid-generator',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const UrlEncoderRoute = UrlEncoderRouteImport.update({
-	id: '/url-encoder',
-	path: '/url-encoder',
-	getParentRoute: () => rootRouteImport,
-} as any);
+  id: '/url-encoder',
+  path: '/url-encoder',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const TlsInspectorRoute = TlsInspectorRouteImport.update({
-	id: '/tls-inspector',
-	path: '/tls-inspector',
-	getParentRoute: () => rootRouteImport,
-} as any);
+  id: '/tls-inspector',
+  path: '/tls-inspector',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const TestDataGeneratorRoute = TestDataGeneratorRouteImport.update({
-	id: '/test-data-generator',
-	path: '/test-data-generator',
-	getParentRoute: () => rootRouteImport,
-} as any);
+  id: '/test-data-generator',
+  path: '/test-data-generator',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const StringCompressorRoute = StringCompressorRouteImport.update({
-	id: '/string-compressor',
-	path: '/string-compressor',
-	getParentRoute: () => rootRouteImport,
-} as any);
+  id: '/string-compressor',
+  path: '/string-compressor',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const StringCaseConverterRoute = StringCaseConverterRouteImport.update({
-	id: '/string-case-converter',
-	path: '/string-case-converter',
-	getParentRoute: () => rootRouteImport,
-} as any);
+  id: '/string-case-converter',
+  path: '/string-case-converter',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SshKeyGeneratorRoute = SshKeyGeneratorRouteImport.update({
-	id: '/ssh-key-generator',
-	path: '/ssh-key-generator',
-	getParentRoute: () => rootRouteImport,
-} as any);
+  id: '/ssh-key-generator',
+  path: '/ssh-key-generator',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SqlFormatterRoute = SqlFormatterRouteImport.update({
-	id: '/sql-formatter',
-	path: '/sql-formatter',
-	getParentRoute: () => rootRouteImport,
-} as any);
+  id: '/sql-formatter',
+  path: '/sql-formatter',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SettingsRoute = SettingsRouteImport.update({
-	id: '/settings',
-	path: '/settings',
-	getParentRoute: () => rootRouteImport,
-} as any);
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SemverToolsRoute = SemverToolsRouteImport.update({
-	id: '/semver-tools',
-	path: '/semver-tools',
-	getParentRoute: () => rootRouteImport,
-} as any);
+  id: '/semver-tools',
+  path: '/semver-tools',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const RsaToolsRoute = RsaToolsRouteImport.update({
-	id: '/rsa-tools',
-	path: '/rsa-tools',
-	getParentRoute: () => rootRouteImport,
-} as any);
+  id: '/rsa-tools',
+  path: '/rsa-tools',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const RestClientRoute = RestClientRouteImport.update({
-	id: '/rest-client',
-	path: '/rest-client',
-	getParentRoute: () => rootRouteImport,
-} as any);
+  id: '/rest-client',
+  path: '/rest-client',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const RegexTesterRoute = RegexTesterRouteImport.update({
-	id: '/regex-tester',
-	path: '/regex-tester',
-	getParentRoute: () => rootRouteImport,
-} as any);
+  id: '/regex-tester',
+  path: '/regex-tester',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const QrCodeGeneratorRoute = QrCodeGeneratorRouteImport.update({
-	id: '/qr-code-generator',
-	path: '/qr-code-generator',
-	getParentRoute: () => rootRouteImport,
-} as any);
+  id: '/qr-code-generator',
+  path: '/qr-code-generator',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PathToolRoute = PathToolRouteImport.update({
-	id: '/path-tool',
-	path: '/path-tool',
-	getParentRoute: () => rootRouteImport,
-} as any);
+  id: '/path-tool',
+  path: '/path-tool',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PasswordGeneratorRoute = PasswordGeneratorRouteImport.update({
-	id: '/password-generator',
-	path: '/password-generator',
-	getParentRoute: () => rootRouteImport,
-} as any);
+  id: '/password-generator',
+  path: '/password-generator',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const NumberBaseConverterRoute = NumberBaseConverterRouteImport.update({
-	id: '/number-base-converter',
-	path: '/number-base-converter',
-	getParentRoute: () => rootRouteImport,
-} as any);
+  id: '/number-base-converter',
+  path: '/number-base-converter',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const NetworkScannerRoute = NetworkScannerRouteImport.update({
-	id: '/network-scanner',
-	path: '/network-scanner',
-	getParentRoute: () => rootRouteImport,
-} as any);
+  id: '/network-scanner',
+  path: '/network-scanner',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const NetworkInterfacesRoute = NetworkInterfacesRouteImport.update({
-	id: '/network-interfaces',
-	path: '/network-interfaces',
-	getParentRoute: () => rootRouteImport,
-} as any);
+  id: '/network-interfaces',
+  path: '/network-interfaces',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const MimeTypesRoute = MimeTypesRouteImport.update({
-	id: '/mime-types',
-	path: '/mime-types',
-	getParentRoute: () => rootRouteImport,
-} as any);
+  id: '/mime-types',
+  path: '/mime-types',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const MarkdownEditorRoute = MarkdownEditorRouteImport.update({
-	id: '/markdown-editor',
-	path: '/markdown-editor',
-	getParentRoute: () => rootRouteImport,
-} as any);
+  id: '/markdown-editor',
+  path: '/markdown-editor',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const MacLookupRoute = MacLookupRouteImport.update({
-	id: '/mac-lookup',
-	path: '/mac-lookup',
-	getParentRoute: () => rootRouteImport,
-} as any);
+  id: '/mac-lookup',
+  path: '/mac-lookup',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const LoremIpsumRoute = LoremIpsumRouteImport.update({
-	id: '/lorem-ipsum',
-	path: '/lorem-ipsum',
-	getParentRoute: () => rootRouteImport,
-} as any);
+  id: '/lorem-ipsum',
+  path: '/lorem-ipsum',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ListComparerRoute = ListComparerRouteImport.update({
-	id: '/list-comparer',
-	path: '/list-comparer',
-	getParentRoute: () => rootRouteImport,
-} as any);
+  id: '/list-comparer',
+  path: '/list-comparer',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const JwtDecoderRoute = JwtDecoderRouteImport.update({
-	id: '/jwt-decoder',
-	path: '/jwt-decoder',
-	getParentRoute: () => rootRouteImport,
-} as any);
+  id: '/jwt-decoder',
+  path: '/jwt-decoder',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const JsonFormatterRoute = JsonFormatterRouteImport.update({
-	id: '/json-formatter',
-	path: '/json-formatter',
-	getParentRoute: () => rootRouteImport,
-} as any);
+  id: '/json-formatter',
+  path: '/json-formatter',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IpConverterRoute = IpConverterRouteImport.update({
-	id: '/ip-converter',
-	path: '/ip-converter',
-	getParentRoute: () => rootRouteImport,
-} as any);
+  id: '/ip-converter',
+  path: '/ip-converter',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ImageConverterRoute = ImageConverterRouteImport.update({
-	id: '/image-converter',
-	path: '/image-converter',
-	getParentRoute: () => rootRouteImport,
-} as any);
+  id: '/image-converter',
+  path: '/image-converter',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const HttpStatusCodesRoute = HttpStatusCodesRouteImport.update({
-	id: '/http-status-codes',
-	path: '/http-status-codes',
-	getParentRoute: () => rootRouteImport,
-} as any);
+  id: '/http-status-codes',
+  path: '/http-status-codes',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const HexEditorRoute = HexEditorRouteImport.update({
-	id: '/hex-editor',
-	path: '/hex-editor',
-	getParentRoute: () => rootRouteImport,
-} as any);
+  id: '/hex-editor',
+  path: '/hex-editor',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const HashGeneratorRoute = HashGeneratorRouteImport.update({
-	id: '/hash-generator',
-	path: '/hash-generator',
-	getParentRoute: () => rootRouteImport,
-} as any);
+  id: '/hash-generator',
+  path: '/hash-generator',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const GpgKeyGeneratorRoute = GpgKeyGeneratorRouteImport.update({
-	id: '/gpg-key-generator',
-	path: '/gpg-key-generator',
-	getParentRoute: () => rootRouteImport,
-} as any);
+  id: '/gpg-key-generator',
+  path: '/gpg-key-generator',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FolderTreeVisualizerRoute = FolderTreeVisualizerRouteImport.update({
+  id: '/folder-tree-visualizer',
+  path: '/folder-tree-visualizer',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const FileWatchRoute = FileWatchRouteImport.update({
-	id: '/file-watch',
-	path: '/file-watch',
-	getParentRoute: () => rootRouteImport,
-} as any);
+  id: '/file-watch',
+  path: '/file-watch',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const FileInspectorRoute = FileInspectorRouteImport.update({
-	id: '/file-inspector',
-	path: '/file-inspector',
-	getParentRoute: () => rootRouteImport,
-} as any);
+  id: '/file-inspector',
+  path: '/file-inspector',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const EscapeToolRoute = EscapeToolRouteImport.update({
-	id: '/escape-tool',
-	path: '/escape-tool',
-	getParentRoute: () => rootRouteImport,
-} as any);
+  id: '/escape-tool',
+  path: '/escape-tool',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const EncodingConverterRoute = EncodingConverterRouteImport.update({
-	id: '/encoding-converter',
-	path: '/encoding-converter',
-	getParentRoute: () => rootRouteImport,
-} as any);
+  id: '/encoding-converter',
+  path: '/encoding-converter',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const DuplicateFinderRoute = DuplicateFinderRouteImport.update({
-	id: '/duplicate-finder',
-	path: '/duplicate-finder',
-	getParentRoute: () => rootRouteImport,
-} as any);
+  id: '/duplicate-finder',
+  path: '/duplicate-finder',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const DnsLookupRoute = DnsLookupRouteImport.update({
-	id: '/dns-lookup',
-	path: '/dns-lookup',
-	getParentRoute: () => rootRouteImport,
-} as any);
+  id: '/dns-lookup',
+  path: '/dns-lookup',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const DiffViewerRoute = DiffViewerRouteImport.update({
-	id: '/diff-viewer',
-	path: '/diff-viewer',
-	getParentRoute: () => rootRouteImport,
-} as any);
+  id: '/diff-viewer',
+  path: '/diff-viewer',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const DateTimestampConverterRoute = DateTimestampConverterRouteImport.update({
-	id: '/date-timestamp-converter',
-	path: '/date-timestamp-converter',
-	getParentRoute: () => rootRouteImport,
-} as any);
+  id: '/date-timestamp-converter',
+  path: '/date-timestamp-converter',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const CurlBuilderRoute = CurlBuilderRouteImport.update({
-	id: '/curl-builder',
-	path: '/curl-builder',
-	getParentRoute: () => rootRouteImport,
-} as any);
+  id: '/curl-builder',
+  path: '/curl-builder',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const CsvToolRoute = CsvToolRouteImport.update({
-	id: '/csv-tool',
-	path: '/csv-tool',
-	getParentRoute: () => rootRouteImport,
-} as any);
+  id: '/csv-tool',
+  path: '/csv-tool',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const CronExpressionBuilderRoute = CronExpressionBuilderRouteImport.update({
-	id: '/cron-expression-builder',
-	path: '/cron-expression-builder',
-	getParentRoute: () => rootRouteImport,
-} as any);
+  id: '/cron-expression-builder',
+  path: '/cron-expression-builder',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const CidrCalculatorRoute = CidrCalculatorRouteImport.update({
-	id: '/cidr-calculator',
-	path: '/cidr-calculator',
-	getParentRoute: () => rootRouteImport,
-} as any);
+  id: '/cidr-calculator',
+  path: '/cidr-calculator',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const BcryptGeneratorRoute = BcryptGeneratorRouteImport.update({
-	id: '/bcrypt-generator',
-	path: '/bcrypt-generator',
-	getParentRoute: () => rootRouteImport,
-} as any);
+  id: '/bcrypt-generator',
+  path: '/bcrypt-generator',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const Base64EncoderRoute = Base64EncoderRouteImport.update({
-	id: '/base64-encoder',
-	path: '/base64-encoder',
-	getParentRoute: () => rootRouteImport,
-} as any);
+  id: '/base64-encoder',
+  path: '/base64-encoder',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ArchiveInspectorRoute = ArchiveInspectorRouteImport.update({
-	id: '/archive-inspector',
-	path: '/archive-inspector',
-	getParentRoute: () => rootRouteImport,
-} as any);
+  id: '/archive-inspector',
+  path: '/archive-inspector',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
-	id: '/',
-	path: '/',
-	getParentRoute: () => rootRouteImport,
-} as any);
+  id: '/',
+  path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
-	'/': typeof IndexRoute;
-	'/archive-inspector': typeof ArchiveInspectorRoute;
-	'/base64-encoder': typeof Base64EncoderRoute;
-	'/bcrypt-generator': typeof BcryptGeneratorRoute;
-	'/cidr-calculator': typeof CidrCalculatorRoute;
-	'/cron-expression-builder': typeof CronExpressionBuilderRoute;
-	'/csv-tool': typeof CsvToolRoute;
-	'/curl-builder': typeof CurlBuilderRoute;
-	'/date-timestamp-converter': typeof DateTimestampConverterRoute;
-	'/diff-viewer': typeof DiffViewerRoute;
-	'/dns-lookup': typeof DnsLookupRoute;
-	'/duplicate-finder': typeof DuplicateFinderRoute;
-	'/encoding-converter': typeof EncodingConverterRoute;
-	'/escape-tool': typeof EscapeToolRoute;
-	'/file-inspector': typeof FileInspectorRoute;
-	'/file-watch': typeof FileWatchRoute;
-	'/gpg-key-generator': typeof GpgKeyGeneratorRoute;
-	'/hash-generator': typeof HashGeneratorRoute;
-	'/hex-editor': typeof HexEditorRoute;
-	'/http-status-codes': typeof HttpStatusCodesRoute;
-	'/image-converter': typeof ImageConverterRoute;
-	'/ip-converter': typeof IpConverterRoute;
-	'/json-formatter': typeof JsonFormatterRoute;
-	'/jwt-decoder': typeof JwtDecoderRoute;
-	'/list-comparer': typeof ListComparerRoute;
-	'/lorem-ipsum': typeof LoremIpsumRoute;
-	'/mac-lookup': typeof MacLookupRoute;
-	'/markdown-editor': typeof MarkdownEditorRoute;
-	'/mime-types': typeof MimeTypesRoute;
-	'/network-interfaces': typeof NetworkInterfacesRoute;
-	'/network-scanner': typeof NetworkScannerRoute;
-	'/number-base-converter': typeof NumberBaseConverterRoute;
-	'/password-generator': typeof PasswordGeneratorRoute;
-	'/path-tool': typeof PathToolRoute;
-	'/qr-code-generator': typeof QrCodeGeneratorRoute;
-	'/regex-tester': typeof RegexTesterRoute;
-	'/rest-client': typeof RestClientRoute;
-	'/rsa-tools': typeof RsaToolsRoute;
-	'/semver-tools': typeof SemverToolsRoute;
-	'/settings': typeof SettingsRoute;
-	'/sql-formatter': typeof SqlFormatterRoute;
-	'/ssh-key-generator': typeof SshKeyGeneratorRoute;
-	'/string-case-converter': typeof StringCaseConverterRoute;
-	'/string-compressor': typeof StringCompressorRoute;
-	'/test-data-generator': typeof TestDataGeneratorRoute;
-	'/tls-inspector': typeof TlsInspectorRoute;
-	'/url-encoder': typeof UrlEncoderRoute;
-	'/uuid-generator': typeof UuidGeneratorRoute;
-	'/webhook-receiver': typeof WebhookReceiverRoute;
-	'/websocket-tester': typeof WebsocketTesterRoute;
-	'/x509-decoder': typeof X509DecoderRoute;
-	'/xml-formatter': typeof XmlFormatterRoute;
-	'/yaml-formatter': typeof YamlFormatterRoute;
+  '/': typeof IndexRoute
+  '/archive-inspector': typeof ArchiveInspectorRoute
+  '/base64-encoder': typeof Base64EncoderRoute
+  '/bcrypt-generator': typeof BcryptGeneratorRoute
+  '/cidr-calculator': typeof CidrCalculatorRoute
+  '/cron-expression-builder': typeof CronExpressionBuilderRoute
+  '/csv-tool': typeof CsvToolRoute
+  '/curl-builder': typeof CurlBuilderRoute
+  '/date-timestamp-converter': typeof DateTimestampConverterRoute
+  '/diff-viewer': typeof DiffViewerRoute
+  '/dns-lookup': typeof DnsLookupRoute
+  '/duplicate-finder': typeof DuplicateFinderRoute
+  '/encoding-converter': typeof EncodingConverterRoute
+  '/escape-tool': typeof EscapeToolRoute
+  '/file-inspector': typeof FileInspectorRoute
+  '/file-watch': typeof FileWatchRoute
+  '/folder-tree-visualizer': typeof FolderTreeVisualizerRoute
+  '/gpg-key-generator': typeof GpgKeyGeneratorRoute
+  '/hash-generator': typeof HashGeneratorRoute
+  '/hex-editor': typeof HexEditorRoute
+  '/http-status-codes': typeof HttpStatusCodesRoute
+  '/image-converter': typeof ImageConverterRoute
+  '/ip-converter': typeof IpConverterRoute
+  '/json-formatter': typeof JsonFormatterRoute
+  '/jwt-decoder': typeof JwtDecoderRoute
+  '/list-comparer': typeof ListComparerRoute
+  '/lorem-ipsum': typeof LoremIpsumRoute
+  '/mac-lookup': typeof MacLookupRoute
+  '/markdown-editor': typeof MarkdownEditorRoute
+  '/mime-types': typeof MimeTypesRoute
+  '/network-interfaces': typeof NetworkInterfacesRoute
+  '/network-scanner': typeof NetworkScannerRoute
+  '/number-base-converter': typeof NumberBaseConverterRoute
+  '/password-generator': typeof PasswordGeneratorRoute
+  '/path-tool': typeof PathToolRoute
+  '/qr-code-generator': typeof QrCodeGeneratorRoute
+  '/regex-tester': typeof RegexTesterRoute
+  '/rest-client': typeof RestClientRoute
+  '/rsa-tools': typeof RsaToolsRoute
+  '/semver-tools': typeof SemverToolsRoute
+  '/settings': typeof SettingsRoute
+  '/sql-formatter': typeof SqlFormatterRoute
+  '/ssh-key-generator': typeof SshKeyGeneratorRoute
+  '/string-case-converter': typeof StringCaseConverterRoute
+  '/string-compressor': typeof StringCompressorRoute
+  '/test-data-generator': typeof TestDataGeneratorRoute
+  '/tls-inspector': typeof TlsInspectorRoute
+  '/url-encoder': typeof UrlEncoderRoute
+  '/uuid-generator': typeof UuidGeneratorRoute
+  '/webhook-receiver': typeof WebhookReceiverRoute
+  '/websocket-tester': typeof WebsocketTesterRoute
+  '/x509-decoder': typeof X509DecoderRoute
+  '/xml-formatter': typeof XmlFormatterRoute
+  '/yaml-formatter': typeof YamlFormatterRoute
 }
 export interface FileRoutesByTo {
-	'/': typeof IndexRoute;
-	'/archive-inspector': typeof ArchiveInspectorRoute;
-	'/base64-encoder': typeof Base64EncoderRoute;
-	'/bcrypt-generator': typeof BcryptGeneratorRoute;
-	'/cidr-calculator': typeof CidrCalculatorRoute;
-	'/cron-expression-builder': typeof CronExpressionBuilderRoute;
-	'/csv-tool': typeof CsvToolRoute;
-	'/curl-builder': typeof CurlBuilderRoute;
-	'/date-timestamp-converter': typeof DateTimestampConverterRoute;
-	'/diff-viewer': typeof DiffViewerRoute;
-	'/dns-lookup': typeof DnsLookupRoute;
-	'/duplicate-finder': typeof DuplicateFinderRoute;
-	'/encoding-converter': typeof EncodingConverterRoute;
-	'/escape-tool': typeof EscapeToolRoute;
-	'/file-inspector': typeof FileInspectorRoute;
-	'/file-watch': typeof FileWatchRoute;
-	'/gpg-key-generator': typeof GpgKeyGeneratorRoute;
-	'/hash-generator': typeof HashGeneratorRoute;
-	'/hex-editor': typeof HexEditorRoute;
-	'/http-status-codes': typeof HttpStatusCodesRoute;
-	'/image-converter': typeof ImageConverterRoute;
-	'/ip-converter': typeof IpConverterRoute;
-	'/json-formatter': typeof JsonFormatterRoute;
-	'/jwt-decoder': typeof JwtDecoderRoute;
-	'/list-comparer': typeof ListComparerRoute;
-	'/lorem-ipsum': typeof LoremIpsumRoute;
-	'/mac-lookup': typeof MacLookupRoute;
-	'/markdown-editor': typeof MarkdownEditorRoute;
-	'/mime-types': typeof MimeTypesRoute;
-	'/network-interfaces': typeof NetworkInterfacesRoute;
-	'/network-scanner': typeof NetworkScannerRoute;
-	'/number-base-converter': typeof NumberBaseConverterRoute;
-	'/password-generator': typeof PasswordGeneratorRoute;
-	'/path-tool': typeof PathToolRoute;
-	'/qr-code-generator': typeof QrCodeGeneratorRoute;
-	'/regex-tester': typeof RegexTesterRoute;
-	'/rest-client': typeof RestClientRoute;
-	'/rsa-tools': typeof RsaToolsRoute;
-	'/semver-tools': typeof SemverToolsRoute;
-	'/settings': typeof SettingsRoute;
-	'/sql-formatter': typeof SqlFormatterRoute;
-	'/ssh-key-generator': typeof SshKeyGeneratorRoute;
-	'/string-case-converter': typeof StringCaseConverterRoute;
-	'/string-compressor': typeof StringCompressorRoute;
-	'/test-data-generator': typeof TestDataGeneratorRoute;
-	'/tls-inspector': typeof TlsInspectorRoute;
-	'/url-encoder': typeof UrlEncoderRoute;
-	'/uuid-generator': typeof UuidGeneratorRoute;
-	'/webhook-receiver': typeof WebhookReceiverRoute;
-	'/websocket-tester': typeof WebsocketTesterRoute;
-	'/x509-decoder': typeof X509DecoderRoute;
-	'/xml-formatter': typeof XmlFormatterRoute;
-	'/yaml-formatter': typeof YamlFormatterRoute;
+  '/': typeof IndexRoute
+  '/archive-inspector': typeof ArchiveInspectorRoute
+  '/base64-encoder': typeof Base64EncoderRoute
+  '/bcrypt-generator': typeof BcryptGeneratorRoute
+  '/cidr-calculator': typeof CidrCalculatorRoute
+  '/cron-expression-builder': typeof CronExpressionBuilderRoute
+  '/csv-tool': typeof CsvToolRoute
+  '/curl-builder': typeof CurlBuilderRoute
+  '/date-timestamp-converter': typeof DateTimestampConverterRoute
+  '/diff-viewer': typeof DiffViewerRoute
+  '/dns-lookup': typeof DnsLookupRoute
+  '/duplicate-finder': typeof DuplicateFinderRoute
+  '/encoding-converter': typeof EncodingConverterRoute
+  '/escape-tool': typeof EscapeToolRoute
+  '/file-inspector': typeof FileInspectorRoute
+  '/file-watch': typeof FileWatchRoute
+  '/folder-tree-visualizer': typeof FolderTreeVisualizerRoute
+  '/gpg-key-generator': typeof GpgKeyGeneratorRoute
+  '/hash-generator': typeof HashGeneratorRoute
+  '/hex-editor': typeof HexEditorRoute
+  '/http-status-codes': typeof HttpStatusCodesRoute
+  '/image-converter': typeof ImageConverterRoute
+  '/ip-converter': typeof IpConverterRoute
+  '/json-formatter': typeof JsonFormatterRoute
+  '/jwt-decoder': typeof JwtDecoderRoute
+  '/list-comparer': typeof ListComparerRoute
+  '/lorem-ipsum': typeof LoremIpsumRoute
+  '/mac-lookup': typeof MacLookupRoute
+  '/markdown-editor': typeof MarkdownEditorRoute
+  '/mime-types': typeof MimeTypesRoute
+  '/network-interfaces': typeof NetworkInterfacesRoute
+  '/network-scanner': typeof NetworkScannerRoute
+  '/number-base-converter': typeof NumberBaseConverterRoute
+  '/password-generator': typeof PasswordGeneratorRoute
+  '/path-tool': typeof PathToolRoute
+  '/qr-code-generator': typeof QrCodeGeneratorRoute
+  '/regex-tester': typeof RegexTesterRoute
+  '/rest-client': typeof RestClientRoute
+  '/rsa-tools': typeof RsaToolsRoute
+  '/semver-tools': typeof SemverToolsRoute
+  '/settings': typeof SettingsRoute
+  '/sql-formatter': typeof SqlFormatterRoute
+  '/ssh-key-generator': typeof SshKeyGeneratorRoute
+  '/string-case-converter': typeof StringCaseConverterRoute
+  '/string-compressor': typeof StringCompressorRoute
+  '/test-data-generator': typeof TestDataGeneratorRoute
+  '/tls-inspector': typeof TlsInspectorRoute
+  '/url-encoder': typeof UrlEncoderRoute
+  '/uuid-generator': typeof UuidGeneratorRoute
+  '/webhook-receiver': typeof WebhookReceiverRoute
+  '/websocket-tester': typeof WebsocketTesterRoute
+  '/x509-decoder': typeof X509DecoderRoute
+  '/xml-formatter': typeof XmlFormatterRoute
+  '/yaml-formatter': typeof YamlFormatterRoute
 }
 export interface FileRoutesById {
-	__root__: typeof rootRouteImport;
-	'/': typeof IndexRoute;
-	'/archive-inspector': typeof ArchiveInspectorRoute;
-	'/base64-encoder': typeof Base64EncoderRoute;
-	'/bcrypt-generator': typeof BcryptGeneratorRoute;
-	'/cidr-calculator': typeof CidrCalculatorRoute;
-	'/cron-expression-builder': typeof CronExpressionBuilderRoute;
-	'/csv-tool': typeof CsvToolRoute;
-	'/curl-builder': typeof CurlBuilderRoute;
-	'/date-timestamp-converter': typeof DateTimestampConverterRoute;
-	'/diff-viewer': typeof DiffViewerRoute;
-	'/dns-lookup': typeof DnsLookupRoute;
-	'/duplicate-finder': typeof DuplicateFinderRoute;
-	'/encoding-converter': typeof EncodingConverterRoute;
-	'/escape-tool': typeof EscapeToolRoute;
-	'/file-inspector': typeof FileInspectorRoute;
-	'/file-watch': typeof FileWatchRoute;
-	'/gpg-key-generator': typeof GpgKeyGeneratorRoute;
-	'/hash-generator': typeof HashGeneratorRoute;
-	'/hex-editor': typeof HexEditorRoute;
-	'/http-status-codes': typeof HttpStatusCodesRoute;
-	'/image-converter': typeof ImageConverterRoute;
-	'/ip-converter': typeof IpConverterRoute;
-	'/json-formatter': typeof JsonFormatterRoute;
-	'/jwt-decoder': typeof JwtDecoderRoute;
-	'/list-comparer': typeof ListComparerRoute;
-	'/lorem-ipsum': typeof LoremIpsumRoute;
-	'/mac-lookup': typeof MacLookupRoute;
-	'/markdown-editor': typeof MarkdownEditorRoute;
-	'/mime-types': typeof MimeTypesRoute;
-	'/network-interfaces': typeof NetworkInterfacesRoute;
-	'/network-scanner': typeof NetworkScannerRoute;
-	'/number-base-converter': typeof NumberBaseConverterRoute;
-	'/password-generator': typeof PasswordGeneratorRoute;
-	'/path-tool': typeof PathToolRoute;
-	'/qr-code-generator': typeof QrCodeGeneratorRoute;
-	'/regex-tester': typeof RegexTesterRoute;
-	'/rest-client': typeof RestClientRoute;
-	'/rsa-tools': typeof RsaToolsRoute;
-	'/semver-tools': typeof SemverToolsRoute;
-	'/settings': typeof SettingsRoute;
-	'/sql-formatter': typeof SqlFormatterRoute;
-	'/ssh-key-generator': typeof SshKeyGeneratorRoute;
-	'/string-case-converter': typeof StringCaseConverterRoute;
-	'/string-compressor': typeof StringCompressorRoute;
-	'/test-data-generator': typeof TestDataGeneratorRoute;
-	'/tls-inspector': typeof TlsInspectorRoute;
-	'/url-encoder': typeof UrlEncoderRoute;
-	'/uuid-generator': typeof UuidGeneratorRoute;
-	'/webhook-receiver': typeof WebhookReceiverRoute;
-	'/websocket-tester': typeof WebsocketTesterRoute;
-	'/x509-decoder': typeof X509DecoderRoute;
-	'/xml-formatter': typeof XmlFormatterRoute;
-	'/yaml-formatter': typeof YamlFormatterRoute;
+  __root__: typeof rootRouteImport
+  '/': typeof IndexRoute
+  '/archive-inspector': typeof ArchiveInspectorRoute
+  '/base64-encoder': typeof Base64EncoderRoute
+  '/bcrypt-generator': typeof BcryptGeneratorRoute
+  '/cidr-calculator': typeof CidrCalculatorRoute
+  '/cron-expression-builder': typeof CronExpressionBuilderRoute
+  '/csv-tool': typeof CsvToolRoute
+  '/curl-builder': typeof CurlBuilderRoute
+  '/date-timestamp-converter': typeof DateTimestampConverterRoute
+  '/diff-viewer': typeof DiffViewerRoute
+  '/dns-lookup': typeof DnsLookupRoute
+  '/duplicate-finder': typeof DuplicateFinderRoute
+  '/encoding-converter': typeof EncodingConverterRoute
+  '/escape-tool': typeof EscapeToolRoute
+  '/file-inspector': typeof FileInspectorRoute
+  '/file-watch': typeof FileWatchRoute
+  '/folder-tree-visualizer': typeof FolderTreeVisualizerRoute
+  '/gpg-key-generator': typeof GpgKeyGeneratorRoute
+  '/hash-generator': typeof HashGeneratorRoute
+  '/hex-editor': typeof HexEditorRoute
+  '/http-status-codes': typeof HttpStatusCodesRoute
+  '/image-converter': typeof ImageConverterRoute
+  '/ip-converter': typeof IpConverterRoute
+  '/json-formatter': typeof JsonFormatterRoute
+  '/jwt-decoder': typeof JwtDecoderRoute
+  '/list-comparer': typeof ListComparerRoute
+  '/lorem-ipsum': typeof LoremIpsumRoute
+  '/mac-lookup': typeof MacLookupRoute
+  '/markdown-editor': typeof MarkdownEditorRoute
+  '/mime-types': typeof MimeTypesRoute
+  '/network-interfaces': typeof NetworkInterfacesRoute
+  '/network-scanner': typeof NetworkScannerRoute
+  '/number-base-converter': typeof NumberBaseConverterRoute
+  '/password-generator': typeof PasswordGeneratorRoute
+  '/path-tool': typeof PathToolRoute
+  '/qr-code-generator': typeof QrCodeGeneratorRoute
+  '/regex-tester': typeof RegexTesterRoute
+  '/rest-client': typeof RestClientRoute
+  '/rsa-tools': typeof RsaToolsRoute
+  '/semver-tools': typeof SemverToolsRoute
+  '/settings': typeof SettingsRoute
+  '/sql-formatter': typeof SqlFormatterRoute
+  '/ssh-key-generator': typeof SshKeyGeneratorRoute
+  '/string-case-converter': typeof StringCaseConverterRoute
+  '/string-compressor': typeof StringCompressorRoute
+  '/test-data-generator': typeof TestDataGeneratorRoute
+  '/tls-inspector': typeof TlsInspectorRoute
+  '/url-encoder': typeof UrlEncoderRoute
+  '/uuid-generator': typeof UuidGeneratorRoute
+  '/webhook-receiver': typeof WebhookReceiverRoute
+  '/websocket-tester': typeof WebsocketTesterRoute
+  '/x509-decoder': typeof X509DecoderRoute
+  '/xml-formatter': typeof XmlFormatterRoute
+  '/yaml-formatter': typeof YamlFormatterRoute
 }
 export interface FileRouteTypes {
-	fileRoutesByFullPath: FileRoutesByFullPath;
-	fullPaths:
-		| '/'
-		| '/archive-inspector'
-		| '/base64-encoder'
-		| '/bcrypt-generator'
-		| '/cidr-calculator'
-		| '/cron-expression-builder'
-		| '/csv-tool'
-		| '/curl-builder'
-		| '/date-timestamp-converter'
-		| '/diff-viewer'
-		| '/dns-lookup'
-		| '/duplicate-finder'
-		| '/encoding-converter'
-		| '/escape-tool'
-		| '/file-inspector'
-		| '/file-watch'
-		| '/gpg-key-generator'
-		| '/hash-generator'
-		| '/hex-editor'
-		| '/http-status-codes'
-		| '/image-converter'
-		| '/ip-converter'
-		| '/json-formatter'
-		| '/jwt-decoder'
-		| '/list-comparer'
-		| '/lorem-ipsum'
-		| '/mac-lookup'
-		| '/markdown-editor'
-		| '/mime-types'
-		| '/network-interfaces'
-		| '/network-scanner'
-		| '/number-base-converter'
-		| '/password-generator'
-		| '/path-tool'
-		| '/qr-code-generator'
-		| '/regex-tester'
-		| '/rest-client'
-		| '/rsa-tools'
-		| '/semver-tools'
-		| '/settings'
-		| '/sql-formatter'
-		| '/ssh-key-generator'
-		| '/string-case-converter'
-		| '/string-compressor'
-		| '/test-data-generator'
-		| '/tls-inspector'
-		| '/url-encoder'
-		| '/uuid-generator'
-		| '/webhook-receiver'
-		| '/websocket-tester'
-		| '/x509-decoder'
-		| '/xml-formatter'
-		| '/yaml-formatter';
-	fileRoutesByTo: FileRoutesByTo;
-	to:
-		| '/'
-		| '/archive-inspector'
-		| '/base64-encoder'
-		| '/bcrypt-generator'
-		| '/cidr-calculator'
-		| '/cron-expression-builder'
-		| '/csv-tool'
-		| '/curl-builder'
-		| '/date-timestamp-converter'
-		| '/diff-viewer'
-		| '/dns-lookup'
-		| '/duplicate-finder'
-		| '/encoding-converter'
-		| '/escape-tool'
-		| '/file-inspector'
-		| '/file-watch'
-		| '/gpg-key-generator'
-		| '/hash-generator'
-		| '/hex-editor'
-		| '/http-status-codes'
-		| '/image-converter'
-		| '/ip-converter'
-		| '/json-formatter'
-		| '/jwt-decoder'
-		| '/list-comparer'
-		| '/lorem-ipsum'
-		| '/mac-lookup'
-		| '/markdown-editor'
-		| '/mime-types'
-		| '/network-interfaces'
-		| '/network-scanner'
-		| '/number-base-converter'
-		| '/password-generator'
-		| '/path-tool'
-		| '/qr-code-generator'
-		| '/regex-tester'
-		| '/rest-client'
-		| '/rsa-tools'
-		| '/semver-tools'
-		| '/settings'
-		| '/sql-formatter'
-		| '/ssh-key-generator'
-		| '/string-case-converter'
-		| '/string-compressor'
-		| '/test-data-generator'
-		| '/tls-inspector'
-		| '/url-encoder'
-		| '/uuid-generator'
-		| '/webhook-receiver'
-		| '/websocket-tester'
-		| '/x509-decoder'
-		| '/xml-formatter'
-		| '/yaml-formatter';
-	id:
-		| '__root__'
-		| '/'
-		| '/archive-inspector'
-		| '/base64-encoder'
-		| '/bcrypt-generator'
-		| '/cidr-calculator'
-		| '/cron-expression-builder'
-		| '/csv-tool'
-		| '/curl-builder'
-		| '/date-timestamp-converter'
-		| '/diff-viewer'
-		| '/dns-lookup'
-		| '/duplicate-finder'
-		| '/encoding-converter'
-		| '/escape-tool'
-		| '/file-inspector'
-		| '/file-watch'
-		| '/gpg-key-generator'
-		| '/hash-generator'
-		| '/hex-editor'
-		| '/http-status-codes'
-		| '/image-converter'
-		| '/ip-converter'
-		| '/json-formatter'
-		| '/jwt-decoder'
-		| '/list-comparer'
-		| '/lorem-ipsum'
-		| '/mac-lookup'
-		| '/markdown-editor'
-		| '/mime-types'
-		| '/network-interfaces'
-		| '/network-scanner'
-		| '/number-base-converter'
-		| '/password-generator'
-		| '/path-tool'
-		| '/qr-code-generator'
-		| '/regex-tester'
-		| '/rest-client'
-		| '/rsa-tools'
-		| '/semver-tools'
-		| '/settings'
-		| '/sql-formatter'
-		| '/ssh-key-generator'
-		| '/string-case-converter'
-		| '/string-compressor'
-		| '/test-data-generator'
-		| '/tls-inspector'
-		| '/url-encoder'
-		| '/uuid-generator'
-		| '/webhook-receiver'
-		| '/websocket-tester'
-		| '/x509-decoder'
-		| '/xml-formatter'
-		| '/yaml-formatter';
-	fileRoutesById: FileRoutesById;
+  fileRoutesByFullPath: FileRoutesByFullPath
+  fullPaths:
+    | '/'
+    | '/archive-inspector'
+    | '/base64-encoder'
+    | '/bcrypt-generator'
+    | '/cidr-calculator'
+    | '/cron-expression-builder'
+    | '/csv-tool'
+    | '/curl-builder'
+    | '/date-timestamp-converter'
+    | '/diff-viewer'
+    | '/dns-lookup'
+    | '/duplicate-finder'
+    | '/encoding-converter'
+    | '/escape-tool'
+    | '/file-inspector'
+    | '/file-watch'
+    | '/folder-tree-visualizer'
+    | '/gpg-key-generator'
+    | '/hash-generator'
+    | '/hex-editor'
+    | '/http-status-codes'
+    | '/image-converter'
+    | '/ip-converter'
+    | '/json-formatter'
+    | '/jwt-decoder'
+    | '/list-comparer'
+    | '/lorem-ipsum'
+    | '/mac-lookup'
+    | '/markdown-editor'
+    | '/mime-types'
+    | '/network-interfaces'
+    | '/network-scanner'
+    | '/number-base-converter'
+    | '/password-generator'
+    | '/path-tool'
+    | '/qr-code-generator'
+    | '/regex-tester'
+    | '/rest-client'
+    | '/rsa-tools'
+    | '/semver-tools'
+    | '/settings'
+    | '/sql-formatter'
+    | '/ssh-key-generator'
+    | '/string-case-converter'
+    | '/string-compressor'
+    | '/test-data-generator'
+    | '/tls-inspector'
+    | '/url-encoder'
+    | '/uuid-generator'
+    | '/webhook-receiver'
+    | '/websocket-tester'
+    | '/x509-decoder'
+    | '/xml-formatter'
+    | '/yaml-formatter'
+  fileRoutesByTo: FileRoutesByTo
+  to:
+    | '/'
+    | '/archive-inspector'
+    | '/base64-encoder'
+    | '/bcrypt-generator'
+    | '/cidr-calculator'
+    | '/cron-expression-builder'
+    | '/csv-tool'
+    | '/curl-builder'
+    | '/date-timestamp-converter'
+    | '/diff-viewer'
+    | '/dns-lookup'
+    | '/duplicate-finder'
+    | '/encoding-converter'
+    | '/escape-tool'
+    | '/file-inspector'
+    | '/file-watch'
+    | '/folder-tree-visualizer'
+    | '/gpg-key-generator'
+    | '/hash-generator'
+    | '/hex-editor'
+    | '/http-status-codes'
+    | '/image-converter'
+    | '/ip-converter'
+    | '/json-formatter'
+    | '/jwt-decoder'
+    | '/list-comparer'
+    | '/lorem-ipsum'
+    | '/mac-lookup'
+    | '/markdown-editor'
+    | '/mime-types'
+    | '/network-interfaces'
+    | '/network-scanner'
+    | '/number-base-converter'
+    | '/password-generator'
+    | '/path-tool'
+    | '/qr-code-generator'
+    | '/regex-tester'
+    | '/rest-client'
+    | '/rsa-tools'
+    | '/semver-tools'
+    | '/settings'
+    | '/sql-formatter'
+    | '/ssh-key-generator'
+    | '/string-case-converter'
+    | '/string-compressor'
+    | '/test-data-generator'
+    | '/tls-inspector'
+    | '/url-encoder'
+    | '/uuid-generator'
+    | '/webhook-receiver'
+    | '/websocket-tester'
+    | '/x509-decoder'
+    | '/xml-formatter'
+    | '/yaml-formatter'
+  id:
+    | '__root__'
+    | '/'
+    | '/archive-inspector'
+    | '/base64-encoder'
+    | '/bcrypt-generator'
+    | '/cidr-calculator'
+    | '/cron-expression-builder'
+    | '/csv-tool'
+    | '/curl-builder'
+    | '/date-timestamp-converter'
+    | '/diff-viewer'
+    | '/dns-lookup'
+    | '/duplicate-finder'
+    | '/encoding-converter'
+    | '/escape-tool'
+    | '/file-inspector'
+    | '/file-watch'
+    | '/folder-tree-visualizer'
+    | '/gpg-key-generator'
+    | '/hash-generator'
+    | '/hex-editor'
+    | '/http-status-codes'
+    | '/image-converter'
+    | '/ip-converter'
+    | '/json-formatter'
+    | '/jwt-decoder'
+    | '/list-comparer'
+    | '/lorem-ipsum'
+    | '/mac-lookup'
+    | '/markdown-editor'
+    | '/mime-types'
+    | '/network-interfaces'
+    | '/network-scanner'
+    | '/number-base-converter'
+    | '/password-generator'
+    | '/path-tool'
+    | '/qr-code-generator'
+    | '/regex-tester'
+    | '/rest-client'
+    | '/rsa-tools'
+    | '/semver-tools'
+    | '/settings'
+    | '/sql-formatter'
+    | '/ssh-key-generator'
+    | '/string-case-converter'
+    | '/string-compressor'
+    | '/test-data-generator'
+    | '/tls-inspector'
+    | '/url-encoder'
+    | '/uuid-generator'
+    | '/webhook-receiver'
+    | '/websocket-tester'
+    | '/x509-decoder'
+    | '/xml-formatter'
+    | '/yaml-formatter'
+  fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
-	IndexRoute: typeof IndexRoute;
-	ArchiveInspectorRoute: typeof ArchiveInspectorRoute;
-	Base64EncoderRoute: typeof Base64EncoderRoute;
-	BcryptGeneratorRoute: typeof BcryptGeneratorRoute;
-	CidrCalculatorRoute: typeof CidrCalculatorRoute;
-	CronExpressionBuilderRoute: typeof CronExpressionBuilderRoute;
-	CsvToolRoute: typeof CsvToolRoute;
-	CurlBuilderRoute: typeof CurlBuilderRoute;
-	DateTimestampConverterRoute: typeof DateTimestampConverterRoute;
-	DiffViewerRoute: typeof DiffViewerRoute;
-	DnsLookupRoute: typeof DnsLookupRoute;
-	DuplicateFinderRoute: typeof DuplicateFinderRoute;
-	EncodingConverterRoute: typeof EncodingConverterRoute;
-	EscapeToolRoute: typeof EscapeToolRoute;
-	FileInspectorRoute: typeof FileInspectorRoute;
-	FileWatchRoute: typeof FileWatchRoute;
-	GpgKeyGeneratorRoute: typeof GpgKeyGeneratorRoute;
-	HashGeneratorRoute: typeof HashGeneratorRoute;
-	HexEditorRoute: typeof HexEditorRoute;
-	HttpStatusCodesRoute: typeof HttpStatusCodesRoute;
-	ImageConverterRoute: typeof ImageConverterRoute;
-	IpConverterRoute: typeof IpConverterRoute;
-	JsonFormatterRoute: typeof JsonFormatterRoute;
-	JwtDecoderRoute: typeof JwtDecoderRoute;
-	ListComparerRoute: typeof ListComparerRoute;
-	LoremIpsumRoute: typeof LoremIpsumRoute;
-	MacLookupRoute: typeof MacLookupRoute;
-	MarkdownEditorRoute: typeof MarkdownEditorRoute;
-	MimeTypesRoute: typeof MimeTypesRoute;
-	NetworkInterfacesRoute: typeof NetworkInterfacesRoute;
-	NetworkScannerRoute: typeof NetworkScannerRoute;
-	NumberBaseConverterRoute: typeof NumberBaseConverterRoute;
-	PasswordGeneratorRoute: typeof PasswordGeneratorRoute;
-	PathToolRoute: typeof PathToolRoute;
-	QrCodeGeneratorRoute: typeof QrCodeGeneratorRoute;
-	RegexTesterRoute: typeof RegexTesterRoute;
-	RestClientRoute: typeof RestClientRoute;
-	RsaToolsRoute: typeof RsaToolsRoute;
-	SemverToolsRoute: typeof SemverToolsRoute;
-	SettingsRoute: typeof SettingsRoute;
-	SqlFormatterRoute: typeof SqlFormatterRoute;
-	SshKeyGeneratorRoute: typeof SshKeyGeneratorRoute;
-	StringCaseConverterRoute: typeof StringCaseConverterRoute;
-	StringCompressorRoute: typeof StringCompressorRoute;
-	TestDataGeneratorRoute: typeof TestDataGeneratorRoute;
-	TlsInspectorRoute: typeof TlsInspectorRoute;
-	UrlEncoderRoute: typeof UrlEncoderRoute;
-	UuidGeneratorRoute: typeof UuidGeneratorRoute;
-	WebhookReceiverRoute: typeof WebhookReceiverRoute;
-	WebsocketTesterRoute: typeof WebsocketTesterRoute;
-	X509DecoderRoute: typeof X509DecoderRoute;
-	XmlFormatterRoute: typeof XmlFormatterRoute;
-	YamlFormatterRoute: typeof YamlFormatterRoute;
+  IndexRoute: typeof IndexRoute
+  ArchiveInspectorRoute: typeof ArchiveInspectorRoute
+  Base64EncoderRoute: typeof Base64EncoderRoute
+  BcryptGeneratorRoute: typeof BcryptGeneratorRoute
+  CidrCalculatorRoute: typeof CidrCalculatorRoute
+  CronExpressionBuilderRoute: typeof CronExpressionBuilderRoute
+  CsvToolRoute: typeof CsvToolRoute
+  CurlBuilderRoute: typeof CurlBuilderRoute
+  DateTimestampConverterRoute: typeof DateTimestampConverterRoute
+  DiffViewerRoute: typeof DiffViewerRoute
+  DnsLookupRoute: typeof DnsLookupRoute
+  DuplicateFinderRoute: typeof DuplicateFinderRoute
+  EncodingConverterRoute: typeof EncodingConverterRoute
+  EscapeToolRoute: typeof EscapeToolRoute
+  FileInspectorRoute: typeof FileInspectorRoute
+  FileWatchRoute: typeof FileWatchRoute
+  FolderTreeVisualizerRoute: typeof FolderTreeVisualizerRoute
+  GpgKeyGeneratorRoute: typeof GpgKeyGeneratorRoute
+  HashGeneratorRoute: typeof HashGeneratorRoute
+  HexEditorRoute: typeof HexEditorRoute
+  HttpStatusCodesRoute: typeof HttpStatusCodesRoute
+  ImageConverterRoute: typeof ImageConverterRoute
+  IpConverterRoute: typeof IpConverterRoute
+  JsonFormatterRoute: typeof JsonFormatterRoute
+  JwtDecoderRoute: typeof JwtDecoderRoute
+  ListComparerRoute: typeof ListComparerRoute
+  LoremIpsumRoute: typeof LoremIpsumRoute
+  MacLookupRoute: typeof MacLookupRoute
+  MarkdownEditorRoute: typeof MarkdownEditorRoute
+  MimeTypesRoute: typeof MimeTypesRoute
+  NetworkInterfacesRoute: typeof NetworkInterfacesRoute
+  NetworkScannerRoute: typeof NetworkScannerRoute
+  NumberBaseConverterRoute: typeof NumberBaseConverterRoute
+  PasswordGeneratorRoute: typeof PasswordGeneratorRoute
+  PathToolRoute: typeof PathToolRoute
+  QrCodeGeneratorRoute: typeof QrCodeGeneratorRoute
+  RegexTesterRoute: typeof RegexTesterRoute
+  RestClientRoute: typeof RestClientRoute
+  RsaToolsRoute: typeof RsaToolsRoute
+  SemverToolsRoute: typeof SemverToolsRoute
+  SettingsRoute: typeof SettingsRoute
+  SqlFormatterRoute: typeof SqlFormatterRoute
+  SshKeyGeneratorRoute: typeof SshKeyGeneratorRoute
+  StringCaseConverterRoute: typeof StringCaseConverterRoute
+  StringCompressorRoute: typeof StringCompressorRoute
+  TestDataGeneratorRoute: typeof TestDataGeneratorRoute
+  TlsInspectorRoute: typeof TlsInspectorRoute
+  UrlEncoderRoute: typeof UrlEncoderRoute
+  UuidGeneratorRoute: typeof UuidGeneratorRoute
+  WebhookReceiverRoute: typeof WebhookReceiverRoute
+  WebsocketTesterRoute: typeof WebsocketTesterRoute
+  X509DecoderRoute: typeof X509DecoderRoute
+  XmlFormatterRoute: typeof XmlFormatterRoute
+  YamlFormatterRoute: typeof YamlFormatterRoute
 }
 
 declare module '@tanstack/react-router' {
-	interface FileRoutesByPath {
-		'/yaml-formatter': {
-			id: '/yaml-formatter';
-			path: '/yaml-formatter';
-			fullPath: '/yaml-formatter';
-			preLoaderRoute: typeof YamlFormatterRouteImport;
-			parentRoute: typeof rootRouteImport;
-		};
-		'/xml-formatter': {
-			id: '/xml-formatter';
-			path: '/xml-formatter';
-			fullPath: '/xml-formatter';
-			preLoaderRoute: typeof XmlFormatterRouteImport;
-			parentRoute: typeof rootRouteImport;
-		};
-		'/x509-decoder': {
-			id: '/x509-decoder';
-			path: '/x509-decoder';
-			fullPath: '/x509-decoder';
-			preLoaderRoute: typeof X509DecoderRouteImport;
-			parentRoute: typeof rootRouteImport;
-		};
-		'/websocket-tester': {
-			id: '/websocket-tester';
-			path: '/websocket-tester';
-			fullPath: '/websocket-tester';
-			preLoaderRoute: typeof WebsocketTesterRouteImport;
-			parentRoute: typeof rootRouteImport;
-		};
-		'/webhook-receiver': {
-			id: '/webhook-receiver';
-			path: '/webhook-receiver';
-			fullPath: '/webhook-receiver';
-			preLoaderRoute: typeof WebhookReceiverRouteImport;
-			parentRoute: typeof rootRouteImport;
-		};
-		'/uuid-generator': {
-			id: '/uuid-generator';
-			path: '/uuid-generator';
-			fullPath: '/uuid-generator';
-			preLoaderRoute: typeof UuidGeneratorRouteImport;
-			parentRoute: typeof rootRouteImport;
-		};
-		'/url-encoder': {
-			id: '/url-encoder';
-			path: '/url-encoder';
-			fullPath: '/url-encoder';
-			preLoaderRoute: typeof UrlEncoderRouteImport;
-			parentRoute: typeof rootRouteImport;
-		};
-		'/tls-inspector': {
-			id: '/tls-inspector';
-			path: '/tls-inspector';
-			fullPath: '/tls-inspector';
-			preLoaderRoute: typeof TlsInspectorRouteImport;
-			parentRoute: typeof rootRouteImport;
-		};
-		'/test-data-generator': {
-			id: '/test-data-generator';
-			path: '/test-data-generator';
-			fullPath: '/test-data-generator';
-			preLoaderRoute: typeof TestDataGeneratorRouteImport;
-			parentRoute: typeof rootRouteImport;
-		};
-		'/string-compressor': {
-			id: '/string-compressor';
-			path: '/string-compressor';
-			fullPath: '/string-compressor';
-			preLoaderRoute: typeof StringCompressorRouteImport;
-			parentRoute: typeof rootRouteImport;
-		};
-		'/string-case-converter': {
-			id: '/string-case-converter';
-			path: '/string-case-converter';
-			fullPath: '/string-case-converter';
-			preLoaderRoute: typeof StringCaseConverterRouteImport;
-			parentRoute: typeof rootRouteImport;
-		};
-		'/ssh-key-generator': {
-			id: '/ssh-key-generator';
-			path: '/ssh-key-generator';
-			fullPath: '/ssh-key-generator';
-			preLoaderRoute: typeof SshKeyGeneratorRouteImport;
-			parentRoute: typeof rootRouteImport;
-		};
-		'/sql-formatter': {
-			id: '/sql-formatter';
-			path: '/sql-formatter';
-			fullPath: '/sql-formatter';
-			preLoaderRoute: typeof SqlFormatterRouteImport;
-			parentRoute: typeof rootRouteImport;
-		};
-		'/settings': {
-			id: '/settings';
-			path: '/settings';
-			fullPath: '/settings';
-			preLoaderRoute: typeof SettingsRouteImport;
-			parentRoute: typeof rootRouteImport;
-		};
-		'/semver-tools': {
-			id: '/semver-tools';
-			path: '/semver-tools';
-			fullPath: '/semver-tools';
-			preLoaderRoute: typeof SemverToolsRouteImport;
-			parentRoute: typeof rootRouteImport;
-		};
-		'/rsa-tools': {
-			id: '/rsa-tools';
-			path: '/rsa-tools';
-			fullPath: '/rsa-tools';
-			preLoaderRoute: typeof RsaToolsRouteImport;
-			parentRoute: typeof rootRouteImport;
-		};
-		'/rest-client': {
-			id: '/rest-client';
-			path: '/rest-client';
-			fullPath: '/rest-client';
-			preLoaderRoute: typeof RestClientRouteImport;
-			parentRoute: typeof rootRouteImport;
-		};
-		'/regex-tester': {
-			id: '/regex-tester';
-			path: '/regex-tester';
-			fullPath: '/regex-tester';
-			preLoaderRoute: typeof RegexTesterRouteImport;
-			parentRoute: typeof rootRouteImport;
-		};
-		'/qr-code-generator': {
-			id: '/qr-code-generator';
-			path: '/qr-code-generator';
-			fullPath: '/qr-code-generator';
-			preLoaderRoute: typeof QrCodeGeneratorRouteImport;
-			parentRoute: typeof rootRouteImport;
-		};
-		'/path-tool': {
-			id: '/path-tool';
-			path: '/path-tool';
-			fullPath: '/path-tool';
-			preLoaderRoute: typeof PathToolRouteImport;
-			parentRoute: typeof rootRouteImport;
-		};
-		'/password-generator': {
-			id: '/password-generator';
-			path: '/password-generator';
-			fullPath: '/password-generator';
-			preLoaderRoute: typeof PasswordGeneratorRouteImport;
-			parentRoute: typeof rootRouteImport;
-		};
-		'/number-base-converter': {
-			id: '/number-base-converter';
-			path: '/number-base-converter';
-			fullPath: '/number-base-converter';
-			preLoaderRoute: typeof NumberBaseConverterRouteImport;
-			parentRoute: typeof rootRouteImport;
-		};
-		'/network-scanner': {
-			id: '/network-scanner';
-			path: '/network-scanner';
-			fullPath: '/network-scanner';
-			preLoaderRoute: typeof NetworkScannerRouteImport;
-			parentRoute: typeof rootRouteImport;
-		};
-		'/network-interfaces': {
-			id: '/network-interfaces';
-			path: '/network-interfaces';
-			fullPath: '/network-interfaces';
-			preLoaderRoute: typeof NetworkInterfacesRouteImport;
-			parentRoute: typeof rootRouteImport;
-		};
-		'/mime-types': {
-			id: '/mime-types';
-			path: '/mime-types';
-			fullPath: '/mime-types';
-			preLoaderRoute: typeof MimeTypesRouteImport;
-			parentRoute: typeof rootRouteImport;
-		};
-		'/markdown-editor': {
-			id: '/markdown-editor';
-			path: '/markdown-editor';
-			fullPath: '/markdown-editor';
-			preLoaderRoute: typeof MarkdownEditorRouteImport;
-			parentRoute: typeof rootRouteImport;
-		};
-		'/mac-lookup': {
-			id: '/mac-lookup';
-			path: '/mac-lookup';
-			fullPath: '/mac-lookup';
-			preLoaderRoute: typeof MacLookupRouteImport;
-			parentRoute: typeof rootRouteImport;
-		};
-		'/lorem-ipsum': {
-			id: '/lorem-ipsum';
-			path: '/lorem-ipsum';
-			fullPath: '/lorem-ipsum';
-			preLoaderRoute: typeof LoremIpsumRouteImport;
-			parentRoute: typeof rootRouteImport;
-		};
-		'/list-comparer': {
-			id: '/list-comparer';
-			path: '/list-comparer';
-			fullPath: '/list-comparer';
-			preLoaderRoute: typeof ListComparerRouteImport;
-			parentRoute: typeof rootRouteImport;
-		};
-		'/jwt-decoder': {
-			id: '/jwt-decoder';
-			path: '/jwt-decoder';
-			fullPath: '/jwt-decoder';
-			preLoaderRoute: typeof JwtDecoderRouteImport;
-			parentRoute: typeof rootRouteImport;
-		};
-		'/json-formatter': {
-			id: '/json-formatter';
-			path: '/json-formatter';
-			fullPath: '/json-formatter';
-			preLoaderRoute: typeof JsonFormatterRouteImport;
-			parentRoute: typeof rootRouteImport;
-		};
-		'/ip-converter': {
-			id: '/ip-converter';
-			path: '/ip-converter';
-			fullPath: '/ip-converter';
-			preLoaderRoute: typeof IpConverterRouteImport;
-			parentRoute: typeof rootRouteImport;
-		};
-		'/image-converter': {
-			id: '/image-converter';
-			path: '/image-converter';
-			fullPath: '/image-converter';
-			preLoaderRoute: typeof ImageConverterRouteImport;
-			parentRoute: typeof rootRouteImport;
-		};
-		'/http-status-codes': {
-			id: '/http-status-codes';
-			path: '/http-status-codes';
-			fullPath: '/http-status-codes';
-			preLoaderRoute: typeof HttpStatusCodesRouteImport;
-			parentRoute: typeof rootRouteImport;
-		};
-		'/hex-editor': {
-			id: '/hex-editor';
-			path: '/hex-editor';
-			fullPath: '/hex-editor';
-			preLoaderRoute: typeof HexEditorRouteImport;
-			parentRoute: typeof rootRouteImport;
-		};
-		'/hash-generator': {
-			id: '/hash-generator';
-			path: '/hash-generator';
-			fullPath: '/hash-generator';
-			preLoaderRoute: typeof HashGeneratorRouteImport;
-			parentRoute: typeof rootRouteImport;
-		};
-		'/gpg-key-generator': {
-			id: '/gpg-key-generator';
-			path: '/gpg-key-generator';
-			fullPath: '/gpg-key-generator';
-			preLoaderRoute: typeof GpgKeyGeneratorRouteImport;
-			parentRoute: typeof rootRouteImport;
-		};
-		'/file-watch': {
-			id: '/file-watch';
-			path: '/file-watch';
-			fullPath: '/file-watch';
-			preLoaderRoute: typeof FileWatchRouteImport;
-			parentRoute: typeof rootRouteImport;
-		};
-		'/file-inspector': {
-			id: '/file-inspector';
-			path: '/file-inspector';
-			fullPath: '/file-inspector';
-			preLoaderRoute: typeof FileInspectorRouteImport;
-			parentRoute: typeof rootRouteImport;
-		};
-		'/escape-tool': {
-			id: '/escape-tool';
-			path: '/escape-tool';
-			fullPath: '/escape-tool';
-			preLoaderRoute: typeof EscapeToolRouteImport;
-			parentRoute: typeof rootRouteImport;
-		};
-		'/encoding-converter': {
-			id: '/encoding-converter';
-			path: '/encoding-converter';
-			fullPath: '/encoding-converter';
-			preLoaderRoute: typeof EncodingConverterRouteImport;
-			parentRoute: typeof rootRouteImport;
-		};
-		'/duplicate-finder': {
-			id: '/duplicate-finder';
-			path: '/duplicate-finder';
-			fullPath: '/duplicate-finder';
-			preLoaderRoute: typeof DuplicateFinderRouteImport;
-			parentRoute: typeof rootRouteImport;
-		};
-		'/dns-lookup': {
-			id: '/dns-lookup';
-			path: '/dns-lookup';
-			fullPath: '/dns-lookup';
-			preLoaderRoute: typeof DnsLookupRouteImport;
-			parentRoute: typeof rootRouteImport;
-		};
-		'/diff-viewer': {
-			id: '/diff-viewer';
-			path: '/diff-viewer';
-			fullPath: '/diff-viewer';
-			preLoaderRoute: typeof DiffViewerRouteImport;
-			parentRoute: typeof rootRouteImport;
-		};
-		'/date-timestamp-converter': {
-			id: '/date-timestamp-converter';
-			path: '/date-timestamp-converter';
-			fullPath: '/date-timestamp-converter';
-			preLoaderRoute: typeof DateTimestampConverterRouteImport;
-			parentRoute: typeof rootRouteImport;
-		};
-		'/curl-builder': {
-			id: '/curl-builder';
-			path: '/curl-builder';
-			fullPath: '/curl-builder';
-			preLoaderRoute: typeof CurlBuilderRouteImport;
-			parentRoute: typeof rootRouteImport;
-		};
-		'/csv-tool': {
-			id: '/csv-tool';
-			path: '/csv-tool';
-			fullPath: '/csv-tool';
-			preLoaderRoute: typeof CsvToolRouteImport;
-			parentRoute: typeof rootRouteImport;
-		};
-		'/cron-expression-builder': {
-			id: '/cron-expression-builder';
-			path: '/cron-expression-builder';
-			fullPath: '/cron-expression-builder';
-			preLoaderRoute: typeof CronExpressionBuilderRouteImport;
-			parentRoute: typeof rootRouteImport;
-		};
-		'/cidr-calculator': {
-			id: '/cidr-calculator';
-			path: '/cidr-calculator';
-			fullPath: '/cidr-calculator';
-			preLoaderRoute: typeof CidrCalculatorRouteImport;
-			parentRoute: typeof rootRouteImport;
-		};
-		'/bcrypt-generator': {
-			id: '/bcrypt-generator';
-			path: '/bcrypt-generator';
-			fullPath: '/bcrypt-generator';
-			preLoaderRoute: typeof BcryptGeneratorRouteImport;
-			parentRoute: typeof rootRouteImport;
-		};
-		'/base64-encoder': {
-			id: '/base64-encoder';
-			path: '/base64-encoder';
-			fullPath: '/base64-encoder';
-			preLoaderRoute: typeof Base64EncoderRouteImport;
-			parentRoute: typeof rootRouteImport;
-		};
-		'/archive-inspector': {
-			id: '/archive-inspector';
-			path: '/archive-inspector';
-			fullPath: '/archive-inspector';
-			preLoaderRoute: typeof ArchiveInspectorRouteImport;
-			parentRoute: typeof rootRouteImport;
-		};
-		'/': {
-			id: '/';
-			path: '/';
-			fullPath: '/';
-			preLoaderRoute: typeof IndexRouteImport;
-			parentRoute: typeof rootRouteImport;
-		};
-	}
+  interface FileRoutesByPath {
+    '/yaml-formatter': {
+      id: '/yaml-formatter'
+      path: '/yaml-formatter'
+      fullPath: '/yaml-formatter'
+      preLoaderRoute: typeof YamlFormatterRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/xml-formatter': {
+      id: '/xml-formatter'
+      path: '/xml-formatter'
+      fullPath: '/xml-formatter'
+      preLoaderRoute: typeof XmlFormatterRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/x509-decoder': {
+      id: '/x509-decoder'
+      path: '/x509-decoder'
+      fullPath: '/x509-decoder'
+      preLoaderRoute: typeof X509DecoderRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/websocket-tester': {
+      id: '/websocket-tester'
+      path: '/websocket-tester'
+      fullPath: '/websocket-tester'
+      preLoaderRoute: typeof WebsocketTesterRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/webhook-receiver': {
+      id: '/webhook-receiver'
+      path: '/webhook-receiver'
+      fullPath: '/webhook-receiver'
+      preLoaderRoute: typeof WebhookReceiverRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/uuid-generator': {
+      id: '/uuid-generator'
+      path: '/uuid-generator'
+      fullPath: '/uuid-generator'
+      preLoaderRoute: typeof UuidGeneratorRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/url-encoder': {
+      id: '/url-encoder'
+      path: '/url-encoder'
+      fullPath: '/url-encoder'
+      preLoaderRoute: typeof UrlEncoderRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/tls-inspector': {
+      id: '/tls-inspector'
+      path: '/tls-inspector'
+      fullPath: '/tls-inspector'
+      preLoaderRoute: typeof TlsInspectorRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/test-data-generator': {
+      id: '/test-data-generator'
+      path: '/test-data-generator'
+      fullPath: '/test-data-generator'
+      preLoaderRoute: typeof TestDataGeneratorRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/string-compressor': {
+      id: '/string-compressor'
+      path: '/string-compressor'
+      fullPath: '/string-compressor'
+      preLoaderRoute: typeof StringCompressorRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/string-case-converter': {
+      id: '/string-case-converter'
+      path: '/string-case-converter'
+      fullPath: '/string-case-converter'
+      preLoaderRoute: typeof StringCaseConverterRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/ssh-key-generator': {
+      id: '/ssh-key-generator'
+      path: '/ssh-key-generator'
+      fullPath: '/ssh-key-generator'
+      preLoaderRoute: typeof SshKeyGeneratorRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/sql-formatter': {
+      id: '/sql-formatter'
+      path: '/sql-formatter'
+      fullPath: '/sql-formatter'
+      preLoaderRoute: typeof SqlFormatterRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/settings': {
+      id: '/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof SettingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/semver-tools': {
+      id: '/semver-tools'
+      path: '/semver-tools'
+      fullPath: '/semver-tools'
+      preLoaderRoute: typeof SemverToolsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/rsa-tools': {
+      id: '/rsa-tools'
+      path: '/rsa-tools'
+      fullPath: '/rsa-tools'
+      preLoaderRoute: typeof RsaToolsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/rest-client': {
+      id: '/rest-client'
+      path: '/rest-client'
+      fullPath: '/rest-client'
+      preLoaderRoute: typeof RestClientRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/regex-tester': {
+      id: '/regex-tester'
+      path: '/regex-tester'
+      fullPath: '/regex-tester'
+      preLoaderRoute: typeof RegexTesterRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/qr-code-generator': {
+      id: '/qr-code-generator'
+      path: '/qr-code-generator'
+      fullPath: '/qr-code-generator'
+      preLoaderRoute: typeof QrCodeGeneratorRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/path-tool': {
+      id: '/path-tool'
+      path: '/path-tool'
+      fullPath: '/path-tool'
+      preLoaderRoute: typeof PathToolRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/password-generator': {
+      id: '/password-generator'
+      path: '/password-generator'
+      fullPath: '/password-generator'
+      preLoaderRoute: typeof PasswordGeneratorRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/number-base-converter': {
+      id: '/number-base-converter'
+      path: '/number-base-converter'
+      fullPath: '/number-base-converter'
+      preLoaderRoute: typeof NumberBaseConverterRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/network-scanner': {
+      id: '/network-scanner'
+      path: '/network-scanner'
+      fullPath: '/network-scanner'
+      preLoaderRoute: typeof NetworkScannerRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/network-interfaces': {
+      id: '/network-interfaces'
+      path: '/network-interfaces'
+      fullPath: '/network-interfaces'
+      preLoaderRoute: typeof NetworkInterfacesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/mime-types': {
+      id: '/mime-types'
+      path: '/mime-types'
+      fullPath: '/mime-types'
+      preLoaderRoute: typeof MimeTypesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/markdown-editor': {
+      id: '/markdown-editor'
+      path: '/markdown-editor'
+      fullPath: '/markdown-editor'
+      preLoaderRoute: typeof MarkdownEditorRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/mac-lookup': {
+      id: '/mac-lookup'
+      path: '/mac-lookup'
+      fullPath: '/mac-lookup'
+      preLoaderRoute: typeof MacLookupRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/lorem-ipsum': {
+      id: '/lorem-ipsum'
+      path: '/lorem-ipsum'
+      fullPath: '/lorem-ipsum'
+      preLoaderRoute: typeof LoremIpsumRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/list-comparer': {
+      id: '/list-comparer'
+      path: '/list-comparer'
+      fullPath: '/list-comparer'
+      preLoaderRoute: typeof ListComparerRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/jwt-decoder': {
+      id: '/jwt-decoder'
+      path: '/jwt-decoder'
+      fullPath: '/jwt-decoder'
+      preLoaderRoute: typeof JwtDecoderRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/json-formatter': {
+      id: '/json-formatter'
+      path: '/json-formatter'
+      fullPath: '/json-formatter'
+      preLoaderRoute: typeof JsonFormatterRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/ip-converter': {
+      id: '/ip-converter'
+      path: '/ip-converter'
+      fullPath: '/ip-converter'
+      preLoaderRoute: typeof IpConverterRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/image-converter': {
+      id: '/image-converter'
+      path: '/image-converter'
+      fullPath: '/image-converter'
+      preLoaderRoute: typeof ImageConverterRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/http-status-codes': {
+      id: '/http-status-codes'
+      path: '/http-status-codes'
+      fullPath: '/http-status-codes'
+      preLoaderRoute: typeof HttpStatusCodesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/hex-editor': {
+      id: '/hex-editor'
+      path: '/hex-editor'
+      fullPath: '/hex-editor'
+      preLoaderRoute: typeof HexEditorRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/hash-generator': {
+      id: '/hash-generator'
+      path: '/hash-generator'
+      fullPath: '/hash-generator'
+      preLoaderRoute: typeof HashGeneratorRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/gpg-key-generator': {
+      id: '/gpg-key-generator'
+      path: '/gpg-key-generator'
+      fullPath: '/gpg-key-generator'
+      preLoaderRoute: typeof GpgKeyGeneratorRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/folder-tree-visualizer': {
+      id: '/folder-tree-visualizer'
+      path: '/folder-tree-visualizer'
+      fullPath: '/folder-tree-visualizer'
+      preLoaderRoute: typeof FolderTreeVisualizerRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/file-watch': {
+      id: '/file-watch'
+      path: '/file-watch'
+      fullPath: '/file-watch'
+      preLoaderRoute: typeof FileWatchRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/file-inspector': {
+      id: '/file-inspector'
+      path: '/file-inspector'
+      fullPath: '/file-inspector'
+      preLoaderRoute: typeof FileInspectorRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/escape-tool': {
+      id: '/escape-tool'
+      path: '/escape-tool'
+      fullPath: '/escape-tool'
+      preLoaderRoute: typeof EscapeToolRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/encoding-converter': {
+      id: '/encoding-converter'
+      path: '/encoding-converter'
+      fullPath: '/encoding-converter'
+      preLoaderRoute: typeof EncodingConverterRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/duplicate-finder': {
+      id: '/duplicate-finder'
+      path: '/duplicate-finder'
+      fullPath: '/duplicate-finder'
+      preLoaderRoute: typeof DuplicateFinderRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/dns-lookup': {
+      id: '/dns-lookup'
+      path: '/dns-lookup'
+      fullPath: '/dns-lookup'
+      preLoaderRoute: typeof DnsLookupRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/diff-viewer': {
+      id: '/diff-viewer'
+      path: '/diff-viewer'
+      fullPath: '/diff-viewer'
+      preLoaderRoute: typeof DiffViewerRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/date-timestamp-converter': {
+      id: '/date-timestamp-converter'
+      path: '/date-timestamp-converter'
+      fullPath: '/date-timestamp-converter'
+      preLoaderRoute: typeof DateTimestampConverterRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/curl-builder': {
+      id: '/curl-builder'
+      path: '/curl-builder'
+      fullPath: '/curl-builder'
+      preLoaderRoute: typeof CurlBuilderRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/csv-tool': {
+      id: '/csv-tool'
+      path: '/csv-tool'
+      fullPath: '/csv-tool'
+      preLoaderRoute: typeof CsvToolRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/cron-expression-builder': {
+      id: '/cron-expression-builder'
+      path: '/cron-expression-builder'
+      fullPath: '/cron-expression-builder'
+      preLoaderRoute: typeof CronExpressionBuilderRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/cidr-calculator': {
+      id: '/cidr-calculator'
+      path: '/cidr-calculator'
+      fullPath: '/cidr-calculator'
+      preLoaderRoute: typeof CidrCalculatorRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/bcrypt-generator': {
+      id: '/bcrypt-generator'
+      path: '/bcrypt-generator'
+      fullPath: '/bcrypt-generator'
+      preLoaderRoute: typeof BcryptGeneratorRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/base64-encoder': {
+      id: '/base64-encoder'
+      path: '/base64-encoder'
+      fullPath: '/base64-encoder'
+      preLoaderRoute: typeof Base64EncoderRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/archive-inspector': {
+      id: '/archive-inspector'
+      path: '/archive-inspector'
+      fullPath: '/archive-inspector'
+      preLoaderRoute: typeof ArchiveInspectorRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+  }
 }
 
 const rootRouteChildren: RootRouteChildren = {
-	IndexRoute: IndexRoute,
-	ArchiveInspectorRoute: ArchiveInspectorRoute,
-	Base64EncoderRoute: Base64EncoderRoute,
-	BcryptGeneratorRoute: BcryptGeneratorRoute,
-	CidrCalculatorRoute: CidrCalculatorRoute,
-	CronExpressionBuilderRoute: CronExpressionBuilderRoute,
-	CsvToolRoute: CsvToolRoute,
-	CurlBuilderRoute: CurlBuilderRoute,
-	DateTimestampConverterRoute: DateTimestampConverterRoute,
-	DiffViewerRoute: DiffViewerRoute,
-	DnsLookupRoute: DnsLookupRoute,
-	DuplicateFinderRoute: DuplicateFinderRoute,
-	EncodingConverterRoute: EncodingConverterRoute,
-	EscapeToolRoute: EscapeToolRoute,
-	FileInspectorRoute: FileInspectorRoute,
-	FileWatchRoute: FileWatchRoute,
-	GpgKeyGeneratorRoute: GpgKeyGeneratorRoute,
-	HashGeneratorRoute: HashGeneratorRoute,
-	HexEditorRoute: HexEditorRoute,
-	HttpStatusCodesRoute: HttpStatusCodesRoute,
-	ImageConverterRoute: ImageConverterRoute,
-	IpConverterRoute: IpConverterRoute,
-	JsonFormatterRoute: JsonFormatterRoute,
-	JwtDecoderRoute: JwtDecoderRoute,
-	ListComparerRoute: ListComparerRoute,
-	LoremIpsumRoute: LoremIpsumRoute,
-	MacLookupRoute: MacLookupRoute,
-	MarkdownEditorRoute: MarkdownEditorRoute,
-	MimeTypesRoute: MimeTypesRoute,
-	NetworkInterfacesRoute: NetworkInterfacesRoute,
-	NetworkScannerRoute: NetworkScannerRoute,
-	NumberBaseConverterRoute: NumberBaseConverterRoute,
-	PasswordGeneratorRoute: PasswordGeneratorRoute,
-	PathToolRoute: PathToolRoute,
-	QrCodeGeneratorRoute: QrCodeGeneratorRoute,
-	RegexTesterRoute: RegexTesterRoute,
-	RestClientRoute: RestClientRoute,
-	RsaToolsRoute: RsaToolsRoute,
-	SemverToolsRoute: SemverToolsRoute,
-	SettingsRoute: SettingsRoute,
-	SqlFormatterRoute: SqlFormatterRoute,
-	SshKeyGeneratorRoute: SshKeyGeneratorRoute,
-	StringCaseConverterRoute: StringCaseConverterRoute,
-	StringCompressorRoute: StringCompressorRoute,
-	TestDataGeneratorRoute: TestDataGeneratorRoute,
-	TlsInspectorRoute: TlsInspectorRoute,
-	UrlEncoderRoute: UrlEncoderRoute,
-	UuidGeneratorRoute: UuidGeneratorRoute,
-	WebhookReceiverRoute: WebhookReceiverRoute,
-	WebsocketTesterRoute: WebsocketTesterRoute,
-	X509DecoderRoute: X509DecoderRoute,
-	XmlFormatterRoute: XmlFormatterRoute,
-	YamlFormatterRoute: YamlFormatterRoute,
-};
+  IndexRoute: IndexRoute,
+  ArchiveInspectorRoute: ArchiveInspectorRoute,
+  Base64EncoderRoute: Base64EncoderRoute,
+  BcryptGeneratorRoute: BcryptGeneratorRoute,
+  CidrCalculatorRoute: CidrCalculatorRoute,
+  CronExpressionBuilderRoute: CronExpressionBuilderRoute,
+  CsvToolRoute: CsvToolRoute,
+  CurlBuilderRoute: CurlBuilderRoute,
+  DateTimestampConverterRoute: DateTimestampConverterRoute,
+  DiffViewerRoute: DiffViewerRoute,
+  DnsLookupRoute: DnsLookupRoute,
+  DuplicateFinderRoute: DuplicateFinderRoute,
+  EncodingConverterRoute: EncodingConverterRoute,
+  EscapeToolRoute: EscapeToolRoute,
+  FileInspectorRoute: FileInspectorRoute,
+  FileWatchRoute: FileWatchRoute,
+  FolderTreeVisualizerRoute: FolderTreeVisualizerRoute,
+  GpgKeyGeneratorRoute: GpgKeyGeneratorRoute,
+  HashGeneratorRoute: HashGeneratorRoute,
+  HexEditorRoute: HexEditorRoute,
+  HttpStatusCodesRoute: HttpStatusCodesRoute,
+  ImageConverterRoute: ImageConverterRoute,
+  IpConverterRoute: IpConverterRoute,
+  JsonFormatterRoute: JsonFormatterRoute,
+  JwtDecoderRoute: JwtDecoderRoute,
+  ListComparerRoute: ListComparerRoute,
+  LoremIpsumRoute: LoremIpsumRoute,
+  MacLookupRoute: MacLookupRoute,
+  MarkdownEditorRoute: MarkdownEditorRoute,
+  MimeTypesRoute: MimeTypesRoute,
+  NetworkInterfacesRoute: NetworkInterfacesRoute,
+  NetworkScannerRoute: NetworkScannerRoute,
+  NumberBaseConverterRoute: NumberBaseConverterRoute,
+  PasswordGeneratorRoute: PasswordGeneratorRoute,
+  PathToolRoute: PathToolRoute,
+  QrCodeGeneratorRoute: QrCodeGeneratorRoute,
+  RegexTesterRoute: RegexTesterRoute,
+  RestClientRoute: RestClientRoute,
+  RsaToolsRoute: RsaToolsRoute,
+  SemverToolsRoute: SemverToolsRoute,
+  SettingsRoute: SettingsRoute,
+  SqlFormatterRoute: SqlFormatterRoute,
+  SshKeyGeneratorRoute: SshKeyGeneratorRoute,
+  StringCaseConverterRoute: StringCaseConverterRoute,
+  StringCompressorRoute: StringCompressorRoute,
+  TestDataGeneratorRoute: TestDataGeneratorRoute,
+  TlsInspectorRoute: TlsInspectorRoute,
+  UrlEncoderRoute: UrlEncoderRoute,
+  UuidGeneratorRoute: UuidGeneratorRoute,
+  WebhookReceiverRoute: WebhookReceiverRoute,
+  WebsocketTesterRoute: WebsocketTesterRoute,
+  X509DecoderRoute: X509DecoderRoute,
+  XmlFormatterRoute: XmlFormatterRoute,
+  YamlFormatterRoute: YamlFormatterRoute,
+}
 export const routeTree = rootRouteImport
-	._addFileChildren(rootRouteChildren)
-	._addFileTypes<FileRouteTypes>();
+  ._addFileChildren(rootRouteChildren)
+  ._addFileTypes<FileRouteTypes>()
