@@ -514,7 +514,6 @@ function DiffViewerPage() {
 						<div className="flex-1 overflow-auto">
 							{unifiedWithSegments.length > 0 ? (
 								<div className="font-mono text-sm">
-									{/* biome-ignore lint/suspicious/noArrayIndexKey: diff result is immutable and ordered */}
 									{unifiedWithSegments.map((line, lIdx) => {
 										if (line.kind === 'hunk-header') {
 											return (
