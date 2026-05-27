@@ -10,6 +10,7 @@ import {
 	FormInput,
 	FormSection,
 } from '@/lib/components/form';
+import { MasterDetailLayout, SubsectionLabel } from '@/lib/components/layout';
 import { ToolShell } from '@/lib/components/shell';
 import { EmbeddedEmptyState, StatItem } from '@/lib/components/status';
 import { Button } from '@/lib/components/ui/button';
@@ -145,6 +146,7 @@ function MimeTypesPage() {
 
 	return (
 		<ToolShell
+			layout="master-detail"
 			showRail={showRail}
 			onShowRailChange={setShowRail}
 			statusContent={
@@ -216,73 +218,86 @@ function MimeTypesPage() {
 				</>
 			}
 		>
-			<div className="flex h-full flex-col overflow-hidden">
-				<div className="border-b border-border/40 bg-background p-3">
-					<FormInput
-						label="Search MIME types, extensions, or text"
-						placeholder="e.g. image/png, .json, video"
-						value={query}
-						onValueChange={(value) => patch({ query: value })}
-						size="default"
-					/>
-					<div className="mt-2 flex flex-wrap items-center gap-1.5 text-2xs">
-						<span className="text-muted-foreground">Active categories:</span>
-						{ALL_CATEGORIES.filter((category) => categoriesSet.has(category)).map((category) => (
-							<button
-								key={category}
-								type="button"
-								className={cn(
-									'inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-2xs font-medium transition-opacity hover:opacity-80',
-									CATEGORY_TONES[category]
+			<MasterDetailLayout
+				listTitle="MIME Types"
+				listCount={filtered.length}
+				defaultListSize="48"
+				minListSize="30"
+				maxListSize="70"
+				list={
+					<div className="flex h-full flex-col">
+						<div className="shrink-0 space-y-2 border-b border-border/60 bg-surface-1 p-3">
+							<FormInput
+								label="Search MIME types, extensions, or text"
+								placeholder="e.g. image/png, .json, video"
+								value={query}
+								onValueChange={(value) => patch({ query: value })}
+								size="default"
+							/>
+							<div className="flex flex-wrap items-center gap-1.5 text-2xs">
+								<span className="text-muted-foreground">Active categories:</span>
+								{ALL_CATEGORIES.filter((category) => categoriesSet.has(category)).map(
+									(category) => (
+										<button
+											key={category}
+											type="button"
+											className={cn(
+												'inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-2xs font-medium transition-opacity hover:opacity-80',
+												CATEGORY_TONES[category]
+											)}
+											onClick={() => handleToggleCategory(category, false)}
+										>
+											{CATEGORY_LABELS[category]}
+											<span className="text-muted-foreground/80">×</span>
+										</button>
+									)
 								)}
-								onClick={() => handleToggleCategory(category, false)}
-							>
-								{CATEGORY_LABELS[category]}
-								<span className="text-muted-foreground/80">×</span>
-							</button>
-						))}
-						{categoriesSet.size === 0 ? (
-							<span className="text-muted-foreground">No category selected.</span>
-						) : null}
-					</div>
-					{query.trim().length > 0 && visibleWebCommon.length > 0 ? (
-						<p className="mt-1 text-2xs text-muted-foreground">
-							Web-common matches: {visibleWebCommon.map((entry) => entry.type).join(', ')}
-						</p>
-					) : null}
-				</div>
-
-				<div className="flex-1 overflow-auto p-3">
-					{filtered.length === 0 ? (
-						<Card density="compact">
-							<CardContent>
-								<EmbeddedEmptyState
-									icon={FileSearch}
-									title="No matching MIME types"
-									description="Adjust the search query, enable more categories, or disable the magic-bytes filter."
-								/>
-							</CardContent>
-						</Card>
-					) : (
-						<div className="grid grid-cols-1 gap-2 md:grid-cols-2 xl:grid-cols-3">
-							{filtered.map((entry) => (
-								<MimeCard
-									key={entry.type}
-									entry={entry}
-									isSelected={entry.type === selectedType}
-									onSelect={handleSelectEntry}
-								/>
-							))}
+								{categoriesSet.size === 0 ? (
+									<span className="text-muted-foreground">No category selected.</span>
+								) : null}
+							</div>
+							{query.trim().length > 0 && visibleWebCommon.length > 0 ? (
+								<p className="text-2xs text-muted-foreground">
+									Web-common matches: {visibleWebCommon.map((entry) => entry.type).join(', ')}
+								</p>
+							) : null}
 						</div>
-					)}
-
-					{selected ? (
-						<div className="mt-3">
+						{filtered.length === 0 ? (
+							<EmbeddedEmptyState
+								icon={FileSearch}
+								title="No matching MIME types"
+								description="Adjust the search query, enable more categories, or disable the magic-bytes filter."
+								fillHeight
+							/>
+						) : (
+							<div className="grid grid-cols-1 gap-2 p-3 md:grid-cols-2">
+								{filtered.map((entry) => (
+									<MimeCard
+										key={entry.type}
+										entry={entry}
+										isSelected={entry.type === selectedType}
+										onSelect={handleSelectEntry}
+									/>
+								))}
+							</div>
+						)}
+					</div>
+				}
+				detail={
+					selected ? (
+						<div className="h-full overflow-auto">
 							<MimeDetailPanel entry={selected} onClose={() => patch({ selectedType: null })} />
 						</div>
-					) : null}
-				</div>
-			</div>
+					) : (
+						<EmbeddedEmptyState
+							icon={FileSearch}
+							title="Select a MIME type"
+							description="Pick any entry on the left to see its aliases, magic bytes, snippets, and references."
+							fillHeight
+						/>
+					)
+				}
+			/>
 		</ToolShell>
 	);
 }
@@ -406,9 +421,7 @@ function MimeDetailPanel({ entry, onClose }: MimeDetailPanelProps) {
 
 				{entry.aliases && entry.aliases.length > 0 ? (
 					<section className="space-y-1">
-						<h3 className="text-2xs font-semibold uppercase tracking-wide text-muted-foreground">
-							Aliases
-						</h3>
+						<SubsectionLabel size="2xs">Aliases</SubsectionLabel>
 						<div className="flex flex-wrap gap-1.5">
 							{entry.aliases.map((alias) => (
 								<span
@@ -434,9 +447,7 @@ function MimeDetailPanel({ entry, onClose }: MimeDetailPanelProps) {
 
 				{entry.magic && entry.magic.length > 0 ? (
 					<section className="space-y-1">
-						<h3 className="text-2xs font-semibold uppercase tracking-wide text-muted-foreground">
-							Magic bytes
-						</h3>
+						<SubsectionLabel size="2xs">Magic bytes</SubsectionLabel>
 						<table className="w-full min-w-max border-collapse text-2xs">
 							<thead>
 								<tr className="border-b border-border/60 text-left uppercase tracking-wide text-muted-foreground">
@@ -473,9 +484,7 @@ function MimeDetailPanel({ entry, onClose }: MimeDetailPanelProps) {
 
 				{entry.charset && entry.charset.length > 0 ? (
 					<section className="space-y-1">
-						<h3 className="text-2xs font-semibold uppercase tracking-wide text-muted-foreground">
-							Charset
-						</h3>
+						<SubsectionLabel size="2xs">Charset</SubsectionLabel>
 						<div className="flex flex-wrap gap-1.5">
 							{entry.charset.map((cs) => (
 								<span
@@ -496,9 +505,7 @@ function MimeDetailPanel({ entry, onClose }: MimeDetailPanelProps) {
 				) : null}
 
 				<section className="space-y-1">
-					<h3 className="text-2xs font-semibold uppercase tracking-wide text-muted-foreground">
-						Copy snippets
-					</h3>
+					<SubsectionLabel size="2xs">Copy snippets</SubsectionLabel>
 					<div className="grid grid-cols-1 gap-1.5 md:grid-cols-2">
 						<SnippetRow label="Content-Type header" value={headerSnippet} />
 						<SnippetRow label="Java MediaType" value={javaSnippet} />
@@ -509,9 +516,7 @@ function MimeDetailPanel({ entry, onClose }: MimeDetailPanelProps) {
 
 				{entry.references && entry.references.length > 0 ? (
 					<section className="space-y-1">
-						<h3 className="text-2xs font-semibold uppercase tracking-wide text-muted-foreground">
-							References
-						</h3>
+						<SubsectionLabel size="2xs">References</SubsectionLabel>
 						<div className="flex flex-wrap gap-1.5">
 							{entry.references.map((r) => (
 								<Button

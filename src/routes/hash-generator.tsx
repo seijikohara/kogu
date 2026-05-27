@@ -30,7 +30,8 @@ import {
 	FormTextarea,
 } from '@/lib/components/form';
 import { SectionHeader, SectionLabel } from '@/lib/components/layout';
-import { ToolShell } from '@/lib/components/shell';
+import { StatusBar, ToolShell } from '@/lib/components/shell';
+import { Rail } from '@/lib/components/ui/rail';
 import { EmbeddedEmptyState, LiveStatusRegion, StatItem } from '@/lib/components/status';
 import { Badge } from '@/lib/components/ui/badge';
 import { Button } from '@/lib/components/ui/button';
@@ -537,16 +538,10 @@ function BatchHashTab() {
 	);
 }
 
-// FileTabLayout dispatches the rail / status content to the outer
-// ToolShell via DOM context isn't available here. Since the outer
-// ToolShell renders the rail and status bar once, we use a small
-// indirection: render the rail / status / children all in the same
-// place by exposing a context-like consumer pattern. To avoid a
-// large refactor of ToolShell we instead render the rail inline in a
-// dedicated `<aside>` adjacent to the main content. The outer
-// ToolShell's own rail slot is left unused for the File tab so the
-// chrome stays consistent and the rail toggle in the toolbar still
-// works at the route level via the inner `showRail` state below.
+// Render rail + content + status as a grid that sits inside the outer
+// ToolShell's tab content area. The outer ToolShell already provides
+// the page title and tab strip; nesting another ToolShell here would
+// duplicate them.
 interface FileTabLayoutProps {
 	readonly rail: React.ReactNode;
 	readonly statusContent: React.ReactNode;
@@ -555,12 +550,23 @@ interface FileTabLayoutProps {
 }
 
 function FileTabLayout({ rail, statusContent, valid, children }: FileTabLayoutProps) {
-	// We render the rail and status inline by wrapping the tab content
-	// in a mini-shell. Outer ToolShell still owns the tab header.
+	const [showRail, setShowRail] = useState(true);
 	return (
-		<ToolShell rail={rail} statusContent={statusContent} valid={valid} railTitle="File options">
-			{children}
-		</ToolShell>
+		<div className="grid h-full min-h-0 grid-rows-[1fr_var(--status-h)] overflow-hidden">
+			<div className="flex min-h-0 overflow-hidden">
+				<Rail
+					show={showRail}
+					title="File options"
+					onShowChange={setShowRail}
+					onClose={() => setShowRail(false)}
+					onOpen={() => setShowRail(true)}
+				>
+					{rail}
+				</Rail>
+				<div className="flex min-h-0 flex-1 flex-col overflow-hidden">{children}</div>
+			</div>
+			<StatusBar valid={valid}>{statusContent}</StatusBar>
+		</div>
 	);
 }
 

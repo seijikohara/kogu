@@ -21,8 +21,9 @@ import { toast } from 'sonner';
 
 import {
 	FormCheckbox,
+	FormFolderPicker,
+	FormGlobFilters,
 	FormInfo,
-	FormInput,
 	FormMode,
 	FormSection,
 	FormSlider,
@@ -298,10 +299,12 @@ function FolderTreeVisualizerPage() {
 				<>
 					<FormSection title="Folder">
 						<div className="flex flex-col gap-2">
-							<Button variant="default" size="sm" onClick={handlePickFolder} disabled={loading}>
-								<FolderOpen className="h-3.5 w-3.5" />
-								{hasRoot ? 'Choose another' : 'Pick folder…'}
-							</Button>
+							<FormFolderPicker
+								picked={hasRoot}
+								path={rootPath}
+								onPick={handlePickFolder}
+								disabled={loading}
+							/>
 							{hasRoot ? (
 								<>
 									<Button variant="outline" size="sm" onClick={handleRefresh} disabled={loading}>
@@ -318,21 +321,15 @@ function FolderTreeVisualizerPage() {
 					</FormSection>
 
 					<FormSection title="Filters">
-						<FormInput
-							label="Include globs"
-							size="compact"
-							value={prefs.includeGlobs}
-							placeholder="e.g. *.png, *.jpg"
-							onValueChange={(v) => patch({ includeGlobs: v })}
-							hint="Comma or space separated. Leave empty for all files."
-						/>
-						<FormInput
-							label="Exclude globs"
-							size="compact"
-							value={prefs.excludeGlobs}
-							placeholder="e.g. node_modules, .git"
-							onValueChange={(v) => patch({ excludeGlobs: v })}
-							hint="Pruned directories never enter the walk."
+						<FormGlobFilters
+							include={prefs.includeGlobs}
+							exclude={prefs.excludeGlobs}
+							onIncludeChange={(v) => patch({ includeGlobs: v })}
+							onExcludeChange={(v) => patch({ excludeGlobs: v })}
+							includePlaceholder="e.g. *.png, *.jpg"
+							excludePlaceholder="e.g. node_modules, .git"
+							includeHint="Comma or space separated. Leave empty for all files."
+							excludeHint="Pruned directories never enter the walk."
 						/>
 						<FormCheckbox
 							size="compact"

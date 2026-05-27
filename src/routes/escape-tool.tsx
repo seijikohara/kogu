@@ -21,6 +21,7 @@ import {
 	FormSection,
 	FormSelect,
 } from '@/lib/components/form';
+import { SplitPane } from '@/lib/components/layout';
 import { ToolShell } from '@/lib/components/shell';
 import { StatItem } from '@/lib/components/status';
 import { Button } from '@/lib/components/ui/button';
@@ -471,31 +472,40 @@ function EscapeToolPage() {
 	};
 
 	const renderMain = () => (
-		<div className="flex h-full min-h-0 flex-col gap-3 p-3">
-			<div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-lg border bg-card">
-				{renderPaneHeader('Raw', 'raw')}
-				<Textarea
-					value={raw}
-					onChange={(e) => updateRaw(e.currentTarget.value)}
-					placeholder="Type or paste the raw text to escape..."
-					spellCheck={false}
-					className="min-h-32 flex-1 resize-none rounded-none border-0 bg-transparent font-mono text-sm focus-visible:ring-0"
-				/>
-			</div>
-
-			<div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-lg border bg-card">
-				{renderPaneHeader('Escaped', 'escaped')}
-				<div className="grid min-h-0 flex-1 grid-rows-2 divide-y">
-					<Textarea
-						value={escaped}
-						onChange={(e) => updateEscaped(e.currentTarget.value)}
-						placeholder="Escaped output appears here. Edit directly to unescape back to raw."
-						spellCheck={false}
-						className="min-h-32 h-full resize-none rounded-none border-0 bg-transparent font-mono text-sm focus-visible:ring-0"
-					/>
-					<div className="min-h-32 overflow-hidden">{renderHighlightOverlay()}</div>
-				</div>
-			</div>
+		<div className="flex h-full min-h-0 flex-1 overflow-hidden p-3">
+			<SplitPane
+				direction="horizontal"
+				defaultSizes={[50, 50]}
+				minSizes={[25, 25]}
+				className="gap-3"
+				left={
+					<div className="flex h-full min-h-0 flex-1 flex-col overflow-hidden rounded-lg border bg-card">
+						{renderPaneHeader('Raw', 'raw')}
+						<Textarea
+							value={raw}
+							onChange={(e) => updateRaw(e.currentTarget.value)}
+							placeholder="Type or paste the raw text to escape..."
+							spellCheck={false}
+							className="min-h-32 flex-1 resize-none rounded-none border-0 bg-transparent font-mono text-sm focus-visible:ring-0"
+						/>
+					</div>
+				}
+				right={
+					<div className="flex h-full min-h-0 flex-1 flex-col overflow-hidden rounded-lg border bg-card">
+						{renderPaneHeader('Escaped', 'escaped')}
+						<div className="grid min-h-0 flex-1 grid-rows-2 divide-y">
+							<Textarea
+								value={escaped}
+								onChange={(e) => updateEscaped(e.currentTarget.value)}
+								placeholder="Escaped output appears here. Edit directly to unescape back to raw."
+								spellCheck={false}
+								className="min-h-32 h-full resize-none rounded-none border-0 bg-transparent font-mono text-sm focus-visible:ring-0"
+							/>
+							<div className="min-h-32 overflow-hidden">{renderHighlightOverlay()}</div>
+						</div>
+					</div>
+				}
+			/>
 		</div>
 	);
 

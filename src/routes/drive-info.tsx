@@ -13,7 +13,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
 import { FormCheckbox, FormInfo, FormSection } from '@/lib/components/form';
-import { RelatedTools, SectionLabel } from '@/lib/components/layout';
+import { DefinitionList, RelatedTools, SectionLabel } from '@/lib/components/layout';
 import { ToolShell } from '@/lib/components/shell';
 import { EmbeddedEmptyState, StatItem } from '@/lib/components/status';
 import { Badge } from '@/lib/components/ui/badge';
@@ -127,8 +127,15 @@ function DriveInfoPage() {
 			onShowRailChange={setShowRail}
 			valid={loaded ? true : null}
 			error={error ?? undefined}
-			toolbarLeading={
-				<Button variant="outline" size="sm" onClick={refresh} disabled={loading}>
+			toolbarTrailing={
+				<Button
+					variant="ghost"
+					size="sm"
+					className="h-8 gap-1.5 px-2.5 text-xs"
+					onClick={refresh}
+					disabled={loading}
+					aria-label="Refresh drives"
+				>
 					{loading ? (
 						<Loader2 className="h-3.5 w-3.5 animate-spin" />
 					) : (
@@ -334,20 +341,18 @@ function DriveCard({ drive }: { readonly drive: DriveInfo }) {
 						{humanSize(drive.availableBytes)} free
 					</Badge>
 				</div>
-				<dl className="grid grid-cols-[110px_1fr] gap-x-3 gap-y-1 text-xs">
-					<dt className="text-muted-foreground">Mount point</dt>
-					<dd className="break-all font-mono">{drive.mountPoint}</dd>
-					<dt className="text-muted-foreground">Filesystem</dt>
-					<dd className="font-mono">{drive.fileSystem || '—'}</dd>
-					<dt className="text-muted-foreground">Total</dt>
-					<dd className="font-mono">
-						{humanSize(drive.totalBytes)} ({drive.totalBytes.toLocaleString()} B)
-					</dd>
-					<dt className="text-muted-foreground">Used</dt>
-					<dd className="font-mono">{humanSize(drive.usedBytes)}</dd>
-					<dt className="text-muted-foreground">Free</dt>
-					<dd className="font-mono">{humanSize(drive.availableBytes)}</dd>
-				</dl>
+				<DefinitionList
+					items={[
+						{ key: 'Mount point', value: drive.mountPoint, break: true },
+						{ key: 'Filesystem', value: drive.fileSystem || '—' },
+						{
+							key: 'Total',
+							value: `${humanSize(drive.totalBytes)} (${drive.totalBytes.toLocaleString()} B)`,
+						},
+						{ key: 'Used', value: humanSize(drive.usedBytes) },
+						{ key: 'Free', value: humanSize(drive.availableBytes) },
+					]}
+				/>
 			</CardContent>
 		</Card>
 	);

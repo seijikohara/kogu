@@ -23,11 +23,13 @@ import {
 	FormCheckbox,
 	FormCheckboxGroup,
 	FormError,
+	FormInfo,
 	FormInput,
 	FormMode,
 	FormSection,
 	FormSlider,
 } from '@/lib/components/form';
+import { RelatedTools } from '@/lib/components/layout';
 import { UnifiedHostDetailPanel, UnifiedHostListItem } from '@/lib/components/network-scanner';
 import { ToolShell } from '@/lib/components/shell';
 import { EmptyState, ErrorDisplay, LiveStatusRegion, StatItem } from '@/lib/components/status';
@@ -635,7 +637,7 @@ function PortScanSection({
 						loading={isScanning}
 						loadingLabel="Scanning..."
 						disabled={!canScan || !isPortRangeValid}
-						shortcut
+						shortcutHint
 						onClick={onScan}
 					/>
 				)}
@@ -715,7 +717,7 @@ function ResultsExportSection({ onClear, onExportJson, onExportCsv }: ResultsExp
 	return (
 		<FormSection title="Results">
 			<div className="space-y-2">
-				<ActionButton label="Clear Results" variant="outline" onClick={onClear} />
+				<ActionButton label="Clear" variant="outline" onClick={onClear} />
 				<ActionButton
 					label="Export JSON"
 					icon={Download}
@@ -1663,6 +1665,24 @@ function NetworkScannerPage() {
 					onExportCsv={handleExportCsv}
 				/>
 			) : null}
+
+			<FormSection title="Related">
+				<RelatedTools
+					items={[
+						{ id: 'network-interfaces', reason: 'Inspect this machine’s own interfaces' },
+						{ id: 'cidr-calculator', reason: 'Plan ranges before scanning' },
+						{ id: 'dns-lookup', reason: 'Resolve hostnames for discovered hosts' },
+						{ id: 'tls-inspector', reason: 'Inspect TLS on discovered services' },
+					]}
+				/>
+			</FormSection>
+
+			<FormSection title="About">
+				<FormInfo>
+					Discovers live hosts and open ports on a local network. All probes run from this device;
+					scans against networks you don’t administer may violate policies.
+				</FormInfo>
+			</FormSection>
 		</>
 	);
 
@@ -1674,6 +1694,12 @@ function NetworkScannerPage() {
 			valid={results ? true : null}
 			statusContent={statusContent}
 			rail={rail}
+			primaryAction={{
+				run: () => {
+					handleScan().catch(() => {});
+				},
+				canRun: canScan && isPortRangeValid && !isScanning,
+			}}
 		>
 			<div className="relative flex h-full flex-col overflow-hidden">
 				{/* Discovery / scan progress panels */}

@@ -14,6 +14,7 @@ import {
 	FormSlider,
 	FormTextarea,
 } from '@/lib/components/form';
+import { SplitPane } from '@/lib/components/layout';
 import { ToolShell } from '@/lib/components/shell';
 import { StatItem } from '@/lib/components/status';
 import { Badge } from '@/lib/components/ui/badge';
@@ -446,49 +447,8 @@ function StringCompressorPage() {
 				</>
 			}
 		>
-			<div className="flex h-full min-h-0 flex-1 flex-col gap-3 overflow-auto p-3">
-				<Card density="compact">
-					<CardHeader className="flex flex-row items-center justify-between space-y-0">
-						<div className="flex flex-col gap-0.5">
-							<CardTitle className="text-sm font-medium">Input</CardTitle>
-							<span className="text-xs text-muted-foreground">
-								{direction === 'compress'
-									? 'Plain text to compress (UTF-8).'
-									: `Compressed payload encoded as base64 / hex / data: URI.`}
-							</span>
-						</div>
-						<div className="flex items-center gap-1">
-							<Badge variant="outline" className="font-mono">
-								{inputText.length} chars
-							</Badge>
-							<Button
-								type="button"
-								variant="ghost"
-								size="sm"
-								onClick={handleClearInput}
-								disabled={!inputText}
-							>
-								Clear
-							</Button>
-						</div>
-					</CardHeader>
-					<CardContent>
-						<Textarea
-							placeholder={
-								direction === 'compress'
-									? 'Paste text here...'
-									: 'Paste base64-encoded compressed payload here...'
-							}
-							value={inputText}
-							onChange={(e) => setInputText(e.target.value)}
-							rows={8}
-							className="resize-none font-mono text-xs"
-							aria-label="Input"
-						/>
-					</CardContent>
-				</Card>
-
-				<Card density="compact" className="border-l-2 border-l-info/40">
+			<div className="flex h-full min-h-0 flex-1 flex-col overflow-hidden p-3">
+				<Card density="compact" className="mb-3 shrink-0 border-l-2 border-l-info/40">
 					<CardContent>
 						<div className="flex flex-wrap items-center justify-between gap-2 text-xs">
 							<div className="flex items-center gap-3">
@@ -540,44 +500,92 @@ function StringCompressorPage() {
 					</CardContent>
 				</Card>
 
-				<Card density="compact">
-					<CardHeader className="flex flex-row items-center justify-between space-y-0">
-						<div className="flex flex-col gap-0.5">
-							<CardTitle className="text-sm font-medium">Output</CardTitle>
-							<span className="text-xs text-muted-foreground">
-								{direction === 'compress'
-									? `Compressed bytes as ${outputFormat === 'data-uri' ? 'data: URI' : outputFormat}.`
-									: 'Decompressed text (UTF-8).'}
-								{detectedAlgorithm && direction === 'decompress' ? (
-									<span className="ml-2 text-info">Detected: {detectedAlgorithm}</span>
-								) : null}
-							</span>
-						</div>
-						<div className="flex items-center gap-1">
-							{busy ? (
-								<Badge variant="outline" className="font-mono text-muted-foreground">
-									Working...
-								</Badge>
-							) : null}
-							<CopyButton text={outputText} toastLabel="Output" disabled={!outputText} />
-						</div>
-					</CardHeader>
-					<CardContent>
-						<Textarea
-							placeholder={
-								direction === 'compress'
-									? 'Compressed output will appear here...'
-									: 'Decompressed text will appear here...'
-							}
-							value={outputText}
-							readOnly
-							rows={8}
-							className="resize-none font-mono text-xs"
-							aria-label="Output"
-						/>
-						<FormError message={error} className="pt-2" />
-					</CardContent>
-				</Card>
+				<SplitPane
+					direction="horizontal"
+					defaultSizes={[50, 50]}
+					minSizes={[25, 25]}
+					className="flex-1 gap-3 overflow-hidden"
+					left={
+						<Card density="compact" className="flex h-full min-h-0 flex-col">
+							<CardHeader className="flex flex-row items-center justify-between space-y-0">
+								<div className="flex flex-col gap-0.5">
+									<CardTitle className="text-sm font-medium">Input</CardTitle>
+									<span className="text-xs text-muted-foreground">
+										{direction === 'compress'
+											? 'Plain text to compress (UTF-8).'
+											: `Compressed payload encoded as base64 / hex / data: URI.`}
+									</span>
+								</div>
+								<div className="flex items-center gap-1">
+									<Badge variant="outline" className="font-mono">
+										{inputText.length} chars
+									</Badge>
+									<Button
+										type="button"
+										variant="ghost"
+										size="sm"
+										onClick={handleClearInput}
+										disabled={!inputText}
+									>
+										Clear
+									</Button>
+								</div>
+							</CardHeader>
+							<CardContent className="flex min-h-0 flex-1 flex-col">
+								<Textarea
+									placeholder={
+										direction === 'compress'
+											? 'Paste text here...'
+											: 'Paste base64-encoded compressed payload here...'
+									}
+									value={inputText}
+									onChange={(e) => setInputText(e.target.value)}
+									className="flex-1 resize-none font-mono text-xs"
+									aria-label="Input"
+								/>
+							</CardContent>
+						</Card>
+					}
+					right={
+						<Card density="compact" className="flex h-full min-h-0 flex-col">
+							<CardHeader className="flex flex-row items-center justify-between space-y-0">
+								<div className="flex flex-col gap-0.5">
+									<CardTitle className="text-sm font-medium">Output</CardTitle>
+									<span className="text-xs text-muted-foreground">
+										{direction === 'compress'
+											? `Compressed bytes as ${outputFormat === 'data-uri' ? 'data: URI' : outputFormat}.`
+											: 'Decompressed text (UTF-8).'}
+										{detectedAlgorithm && direction === 'decompress' ? (
+											<span className="ml-2 text-info">Detected: {detectedAlgorithm}</span>
+										) : null}
+									</span>
+								</div>
+								<div className="flex items-center gap-1">
+									{busy ? (
+										<Badge variant="outline" className="font-mono text-muted-foreground">
+											Working...
+										</Badge>
+									) : null}
+									<CopyButton text={outputText} toastLabel="Output" disabled={!outputText} />
+								</div>
+							</CardHeader>
+							<CardContent className="flex min-h-0 flex-1 flex-col">
+								<Textarea
+									placeholder={
+										direction === 'compress'
+											? 'Compressed output will appear here...'
+											: 'Decompressed text will appear here...'
+									}
+									value={outputText}
+									readOnly
+									className="flex-1 resize-none font-mono text-xs"
+									aria-label="Output"
+								/>
+								<FormError message={error} className="pt-2" />
+							</CardContent>
+						</Card>
+					}
+				/>
 			</div>
 		</ToolShell>
 	);

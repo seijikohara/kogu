@@ -7,6 +7,12 @@ export type { FormCheckboxGroupProps } from './form-checkbox-group';
 export { FormError } from './form-error';
 export type { FormErrorProps } from './form-error';
 
+export { FormFolderPicker } from './form-folder-picker';
+export type { FormFolderPickerProps } from './form-folder-picker';
+
+export { FormGlobFilters } from './form-glob-filters';
+export type { FormGlobFiltersProps } from './form-glob-filters';
+
 export { FormInfo } from './form-info';
 export type { FormInfoProps } from './form-info';
 

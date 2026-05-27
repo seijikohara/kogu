@@ -197,6 +197,10 @@ function BcryptGeneratorPage() {
 			valid={valid}
 			showRail={showOptions}
 			onShowRailChange={setShowOptions}
+			primaryAction={{
+				run: activeTab === 'generate' ? handleGenerate : handleVerify,
+				canRun: activeTab === 'generate' ? canGenerate && !isGenerating : canVerify && !isVerifying,
+			}}
 			statusContent={
 				activeTab === 'generate' && hashResult ? (
 					<>
@@ -268,7 +272,7 @@ function BcryptGeneratorPage() {
 										loading={isGenerating}
 										loadingLabel="Generating..."
 										disabled={!canGenerate}
-										shortcut
+										shortcutHint
 										onClick={handleGenerate}
 									/>
 									{hashResult || password ? (
@@ -309,7 +313,7 @@ function BcryptGeneratorPage() {
 										loading={isVerifying}
 										loadingLabel="Verifying..."
 										disabled={!canVerify}
-										shortcut
+										shortcutHint
 										onClick={handleVerify}
 									/>
 									{verifyResult || verifyPassword || verifyHash ? (

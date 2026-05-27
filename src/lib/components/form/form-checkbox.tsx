@@ -37,9 +37,9 @@ export function FormCheckbox({
 			: 'mt-0.5 h-4 w-4 shrink-0 bg-background';
 
 	const labelClass =
-		size === 'compact'
-			? 'min-w-0 text-xs font-medium leading-snug'
-			: 'min-w-0 text-sm font-medium leading-snug';
+		size === 'compact' ? 'text-xs font-medium leading-snug' : 'text-sm font-medium leading-snug';
+
+	const hintClass = size === 'compact' ? 'text-2xs leading-snug' : 'text-xs leading-snug';
 
 	return (
 		<label
@@ -56,8 +56,10 @@ export function FormCheckbox({
 				onCheckedChange={handleChange}
 				className={checkboxClass}
 			/>
-			<span className={labelClass}>{label}</span>
-			{hint ? <span className="shrink-0 text-xs text-muted-foreground">({hint})</span> : null}
+			<span className="flex min-w-0 flex-1 flex-col gap-0.5">
+				<span className={labelClass}>{label}</span>
+				{hint ? <span className={cn(hintClass, 'text-muted-foreground')}>{hint}</span> : null}
+			</span>
 		</label>
 	);
 }

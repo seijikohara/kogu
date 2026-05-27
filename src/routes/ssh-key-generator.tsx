@@ -150,6 +150,7 @@ function SshKeyGeneratorPage() {
 			valid={keyResult ? true : null}
 			showRail={showOptions}
 			onShowRailChange={setShowOptions}
+			primaryAction={{ run: handleGenerate, canRun: !isGenerating }}
 			statusContent={
 				keyResult ? (
 					<>
@@ -236,11 +237,11 @@ function SshKeyGeneratorPage() {
 								icon={Key}
 								loading={isGenerating}
 								loadingLabel="Generating..."
-								shortcut
+								shortcutHint
 								onClick={handleGenerate}
 							/>
 							{keyResult ? (
-								<ActionButton label="Clear Result" variant="outline" onClick={handleClear} />
+								<ActionButton label="Clear" variant="outline" onClick={handleClear} />
 							) : null}
 						</div>
 					</FormSection>

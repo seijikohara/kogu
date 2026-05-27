@@ -14,7 +14,19 @@ interface ActionButtonProps {
 	readonly variant?: 'default' | 'outline' | 'destructive' | 'ghost' | 'secondary';
 	readonly size?: 'default' | 'sm';
 	readonly className?: string;
+	/**
+	 * Binds a window-level Cmd/Ctrl+Enter listener AND renders the `⏎`
+	 * badge. Prefer declaring the shortcut on the surrounding
+	 * `<ToolShell primaryAction={...}>` and using `shortcutHint` here —
+	 * that centralizes keyboard handling and avoids duplicate listeners
+	 * when multiple action buttons exist on the page.
+	 */
 	readonly shortcut?: boolean;
+	/**
+	 * Visual-only: renders the `⏎` badge without binding any listener.
+	 * Use when the shortcut is owned by `ToolShell.primaryAction`.
+	 */
+	readonly shortcutHint?: boolean;
 	readonly onClick: () => void;
 }
 
@@ -28,6 +40,7 @@ export function ActionButton({
 	size = 'default',
 	className,
 	shortcut = false,
+	shortcutHint = false,
 	onClick,
 }: ActionButtonProps) {
 	const displayLabel = loading ? (loadingLabel ?? `${label}...`) : label;
@@ -66,7 +79,7 @@ export function ActionButton({
 				<Icon className={iconClass} />
 			) : null}
 			{displayLabel}
-			{shortcut && !loading ? (
+			{(shortcut || shortcutHint) && !loading ? (
 				<kbd className="ml-1.5 rounded border border-current/20 px-1 py-0.5 font-mono text-2xs opacity-60">
 					{shortcutLabel}
 				</kbd>

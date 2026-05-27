@@ -198,7 +198,9 @@ function ImageConverterPage() {
 			const failures = outcomes.filter((o) => !o.ok);
 			if (failures.length > 0) {
 				toast.warning(`Converted ${outcomes.length - failures.length}/${outcomes.length} formats`, {
-					description: failures.map((f) => `${FORMAT_LABEL[f.format]}: ${f.ok ? '' : f.error}`).join(', '),
+					description: failures
+						.map((f) => `${FORMAT_LABEL[f.format]}: ${f.ok ? '' : f.error}`)
+						.join(', '),
 				});
 			} else {
 				toast.success(`Converted ${outcomes.length} format${outcomes.length === 1 ? '' : 's'}`);
@@ -335,7 +337,9 @@ function ImageConverterPage() {
 								/>
 							</>
 						) : (
-							<p className="text-xs text-muted-foreground">Drop an image to enable resize controls.</p>
+							<p className="text-xs text-muted-foreground">
+								Drop an image to enable resize controls.
+							</p>
 						)}
 						<div className="flex flex-wrap gap-1.5">
 							{RESIZE_PRESETS.map((p) => (
@@ -457,8 +461,8 @@ function ImageConverterPage() {
 
 					<FormSection title="About">
 						<FormInfo>
-							All processing happens in your browser. Nothing is uploaded. Canvas re-render
-							strips EXIF metadata inherently.
+							All processing happens in your browser. Nothing is uploaded. Canvas re-render strips
+							EXIF metadata inherently.
 						</FormInfo>
 					</FormSection>
 				</>
@@ -476,9 +480,7 @@ function ImageConverterPage() {
 					<div
 						className={cn(
 							'flex h-full flex-1 items-center justify-center rounded-xl border-2 border-dashed transition-colors',
-							dragOver
-								? 'border-primary bg-primary/5'
-								: 'border-border bg-surface-1'
+							dragOver ? 'border-primary bg-primary/5' : 'border-border bg-surface-1'
 						)}
 						onDrop={handleDrop}
 						onDragOver={handleDragOver}
@@ -494,7 +496,12 @@ function ImageConverterPage() {
 								<Button type="button" onClick={() => fileInputRef.current?.click()} size="sm">
 									Choose file
 								</Button>
-								<Button type="button" variant="outline" onClick={() => void handleLoadDemo()} size="sm">
+								<Button
+									type="button"
+									variant="outline"
+									onClick={() => void handleLoadDemo()}
+									size="sm"
+								>
 									Load demo image
 								</Button>
 							</div>
@@ -524,7 +531,9 @@ function ImageConverterPage() {
 											/>
 										) : null}
 										<div className="flex flex-wrap gap-1.5">
-											<Badge variant="outline">{source.mime.replace('image/', '').toUpperCase()}</Badge>
+											<Badge variant="outline">
+												{source.mime.replace('image/', '').toUpperCase()}
+											</Badge>
 											<Badge variant="outline">
 												{source.width}×{source.height}
 											</Badge>
@@ -540,8 +549,8 @@ function ImageConverterPage() {
 								<CardContent>
 									{okResults.length === 0 ? (
 										<p className="text-sm text-muted-foreground">
-											Configure targets and click <span className="font-medium">Convert</span>{' '}
-											to generate previews.
+											Configure targets and click <span className="font-medium">Convert</span> to
+											generate previews.
 										</p>
 									) : (
 										<Tabs
@@ -611,8 +620,7 @@ function ImageConverterPage() {
 											.map((r) =>
 												r.ok ? null : (
 													<li key={r.format}>
-														<span className="font-medium">{FORMAT_LABEL[r.format]}:</span>{' '}
-														{r.error}
+														<span className="font-medium">{FORMAT_LABEL[r.format]}:</span> {r.error}
 													</li>
 												)
 											)}
@@ -626,4 +634,3 @@ function ImageConverterPage() {
 		</ToolShell>
 	);
 }
-

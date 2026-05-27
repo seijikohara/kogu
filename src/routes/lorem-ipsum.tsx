@@ -117,6 +117,7 @@ function LoremIpsumPage() {
 		<ToolShell
 			showRail={showRail}
 			onShowRailChange={setShowRail}
+			primaryAction={{ run: handleRegenerate }}
 			statusContent={
 				<>
 					<StatItem label="Characters" value={stats.chars} />
@@ -191,14 +192,10 @@ function LoremIpsumPage() {
 							<ActionButton
 								label="Regenerate"
 								icon={RefreshCw}
-								shortcut
+								shortcutHint
 								onClick={handleRegenerate}
 							/>
-							<ActionButton
-								label="Reset defaults"
-								variant="outline"
-								onClick={handleResetDefaults}
-							/>
+							<ActionButton label="Reset options" variant="outline" onClick={handleResetDefaults} />
 						</div>
 					</FormSection>
 

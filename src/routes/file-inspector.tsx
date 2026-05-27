@@ -24,7 +24,7 @@ import {
 	FormSection,
 	FormSlider,
 } from '@/lib/components/form';
-import { RelatedTools, SectionLabel } from '@/lib/components/layout';
+import { DefinitionList, RelatedTools, SectionLabel } from '@/lib/components/layout';
 import { ToolShell } from '@/lib/components/shell';
 import { EmbeddedEmptyState, StatItem } from '@/lib/components/status';
 import { Badge } from '@/lib/components/ui/badge';
@@ -538,7 +538,7 @@ function DropZone({ loading, isDragOver, onDrop, onDragOver, onDragLeave, onPick
 				<EmbeddedEmptyState
 					icon={FileSearch}
 					title="Open a file to inspect"
-					description="Drag a file here, or use the button below."
+					description="Drop a file here or click to browse."
 				/>
 				<Button variant="default" size="sm" onClick={onPick} disabled={loading}>
 					{loading ? (
@@ -866,20 +866,22 @@ function ImagePreviewCard({ preview }: { readonly preview: ImagePreview }) {
 						className="max-h-64 max-w-full rounded-md border bg-muted object-contain"
 					/>
 				</div>
-				<dl className="grid grid-cols-[100px_1fr] gap-x-3 gap-y-1 text-xs">
-					<dt className="text-muted-foreground">Dimensions</dt>
-					<dd className="font-mono">
-						{preview.width} × {preview.height}
-					</dd>
-				</dl>
+				<DefinitionList
+					keyColumn="100px"
+					items={[{ key: 'Dimensions', value: `${preview.width} × ${preview.height}` }]}
+				/>
 				{exifEntries.length > 0 ? (
 					<div>
 						<SectionLabel>EXIF ({exifEntries.length})</SectionLabel>
-						<dl className="grid grid-cols-[140px_1fr] gap-x-3 gap-y-1 text-2xs">
-							{exifEntries.slice(0, 32).map(([k, v]) => (
-								<ExifRow key={k} field={k} value={v} />
-							))}
-						</dl>
+						<DefinitionList
+							keyColumn="140px"
+							size="2xs"
+							items={exifEntries.slice(0, 32).map(([k, v]) => ({
+								key: k,
+								value: stringifyExifValue(v),
+								break: true,
+							}))}
+						/>
 						{exifEntries.length > 32 ? (
 							<p className="mt-1 text-2xs text-muted-foreground">
 								Showing first 32 fields of {exifEntries.length}.
@@ -892,21 +894,11 @@ function ImagePreviewCard({ preview }: { readonly preview: ImagePreview }) {
 	);
 }
 
-function ExifRow({ field, value }: { readonly field: string; readonly value: unknown }) {
-	const display =
-		typeof value === 'string'
-			? value
-			: typeof value === 'number'
-				? String(value)
-				: value instanceof Date
-					? value.toISOString()
-					: JSON.stringify(value);
-	return (
-		<>
-			<dt className="font-mono text-muted-foreground">{field}</dt>
-			<dd className="break-all font-mono">{display}</dd>
-		</>
-	);
+function stringifyExifValue(value: unknown): string {
+	if (typeof value === 'string') return value;
+	if (typeof value === 'number') return String(value);
+	if (value instanceof Date) return value.toISOString();
+	return JSON.stringify(value);
 }
 
 interface AudioInfo {
@@ -922,14 +914,14 @@ function AudioInfoCard({ info }: { readonly info: AudioInfo }) {
 				<CardTitle className="text-sm">Audio</CardTitle>
 			</CardHeader>
 			<CardContent>
-				<dl className="grid grid-cols-[100px_1fr] gap-x-3 gap-y-1 text-xs">
-					<dt className="text-muted-foreground">Duration</dt>
-					<dd className="font-mono">{info.duration.toFixed(2)} s</dd>
-					<dt className="text-muted-foreground">Sample rate</dt>
-					<dd className="font-mono">{info.sampleRate.toLocaleString()} Hz</dd>
-					<dt className="text-muted-foreground">Channels</dt>
-					<dd className="font-mono">{info.channels}</dd>
-				</dl>
+				<DefinitionList
+					keyColumn="100px"
+					items={[
+						{ key: 'Duration', value: `${info.duration.toFixed(2)} s` },
+						{ key: 'Sample rate', value: `${info.sampleRate.toLocaleString()} Hz` },
+						{ key: 'Channels', value: String(info.channels) },
+					]}
+				/>
 			</CardContent>
 		</Card>
 	);

@@ -13,7 +13,12 @@
 
 export type StatusCategory = '1xx' | '2xx' | '3xx' | '4xx' | '5xx';
 
-export type StatusKind = 'informational' | 'success' | 'redirection' | 'client-error' | 'server-error';
+export type StatusKind =
+	| 'informational'
+	| 'success'
+	| 'redirection'
+	| 'client-error'
+	| 'server-error';
 
 export interface StatusCode {
 	readonly code: number;
@@ -50,7 +55,8 @@ export const STATUS_CODES: readonly StatusCode[] = [
 			'Initial part of the request received and the client should continue sending the request body.',
 		rfc: 'RFC 9110 §15.2.1',
 		rfcUrl: rfc9110('15.2.1'),
-		whenToUse: 'Respond when the client sent "Expect: 100-continue" and the request looks acceptable.',
+		whenToUse:
+			'Respond when the client sent "Expect: 100-continue" and the request looks acceptable.',
 		standard: true,
 	},
 	{
@@ -61,7 +67,8 @@ export const STATUS_CODES: readonly StatusCode[] = [
 		summary: 'Server is switching protocols as requested by the client in the Upgrade header.',
 		rfc: 'RFC 9110 §15.2.2',
 		rfcUrl: rfc9110('15.2.2'),
-		whenToUse: 'Use when upgrading from HTTP/1.1 to WebSocket or HTTP/2 over the same TCP connection.',
+		whenToUse:
+			'Use when upgrading from HTTP/1.1 to WebSocket or HTTP/2 over the same TCP connection.',
 		standard: true,
 	},
 	{
@@ -73,7 +80,8 @@ export const STATUS_CODES: readonly StatusCode[] = [
 			'WebDAV interim response indicating the server has accepted the complete request but is still processing it.',
 		rfc: 'RFC 2518 §10.1',
 		rfcUrl: rfcUrl('rfc2518', '10.1'),
-		whenToUse: 'Send periodically during a long WebDAV operation to keep the client from timing out.',
+		whenToUse:
+			'Send periodically during a long WebDAV operation to keep the client from timing out.',
 		standard: true,
 	},
 	{
@@ -85,7 +93,8 @@ export const STATUS_CODES: readonly StatusCode[] = [
 			'Allows the user agent to start preloading resources while the server prepares the final response.',
 		rfc: 'RFC 8297',
 		rfcUrl: 'https://www.rfc-editor.org/rfc/rfc8297',
-		whenToUse: 'Send Link headers early so the browser can begin fetching critical CSS / JS in parallel.',
+		whenToUse:
+			'Send Link headers early so the browser can begin fetching critical CSS / JS in parallel.',
 		standard: true,
 	},
 
@@ -98,7 +107,8 @@ export const STATUS_CODES: readonly StatusCode[] = [
 		summary: 'Request succeeded; the meaning of the success depends on the HTTP method.',
 		rfc: 'RFC 9110 §15.3.1',
 		rfcUrl: rfc9110('15.3.1'),
-		whenToUse: 'Default success response for GET, HEAD, PUT, POST, DELETE when no more specific code applies.',
+		whenToUse:
+			'Default success response for GET, HEAD, PUT, POST, DELETE when no more specific code applies.',
 		misuse: 'Do not return 200 with an error body — pick the right 4xx/5xx code instead.',
 		related: [201, 202, 204],
 		standard: true,
@@ -111,7 +121,8 @@ export const STATUS_CODES: readonly StatusCode[] = [
 		summary: 'Request succeeded and a new resource has been created as a result.',
 		rfc: 'RFC 9110 §15.3.2',
 		rfcUrl: rfc9110('15.3.2'),
-		whenToUse: 'Respond to POST / PUT that creates a resource; include a Location header pointing to it.',
+		whenToUse:
+			'Respond to POST / PUT that creates a resource; include a Location header pointing to it.',
 		related: [200, 202, 204],
 		standard: true,
 	},
@@ -123,7 +134,8 @@ export const STATUS_CODES: readonly StatusCode[] = [
 		summary: 'Request accepted for processing but processing has not been completed.',
 		rfc: 'RFC 9110 §15.3.3',
 		rfcUrl: rfc9110('15.3.3'),
-		whenToUse: 'Acknowledge work that is dispatched asynchronously; return a status URL clients can poll.',
+		whenToUse:
+			'Acknowledge work that is dispatched asynchronously; return a status URL clients can poll.',
 		related: [200, 201, 204],
 		standard: true,
 	},
@@ -147,7 +159,8 @@ export const STATUS_CODES: readonly StatusCode[] = [
 		summary: 'Request succeeded and there is no additional content to send in the response body.',
 		rfc: 'RFC 9110 §15.3.5',
 		rfcUrl: rfc9110('15.3.5'),
-		whenToUse: 'Respond to DELETE or to a PUT/PATCH that does not return the resource representation.',
+		whenToUse:
+			'Respond to DELETE or to a PUT/PATCH that does not return the resource representation.',
 		related: [200, 205, 304],
 		standard: true,
 	},
@@ -160,7 +173,8 @@ export const STATUS_CODES: readonly StatusCode[] = [
 			'Instructs the user agent to reset the document that sent the request (e.g. clear the submitted form).',
 		rfc: 'RFC 9110 §15.3.6',
 		rfcUrl: rfc9110('15.3.6'),
-		whenToUse: 'After a data-entry submission, when you want the client to clear and reset the form.',
+		whenToUse:
+			'After a data-entry submission, when you want the client to clear and reset the form.',
 		related: [204],
 		standard: true,
 	},
@@ -184,7 +198,8 @@ export const STATUS_CODES: readonly StatusCode[] = [
 		summary: 'WebDAV: response body conveys the status of multiple independent operations.',
 		rfc: 'RFC 4918 §11.1',
 		rfcUrl: rfcUrl('rfc4918', '11.1'),
-		whenToUse: 'Reply to a WebDAV PROPFIND / batch operation where individual items may differ in status.',
+		whenToUse:
+			'Reply to a WebDAV PROPFIND / batch operation where individual items may differ in status.',
 		standard: true,
 	},
 	{
@@ -218,10 +233,12 @@ export const STATUS_CODES: readonly StatusCode[] = [
 		phrase: 'Multiple Choices',
 		category: '3xx',
 		kind: 'redirection',
-		summary: 'Request has more than one possible response; the user agent or user should choose one of them.',
+		summary:
+			'Request has more than one possible response; the user agent or user should choose one of them.',
 		rfc: 'RFC 9110 §15.4.1',
 		rfcUrl: rfc9110('15.4.1'),
-		whenToUse: 'Offer alternative representations (e.g. language variants) and let the client pick.',
+		whenToUse:
+			'Offer alternative representations (e.g. language variants) and let the client pick.',
 		standard: true,
 	},
 	{
@@ -233,7 +250,8 @@ export const STATUS_CODES: readonly StatusCode[] = [
 		rfc: 'RFC 9110 §15.4.2',
 		rfcUrl: rfc9110('15.4.2'),
 		whenToUse: 'Use for permanent URL changes that should be cached and update bookmarks.',
-		misuse: '301 is aggressively cached. Prefer 302 for temporary moves; once cached, 301 is hard to undo.',
+		misuse:
+			'301 is aggressively cached. Prefer 302 for temporary moves; once cached, 301 is hard to undo.',
 		related: [302, 303, 307, 308],
 		standard: true,
 	},
@@ -242,11 +260,14 @@ export const STATUS_CODES: readonly StatusCode[] = [
 		phrase: 'Found',
 		category: '3xx',
 		kind: 'redirection',
-		summary: 'Resource resides temporarily under a different URL; future requests should still use the original URL.',
+		summary:
+			'Resource resides temporarily under a different URL; future requests should still use the original URL.',
 		rfc: 'RFC 9110 §15.4.3',
 		rfcUrl: rfc9110('15.4.3'),
-		whenToUse: 'Default temporary redirect when method-preservation does not matter (browsers often rewrite to GET).',
-		misuse: 'Many clients rewrite the method to GET; if you need the original method preserved, use 307 instead.',
+		whenToUse:
+			'Default temporary redirect when method-preservation does not matter (browsers often rewrite to GET).',
+		misuse:
+			'Many clients rewrite the method to GET; if you need the original method preserved, use 307 instead.',
 		related: [301, 303, 307, 308],
 		standard: true,
 	},
@@ -259,7 +280,8 @@ export const STATUS_CODES: readonly StatusCode[] = [
 			'Response can be found at another URL using a GET method; commonly used after POST to redirect to a result page.',
 		rfc: 'RFC 9110 §15.4.4',
 		rfcUrl: rfc9110('15.4.4'),
-		whenToUse: 'Implement the Post/Redirect/Get pattern after form submission to avoid duplicate POSTs on refresh.',
+		whenToUse:
+			'Implement the Post/Redirect/Get pattern after form submission to avoid duplicate POSTs on refresh.',
 		related: [301, 302, 307],
 		standard: true,
 	},
@@ -271,7 +293,8 @@ export const STATUS_CODES: readonly StatusCode[] = [
 		summary: 'Cached copy is still fresh; client should use its stored representation.',
 		rfc: 'RFC 9110 §15.4.5',
 		rfcUrl: rfc9110('15.4.5'),
-		whenToUse: 'Respond to conditional GET (If-None-Match / If-Modified-Since) when the resource is unchanged.',
+		whenToUse:
+			'Respond to conditional GET (If-None-Match / If-Modified-Since) when the resource is unchanged.',
 		related: [200, 412],
 		standard: true,
 	},
@@ -280,7 +303,8 @@ export const STATUS_CODES: readonly StatusCode[] = [
 		phrase: 'Use Proxy',
 		category: '3xx',
 		kind: 'redirection',
-		summary: 'Deprecated: requested resource must be accessed through the proxy given in the Location field.',
+		summary:
+			'Deprecated: requested resource must be accessed through the proxy given in the Location field.',
 		rfc: 'RFC 9110 §15.4.6',
 		rfcUrl: rfc9110('15.4.6'),
 		whenToUse: 'Do not use — deprecated due to security concerns.',
@@ -296,7 +320,8 @@ export const STATUS_CODES: readonly StatusCode[] = [
 		rfc: 'RFC 9110 §15.4.8',
 		rfcUrl: rfc9110('15.4.8'),
 		whenToUse: 'Temporary redirect that preserves the HTTP method (POST stays POST).',
-		misuse: '307/308 preserve the request method. Use 307 (not 302) when redirecting a POST and you want it re-POSTed.',
+		misuse:
+			'307/308 preserve the request method. Use 307 (not 302) when redirecting a POST and you want it re-POSTed.',
 		related: [302, 308],
 		standard: true,
 	},
@@ -309,8 +334,10 @@ export const STATUS_CODES: readonly StatusCode[] = [
 			'Resource has been permanently moved; the request method and body must not change when following the redirect.',
 		rfc: 'RFC 9110 §15.4.9',
 		rfcUrl: rfc9110('15.4.9'),
-		whenToUse: 'Permanent redirect for APIs where the original method (POST / PUT) must be preserved.',
-		misuse: '307/308 preserve the request method. Use 308 (not 301) for permanent API URL changes that must keep POST.',
+		whenToUse:
+			'Permanent redirect for APIs where the original method (POST / PUT) must be preserved.',
+		misuse:
+			'307/308 preserve the request method. Use 308 (not 301) for permanent API URL changes that must keep POST.',
 		related: [301, 307],
 		standard: true,
 	},
@@ -321,11 +348,14 @@ export const STATUS_CODES: readonly StatusCode[] = [
 		phrase: 'Bad Request',
 		category: '4xx',
 		kind: 'client-error',
-		summary: 'Server cannot or will not process the request due to a client error (malformed syntax, invalid framing, etc.).',
+		summary:
+			'Server cannot or will not process the request due to a client error (malformed syntax, invalid framing, etc.).',
 		rfc: 'RFC 9110 §15.5.1',
 		rfcUrl: rfc9110('15.5.1'),
-		whenToUse: 'Reject malformed JSON, invalid headers, or otherwise unparseable input at the protocol layer.',
-		misuse: 'Reserve 400 for malformed input. Use 422 when the body is well-formed but semantically invalid.',
+		whenToUse:
+			'Reject malformed JSON, invalid headers, or otherwise unparseable input at the protocol layer.',
+		misuse:
+			'Reserve 400 for malformed input. Use 422 when the body is well-formed but semantically invalid.',
 		related: [422],
 		standard: true,
 	},
@@ -338,8 +368,10 @@ export const STATUS_CODES: readonly StatusCode[] = [
 			'Request lacks valid authentication credentials for the target resource; "Unauthenticated" would be more accurate.',
 		rfc: 'RFC 9110 §15.5.2',
 		rfcUrl: rfc9110('15.5.2'),
-		whenToUse: 'Use when no credentials were sent or the credentials are invalid; include a WWW-Authenticate header.',
-		misuse: '401 = not authenticated (missing/invalid credentials). 403 = authenticated but not authorized for this resource.',
+		whenToUse:
+			'Use when no credentials were sent or the credentials are invalid; include a WWW-Authenticate header.',
+		misuse:
+			'401 = not authenticated (missing/invalid credentials). 403 = authenticated but not authorized for this resource.',
 		related: [403, 407],
 		standard: true,
 	},
@@ -348,10 +380,12 @@ export const STATUS_CODES: readonly StatusCode[] = [
 		phrase: 'Payment Required',
 		category: '4xx',
 		kind: 'client-error',
-		summary: 'Reserved for future use; sometimes returned by APIs to indicate a billing issue or quota exhaustion.',
+		summary:
+			'Reserved for future use; sometimes returned by APIs to indicate a billing issue or quota exhaustion.',
 		rfc: 'RFC 9110 §15.5.3',
 		rfcUrl: rfc9110('15.5.3'),
-		whenToUse: 'Optionally used by paid APIs to flag subscription/billing failures; behavior is non-standard.',
+		whenToUse:
+			'Optionally used by paid APIs to flag subscription/billing failures; behavior is non-standard.',
 		standard: true,
 	},
 	{
@@ -359,11 +393,14 @@ export const STATUS_CODES: readonly StatusCode[] = [
 		phrase: 'Forbidden',
 		category: '4xx',
 		kind: 'client-error',
-		summary: 'Server understood the request but refuses to authorize it; re-authenticating will not help.',
+		summary:
+			'Server understood the request but refuses to authorize it; re-authenticating will not help.',
 		rfc: 'RFC 9110 §15.5.4',
 		rfcUrl: rfc9110('15.5.4'),
-		whenToUse: 'Use when the authenticated principal lacks permission for the action regardless of credentials.',
-		misuse: '403 means "not allowed even with valid credentials". Use 401 when credentials are missing or invalid.',
+		whenToUse:
+			'Use when the authenticated principal lacks permission for the action regardless of credentials.',
+		misuse:
+			'403 means "not allowed even with valid credentials". Use 401 when credentials are missing or invalid.',
 		related: [401, 404, 405],
 		standard: true,
 	},
@@ -372,11 +409,14 @@ export const STATUS_CODES: readonly StatusCode[] = [
 		phrase: 'Not Found',
 		category: '4xx',
 		kind: 'client-error',
-		summary: 'Server cannot find the requested resource; the URL may be wrong or the resource may not exist.',
+		summary:
+			'Server cannot find the requested resource; the URL may be wrong or the resource may not exist.',
 		rfc: 'RFC 9110 §15.5.5',
 		rfcUrl: rfc9110('15.5.5'),
-		whenToUse: 'Use when the resource identified by the URL does not exist (or to hide its existence from unauthorized callers).',
-		misuse: '404 for a missing item is correct; 404 for an existing collection endpoint with zero results is wrong — return 200 with [].',
+		whenToUse:
+			'Use when the resource identified by the URL does not exist (or to hide its existence from unauthorized callers).',
+		misuse:
+			'404 for a missing item is correct; 404 for an existing collection endpoint with zero results is wrong — return 200 with [].',
 		related: [403, 410],
 		standard: true,
 	},
@@ -388,7 +428,8 @@ export const STATUS_CODES: readonly StatusCode[] = [
 		summary: 'Request method is known by the server but not supported by the target resource.',
 		rfc: 'RFC 9110 §15.5.6',
 		rfcUrl: rfc9110('15.5.6'),
-		whenToUse: 'Reject methods the endpoint does not support; include an Allow header listing valid methods.',
+		whenToUse:
+			'Reject methods the endpoint does not support; include an Allow header listing valid methods.',
 		related: [403, 501],
 		standard: true,
 	},
@@ -421,10 +462,12 @@ export const STATUS_CODES: readonly StatusCode[] = [
 		phrase: 'Request Timeout',
 		category: '4xx',
 		kind: 'client-error',
-		summary: 'Server timed out waiting for the request; the client may repeat the request without modifications.',
+		summary:
+			'Server timed out waiting for the request; the client may repeat the request without modifications.',
 		rfc: 'RFC 9110 §15.5.9',
 		rfcUrl: rfc9110('15.5.9'),
-		whenToUse: 'Close idle connections that did not finish sending the request within the server timeout.',
+		whenToUse:
+			'Close idle connections that did not finish sending the request within the server timeout.',
 		standard: true,
 	},
 	{
@@ -432,10 +475,12 @@ export const STATUS_CODES: readonly StatusCode[] = [
 		phrase: 'Conflict',
 		category: '4xx',
 		kind: 'client-error',
-		summary: 'Request conflicts with the current state of the target resource (e.g. concurrent edit).',
+		summary:
+			'Request conflicts with the current state of the target resource (e.g. concurrent edit).',
 		rfc: 'RFC 9110 §15.5.10',
 		rfcUrl: rfc9110('15.5.10'),
-		whenToUse: 'Reject optimistic-concurrency conflicts, duplicate-key inserts, or competing edits.',
+		whenToUse:
+			'Reject optimistic-concurrency conflicts, duplicate-key inserts, or competing edits.',
 		standard: true,
 	},
 	{
@@ -443,10 +488,12 @@ export const STATUS_CODES: readonly StatusCode[] = [
 		phrase: 'Gone',
 		category: '4xx',
 		kind: 'client-error',
-		summary: 'Resource is no longer available and will not be available again; the condition is expected to be permanent.',
+		summary:
+			'Resource is no longer available and will not be available again; the condition is expected to be permanent.',
 		rfc: 'RFC 9110 §15.5.11',
 		rfcUrl: rfc9110('15.5.11'),
-		whenToUse: 'Signal that a resource has been intentionally retired so search engines and caches can purge it.',
+		whenToUse:
+			'Signal that a resource has been intentionally retired so search engines and caches can purge it.',
 		related: [404],
 		standard: true,
 	},
@@ -469,7 +516,8 @@ export const STATUS_CODES: readonly StatusCode[] = [
 		summary: 'One or more conditions given in the request header fields evaluated to false.',
 		rfc: 'RFC 9110 §15.5.13',
 		rfcUrl: rfc9110('15.5.13'),
-		whenToUse: 'Reject conditional PUT / PATCH when If-Match / If-Unmodified-Since does not hold (optimistic concurrency).',
+		whenToUse:
+			'Reject conditional PUT / PATCH when If-Match / If-Unmodified-Since does not hold (optimistic concurrency).',
 		related: [304, 428],
 		standard: true,
 	},
@@ -478,7 +526,8 @@ export const STATUS_CODES: readonly StatusCode[] = [
 		phrase: 'Content Too Large',
 		category: '4xx',
 		kind: 'client-error',
-		summary: 'Request body is larger than the server is willing or able to process. Previously "Payload Too Large".',
+		summary:
+			'Request body is larger than the server is willing or able to process. Previously "Payload Too Large".',
 		rfc: 'RFC 9110 §15.5.14',
 		rfcUrl: rfc9110('15.5.14'),
 		whenToUse: 'Reject uploads beyond the configured maximum size.',
@@ -500,7 +549,8 @@ export const STATUS_CODES: readonly StatusCode[] = [
 		phrase: 'Unsupported Media Type',
 		category: '4xx',
 		kind: 'client-error',
-		summary: 'Server refuses to accept the request because the payload format is in an unsupported media type.',
+		summary:
+			'Server refuses to accept the request because the payload format is in an unsupported media type.',
 		rfc: 'RFC 9110 §15.5.16',
 		rfcUrl: rfc9110('15.5.16'),
 		whenToUse: 'Reject Content-Type values that the endpoint does not support.',
@@ -511,7 +561,8 @@ export const STATUS_CODES: readonly StatusCode[] = [
 		phrase: 'Range Not Satisfiable',
 		category: '4xx',
 		kind: 'client-error',
-		summary: 'None of the ranges in the request Range header overlap the current extent of the selected resource.',
+		summary:
+			'None of the ranges in the request Range header overlap the current extent of the selected resource.',
 		rfc: 'RFC 9110 §15.5.17',
 		rfcUrl: rfc9110('15.5.17'),
 		whenToUse: 'Respond when a Range request asks for bytes beyond the size of the resource.',
@@ -534,7 +585,8 @@ export const STATUS_CODES: readonly StatusCode[] = [
 		phrase: "I'm a teapot",
 		category: '4xx',
 		kind: 'client-error',
-		summary: 'Joke status from RFC 2324 (Hyper Text Coffee Pot Control Protocol); occasionally used as a sentinel value.',
+		summary:
+			'Joke status from RFC 2324 (Hyper Text Coffee Pot Control Protocol); occasionally used as a sentinel value.',
 		rfc: 'RFC 2324 §2.3.2',
 		rfcUrl: rfcUrl('rfc2324', '2.3.2'),
 		whenToUse: 'Avoid in production APIs; some services return it to flag bot / abuse traffic.',
@@ -545,10 +597,12 @@ export const STATUS_CODES: readonly StatusCode[] = [
 		phrase: 'Misdirected Request',
 		category: '4xx',
 		kind: 'client-error',
-		summary: 'Request was directed at a server that is not able to produce a response (e.g. wrong SNI / authority).',
+		summary:
+			'Request was directed at a server that is not able to produce a response (e.g. wrong SNI / authority).',
 		rfc: 'RFC 9110 §15.5.20',
 		rfcUrl: rfc9110('15.5.20'),
-		whenToUse: 'Reject HTTP/2 connection coalescing when the authority does not match the certificate.',
+		whenToUse:
+			'Reject HTTP/2 connection coalescing when the authority does not match the certificate.',
 		standard: true,
 	},
 	{
@@ -560,8 +614,10 @@ export const STATUS_CODES: readonly StatusCode[] = [
 			'Server understands the content type and syntax of the request but was unable to process the contained instructions.',
 		rfc: 'RFC 9110 §15.5.21',
 		rfcUrl: rfc9110('15.5.21'),
-		whenToUse: 'Reject well-formed input that fails business / semantic validation (e.g. invalid email, value out of range).',
-		misuse: '422 = well-formed body with semantic errors. 400 = malformed body (bad JSON, missing required header).',
+		whenToUse:
+			'Reject well-formed input that fails business / semantic validation (e.g. invalid email, value out of range).',
+		misuse:
+			'422 = well-formed body with semantic errors. 400 = malformed body (bad JSON, missing required header).',
 		related: [400],
 		standard: true,
 	},
@@ -581,7 +637,8 @@ export const STATUS_CODES: readonly StatusCode[] = [
 		phrase: 'Failed Dependency',
 		category: '4xx',
 		kind: 'client-error',
-		summary: 'WebDAV: method could not be performed because the requested action depended on another action that failed.',
+		summary:
+			'WebDAV: method could not be performed because the requested action depended on another action that failed.',
 		rfc: 'RFC 4918 §11.4',
 		rfcUrl: rfcUrl('rfc4918', '11.4'),
 		whenToUse: 'Use within a WebDAV multistatus when one operation cascades a failure.',
@@ -592,7 +649,8 @@ export const STATUS_CODES: readonly StatusCode[] = [
 		phrase: 'Too Early',
 		category: '4xx',
 		kind: 'client-error',
-		summary: 'Server is unwilling to risk processing a request that might be replayed (TLS 1.3 0-RTT).',
+		summary:
+			'Server is unwilling to risk processing a request that might be replayed (TLS 1.3 0-RTT).',
 		rfc: 'RFC 8470',
 		rfcUrl: 'https://www.rfc-editor.org/rfc/rfc8470',
 		whenToUse: 'Reject early-data requests for endpoints whose effects are not safe to replay.',
@@ -603,7 +661,8 @@ export const STATUS_CODES: readonly StatusCode[] = [
 		phrase: 'Upgrade Required',
 		category: '4xx',
 		kind: 'client-error',
-		summary: 'Server refuses to perform the request using the current protocol but might after the client upgrades.',
+		summary:
+			'Server refuses to perform the request using the current protocol but might after the client upgrades.',
 		rfc: 'RFC 9110 §15.5.22',
 		rfcUrl: rfc9110('15.5.22'),
 		whenToUse: 'Demand TLS / HTTP/2 by including an Upgrade header in the response.',
@@ -614,10 +673,12 @@ export const STATUS_CODES: readonly StatusCode[] = [
 		phrase: 'Precondition Required',
 		category: '4xx',
 		kind: 'client-error',
-		summary: 'Origin server requires the request to be conditional (prevents lost-update / "lost edit" problems).',
+		summary:
+			'Origin server requires the request to be conditional (prevents lost-update / "lost edit" problems).',
 		rfc: 'RFC 6585 §3',
 		rfcUrl: rfcUrl('rfc6585', '3'),
-		whenToUse: 'Require If-Match on PUT / PATCH so concurrent edits cannot silently overwrite each other.',
+		whenToUse:
+			'Require If-Match on PUT / PATCH so concurrent edits cannot silently overwrite each other.',
 		related: [412],
 		standard: true,
 	},
@@ -649,10 +710,12 @@ export const STATUS_CODES: readonly StatusCode[] = [
 		phrase: 'Unavailable For Legal Reasons',
 		category: '4xx',
 		kind: 'client-error',
-		summary: 'Resource is unavailable due to legal demands (e.g. court order, government censorship).',
+		summary:
+			'Resource is unavailable due to legal demands (e.g. court order, government censorship).',
 		rfc: 'RFC 7725',
 		rfcUrl: 'https://www.rfc-editor.org/rfc/rfc7725',
-		whenToUse: 'Indicate that content was removed for legal reasons rather than because it does not exist.',
+		whenToUse:
+			'Indicate that content was removed for legal reasons rather than because it does not exist.',
 		standard: true,
 	},
 	{
@@ -660,8 +723,10 @@ export const STATUS_CODES: readonly StatusCode[] = [
 		phrase: 'Client Closed Request',
 		category: '4xx',
 		kind: 'client-error',
-		summary: 'Non-standard nginx code logged when the client closed the connection before the server could respond.',
-		whenToUse: 'Recognise in nginx access logs as a client-side abort; not a code you should emit yourself.',
+		summary:
+			'Non-standard nginx code logged when the client closed the connection before the server could respond.',
+		whenToUse:
+			'Recognise in nginx access logs as a client-side abort; not a code you should emit yourself.',
 		standard: false,
 	},
 
@@ -671,10 +736,12 @@ export const STATUS_CODES: readonly StatusCode[] = [
 		phrase: 'Internal Server Error',
 		category: '5xx',
 		kind: 'server-error',
-		summary: 'Server encountered an unexpected condition that prevented it from fulfilling the request.',
+		summary:
+			'Server encountered an unexpected condition that prevented it from fulfilling the request.',
 		rfc: 'RFC 9110 §15.6.1',
 		rfcUrl: rfc9110('15.6.1'),
-		whenToUse: 'Generic catch-all when no more specific 5xx applies; log details server-side but do not leak them.',
+		whenToUse:
+			'Generic catch-all when no more specific 5xx applies; log details server-side but do not leak them.',
 		standard: true,
 	},
 	{
@@ -694,10 +761,12 @@ export const STATUS_CODES: readonly StatusCode[] = [
 		phrase: 'Bad Gateway',
 		category: '5xx',
 		kind: 'server-error',
-		summary: 'Server, while acting as a gateway or proxy, received an invalid response from the upstream server.',
+		summary:
+			'Server, while acting as a gateway or proxy, received an invalid response from the upstream server.',
 		rfc: 'RFC 9110 §15.6.3',
 		rfcUrl: rfc9110('15.6.3'),
-		whenToUse: 'Returned by load balancers / reverse proxies when upstream returns garbage or closes prematurely.',
+		whenToUse:
+			'Returned by load balancers / reverse proxies when upstream returns garbage or closes prematurely.',
 		standard: true,
 	},
 	{
@@ -705,10 +774,12 @@ export const STATUS_CODES: readonly StatusCode[] = [
 		phrase: 'Service Unavailable',
 		category: '5xx',
 		kind: 'server-error',
-		summary: 'Server is currently unable to handle the request due to temporary overload or scheduled maintenance.',
+		summary:
+			'Server is currently unable to handle the request due to temporary overload or scheduled maintenance.',
 		rfc: 'RFC 9110 §15.6.4',
 		rfcUrl: rfc9110('15.6.4'),
-		whenToUse: 'Reject during maintenance windows or when capacity is exhausted; include Retry-After.',
+		whenToUse:
+			'Reject during maintenance windows or when capacity is exhausted; include Retry-After.',
 		related: [429, 504],
 		standard: true,
 	},
@@ -721,7 +792,8 @@ export const STATUS_CODES: readonly StatusCode[] = [
 			'Server, while acting as a gateway or proxy, did not receive a timely response from an upstream server it needed to access.',
 		rfc: 'RFC 9110 §15.6.5',
 		rfcUrl: rfc9110('15.6.5'),
-		whenToUse: 'Returned by load balancers when the upstream is slow / unresponsive beyond the configured timeout.',
+		whenToUse:
+			'Returned by load balancers when the upstream is slow / unresponsive beyond the configured timeout.',
 		related: [502, 503],
 		standard: true,
 	},
@@ -777,7 +849,8 @@ export const STATUS_CODES: readonly StatusCode[] = [
 		summary: 'Further extensions to the request are required for the server to fulfill it.',
 		rfc: 'RFC 2774 §7',
 		rfcUrl: rfcUrl('rfc2774', '7'),
-		whenToUse: 'Rarely used; signals that the request must include additional HTTP extension framing.',
+		whenToUse:
+			'Rarely used; signals that the request must include additional HTTP extension framing.',
 		standard: true,
 	},
 	{
@@ -796,7 +869,8 @@ export const STATUS_CODES: readonly StatusCode[] = [
 		phrase: 'Web Server Returned an Unknown Error',
 		category: '5xx',
 		kind: 'server-error',
-		summary: 'Non-standard CDN code: origin returned an empty, unknown, or otherwise unexpected response.',
+		summary:
+			'Non-standard CDN code: origin returned an empty, unknown, or otherwise unexpected response.',
 		whenToUse: 'CDN diagnostic only; investigate the origin server response if you encounter this.',
 		standard: false,
 	},
@@ -832,7 +906,8 @@ export const STATUS_CODES: readonly StatusCode[] = [
 		phrase: 'A Timeout Occurred',
 		category: '5xx',
 		kind: 'server-error',
-		summary: 'Non-standard CDN code: TCP connection to the origin established, but no HTTP response within the timeout.',
+		summary:
+			'Non-standard CDN code: TCP connection to the origin established, but no HTTP response within the timeout.',
 		whenToUse: 'CDN diagnostic only; tune origin response times or extend CDN timeout.',
 		standard: false,
 	},
@@ -870,7 +945,8 @@ export const STATUS_CODES: readonly StatusCode[] = [
 		kind: 'server-error',
 		summary:
 			'Non-standard CDN code: site is suspended or origin returned an error that triggered a CDN 1xxx error page.',
-		whenToUse: 'CDN diagnostic only; consult the CDN-specific error-code page for the underlying cause.',
+		whenToUse:
+			'CDN diagnostic only; consult the CDN-specific error-code page for the underlying cause.',
 		standard: false,
 	},
 	{
@@ -878,7 +954,8 @@ export const STATUS_CODES: readonly StatusCode[] = [
 		phrase: 'Network Read Timeout Error',
 		category: '5xx',
 		kind: 'server-error',
-		summary: 'Non-standard proxy code: used by some HTTP proxies when a read on the upstream connection times out.',
+		summary:
+			'Non-standard proxy code: used by some HTTP proxies when a read on the upstream connection times out.',
 		whenToUse: 'Proxy diagnostic only; not part of any RFC.',
 		standard: false,
 	},
@@ -887,7 +964,8 @@ export const STATUS_CODES: readonly StatusCode[] = [
 		phrase: 'Network Connect Timeout Error',
 		category: '5xx',
 		kind: 'server-error',
-		summary: 'Non-standard proxy code: used by some HTTP proxies when establishing the upstream connection times out.',
+		summary:
+			'Non-standard proxy code: used by some HTTP proxies when establishing the upstream connection times out.',
 		whenToUse: 'Proxy diagnostic only; not part of any RFC.',
 		standard: false,
 	},
@@ -906,7 +984,9 @@ export const CATEGORY_LABELS: Readonly<Record<StatusCategory, string>> = {
  * tone tokens (`success` / `info` / `warning` / `destructive`) used by
  * `ToneBadge`.
  */
-export const CATEGORY_TONES: Readonly<Record<StatusCategory, 'info' | 'success' | 'warning' | 'destructive'>> = {
+export const CATEGORY_TONES: Readonly<
+	Record<StatusCategory, 'info' | 'success' | 'warning' | 'destructive'>
+> = {
 	'1xx': 'info',
 	'2xx': 'success',
 	'3xx': 'info',

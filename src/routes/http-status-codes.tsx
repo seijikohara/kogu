@@ -3,7 +3,14 @@ import { AlertTriangle, BookOpen, ExternalLink, Search, X } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 
 import { ActionButton, CopyButton } from '@/lib/components/action';
-import { FormCheckbox, FormCheckboxGroup, FormInfo, FormInput, FormSection } from '@/lib/components/form';
+import {
+	FormCheckbox,
+	FormCheckboxGroup,
+	FormInfo,
+	FormInput,
+	FormSection,
+} from '@/lib/components/form';
+import { MasterDetailLayout, SubsectionLabel } from '@/lib/components/layout';
 import { ToolShell } from '@/lib/components/shell';
 import { EmbeddedEmptyState, StatItem } from '@/lib/components/status';
 import { Badge } from '@/lib/components/ui/badge';
@@ -67,10 +74,7 @@ function HttpStatusCodesPage() {
 		return () => window.clearTimeout(handle);
 	}, [query]);
 
-	const categorySet = useMemo<ReadonlySet<StatusCategory>>(
-		() => new Set(categories),
-		[categories]
-	);
+	const categorySet = useMemo<ReadonlySet<StatusCategory>>(() => new Set(categories), [categories]);
 
 	const filterOptions = useMemo<FilterOptions>(
 		() => ({
@@ -82,10 +86,7 @@ function HttpStatusCodesPage() {
 		[debouncedQuery, categorySet, includeNonStandard, misuseOnly]
 	);
 
-	const filtered = useMemo(
-		() => filterStatusCodes(STATUS_CODES, filterOptions),
-		[filterOptions]
-	);
+	const filtered = useMemo(() => filterStatusCodes(STATUS_CODES, filterOptions), [filterOptions]);
 
 	const selectedEntry = useMemo(
 		() => (selectedCode === null ? null : (getStatusCode(selectedCode) ?? null)),
@@ -109,6 +110,7 @@ function HttpStatusCodesPage() {
 
 	return (
 		<ToolShell
+			layout="master-detail"
 			showRail={showRail}
 			onShowRailChange={setShowRail}
 			statusContent={
@@ -128,7 +130,11 @@ function HttpStatusCodesPage() {
 							<code className="font-mono">unauth</code>).
 						</FormInfo>
 						{query.length > 0 ? (
-							<ActionButton label="Clear search" variant="outline" onClick={() => patch({ query: '' })} />
+							<ActionButton
+								label="Clear search"
+								variant="outline"
+								onClick={() => patch({ query: '' })}
+							/>
 						) : null}
 					</FormSection>
 
@@ -190,11 +196,7 @@ function HttpStatusCodesPage() {
 							>
 								{misuseOnly ? 'Show all' : 'Misuse warnings'}
 							</Button>
-							<Button
-								variant="outline"
-								size="sm"
-								onClick={() => setCategories(['3xx'])}
-							>
+							<Button variant="outline" size="sm" onClick={() => setCategories(['3xx'])}>
 								Only redirects
 							</Button>
 						</div>
@@ -209,10 +211,15 @@ function HttpStatusCodesPage() {
 				</>
 			}
 		>
-			<div className="flex h-full flex-col overflow-auto p-3">
-				<div className="space-y-3">
-					<Card density="compact">
-						<CardContent className="space-y-2">
+			<MasterDetailLayout
+				listTitle="Status Codes"
+				listCount={filtered.length}
+				defaultListSize="48"
+				minListSize="30"
+				maxListSize="70"
+				list={
+					<div className="flex h-full flex-col">
+						<div className="shrink-0 space-y-2 border-b border-border/60 bg-surface-1 p-3">
 							<div className="relative">
 								<Search className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
 								<FormInput
@@ -234,41 +241,49 @@ function HttpStatusCodesPage() {
 								onToggleMisuseOnly={() => patch({ misuseOnly: false })}
 								onClearQuery={() => patch({ query: '' })}
 							/>
-						</CardContent>
-					</Card>
-
-					{filtered.length === 0 ? (
-						<Card density="compact">
-							<CardContent>
-								<EmbeddedEmptyState
-									icon={BookOpen}
-									title="No status codes match the current filters"
-									description="Try widening the categories, enabling non-standard codes, or clearing the search query."
-								/>
-							</CardContent>
-						</Card>
-					) : (
-						<div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-							{filtered.map((entry) => (
-								<StatusCard
-									key={entry.code}
-									entry={entry}
-									isSelected={entry.code === selectedCode}
-									onSelect={() => setSelectedCode(entry.code === selectedCode ? null : entry.code)}
-								/>
-							))}
 						</div>
-					)}
-
-					{selectedEntry ? (
-						<DetailPanel
-							entry={selectedEntry}
-							onClose={() => setSelectedCode(null)}
-							onSelectRelated={(code) => setSelectedCode(code)}
+						{filtered.length === 0 ? (
+							<EmbeddedEmptyState
+								icon={BookOpen}
+								title="No status codes match the current filters"
+								description="Try widening the categories, enabling non-standard codes, or clearing the search query."
+								fillHeight
+							/>
+						) : (
+							<div className="grid grid-cols-1 gap-2 p-3 sm:grid-cols-2">
+								{filtered.map((entry) => (
+									<StatusCard
+										key={entry.code}
+										entry={entry}
+										isSelected={entry.code === selectedCode}
+										onSelect={() =>
+											setSelectedCode(entry.code === selectedCode ? null : entry.code)
+										}
+									/>
+								))}
+							</div>
+						)}
+					</div>
+				}
+				detail={
+					selectedEntry ? (
+						<div className="h-full overflow-auto">
+							<DetailPanel
+								entry={selectedEntry}
+								onClose={() => setSelectedCode(null)}
+								onSelectRelated={(code) => setSelectedCode(code)}
+							/>
+						</div>
+					) : (
+						<EmbeddedEmptyState
+							icon={BookOpen}
+							title="Select a status code"
+							description="Pick any entry on the left to see its summary, RFC reference, common misuses, and related codes."
+							fillHeight
 						/>
-					) : null}
-				</div>
-			</div>
+					)
+				}
+			/>
 		</ToolShell>
 	);
 }
@@ -320,11 +335,7 @@ function ActiveFilterChips({
 				<RemovableChip label="Misuse warnings" tone="warning" onRemove={onToggleMisuseOnly} />
 			) : null}
 			{query.trim().length > 0 ? (
-				<RemovableChip
-					label={`"${query.trim()}"`}
-					tone="info"
-					onRemove={onClearQuery}
-				/>
+				<RemovableChip label={`"${query.trim()}"`} tone="info" onRemove={onClearQuery} />
 			) : null}
 		</div>
 	);
@@ -478,7 +489,12 @@ function DetailPanel({ entry, onClose, onSelectRelated }: DetailPanelProps) {
 							size="sm"
 							variant="outline"
 						/>
-						<Button variant="ghost" size="icon-sm" onClick={onClose} aria-label="Close detail panel">
+						<Button
+							variant="ghost"
+							size="icon-sm"
+							onClick={onClose}
+							aria-label="Close detail panel"
+						>
 							<X className="h-4 w-4" />
 						</Button>
 					</div>
@@ -486,17 +502,13 @@ function DetailPanel({ entry, onClose, onSelectRelated }: DetailPanelProps) {
 			</CardHeader>
 			<CardContent className="space-y-3">
 				<section className="space-y-1.5">
-					<h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-						Summary
-					</h3>
+					<SubsectionLabel>Summary</SubsectionLabel>
 					<p className="text-sm text-foreground/90">{entry.summary}</p>
 				</section>
 
 				{entry.whenToUse ? (
 					<section className="space-y-1.5">
-						<h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-							When to use
-						</h3>
+						<SubsectionLabel>When to use</SubsectionLabel>
 						<p className="text-sm text-foreground/90">{entry.whenToUse}</p>
 					</section>
 				) : null}
@@ -506,9 +518,7 @@ function DetailPanel({ entry, onClose, onSelectRelated }: DetailPanelProps) {
 						<div className="flex items-start gap-2">
 							<AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-warning" />
 							<div className="space-y-0.5">
-								<div className="text-xs font-semibold uppercase tracking-wide text-warning">
-									Common misuse
-								</div>
+								<SubsectionLabel tone="warning">Common misuse</SubsectionLabel>
 								<p className="text-sm text-foreground/90">{entry.misuse}</p>
 							</div>
 						</div>
@@ -517,9 +527,7 @@ function DetailPanel({ entry, onClose, onSelectRelated }: DetailPanelProps) {
 
 				{entry.related && entry.related.length > 0 ? (
 					<section className="space-y-1.5">
-						<h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-							Related codes
-						</h3>
+						<SubsectionLabel>Related codes</SubsectionLabel>
 						<div className="flex flex-wrap gap-1.5">
 							{entry.related.map((code) => {
 								const related = getStatusCode(code);

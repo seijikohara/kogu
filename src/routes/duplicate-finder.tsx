@@ -4,7 +4,14 @@ import { Copy, FolderOpen, Link2, Loader2, Play, Square, Trash2 } from 'lucide-r
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
-import { FormInput, FormInfo, FormMode, FormSection, FormSlider } from '@/lib/components/form';
+import {
+	FormFolderPicker,
+	FormGlobFilters,
+	FormInfo,
+	FormMode,
+	FormSection,
+	FormSlider,
+} from '@/lib/components/form';
 import { RelatedTools } from '@/lib/components/layout';
 import { ToolShell } from '@/lib/components/shell';
 import { EmbeddedEmptyState, StatItem } from '@/lib/components/status';
@@ -356,35 +363,20 @@ function DuplicateFinderPage() {
 			rail={
 				<>
 					<FormSection title="Folder">
-						<div className="flex flex-col gap-2">
-							<Button variant="default" size="sm" onClick={handlePickFolder} disabled={scanning}>
-								<FolderOpen className="h-3.5 w-3.5" />
-								{root ? 'Choose another' : 'Pick folder…'}
-							</Button>
-							{root ? (
-								<div className="rounded-md border bg-muted/30 p-2 font-mono text-2xs break-all">
-									{root}
-								</div>
-							) : null}
-						</div>
+						<FormFolderPicker
+							picked={root !== null}
+							path={root}
+							onPick={handlePickFolder}
+							disabled={scanning}
+						/>
 					</FormSection>
 
 					<FormSection title="Filters">
-						<FormInput
-							label="Include globs"
-							value={prefs.includeGlob}
-							placeholder="*.jpg,*.png (empty = all)"
-							size="compact"
-							onValueChange={(v) => patch({ includeGlob: v })}
-							hint="Comma- or whitespace-separated; matched against file name and path components."
-						/>
-						<FormInput
-							label="Exclude globs"
-							value={prefs.excludeGlob}
-							placeholder="node_modules,.git"
-							size="compact"
-							onValueChange={(v) => patch({ excludeGlob: v })}
-							hint="Skip files / directories matching any pattern."
+						<FormGlobFilters
+							include={prefs.includeGlob}
+							exclude={prefs.excludeGlob}
+							onIncludeChange={(v) => patch({ includeGlob: v })}
+							onExcludeChange={(v) => patch({ excludeGlob: v })}
 						/>
 						<FormSlider
 							label="Min size"

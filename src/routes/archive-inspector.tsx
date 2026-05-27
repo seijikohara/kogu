@@ -15,7 +15,14 @@ import {
 import { useCallback, useEffect, useMemo, useState, type DragEvent } from 'react';
 import { toast } from 'sonner';
 
-import { FormInfo, FormInput, FormMode, FormSection, FormSelect } from '@/lib/components/form';
+import {
+	FormFolderPicker,
+	FormInfo,
+	FormInput,
+	FormMode,
+	FormSection,
+	FormSelect,
+} from '@/lib/components/form';
 import { RelatedTools, SectionLabel } from '@/lib/components/layout';
 import { ToolShell } from '@/lib/components/shell';
 import { EmbeddedEmptyState, StatItem } from '@/lib/components/status';
@@ -366,10 +373,12 @@ function ArchiveInspectorPage() {
 				<>
 					<FormSection title="Open">
 						<div className="flex flex-col gap-2">
-							<Button variant="default" size="sm" onClick={handlePickFile} disabled={loading}>
-								<FolderOpen className="h-3.5 w-3.5" />
-								{hasArchive ? 'Choose another' : 'Open archive…'}
-							</Button>
+							<FormFolderPicker
+								picked={hasArchive}
+								onPick={handlePickFile}
+								disabled={loading}
+								emptyLabel="Open archive…"
+							/>
 							{hasArchive ? (
 								<Button variant="outline" size="sm" onClick={handleClear}>
 									<Trash2 className="h-3.5 w-3.5" />
@@ -583,7 +592,7 @@ function DropZone({ loading, isDragOver, onDrop, onDragOver, onDragLeave, onPick
 				<EmbeddedEmptyState
 					icon={Package}
 					title="Open an archive"
-					description="Drag a .zip / .tar / .gz / .bz2 / .xz / .7z file here, or use the button below."
+					description="Drop a .zip / .tar / .gz / .bz2 / .xz / .7z file here or click to browse."
 				/>
 				<Button variant="default" size="sm" onClick={onPick} disabled={loading}>
 					{loading ? (
