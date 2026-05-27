@@ -58,6 +58,7 @@ import {
 	Shield,
 	ShieldCheck,
 	Sparkles,
+	SplitSquareHorizontal,
 	Table,
 	Target,
 	Terminal,
@@ -570,6 +571,15 @@ export const PAGES: readonly PageDefinition[] = [
 		icon: Package,
 		description: 'Browse and extract .zip / .tar / .gz / .bz2 / .xz / .7z archives',
 		color: 'text-amber-800',
+		category: 'files',
+	},
+	{
+		id: 'path-tool',
+		title: 'Path Tool',
+		url: '/path-tool',
+		icon: SplitSquareHorizontal,
+		description: 'Parse paths and convert between Windows / POSIX / URL / shell-escaped formats',
+		color: 'text-amber-300',
 		category: 'files',
 	},
 	{

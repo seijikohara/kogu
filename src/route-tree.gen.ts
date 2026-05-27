@@ -27,6 +27,7 @@ import { Route as RsaToolsRouteImport } from './routes/rsa-tools';
 import { Route as RestClientRouteImport } from './routes/rest-client';
 import { Route as RegexTesterRouteImport } from './routes/regex-tester';
 import { Route as QrCodeGeneratorRouteImport } from './routes/qr-code-generator';
+import { Route as PathToolRouteImport } from './routes/path-tool';
 import { Route as PasswordGeneratorRouteImport } from './routes/password-generator';
 import { Route as NumberBaseConverterRouteImport } from './routes/number-base-converter';
 import { Route as NetworkScannerRouteImport } from './routes/network-scanner';
@@ -145,6 +146,11 @@ const RegexTesterRoute = RegexTesterRouteImport.update({
 const QrCodeGeneratorRoute = QrCodeGeneratorRouteImport.update({
 	id: '/qr-code-generator',
 	path: '/qr-code-generator',
+	getParentRoute: () => rootRouteImport,
+} as any);
+const PathToolRoute = PathToolRouteImport.update({
+	id: '/path-tool',
+	path: '/path-tool',
 	getParentRoute: () => rootRouteImport,
 } as any);
 const PasswordGeneratorRoute = PasswordGeneratorRouteImport.update({
@@ -323,6 +329,7 @@ export interface FileRoutesByFullPath {
 	'/network-scanner': typeof NetworkScannerRoute;
 	'/number-base-converter': typeof NumberBaseConverterRoute;
 	'/password-generator': typeof PasswordGeneratorRoute;
+	'/path-tool': typeof PathToolRoute;
 	'/qr-code-generator': typeof QrCodeGeneratorRoute;
 	'/regex-tester': typeof RegexTesterRoute;
 	'/rest-client': typeof RestClientRoute;
@@ -372,6 +379,7 @@ export interface FileRoutesByTo {
 	'/network-scanner': typeof NetworkScannerRoute;
 	'/number-base-converter': typeof NumberBaseConverterRoute;
 	'/password-generator': typeof PasswordGeneratorRoute;
+	'/path-tool': typeof PathToolRoute;
 	'/qr-code-generator': typeof QrCodeGeneratorRoute;
 	'/regex-tester': typeof RegexTesterRoute;
 	'/rest-client': typeof RestClientRoute;
@@ -422,6 +430,7 @@ export interface FileRoutesById {
 	'/network-scanner': typeof NetworkScannerRoute;
 	'/number-base-converter': typeof NumberBaseConverterRoute;
 	'/password-generator': typeof PasswordGeneratorRoute;
+	'/path-tool': typeof PathToolRoute;
 	'/qr-code-generator': typeof QrCodeGeneratorRoute;
 	'/regex-tester': typeof RegexTesterRoute;
 	'/rest-client': typeof RestClientRoute;
@@ -473,6 +482,7 @@ export interface FileRouteTypes {
 		| '/network-scanner'
 		| '/number-base-converter'
 		| '/password-generator'
+		| '/path-tool'
 		| '/qr-code-generator'
 		| '/regex-tester'
 		| '/rest-client'
@@ -522,6 +532,7 @@ export interface FileRouteTypes {
 		| '/network-scanner'
 		| '/number-base-converter'
 		| '/password-generator'
+		| '/path-tool'
 		| '/qr-code-generator'
 		| '/regex-tester'
 		| '/rest-client'
@@ -571,6 +582,7 @@ export interface FileRouteTypes {
 		| '/network-scanner'
 		| '/number-base-converter'
 		| '/password-generator'
+		| '/path-tool'
 		| '/qr-code-generator'
 		| '/regex-tester'
 		| '/rest-client'
@@ -621,6 +633,7 @@ export interface RootRouteChildren {
 	NetworkScannerRoute: typeof NetworkScannerRoute;
 	NumberBaseConverterRoute: typeof NumberBaseConverterRoute;
 	PasswordGeneratorRoute: typeof PasswordGeneratorRoute;
+	PathToolRoute: typeof PathToolRoute;
 	QrCodeGeneratorRoute: typeof QrCodeGeneratorRoute;
 	RegexTesterRoute: typeof RegexTesterRoute;
 	RestClientRoute: typeof RestClientRoute;
@@ -767,6 +780,13 @@ declare module '@tanstack/react-router' {
 			path: '/qr-code-generator';
 			fullPath: '/qr-code-generator';
 			preLoaderRoute: typeof QrCodeGeneratorRouteImport;
+			parentRoute: typeof rootRouteImport;
+		};
+		'/path-tool': {
+			id: '/path-tool';
+			path: '/path-tool';
+			fullPath: '/path-tool';
+			preLoaderRoute: typeof PathToolRouteImport;
 			parentRoute: typeof rootRouteImport;
 		};
 		'/password-generator': {
@@ -1005,6 +1025,7 @@ const rootRouteChildren: RootRouteChildren = {
 	NetworkScannerRoute: NetworkScannerRoute,
 	NumberBaseConverterRoute: NumberBaseConverterRoute,
 	PasswordGeneratorRoute: PasswordGeneratorRoute,
+	PathToolRoute: PathToolRoute,
 	QrCodeGeneratorRoute: QrCodeGeneratorRoute,
 	RegexTesterRoute: RegexTesterRoute,
 	RestClientRoute: RestClientRoute,
