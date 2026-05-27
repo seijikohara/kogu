@@ -47,6 +47,7 @@ import { Route as HashGeneratorRouteImport } from './routes/hash-generator';
 import { Route as GpgKeyGeneratorRouteImport } from './routes/gpg-key-generator';
 import { Route as FileInspectorRouteImport } from './routes/file-inspector';
 import { Route as EscapeToolRouteImport } from './routes/escape-tool';
+import { Route as EncodingConverterRouteImport } from './routes/encoding-converter';
 import { Route as DnsLookupRouteImport } from './routes/dns-lookup';
 import { Route as DiffViewerRouteImport } from './routes/diff-viewer';
 import { Route as DateTimestampConverterRouteImport } from './routes/date-timestamp-converter';
@@ -249,6 +250,11 @@ const EscapeToolRoute = EscapeToolRouteImport.update({
 	path: '/escape-tool',
 	getParentRoute: () => rootRouteImport,
 } as any);
+const EncodingConverterRoute = EncodingConverterRouteImport.update({
+	id: '/encoding-converter',
+	path: '/encoding-converter',
+	getParentRoute: () => rootRouteImport,
+} as any);
 const DnsLookupRoute = DnsLookupRouteImport.update({
 	id: '/dns-lookup',
 	path: '/dns-lookup',
@@ -317,6 +323,7 @@ export interface FileRoutesByFullPath {
 	'/date-timestamp-converter': typeof DateTimestampConverterRoute;
 	'/diff-viewer': typeof DiffViewerRoute;
 	'/dns-lookup': typeof DnsLookupRoute;
+	'/encoding-converter': typeof EncodingConverterRoute;
 	'/escape-tool': typeof EscapeToolRoute;
 	'/file-inspector': typeof FileInspectorRoute;
 	'/gpg-key-generator': typeof GpgKeyGeneratorRoute;
@@ -368,6 +375,7 @@ export interface FileRoutesByTo {
 	'/date-timestamp-converter': typeof DateTimestampConverterRoute;
 	'/diff-viewer': typeof DiffViewerRoute;
 	'/dns-lookup': typeof DnsLookupRoute;
+	'/encoding-converter': typeof EncodingConverterRoute;
 	'/escape-tool': typeof EscapeToolRoute;
 	'/file-inspector': typeof FileInspectorRoute;
 	'/gpg-key-generator': typeof GpgKeyGeneratorRoute;
@@ -420,6 +428,7 @@ export interface FileRoutesById {
 	'/date-timestamp-converter': typeof DateTimestampConverterRoute;
 	'/diff-viewer': typeof DiffViewerRoute;
 	'/dns-lookup': typeof DnsLookupRoute;
+	'/encoding-converter': typeof EncodingConverterRoute;
 	'/escape-tool': typeof EscapeToolRoute;
 	'/file-inspector': typeof FileInspectorRoute;
 	'/gpg-key-generator': typeof GpgKeyGeneratorRoute;
@@ -473,6 +482,7 @@ export interface FileRouteTypes {
 		| '/date-timestamp-converter'
 		| '/diff-viewer'
 		| '/dns-lookup'
+		| '/encoding-converter'
 		| '/escape-tool'
 		| '/file-inspector'
 		| '/gpg-key-generator'
@@ -524,6 +534,7 @@ export interface FileRouteTypes {
 		| '/date-timestamp-converter'
 		| '/diff-viewer'
 		| '/dns-lookup'
+		| '/encoding-converter'
 		| '/escape-tool'
 		| '/file-inspector'
 		| '/gpg-key-generator'
@@ -575,6 +586,7 @@ export interface FileRouteTypes {
 		| '/date-timestamp-converter'
 		| '/diff-viewer'
 		| '/dns-lookup'
+		| '/encoding-converter'
 		| '/escape-tool'
 		| '/file-inspector'
 		| '/gpg-key-generator'
@@ -627,6 +639,7 @@ export interface RootRouteChildren {
 	DateTimestampConverterRoute: typeof DateTimestampConverterRoute;
 	DiffViewerRoute: typeof DiffViewerRoute;
 	DnsLookupRoute: typeof DnsLookupRoute;
+	EncodingConverterRoute: typeof EncodingConverterRoute;
 	EscapeToolRoute: typeof EscapeToolRoute;
 	FileInspectorRoute: typeof FileInspectorRoute;
 	GpgKeyGeneratorRoute: typeof GpgKeyGeneratorRoute;
@@ -935,6 +948,13 @@ declare module '@tanstack/react-router' {
 			preLoaderRoute: typeof EscapeToolRouteImport;
 			parentRoute: typeof rootRouteImport;
 		};
+		'/encoding-converter': {
+			id: '/encoding-converter';
+			path: '/encoding-converter';
+			fullPath: '/encoding-converter';
+			preLoaderRoute: typeof EncodingConverterRouteImport;
+			parentRoute: typeof rootRouteImport;
+		};
 		'/dns-lookup': {
 			id: '/dns-lookup';
 			path: '/dns-lookup';
@@ -1027,6 +1047,7 @@ const rootRouteChildren: RootRouteChildren = {
 	DateTimestampConverterRoute: DateTimestampConverterRoute,
 	DiffViewerRoute: DiffViewerRoute,
 	DnsLookupRoute: DnsLookupRoute,
+	EncodingConverterRoute: EncodingConverterRoute,
 	EscapeToolRoute: EscapeToolRoute,
 	FileInspectorRoute: FileInspectorRoute,
 	GpgKeyGeneratorRoute: GpgKeyGeneratorRoute,
