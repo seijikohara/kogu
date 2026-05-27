@@ -63,6 +63,7 @@ import {
 	Table,
 	Target,
 	Terminal,
+	TestTube,
 	TextQuote,
 	TrendingUp,
 } from 'lucide-react';
@@ -599,6 +600,15 @@ export const PAGES: readonly PageDefinition[] = [
 		icon: Languages,
 		description: 'Detect and convert text encoding (UTF-8/16, Shift-JIS, EUC-JP, GBK, ...)',
 		color: 'text-amber-700',
+		category: 'files',
+	},
+	{
+		id: 'test-data-generator',
+		title: 'Test Data Generator',
+		url: '/test-data-generator',
+		icon: TestTube,
+		description: 'Generate synthetic N×M datasets (CSV / TSV / JSON / SQL) with typed columns',
+		color: 'text-amber-500',
 		category: 'files',
 	},
 	{

@@ -17,6 +17,7 @@ import { Route as WebhookReceiverRouteImport } from './routes/webhook-receiver';
 import { Route as UuidGeneratorRouteImport } from './routes/uuid-generator';
 import { Route as UrlEncoderRouteImport } from './routes/url-encoder';
 import { Route as TlsInspectorRouteImport } from './routes/tls-inspector';
+import { Route as TestDataGeneratorRouteImport } from './routes/test-data-generator';
 import { Route as StringCompressorRouteImport } from './routes/string-compressor';
 import { Route as StringCaseConverterRouteImport } from './routes/string-case-converter';
 import { Route as SshKeyGeneratorRouteImport } from './routes/ssh-key-generator';
@@ -98,6 +99,11 @@ const UrlEncoderRoute = UrlEncoderRouteImport.update({
 const TlsInspectorRoute = TlsInspectorRouteImport.update({
 	id: '/tls-inspector',
 	path: '/tls-inspector',
+	getParentRoute: () => rootRouteImport,
+} as any);
+const TestDataGeneratorRoute = TestDataGeneratorRouteImport.update({
+	id: '/test-data-generator',
+	path: '/test-data-generator',
 	getParentRoute: () => rootRouteImport,
 } as any);
 const StringCompressorRoute = StringCompressorRouteImport.update({
@@ -354,6 +360,7 @@ export interface FileRoutesByFullPath {
 	'/ssh-key-generator': typeof SshKeyGeneratorRoute;
 	'/string-case-converter': typeof StringCaseConverterRoute;
 	'/string-compressor': typeof StringCompressorRoute;
+	'/test-data-generator': typeof TestDataGeneratorRoute;
 	'/tls-inspector': typeof TlsInspectorRoute;
 	'/url-encoder': typeof UrlEncoderRoute;
 	'/uuid-generator': typeof UuidGeneratorRoute;
@@ -406,6 +413,7 @@ export interface FileRoutesByTo {
 	'/ssh-key-generator': typeof SshKeyGeneratorRoute;
 	'/string-case-converter': typeof StringCaseConverterRoute;
 	'/string-compressor': typeof StringCompressorRoute;
+	'/test-data-generator': typeof TestDataGeneratorRoute;
 	'/tls-inspector': typeof TlsInspectorRoute;
 	'/url-encoder': typeof UrlEncoderRoute;
 	'/uuid-generator': typeof UuidGeneratorRoute;
@@ -459,6 +467,7 @@ export interface FileRoutesById {
 	'/ssh-key-generator': typeof SshKeyGeneratorRoute;
 	'/string-case-converter': typeof StringCaseConverterRoute;
 	'/string-compressor': typeof StringCompressorRoute;
+	'/test-data-generator': typeof TestDataGeneratorRoute;
 	'/tls-inspector': typeof TlsInspectorRoute;
 	'/url-encoder': typeof UrlEncoderRoute;
 	'/uuid-generator': typeof UuidGeneratorRoute;
@@ -513,6 +522,7 @@ export interface FileRouteTypes {
 		| '/ssh-key-generator'
 		| '/string-case-converter'
 		| '/string-compressor'
+		| '/test-data-generator'
 		| '/tls-inspector'
 		| '/url-encoder'
 		| '/uuid-generator'
@@ -565,6 +575,7 @@ export interface FileRouteTypes {
 		| '/ssh-key-generator'
 		| '/string-case-converter'
 		| '/string-compressor'
+		| '/test-data-generator'
 		| '/tls-inspector'
 		| '/url-encoder'
 		| '/uuid-generator'
@@ -617,6 +628,7 @@ export interface FileRouteTypes {
 		| '/ssh-key-generator'
 		| '/string-case-converter'
 		| '/string-compressor'
+		| '/test-data-generator'
 		| '/tls-inspector'
 		| '/url-encoder'
 		| '/uuid-generator'
@@ -670,6 +682,7 @@ export interface RootRouteChildren {
 	SshKeyGeneratorRoute: typeof SshKeyGeneratorRoute;
 	StringCaseConverterRoute: typeof StringCaseConverterRoute;
 	StringCompressorRoute: typeof StringCompressorRoute;
+	TestDataGeneratorRoute: typeof TestDataGeneratorRoute;
 	TlsInspectorRoute: typeof TlsInspectorRoute;
 	UrlEncoderRoute: typeof UrlEncoderRoute;
 	UuidGeneratorRoute: typeof UuidGeneratorRoute;
@@ -736,6 +749,13 @@ declare module '@tanstack/react-router' {
 			path: '/tls-inspector';
 			fullPath: '/tls-inspector';
 			preLoaderRoute: typeof TlsInspectorRouteImport;
+			parentRoute: typeof rootRouteImport;
+		};
+		'/test-data-generator': {
+			id: '/test-data-generator';
+			path: '/test-data-generator';
+			fullPath: '/test-data-generator';
+			preLoaderRoute: typeof TestDataGeneratorRouteImport;
 			parentRoute: typeof rootRouteImport;
 		};
 		'/string-compressor': {
@@ -1078,6 +1098,7 @@ const rootRouteChildren: RootRouteChildren = {
 	SshKeyGeneratorRoute: SshKeyGeneratorRoute,
 	StringCaseConverterRoute: StringCaseConverterRoute,
 	StringCompressorRoute: StringCompressorRoute,
+	TestDataGeneratorRoute: TestDataGeneratorRoute,
 	TlsInspectorRoute: TlsInspectorRoute,
 	UrlEncoderRoute: UrlEncoderRoute,
 	UuidGeneratorRoute: UuidGeneratorRoute,
