@@ -30,7 +30,7 @@ import {
 	usagePercent,
 	usageTier,
 } from '@/lib/services/drive-info';
-import { createToolOptionsStore } from '@/lib/stores';
+import { createToolOptionsStore, usePersistedRail } from '@/lib/stores';
 import { cn } from '@/lib/utils';
 
 interface DriveInfoPrefs {
@@ -76,7 +76,7 @@ function DriveInfoPage() {
 	const [loading, setLoading] = useState(false);
 	const [error, setError] = useState<string | null>(null);
 	const [loaded, setLoaded] = useState(false);
-	const [showRail, setShowRail] = useState(true);
+	const [showRail, setShowRail] = usePersistedRail('drive-info');
 
 	const refresh = useCallback(async () => {
 		setLoading(true);

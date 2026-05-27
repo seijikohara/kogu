@@ -39,7 +39,7 @@ import {
 	type Encoding,
 	type LineEnding,
 } from '@/lib/services/encoding-converter';
-import { createToolOptionsStore } from '@/lib/stores';
+import { createToolOptionsStore, usePersistedRail } from '@/lib/stores';
 import { cn } from '@/lib/utils';
 
 interface EncodingConverterPrefs {
@@ -97,7 +97,7 @@ function EncodingConverterPage() {
 	const [overrideEncoding, setOverrideEncoding] = useState<Encoding | null>(null);
 	const [loading, setLoading] = useState(false);
 	const [isDragOver, setIsDragOver] = useState(false);
-	const [showRail, setShowRail] = useState(true);
+	const [showRail, setShowRail] = usePersistedRail('encoding-converter');
 
 	const detected = useMemo<DetectedEncoding | null>(() => {
 		if (!sourceBytes) return null;

@@ -17,7 +17,7 @@ import { ToolShell } from '@/lib/components/shell';
 import { LiveStatusRegion, StatItem } from '@/lib/components/status';
 import { Card, CardContent, CardHeader, CardTitle } from '@/lib/components/ui/card';
 import { useDocumentTitle } from '@/lib/hooks';
-import { createToolOptionsStore } from '@/lib/stores';
+import { createToolOptionsStore, usePersistedRail } from '@/lib/stores';
 import {
 	COUNT_RANGES,
 	countStats,
@@ -49,7 +49,7 @@ function LoremIpsumPage() {
 	const { flavor, unit, count, sentenceLength, startWithClassic, format } = options;
 
 	const [regenerateCounter, setRegenerateCounter] = useState(0);
-	const [showRail, setShowRail] = useState(true);
+	const [showRail, setShowRail] = usePersistedRail('lorem-ipsum');
 
 	useDocumentTitle('Lorem Ipsum');
 

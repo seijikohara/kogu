@@ -38,7 +38,7 @@ import { Badge } from '@/lib/components/ui/badge';
 import { Button } from '@/lib/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/lib/components/ui/card';
 import { useDocumentTitle } from '@/lib/hooks';
-import { createToolOptionsStore } from '@/lib/stores';
+import { createToolOptionsStore, usePersistedRail } from '@/lib/stores';
 import {
 	buildChain,
 	daysSinceStart,
@@ -141,7 +141,7 @@ function X509DecoderPage() {
 	const [parseResult, setParseResult] = useState<ParseResult | null>(null);
 	const [parsing, setParsing] = useState(false);
 	const [now, setNow] = useState<Date>(() => new Date());
-	const [showRail, setShowRail] = useState(true);
+	const [showRail, setShowRail] = usePersistedRail('x509-decoder');
 	const [isDragOver, setIsDragOver] = useState(false);
 
 	// Re-parse whenever the textual input changes. Debounce so a long paste

@@ -55,6 +55,7 @@ import {
 import { ListItemButton } from '@/lib/components/ui/list-item-button';
 import { IconTooltip } from '@/lib/components/ui/icon-tooltip';
 import { useDocumentTitle } from '@/lib/hooks';
+import { usePersistedRail } from '@/lib/stores';
 import {
 	applyFormat,
 	exportAsHtml,
@@ -247,7 +248,7 @@ function TocNav({ items, onSelect }: TocNavProps) {
 function MarkdownEditorPage() {
 	const [input, setInput] = useState('');
 	const [rightPanelMode, setRightPanelMode] = useState<RightPanelMode>('editor');
-	const [showOptions, setShowOptions] = useState(true);
+	const [showOptions, setShowOptions] = usePersistedRail('markdown-editor');
 	const [activeEditor, setActiveEditor] = useState<ActiveEditor>(null);
 	const [htmlOutput, setHtmlOutput] = useState('');
 

@@ -24,7 +24,7 @@ import {
 	type FileWatchEventKind,
 	useFileWatch,
 } from '@/lib/services/file-watch';
-import { createToolOptionsStore } from '@/lib/stores';
+import { createToolOptionsStore, usePersistedRail } from '@/lib/stores';
 import { cn } from '@/lib/utils';
 
 const ALL_KINDS: readonly FileWatchEventKind[] = ['create', 'modify', 'delete', 'rename'];
@@ -66,7 +66,7 @@ function FileWatchPage() {
 	const { value: prefs, patch } = useFileWatchPrefs();
 
 	const [path, setPath] = useState(prefs.lastPath);
-	const [showRail, setShowRail] = useState(true);
+	const [showRail, setShowRail] = usePersistedRail('file-watch');
 	const [error, setError] = useState<string | null>(null);
 
 	const { events, watching, start, stop, clear } = useFileWatch();

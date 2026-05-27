@@ -17,6 +17,7 @@ import { SectionHeader, SplitPane } from '@/lib/components/layout';
 import { ToolShell } from '@/lib/components/shell';
 import { EmbeddedEmptyState, StatItem } from '@/lib/components/status';
 import { useDocumentTitle } from '@/lib/hooks';
+import { usePersistedRail } from '@/lib/stores';
 import {
 	BASE64_MIME_TYPES,
 	type Base64DecodeOptions,
@@ -43,7 +44,7 @@ export const Route = createFileRoute('/base64-encoder')({
 function Base64EncoderPage() {
 	const [mode, setMode] = useState<Mode>('encode');
 	const [input, setInput] = useState('');
-	const [showOptions, setShowOptions] = useState(true);
+	const [showOptions, setShowOptions] = usePersistedRail('base64-encoder');
 
 	const [variant, setVariant] = useState<Base64Variant>(defaultBase64EncodeOptions.variant);
 	const [padding, setPadding] = useState(defaultBase64EncodeOptions.padding);

@@ -36,7 +36,7 @@ import {
 	toIpv6LinkLocal,
 	type VendorResult,
 } from '@/lib/services/mac';
-import { createToolOptionsStore } from '@/lib/stores';
+import { createToolOptionsStore, usePersistedRail } from '@/lib/stores';
 
 interface MacLookupOptions {
 	readonly displayFormat: MacFormat;
@@ -75,7 +75,7 @@ function MacLookupPage() {
 	const [vendor, setVendor] = useState<VendorResult | null>(null);
 	const [vendorLoading, setVendorLoading] = useState<boolean>(false);
 	const [dbInfo, setDbInfo] = useState<OuiDatabaseInfo | null>(null);
-	const [showRail, setShowRail] = useState(true);
+	const [showRail, setShowRail] = usePersistedRail('mac-lookup');
 
 	const parseResult = useMemo(() => parseMac(input), [input]);
 	const trimmed = input.trim();

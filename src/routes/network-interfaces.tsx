@@ -51,6 +51,7 @@ import {
 import { cn } from '@/lib/utils';
 import { getErrorMessage } from '@/lib/utils';
 import { useDocumentTitle } from '@/lib/hooks';
+import { usePersistedRail } from '@/lib/stores';
 
 const getInterfaceTypeIcon = (type: string) => {
 	if (type === 'WiFi') return Wifi;
@@ -125,7 +126,7 @@ function NetworkInterfacesPage() {
 	const [interfaces, setInterfaces] = useState<DetailedNetworkInterface[]>([]);
 	const [loading, setLoading] = useState(false);
 	const [error, setError] = useState<string | null>(null);
-	const [showOptions, setShowOptions] = useState(true);
+	const [showOptions, setShowOptions] = usePersistedRail('network-interfaces');
 	const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
 	const [showActive, setShowActive] = useState(true);
 	const [showInactive, setShowInactive] = useState(true);

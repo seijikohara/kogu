@@ -12,6 +12,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/lib/components/ui/ca
 import { IconTooltip } from '@/lib/components/ui/icon-tooltip';
 import { CodeBlock } from '@/lib/components/ui/code-block';
 import { useDocumentTitle } from '@/lib/hooks';
+import { usePersistedRail } from '@/lib/stores';
 import {
 	decodeJwt,
 	JWT_STANDARD_CLAIMS,
@@ -64,7 +65,7 @@ export const Route = createFileRoute('/jwt-decoder')({
 
 function JwtDecoderPage() {
 	const [input, setInput] = useState('');
-	const [showOptions, setShowOptions] = useState(true);
+	const [showOptions, setShowOptions] = usePersistedRail('jwt-decoder');
 
 	useDocumentTitle('JWT Decoder');
 

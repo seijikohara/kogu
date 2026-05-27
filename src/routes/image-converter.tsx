@@ -19,7 +19,7 @@ import { Button } from '@/lib/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/lib/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/lib/components/ui/tabs';
 import { useDocumentTitle } from '@/lib/hooks';
-import { createToolOptionsStore } from '@/lib/stores';
+import { createToolOptionsStore, usePersistedRail } from '@/lib/stores';
 import {
 	ALL_FORMATS,
 	buildOutputFilename,
@@ -88,7 +88,7 @@ function ImageConverterPage() {
 	const [activeFormat, setActiveFormat] = useState<ImageFormat | null>(null);
 	const [converting, setConverting] = useState(false);
 	const [error, setError] = useState<string | null>(null);
-	const [showRail, setShowRail] = useState(true);
+	const [showRail, setShowRail] = usePersistedRail('image-converter');
 
 	const fileInputRef = useRef<HTMLInputElement | null>(null);
 

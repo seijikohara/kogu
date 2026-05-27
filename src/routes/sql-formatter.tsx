@@ -17,6 +17,7 @@ import { SectionHeader, SplitPane } from '@/lib/components/layout';
 import { ToolShell } from '@/lib/components/shell';
 import { EmbeddedEmptyState, StatItem } from '@/lib/components/status';
 import { useDocumentTitle } from '@/lib/hooks';
+import { usePersistedRail } from '@/lib/stores';
 import {
 	calculateSqlStats,
 	defaultSqlFormatOptions,
@@ -42,7 +43,7 @@ export const Route = createFileRoute('/sql-formatter')({
 function SqlFormatterPage() {
 	const [mode, setMode] = useState<Mode>('format');
 	const [input, setInput] = useState('');
-	const [showOptions, setShowOptions] = useState(true);
+	const [showOptions, setShowOptions] = usePersistedRail('sql-formatter');
 
 	const [language, setLanguage] = useState<SqlLanguage>(defaultSqlFormatOptions.language);
 	const [tabWidthStr, setTabWidthStr] = useState(String(defaultSqlFormatOptions.tabWidth));

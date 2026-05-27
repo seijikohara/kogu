@@ -43,7 +43,7 @@ import {
 	type ParsedPath,
 	type PathStyle,
 } from '@/lib/services/path-tool';
-import { createToolOptionsStore } from '@/lib/stores';
+import { createToolOptionsStore, usePersistedRail } from '@/lib/stores';
 import { cn } from '@/lib/utils';
 
 interface PathToolPrefs {
@@ -71,7 +71,7 @@ function PathToolPage() {
 
 	const [input, setInput] = useState('');
 	const [isDragOver, setIsDragOver] = useState(false);
-	const [showRail, setShowRail] = useState(true);
+	const [showRail, setShowRail] = usePersistedRail('path-tool');
 
 	const transformedInput = useMemo(() => {
 		let working = input;

@@ -14,7 +14,7 @@ import {
 	TestTube,
 	Trash2,
 } from 'lucide-react';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo } from 'react';
 import { toast } from 'sonner';
 
 import { ActionButton } from '@/lib/components/action';
@@ -35,7 +35,7 @@ import { Badge } from '@/lib/components/ui/badge';
 import { Button } from '@/lib/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/lib/components/ui/card';
 import { useDocumentTitle } from '@/lib/hooks';
-import { createToolOptionsStore } from '@/lib/stores';
+import { createToolOptionsStore, usePersistedRail } from '@/lib/stores';
 import {
 	approxUtf8Bytes,
 	COLUMN_TYPE_LABELS,
@@ -98,7 +98,7 @@ function TestDataGeneratorPage() {
 	const spec = useMemo(() => ensureColumnIds(prefs.spec), [prefs.spec]);
 	const { format, sqlTableName } = prefs;
 
-	const [showRail, setShowRail] = useState(true);
+	const [showRail, setShowRail] = usePersistedRail('test-data-generator');
 
 	const updateSpec = useCallback(
 		(next: Partial<DatasetSpec>) => {

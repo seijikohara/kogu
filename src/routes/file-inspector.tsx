@@ -31,7 +31,7 @@ import { Badge } from '@/lib/components/ui/badge';
 import { Button } from '@/lib/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/lib/components/ui/card';
 import { useDocumentTitle } from '@/lib/hooks';
-import { createToolOptionsStore } from '@/lib/stores';
+import { createToolOptionsStore, usePersistedRail } from '@/lib/stores';
 import {
 	base64ToBytes,
 	decodeTextPreview,
@@ -99,7 +99,7 @@ function FileInspectorPage() {
 		readonly channels: number;
 	} | null>(null);
 	const [isDragOver, setIsDragOver] = useState(false);
-	const [showRail, setShowRail] = useState(true);
+	const [showRail, setShowRail] = usePersistedRail('file-inspector');
 
 	const headBytes = useMemo<Uint8Array | null>(() => {
 		if (!result) return null;

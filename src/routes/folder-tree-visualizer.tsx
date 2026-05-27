@@ -52,7 +52,7 @@ import {
 	type SortKey,
 	type TreeNode,
 } from '@/lib/services/folder-tree';
-import { createToolOptionsStore } from '@/lib/stores';
+import { createToolOptionsStore, usePersistedRail } from '@/lib/stores';
 import { cn } from '@/lib/utils';
 
 const TOP_N = 20;
@@ -99,7 +99,7 @@ function FolderTreeVisualizerPage() {
 	const [largest, setLargest] = useState<readonly LargestFile[]>([]);
 	const [loading, setLoading] = useState(false);
 	const [error, setError] = useState<string | null>(null);
-	const [showRail, setShowRail] = useState(true);
+	const [showRail, setShowRail] = usePersistedRail('folder-tree-visualizer');
 	const [expanded, setExpanded] = useState<ReadonlySet<string>>(new Set());
 	const [scanTimeMs, setScanTimeMs] = useState<number | null>(null);
 	const [rootPath, setRootPath] = useState<string | null>(null);

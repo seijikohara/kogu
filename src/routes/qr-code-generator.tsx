@@ -35,6 +35,7 @@ import { Button } from '@/lib/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/lib/components/ui/card';
 import { IconTooltip } from '@/lib/components/ui/icon-tooltip';
 import { useDocumentTitle } from '@/lib/hooks';
+import { usePersistedRail } from '@/lib/stores';
 import {
 	CONTENT_KINDS,
 	CORNER_DOT_TYPES,
@@ -111,7 +112,7 @@ function QrCodeGeneratorPage() {
 		bitcoin: { ...DEFAULT_CONTENT_BY_KIND.bitcoin } as BitcoinContent,
 	});
 	const [style, setStyle] = useState<StyleOptions>({ ...DEFAULT_STYLE_OPTIONS });
-	const [showOptions, setShowOptions] = useState(true);
+	const [showOptions, setShowOptions] = usePersistedRail('qr-code-generator');
 
 	const previewRef = useRef<HTMLDivElement | null>(null);
 	const qrInstanceRef = useRef<ReturnType<typeof createQr> | null>(null);

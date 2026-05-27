@@ -31,7 +31,7 @@ import {
 	STATUS_CODES,
 	TOTAL_CODES,
 } from '@/lib/services/http-status';
-import { createToolOptionsStore } from '@/lib/stores';
+import { createToolOptionsStore, usePersistedRail } from '@/lib/stores';
 import { cn } from '@/lib/utils';
 
 interface HttpStatusOptions {
@@ -65,7 +65,7 @@ function HttpStatusCodesPage() {
 	const { value: options, patch } = useHttpStatusOptions();
 	const { query, categories, includeNonStandard, misuseOnly, selectedCode } = options;
 
-	const [showRail, setShowRail] = useState(true);
+	const [showRail, setShowRail] = usePersistedRail('http-status-codes');
 	const [debouncedQuery, setDebouncedQuery] = useState(query);
 
 	// Debounce text input by 100ms so typing does not thrash the grid.

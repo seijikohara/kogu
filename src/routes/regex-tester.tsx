@@ -19,7 +19,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/lib/components/ui/ca
 import { ToggleGroup, ToggleGroupItem } from '@/lib/components/ui/toggle-group';
 import { IconTooltip } from '@/lib/components/ui/icon-tooltip';
 import { useState } from 'react';
-import { createToolOptionsStore } from '@/lib/stores';
+import { createToolOptionsStore, usePersistedRail } from '@/lib/stores';
 import { cn } from '@/lib/utils';
 import { groupColor, matchBackdropColor } from '@/lib/services/regex-design';
 import {
@@ -527,7 +527,7 @@ function RegexTesterPage() {
 	const [testText, setTestText] = useState('');
 	const [replaceEnabled, setReplaceEnabled] = useState(false);
 	const [replacement, setReplacement] = useState('');
-	const [showOptions, setShowOptions] = useState(true);
+	const [showOptions, setShowOptions] = usePersistedRail('regex-tester');
 
 	useDocumentTitle('Regex Tester');
 

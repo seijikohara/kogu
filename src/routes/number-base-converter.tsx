@@ -26,7 +26,7 @@ import { Input } from '@/lib/components/ui/input';
 import { Label } from '@/lib/components/ui/label';
 import { ToneBadge } from '@/lib/components/ui/tone-badge';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/lib/components/ui/tooltip';
-import { createToolOptionsStore } from '@/lib/stores';
+import { createToolOptionsStore, usePersistedRail } from '@/lib/stores';
 import { cn } from '@/lib/utils';
 import {
 	asciiInfo,
@@ -120,7 +120,7 @@ function NumberBaseConverterPage() {
 
 	useDocumentTitle('Number Base Converter');
 
-	const [showRail, setShowRail] = useState(true);
+	const [showRail, setShowRail] = usePersistedRail('number-base-converter');
 
 	// Canonical state: unsigned bit pattern within the current bit width.
 	const [valueA, setValueA] = useState<bigint>(0n);

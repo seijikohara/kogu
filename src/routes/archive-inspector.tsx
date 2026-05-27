@@ -50,7 +50,7 @@ import {
 	type PreviewKind,
 	previewKindFor,
 } from '@/lib/services/archive';
-import { createToolOptionsStore } from '@/lib/stores';
+import { createToolOptionsStore, usePersistedRail } from '@/lib/stores';
 import { cn } from '@/lib/utils';
 
 type SortColumn = 'path' | 'size' | 'compressed' | 'modified';
@@ -103,7 +103,7 @@ function ArchiveInspectorPage() {
 	const [loading, setLoading] = useState(false);
 	const [error, setError] = useState<string | null>(null);
 	const [isDragOver, setIsDragOver] = useState(false);
-	const [showRail, setShowRail] = useState(true);
+	const [showRail, setShowRail] = usePersistedRail('archive-inspector');
 	const [selected, setSelected] = useState<ReadonlySet<string>>(new Set());
 	const [expanded, setExpanded] = useState<ReadonlySet<string>>(new Set());
 	const [previewEntry, setPreviewEntry] = useState<ArchiveEntry | null>(null);
