@@ -102,6 +102,7 @@ function PasswordGeneratorPage() {
 			error={error ?? undefined}
 			showRail={showOptions}
 			onShowRailChange={setShowOptions}
+			primaryAction={{ run: handleGenerate, canRun: canGenerate }}
 			statusContent={
 				results.length > 0 ? (
 					<>
@@ -216,7 +217,7 @@ function PasswordGeneratorPage() {
 								label="Generate"
 								icon={Lock}
 								disabled={!canGenerate}
-								shortcut
+								shortcutHint
 								onClick={handleGenerate}
 							/>
 							{results.length > 0 ? (

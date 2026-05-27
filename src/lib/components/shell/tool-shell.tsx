@@ -16,6 +16,11 @@ interface TabDefinition {
 
 type ShellLayout = 'tabbed' | 'transform' | 'master-detail';
 
+interface PrimaryAction {
+	readonly run: () => void;
+	readonly canRun?: boolean;
+}
+
 interface ToolShellProps {
 	readonly layout?: ShellLayout;
 
@@ -40,6 +45,15 @@ interface ToolShellProps {
 	readonly error?: string;
 	readonly statusContent?: ReactNode;
 
+	/**
+	 * Page-level primary action. When provided, Cmd/Ctrl+Enter invokes
+	 * `run` (unless `canRun === false` or the user is composing in an
+	 * IME). Pair with `<ActionButton shortcutHint />` on the visible
+	 * button to surface the `⏎` badge without registering a duplicate
+	 * window listener.
+	 */
+	readonly primaryAction?: PrimaryAction;
+
 	readonly children?: ReactNode;
 }
 
@@ -62,6 +76,7 @@ export function ToolShell({
 	valid,
 	error,
 	statusContent,
+	primaryAction,
 	children,
 }: ToolShellProps) {
 	const [internalShowRail, setInternalShowRail] = useState(defaultShowRail);
@@ -98,6 +113,12 @@ export function ToolShell({
 				return;
 			}
 
+			if (e.key === 'Enter' && primaryAction && primaryAction.canRun !== false) {
+				e.preventDefault();
+				primaryAction.run();
+				return;
+			}
+
 			if (e.key >= '1' && e.key <= '9' && tabs && tabs.length > 0) {
 				const idx = Number.parseInt(e.key, 10) - 1;
 				const tab = tabs[idx];
@@ -109,7 +130,7 @@ export function ToolShell({
 		};
 		el.addEventListener('keydown', handler);
 		return () => el.removeEventListener('keydown', handler);
-	}, [rail, showRail, setShowRail, tabs, onTabChange]);
+	}, [rail, showRail, setShowRail, tabs, onTabChange, primaryAction]);
 
 	const shell = (
 		<div
@@ -236,4 +257,4 @@ export function ToolShell({
 	return shell;
 }
 
-export type { ToolShellProps, TabDefinition, ShellLayout };
+export type { ToolShellProps, TabDefinition, ShellLayout, PrimaryAction };

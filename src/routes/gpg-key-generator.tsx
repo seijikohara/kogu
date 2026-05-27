@@ -148,6 +148,7 @@ function GpgKeyGeneratorPage() {
 			valid={keyResult ? true : null}
 			showRail={showOptions}
 			onShowRailChange={setShowOptions}
+			primaryAction={{ run: handleGenerate, canRun: canGenerate && !isGenerating }}
 			statusContent={
 				keyResult ? (
 					<>
@@ -263,7 +264,7 @@ function GpgKeyGeneratorPage() {
 								loading={isGenerating}
 								loadingLabel="Generating..."
 								disabled={!canGenerate}
-								shortcut
+								shortcutHint
 								onClick={handleGenerate}
 							/>
 							{keyResult ? (

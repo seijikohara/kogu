@@ -122,6 +122,7 @@ function UuidGeneratorPage() {
 			error={error ?? undefined}
 			showRail={showOptions}
 			onShowRailChange={setShowOptions}
+			primaryAction={{ run: handleGenerate, canRun: canGenerate }}
 			statusContent={
 				results.length > 0 ? (
 					<>
@@ -210,7 +211,7 @@ function UuidGeneratorPage() {
 								label="Generate"
 								icon={Fingerprint}
 								disabled={!canGenerate}
-								shortcut
+								shortcutHint
 								onClick={handleGenerate}
 							/>
 							{results.length > 0 ? (
