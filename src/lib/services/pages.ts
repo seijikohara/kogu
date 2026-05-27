@@ -38,6 +38,7 @@ import {
 	Key,
 	KeyRound,
 	KeySquare,
+	Languages,
 	Link,
 	ListChecks,
 	Lock,
@@ -589,6 +590,15 @@ export const PAGES: readonly PageDefinition[] = [
 		icon: Table,
 		description: 'Browse, edit, and convert CSV / TSV / JSON / YAML / SQL / Markdown tables',
 		color: 'text-orange-700',
+		category: 'files',
+	},
+	{
+		id: 'encoding-converter',
+		title: 'Encoding Converter',
+		url: '/encoding-converter',
+		icon: Languages,
+		description: 'Detect and convert text encoding (UTF-8/16, Shift-JIS, EUC-JP, GBK, ...)',
+		color: 'text-amber-700',
 		category: 'files',
 	},
 	{
