@@ -45,6 +45,7 @@
 	},
 	"license": "MIT",
 	"dependencies": {
+		"@faker-js/faker": "^10.4.0",
 		"@fontsource-variable/geist": "^5.2.8",
 		"@hpcc-js/wasm-graphviz": "^1.21.5",
 		"@peculiar/x509": "^2.0.0",
