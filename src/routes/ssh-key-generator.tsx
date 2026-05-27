@@ -241,7 +241,7 @@ function SshKeyGeneratorPage() {
 								onClick={handleGenerate}
 							/>
 							{keyResult ? (
-								<ActionButton label="Clear Result" variant="outline" onClick={handleClear} />
+								<ActionButton label="Clear" variant="outline" onClick={handleClear} />
 							) : null}
 						</div>
 					</FormSection>

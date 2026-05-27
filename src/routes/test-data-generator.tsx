@@ -312,7 +312,7 @@ function TestDataGeneratorPage() {
 								onClick={handleLoadSample}
 							/>
 							<ActionButton
-								label="Remove all"
+								label="Clear all"
 								icon={Trash2}
 								variant="outline"
 								size="sm"
@@ -402,7 +402,7 @@ function TestDataGeneratorPage() {
 								size="sm"
 							/>
 							<ActionButton
-								label="Reset defaults"
+								label="Reset options"
 								icon={RefreshCw}
 								variant="outline"
 								size="sm"

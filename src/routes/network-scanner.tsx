@@ -717,7 +717,7 @@ function ResultsExportSection({ onClear, onExportJson, onExportCsv }: ResultsExp
 	return (
 		<FormSection title="Results">
 			<div className="space-y-2">
-				<ActionButton label="Clear Results" variant="outline" onClick={onClear} />
+				<ActionButton label="Clear" variant="outline" onClick={onClear} />
 				<ActionButton
 					label="Export JSON"
 					icon={Download}

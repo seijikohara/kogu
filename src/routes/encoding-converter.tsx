@@ -439,8 +439,8 @@ function DropZone({ loading, isDragOver, onDrop, onDragOver, onDragLeave, onPick
 			>
 				<EmbeddedEmptyState
 					icon={Languages}
-					title="Drop a text file"
-					description="Drag a text file here, or use the button below. Sample buttons load a known UTF-8 / Shift-JIS payload."
+					title="Open a text file"
+					description="Drop a text file here or click to browse. Sample buttons load a known UTF-8 / Shift-JIS payload."
 				/>
 				<Button variant="default" size="sm" onClick={onPick} disabled={loading}>
 					{loading ? (

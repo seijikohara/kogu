@@ -592,7 +592,7 @@ function DropZone({ loading, isDragOver, onDrop, onDragOver, onDragLeave, onPick
 				<EmbeddedEmptyState
 					icon={Package}
 					title="Open an archive"
-					description="Drag a .zip / .tar / .gz / .bz2 / .xz / .7z file here, or use the button below."
+					description="Drop a .zip / .tar / .gz / .bz2 / .xz / .7z file here or click to browse."
 				/>
 				<Button variant="default" size="sm" onClick={onPick} disabled={loading}>
 					{loading ? (

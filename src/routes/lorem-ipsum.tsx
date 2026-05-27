@@ -195,11 +195,7 @@ function LoremIpsumPage() {
 								shortcutHint
 								onClick={handleRegenerate}
 							/>
-							<ActionButton
-								label="Reset defaults"
-								variant="outline"
-								onClick={handleResetDefaults}
-							/>
+							<ActionButton label="Reset options" variant="outline" onClick={handleResetDefaults} />
 						</div>
 					</FormSection>
 

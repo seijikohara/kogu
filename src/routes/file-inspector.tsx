@@ -538,7 +538,7 @@ function DropZone({ loading, isDragOver, onDrop, onDragOver, onDragLeave, onPick
 				<EmbeddedEmptyState
 					icon={FileSearch}
 					title="Open a file to inspect"
-					description="Drag a file here, or use the button below."
+					description="Drop a file here or click to browse."
 				/>
 				<Button variant="default" size="sm" onClick={onPick} disabled={loading}>
 					{loading ? (
