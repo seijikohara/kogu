@@ -583,6 +583,15 @@ export const PAGES: readonly PageDefinition[] = [
 		category: 'files',
 	},
 	{
+		id: 'csv-tool',
+		title: 'CSV / TSV Tool',
+		url: '/csv-tool',
+		icon: Table,
+		description: 'Browse, edit, and convert CSV / TSV / JSON / YAML / SQL / Markdown tables',
+		color: 'text-orange-700',
+		category: 'files',
+	},
+	{
 		id: 'settings',
 		title: 'Settings',
 		url: '/settings',
