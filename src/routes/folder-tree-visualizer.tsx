@@ -53,7 +53,7 @@ import {
 	type TreeNode,
 } from '@/lib/services/folder-tree';
 import { createToolOptionsStore, usePersistedRail } from '@/lib/stores';
-import { cn } from '@/lib/utils';
+import { basename, cn } from '@/lib/utils';
 
 const TOP_N = 20;
 
@@ -793,7 +793,7 @@ interface LargestFileRowProps {
 function LargestFileRow({ file, rank, biggest, onReveal }: LargestFileRowProps) {
 	const ratio = biggest > 0 ? file.sizeBytes / biggest : 0;
 	const pct = Math.max(2, Math.round(ratio * 100));
-	const name = file.path.split('/').pop() ?? file.path;
+	const name = basename(file.path);
 	return (
 		<li className="group flex flex-col gap-1 rounded-md border border-border bg-background p-2 text-xs transition-colors hover:bg-muted/40">
 			<div className="flex items-center gap-2">

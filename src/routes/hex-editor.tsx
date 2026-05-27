@@ -51,7 +51,7 @@ import {
 	type HexFileInfo,
 } from '@/lib/services/hex-editor';
 import { createToolOptionsStore, usePersistedRail } from '@/lib/stores';
-import { cn } from '@/lib/utils';
+import { basename, cn } from '@/lib/utils';
 
 const ROW_HEIGHT = 20;
 const OVERSCAN_ROWS = 12;
@@ -200,7 +200,7 @@ function HexEditorPage() {
 	const mimeInfo = useMemo(() => {
 		if (!buffer || !file) return null;
 		const head = buffer.subarray(0, Math.min(buffer.length, 4096));
-		return detectMimeFromMagic(head, file.path.split('/').pop() ?? file.path);
+		return detectMimeFromMagic(head, basename(file.path));
 	}, [buffer, file]);
 	const detectedMime = mimeInfo?.mime ?? mimeInfo?.expectedFromExtension ?? null;
 
@@ -914,7 +914,7 @@ interface FileBannerProps {
 }
 
 function FileBanner({ file, detectedMime, magicHex, dirty, pendingCount }: FileBannerProps) {
-	const filename = file.path.split('/').pop() ?? file.path;
+	const filename = basename(file.path);
 	return (
 		<Card density="compact">
 			<CardHeader>
