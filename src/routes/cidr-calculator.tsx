@@ -33,7 +33,7 @@ import {
 	splitIntoSubnets,
 	tryAggregate,
 } from '@/lib/services/cidr';
-import { createToolOptionsStore } from '@/lib/stores';
+import { createToolOptionsStore, usePersistedRail } from '@/lib/stores';
 import { cn } from '@/lib/utils';
 
 type FamilyOption = 'auto' | IpFamily;
@@ -103,7 +103,7 @@ function CidrCalculatorPage() {
 	const [input, setInput] = useState<string>(SAMPLE_V4);
 	const [childPrefixText, setChildPrefixText] = useState<string>('27');
 	const [aggregateInput, setAggregateInput] = useState<string>('');
-	const [showRail, setShowRail] = useState(true);
+	const [showRail, setShowRail] = usePersistedRail('cidr-calculator');
 
 	const result = useMemo(
 		() => parseCidr(input, familyOverride === 'auto' ? undefined : familyOverride),

@@ -1,6 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { ExternalLink, FileSearch } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 
 import { CopyButton } from '@/lib/components/action';
 import {
@@ -29,7 +29,7 @@ import {
 	type MimeEntry,
 	MIME_ENTRIES,
 } from '@/lib/services/mime';
-import { createToolOptionsStore } from '@/lib/stores';
+import { createToolOptionsStore, usePersistedRail } from '@/lib/stores';
 import { cn } from '@/lib/utils';
 
 const ALL_CATEGORIES: readonly MimeCategory[] = [
@@ -87,7 +87,7 @@ function MimeTypesPage() {
 	const { value: options, patch } = useMimeOptions();
 	const { query, categories, requireMagic, selectedType } = options;
 
-	const [showRail, setShowRail] = useState(true);
+	const [showRail, setShowRail] = usePersistedRail('mime-types');
 
 	const categoriesSet = useMemo(() => new Set<MimeCategory>(categories), [categories]);
 

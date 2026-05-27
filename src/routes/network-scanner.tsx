@@ -92,7 +92,7 @@ import {
 	WEB_PORTS,
 	WELL_KNOWN_SERVICES,
 } from '@/lib/services/network-scanner';
-import { createToolOptionsStore } from '@/lib/stores';
+import { createToolOptionsStore, usePersistedRail } from '@/lib/stores';
 import { cn, getErrorMessage } from '@/lib/utils';
 import { useDocumentTitle } from '@/lib/hooks';
 
@@ -1174,7 +1174,7 @@ function NetworkScannerPage() {
 	const [error, setError] = useState<string | null>(null);
 
 	// UI state
-	const [showOptions, setShowOptions] = useState(true);
+	const [showOptions, setShowOptions] = usePersistedRail('network-scanner');
 	const [selectedHostId, setSelectedHostId] = useState<string | null>(null);
 	const [recentlyDiscoveredIds, setRecentlyDiscoveredIds] = useState<Set<string>>(new Set());
 	const [portRangeTouched, setPortRangeTouched] = useState(false);

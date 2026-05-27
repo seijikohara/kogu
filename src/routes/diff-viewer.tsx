@@ -15,6 +15,7 @@ import {
 import { ToolShell } from '@/lib/components/shell';
 import { EmptyState } from '@/lib/components/status';
 import { useDocumentTitle } from '@/lib/hooks';
+import { usePersistedRail } from '@/lib/stores';
 import {
 	areTextsIdentical,
 	computeEnhancedDiff,
@@ -52,7 +53,7 @@ function DiffViewerPage() {
 	const [leftInput, setLeftInput] = useState('');
 	const [rightInput, setRightInput] = useState('');
 	const [viewMode, setViewMode] = useState<ViewMode>('split');
-	const [showOptions, setShowOptions] = useState(true);
+	const [showOptions, setShowOptions] = usePersistedRail('diff-viewer');
 
 	const [ignoreWhitespace, setIgnoreWhitespace] = useState<boolean>(
 		defaultDiffOptions.ignoreWhitespace

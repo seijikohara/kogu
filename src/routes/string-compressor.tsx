@@ -40,7 +40,7 @@ import {
 	extractCurlDataRaw,
 	hexToBytes,
 } from '@/lib/services/compression';
-import { createToolOptionsStore } from '@/lib/stores';
+import { createToolOptionsStore, usePersistedRail } from '@/lib/stores';
 import { cn, formatBytes } from '@/lib/utils';
 
 type Direction = 'compress' | 'decompress';
@@ -184,7 +184,7 @@ function StringCompressorPage() {
 	const [lastResult, setLastResult] = useState<CompressResult | null>(null);
 	const [detectedAlgorithm, setDetectedAlgorithm] = useState<CompressionAlgorithm | null>(null);
 	const [busy, setBusy] = useState(false);
-	const [showRail, setShowRail] = useState(true);
+	const [showRail, setShowRail] = usePersistedRail('string-compressor');
 
 	const handleAlgorithmChange = (next: CompressionAlgorithm) => {
 		// Re-clamp level into the new algorithm's range so the slider stays valid.

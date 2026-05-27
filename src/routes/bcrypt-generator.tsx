@@ -18,6 +18,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from '@/lib/components/ui/card';
 import { CodeBlock } from '@/lib/components/ui/code-block';
 import { useDocumentTitle } from '@/lib/hooks';
+import { usePersistedRail } from '@/lib/stores';
 import {
 	type BcryptCostInfo,
 	type BcryptHashResult,
@@ -55,7 +56,7 @@ function BcryptGeneratorPage() {
 	const [verifyError, setVerifyError] = useState<string | null>(null);
 	const verifyCancelledRef = useRef(false);
 
-	const [showOptions, setShowOptions] = useState(true);
+	const [showOptions, setShowOptions] = usePersistedRail('bcrypt-generator');
 	const [costInfo, setCostInfo] = useState<BcryptCostInfo | null>(null);
 	const [activeTab, setActiveTab] = useState<ActiveTab>('generate');
 	const [flashCounter, setFlashCounter] = useState(0);

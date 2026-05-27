@@ -56,7 +56,7 @@ import {
 	type VerifyOutcome,
 	verifyShasum,
 } from '@/lib/services/encoders';
-import { createToolOptionsStore, useActiveTab, useTabStore } from '@/lib/stores';
+import { createToolOptionsStore, useActiveTab, useTabStore, usePersistedRail } from '@/lib/stores';
 import { cn } from '@/lib/utils';
 
 type HashTab = 'text' | 'batch';
@@ -108,7 +108,7 @@ function HashGeneratorPage() {
 		if (tab === 'text' || tab === 'batch') setActive(PERSIST_KEY, tab);
 	};
 
-	const [showRail, setShowRail] = useState(true);
+	const [showRail, setShowRail] = usePersistedRail('hash-generator');
 
 	return (
 		<ToolShell
@@ -550,7 +550,7 @@ interface FileTabLayoutProps {
 }
 
 function FileTabLayout({ rail, statusContent, valid, children }: FileTabLayoutProps) {
-	const [showRail, setShowRail] = useState(true);
+	const [showRail, setShowRail] = usePersistedRail('hash-generator');
 	return (
 		<div className="grid h-full min-h-0 grid-rows-[1fr_var(--status-h)] overflow-hidden">
 			<div className="flex min-h-0 overflow-hidden">

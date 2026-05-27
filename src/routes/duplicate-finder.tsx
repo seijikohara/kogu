@@ -38,7 +38,7 @@ import {
 	type ScanResult,
 } from '@/lib/services/duplicate-finder';
 import { getPlatform } from '@/lib/services/platform';
-import { createToolOptionsStore } from '@/lib/stores';
+import { createToolOptionsStore, usePersistedRail } from '@/lib/stores';
 
 // Size threshold sliders use a log-style mapping so the user can pick a
 // few bytes or a few gigabytes from the same control. We store the raw
@@ -178,7 +178,7 @@ function DuplicateFinderPage() {
 	const [error, setError] = useState<string | null>(null);
 	const [progress, setProgress] = useState<ScanProgress | null>(null);
 	const [selected, setSelected] = useState<ReadonlySet<string>>(new Set());
-	const [showRail, setShowRail] = useState(true);
+	const [showRail, setShowRail] = usePersistedRail('duplicate-finder');
 	const [supportsSymlink, setSupportsSymlink] = useState(true);
 
 	const minSize = MIN_SIZE_STEPS[prefs.minSizeIdx] ?? MIN_SIZE_STEPS[3] ?? 1024;

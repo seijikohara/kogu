@@ -25,6 +25,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from '@/lib/components/ui/card';
 import { CodeBlock } from '@/lib/components/ui/code-block';
 import { useDocumentTitle } from '@/lib/hooks';
+import { usePersistedRail } from '@/lib/stores';
 import {
 	cancelWorkerOperation,
 	checkCliAvailability,
@@ -68,7 +69,7 @@ function SshKeyGeneratorPage() {
 	const timerIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 	const isCancelledRef = useRef(false);
 
-	const [showOptions, setShowOptions] = useState(true);
+	const [showOptions, setShowOptions] = usePersistedRail('ssh-key-generator');
 	const [showFingerprint, setShowFingerprint] = useState(true);
 	const [showEquivalentCommand, setShowEquivalentCommand] = useState(true);
 

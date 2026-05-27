@@ -45,7 +45,7 @@ import {
 	representationsOf,
 	zonedClock,
 } from '@/lib/services/date-timestamp';
-import { createToolOptionsStore } from '@/lib/stores';
+import { createToolOptionsStore, usePersistedRail } from '@/lib/stores';
 import { cn } from '@/lib/utils';
 
 interface DateTimestampOptions {
@@ -94,7 +94,7 @@ function DateTimestampConverterPage() {
 	const [nowMs, setNowMs] = useState<number>(() => Date.now());
 	const [inputText, setInputText] = useState<string>(() => String(Date.now()));
 	const [pickedMs, setPickedMs] = useState<number>(() => Date.now());
-	const [showRail, setShowRail] = useState(true);
+	const [showRail, setShowRail] = usePersistedRail('date-timestamp-converter');
 
 	// Tick once per second while sticky mode is on. `useEffect` is the correct
 	// home for this side effect — every tick is a real wall-clock change, not a

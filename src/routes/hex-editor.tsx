@@ -50,7 +50,7 @@ import {
 	type HexEditOp,
 	type HexFileInfo,
 } from '@/lib/services/hex-editor';
-import { createToolOptionsStore } from '@/lib/stores';
+import { createToolOptionsStore, usePersistedRail } from '@/lib/stores';
 import { cn } from '@/lib/utils';
 
 const ROW_HEIGHT = 20;
@@ -100,7 +100,7 @@ function HexEditorPage() {
 	const [loading, setLoading] = useState(false);
 	const [error, setError] = useState<string | null>(null);
 	const [isDragOver, setIsDragOver] = useState(false);
-	const [showRail, setShowRail] = useState(true);
+	const [showRail, setShowRail] = usePersistedRail('hex-editor');
 	const [selection, setSelection] = useState<Selection | null>(null);
 	const [pendingOps, setPendingOps] = useState<readonly HexEditOp[]>([]);
 	const [undoStack, setUndoStack] = useState<readonly Uint8Array[]>([]);

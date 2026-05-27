@@ -17,7 +17,7 @@ import {
 import { GeneratedListPanel } from '@/lib/components/panel';
 import { ToolShell } from '@/lib/components/shell';
 import { StatItem } from '@/lib/components/status';
-import { createToolOptionsStore } from '@/lib/stores';
+import { createToolOptionsStore, usePersistedRail } from '@/lib/stores';
 import { useDocumentTitle } from '@/lib/hooks';
 import {
 	DEFAULT_COUNT,
@@ -58,7 +58,7 @@ function UuidGeneratorPage() {
 	const [nameInput, setNameInput] = useState('');
 	const [results, setResults] = useState<readonly string[]>([]);
 	const [error, setError] = useState<string | null>(null);
-	const [showOptions, setShowOptions] = useState(true);
+	const [showOptions, setShowOptions] = usePersistedRail('uuid-generator');
 	const [flashCounter, setFlashCounter] = useState(0);
 
 	useDocumentTitle('UUID Generator');

@@ -65,7 +65,7 @@ import {
 	type SortDirection,
 	updateCell,
 } from '@/lib/services/csv-tool';
-import { createToolOptionsStore } from '@/lib/stores';
+import { createToolOptionsStore, usePersistedRail } from '@/lib/stores';
 import { cn } from '@/lib/utils';
 
 interface CsvToolPrefs {
@@ -133,7 +133,7 @@ function CsvToolPage() {
 	const [filterQuery, setFilterQuery] = useState('');
 	const [sort, setSort] = useState<SortState | null>(null);
 	const [isDragOver, setIsDragOver] = useState(false);
-	const [showRail, setShowRail] = useState(true);
+	const [showRail, setShowRail] = usePersistedRail('csv-tool');
 	const [editingHeader, setEditingHeader] = useState<number | null>(null);
 	const [editingCell, setEditingCell] = useState<{
 		readonly rowIndex: number;

@@ -47,7 +47,7 @@ import {
 	type SanEntry,
 	type SanType,
 } from '@/lib/services/x509';
-import { createToolOptionsStore } from '@/lib/stores';
+import { createToolOptionsStore, usePersistedRail } from '@/lib/stores';
 import { cn, getErrorMessage } from '@/lib/utils';
 
 interface TlsInspectorOptions {
@@ -130,7 +130,7 @@ function TlsInspectorPage() {
 	const [parsedChain, setParsedChain] = useState<readonly ParsedCertificate[]>([]);
 	const [error, setError] = useState<string | null>(null);
 	const [running, setRunning] = useState(false);
-	const [showRail, setShowRail] = useState(true);
+	const [showRail, setShowRail] = usePersistedRail('tls-inspector');
 
 	const canRun = host.trim().length > 0 && !running;
 

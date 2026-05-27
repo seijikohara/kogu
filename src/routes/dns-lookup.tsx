@@ -36,7 +36,7 @@ import {
 	SAMPLE_REVERSE_IP,
 	toReverseDnsName,
 } from '@/lib/services/dns';
-import { createToolOptionsStore } from '@/lib/stores';
+import { createToolOptionsStore, usePersistedRail } from '@/lib/stores';
 
 interface DnsLookupOptions {
 	readonly recordTypes: readonly RecordType[];
@@ -77,7 +77,7 @@ function DnsLookupPage() {
 	const [result, setResult] = useState<DnsLookupResult | null>(null);
 	const [error, setError] = useState<string | null>(null);
 	const [loading, setLoading] = useState<boolean>(false);
-	const [showRail, setShowRail] = useState(true);
+	const [showRail, setShowRail] = usePersistedRail('dns-lookup');
 
 	const trimmedName = name.trim();
 	const reverseLookup = trimmedName.length > 0 && isIpLiteral(trimmedName);

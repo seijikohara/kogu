@@ -24,7 +24,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/lib/components/ui/ca
 import { Input } from '@/lib/components/ui/input';
 import { IconTooltip } from '@/lib/components/ui/icon-tooltip';
 import { CodeBlock } from '@/lib/components/ui/code-block';
-import { useActiveTab, useTabStore } from '@/lib/stores';
+import { useActiveTab, useTabStore, usePersistedRail } from '@/lib/stores';
 import { useDocumentTitle } from '@/lib/hooks';
 import {
 	buildUrl,
@@ -71,7 +71,7 @@ function UrlEncoderPage() {
 
 	const [mode, setMode] = useState<Mode>('encode');
 	const [input, setInput] = useState('');
-	const [showOptions, setShowOptions] = useState(true);
+	const [showOptions, setShowOptions] = usePersistedRail('url-encoder');
 
 	const [encodeMode, setEncodeMode] = useState<UrlEncodeMode>(defaultUrlEncodeOptions.mode);
 	const [spaceEncoding, setSpaceEncoding] = useState<UrlSpaceEncoding>(

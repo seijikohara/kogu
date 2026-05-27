@@ -26,6 +26,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from '@/lib/components/ui/card';
 import { CodeBlock } from '@/lib/components/ui/code-block';
 import { useDocumentTitle } from '@/lib/hooks';
+import { usePersistedRail } from '@/lib/stores';
 import {
 	buildGpgUserId,
 	cancelWorkerOperation,
@@ -62,7 +63,7 @@ function GpgKeyGeneratorPage() {
 
 	const [cliAvailability, setCliAvailability] = useState<CliAvailability | null>(null);
 
-	const [showOptions, setShowOptions] = useState(true);
+	const [showOptions, setShowOptions] = usePersistedRail('gpg-key-generator');
 	const [showKeyInfo, setShowKeyInfo] = useState(true);
 	const [showGpgCommands, setShowGpgCommands] = useState(true);
 

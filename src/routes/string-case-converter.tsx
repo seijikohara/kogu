@@ -17,6 +17,7 @@ import { ToolShell } from '@/lib/components/shell';
 import { EmbeddedEmptyState, StatItem } from '@/lib/components/status';
 import { Card, CardContent } from '@/lib/components/ui/card';
 import { useDocumentTitle } from '@/lib/hooks';
+import { usePersistedRail } from '@/lib/stores';
 import {
 	CASE_DEFINITIONS,
 	convertToAllCases,
@@ -32,7 +33,7 @@ export const Route = createFileRoute('/string-case-converter')({
 
 function StringCaseConverterPage() {
 	const [input, setInput] = useState('');
-	const [showOptions, setShowOptions] = useState(true);
+	const [showOptions, setShowOptions] = usePersistedRail('string-case-converter');
 	const [sortLines, setSortLines] = useState<SortOrder>('none');
 	const [removeDuplicates, setRemoveDuplicates] = useState(false);
 	const [trimLines, setTrimLines] = useState(false);

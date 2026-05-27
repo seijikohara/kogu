@@ -30,7 +30,7 @@ import {
 	SAMPLE_V4,
 	SAMPLE_V6,
 } from '@/lib/services/ip-convert';
-import { createToolOptionsStore } from '@/lib/stores';
+import { createToolOptionsStore, usePersistedRail } from '@/lib/stores';
 import { cn } from '@/lib/utils';
 
 interface IpConverterOptions {
@@ -74,7 +74,7 @@ function IpConverterPage() {
 	const { showBitmap, favorMixedForMapped } = options;
 
 	const [input, setInput] = useState<string>(SAMPLE_V4);
-	const [showRail, setShowRail] = useState(true);
+	const [showRail, setShowRail] = usePersistedRail('ip-converter');
 
 	const result = useMemo(() => parseIp(input), [input]);
 	const fromIpv4 = useMemo(
