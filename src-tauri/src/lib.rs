@@ -49,6 +49,7 @@
 mod archive_inspect;
 mod ast;
 mod dns_lookup;
+mod drive_info;
 mod duplicate_finder;
 mod file_inspect;
 mod file_watch;
@@ -493,6 +494,8 @@ pub fn run() {
             duplicate_finder::duplicate_scan,
             duplicate_finder::duplicate_delete,
             duplicate_finder::duplicate_replace_with_symlink,
+            drive_info::drives_list,
+            drive_info::folder_size_scan,
             file_inspect::file_inspect,
             hash_batch::hash_file_batch,
             file_watch::file_watch_start,
