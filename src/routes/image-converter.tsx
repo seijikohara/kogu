@@ -148,7 +148,7 @@ function ImageConverterPage() {
 
 	const handleFileInput = (e: ChangeEvent<HTMLInputElement>) => {
 		const file = e.target.files?.[0];
-		if (file) void acceptFile(file);
+		if (file) acceptFile(file).catch(() => undefined);
 		e.target.value = '';
 	};
 
@@ -156,7 +156,7 @@ function ImageConverterPage() {
 		e.preventDefault();
 		setDragOver(false);
 		const file = e.dataTransfer.files?.[0];
-		if (file && file.type.startsWith('image/')) void acceptFile(file);
+		if (file?.type.startsWith('image/')) acceptFile(file).catch(() => undefined);
 		else if (file) toast.error('Only image files are supported');
 	};
 
@@ -172,7 +172,7 @@ function ImageConverterPage() {
 
 	const handleLoadDemo = async () => {
 		const demo = await generateDemoImage();
-		void acceptFile(demo);
+		await acceptFile(demo);
 	};
 
 	const handleConvert = async () => {
@@ -441,12 +441,16 @@ function ImageConverterPage() {
 								label={converting ? 'Converting…' : 'Convert'}
 								icon={Sparkles}
 								disabled={!source || prefs.targets.length === 0 || converting}
-								onClick={() => void handleConvert()}
+								onClick={() => {
+									handleConvert().catch(() => undefined);
+								}}
 							/>
 							<Button
 								type="button"
 								variant="outline"
-								onClick={() => void handleLoadDemo()}
+								onClick={() => {
+									handleLoadDemo().catch(() => undefined);
+								}}
 								size="sm"
 							>
 								<Upload className="size-3.5" /> Load demo image
@@ -477,7 +481,8 @@ function ImageConverterPage() {
 					className="hidden"
 				/>
 				{!source ? (
-					<div
+					<section
+						aria-label="Image drop zone"
 						className={cn(
 							'flex h-full flex-1 items-center justify-center rounded-xl border-2 border-dashed transition-colors',
 							dragOver ? 'border-primary bg-primary/5' : 'border-border bg-surface-1'
@@ -499,14 +504,16 @@ function ImageConverterPage() {
 								<Button
 									type="button"
 									variant="outline"
-									onClick={() => void handleLoadDemo()}
+									onClick={() => {
+										handleLoadDemo().catch(() => undefined);
+									}}
 									size="sm"
 								>
 									Load demo image
 								</Button>
 							</div>
 						</div>
-					</div>
+					</section>
 				) : (
 					<div className="flex flex-col gap-4 overflow-auto">
 						{error ? (

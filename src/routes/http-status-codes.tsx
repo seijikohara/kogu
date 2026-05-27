@@ -415,6 +415,7 @@ function StatusCard({ entry, isSelected, onSelect }: StatusCardProps) {
 				<p className="line-clamp-2 text-xs text-muted-foreground">{entry.summary}</p>
 				<div className="flex items-center justify-between gap-2">
 					<span className="truncate text-2xs text-muted-foreground">{entry.rfc ?? 'No RFC'}</span>
+					{/* biome-ignore lint/a11y/noStaticElementInteractions: stopPropagation wrapper around an interactive CopyButton; the wrapper itself is not the target. */}
 					<div onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()}>
 						<CopyButton
 							text={copyText}
