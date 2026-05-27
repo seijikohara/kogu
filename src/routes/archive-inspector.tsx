@@ -51,7 +51,7 @@ import {
 	previewKindFor,
 } from '@/lib/services/archive';
 import { createToolOptionsStore, usePersistedRail } from '@/lib/stores';
-import { cn } from '@/lib/utils';
+import { basename, cn } from '@/lib/utils';
 
 type SortColumn = 'path' | 'size' | 'compressed' | 'modified';
 type SortDirection = 'asc' | 'desc';
@@ -338,7 +338,7 @@ function ArchiveInspectorPage() {
 	};
 
 	const hasArchive = archive !== null;
-	const filename = archive?.path.split('/').pop() ?? '';
+	const filename = archive ? basename(archive.path) : '';
 	const selectedCount = selected.size;
 	const totalEntries = archive?.entries.length ?? 0;
 	const filteredCount = filteredEntries.length;
