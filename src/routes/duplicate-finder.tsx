@@ -500,9 +500,10 @@ function DuplicateFinderPage() {
 					<FormSection title="Related">
 						<RelatedTools
 							items={[
+								{ id: 'drive-info', reason: 'See how much space the duplicates occupy' },
+								{ id: 'folder-tree-visualizer', reason: 'Inspect the folder structure first' },
 								{ id: 'file-inspector', reason: 'Inspect a single file in depth' },
 								{ id: 'hash-generator', reason: 'Hash arbitrary text or bytes' },
-								{ id: 'hex-editor', reason: 'View raw bytes of a file' },
 							]}
 						/>
 					</FormSection>

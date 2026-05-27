@@ -11,6 +11,7 @@ import {
 	FormInput,
 	FormSection,
 } from '@/lib/components/form';
+import { RelatedTools } from '@/lib/components/layout';
 import { ToolShell } from '@/lib/components/shell';
 import { EmbeddedEmptyState, StatItem } from '@/lib/components/status';
 import { Badge } from '@/lib/components/ui/badge';
@@ -184,6 +185,16 @@ function FileWatchPage() {
 								/>
 							))}
 						</FormCheckboxGroup>
+					</FormSection>
+
+					<FormSection title="Related">
+						<RelatedTools
+							items={[
+								{ id: 'file-inspector', reason: 'Inspect a changed file in detail' },
+								{ id: 'hex-editor', reason: 'View raw bytes of an updated file' },
+								{ id: 'folder-tree-visualizer', reason: 'See size impact of the watched tree' },
+							]}
+						/>
 					</FormSection>
 
 					<FormSection title="About">

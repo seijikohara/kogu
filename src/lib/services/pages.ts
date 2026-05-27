@@ -370,7 +370,7 @@ export const PAGES: readonly PageDefinition[] = [
 		icon: TextQuote,
 		description: 'Generate placeholder text in multiple flavors with structure and format controls',
 		color: 'text-amber-700',
-		category: 'generators',
+		category: 'text',
 	},
 	{
 		id: 'curl-builder',
@@ -379,7 +379,7 @@ export const PAGES: readonly PageDefinition[] = [
 		icon: Terminal,
 		description: 'Build and parse cURL commands; emit fetch / Python / Go snippets',
 		color: 'text-zinc-500',
-		category: 'generators',
+		category: 'network',
 		tabs: [
 			{ id: 'build', label: 'Build', icon: Pencil },
 			{ id: 'parse', label: 'Parse', icon: Search },
