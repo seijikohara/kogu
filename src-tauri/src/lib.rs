@@ -50,6 +50,7 @@ mod archive_inspect;
 mod ast;
 mod dns_lookup;
 mod file_inspect;
+mod file_watch;
 mod generators;
 mod hash_batch;
 mod hex_editor;
@@ -368,6 +369,55 @@ fn parse_to_ast(text: &str, language: &str) -> Result<AstParseResult, String> {
     Ok(ast::parse_to_ast(text, lang))
 }
 
+/// Bootstrap routine executed inside the Tauri builder's `setup`
+/// callback. Extracted from [`run`] so the entry function stays under
+/// the clippy line-count threshold.
+fn setup_app(app: &mut tauri::App) -> Result<(), Box<dyn std::error::Error>> {
+    // Windows: enable Snap Layout support via the decorum overlay titlebar.
+    // The same call on macOS injects transparent <div data-tauri-drag-region>
+    // overlays at the top of the document body, which sit above any in-flow
+    // titlebar UI (e.g. the Command search input) and intercept clicks for
+    // window drag, leaving controls unfocusable. macOS gets a fully native
+    // overlay titlebar via tauri.conf.json's `titleBarStyle: "Overlay"`, so
+    // the decorum overlay is unnecessary and actively harmful there. Linux
+    // needs neither call, so the `main_window` handle is only bound on
+    // platforms that consume it.
+    #[cfg(any(target_os = "macos", target_os = "windows"))]
+    {
+        let main_window = app
+            .get_webview_window("main")
+            .ok_or("Failed to get main window")?;
+        #[cfg(target_os = "windows")]
+        main_window.create_overlay_titlebar()?;
+        // macOS: position traffic lights centered in 32px (h-8) title bar.
+        #[cfg(target_os = "macos")]
+        main_window.set_traffic_lights_inset(12.0, 10.0)?;
+    }
+
+    // Initialize settings from config directory.
+    let config_dir = app
+        .path()
+        .app_config_dir()
+        .map_err(|e| format!("Failed to resolve app config directory: {e}"))?;
+    app.manage(settings::SettingsState::load(&config_dir));
+
+    // Warm the system font caches from a background task so the
+    // first Settings open returns instantly. font-kit's `all_families`
+    // + per-family `is_monospace` walk would otherwise block the UI
+    // thread for several seconds on macOS at the cold path.
+    settings::prewarm_font_cache();
+
+    // macOS: set up native app menu with "Reset All Settings..."
+    #[cfg(target_os = "macos")]
+    {
+        let native_menu = menu::build(app)?;
+        app.set_menu(native_menu)?;
+        menu::setup_event_handler(app);
+    }
+
+    Ok(())
+}
+
 /// Runs the Tauri application.
 ///
 /// This is the main entry point for the Kogu desktop application.
@@ -410,54 +460,8 @@ pub fn run() {
         .manage(NetworkScannerState::new())
         .manage(websocket::WebSocketState::new())
         .manage(webhook::WebhookState::new())
-        .setup(|app| {
-            // Windows: enable Snap Layout support via the decorum overlay titlebar.
-            // The same call on macOS injects transparent <div data-tauri-drag-region>
-            // overlays at the top of the document body, which sit above any in-flow
-            // titlebar UI (e.g. the Command search input) and intercept clicks for
-            // window drag, leaving controls unfocusable. macOS gets a fully native
-            // overlay titlebar via tauri.conf.json's `titleBarStyle: "Overlay"`, so
-            // the decorum overlay is unnecessary and actively harmful there. Linux
-            // needs neither call, so the `main_window` handle is only bound on
-            // platforms that consume it.
-            #[cfg(any(target_os = "macos", target_os = "windows"))]
-            {
-                let main_window = app
-                    .get_webview_window("main")
-                    .ok_or("Failed to get main window")?;
-
-                #[cfg(target_os = "windows")]
-                main_window.create_overlay_titlebar()?;
-
-                // macOS: position traffic lights centered in 32px (h-8) title bar.
-                #[cfg(target_os = "macos")]
-                main_window.set_traffic_lights_inset(12.0, 10.0)?;
-            }
-
-            // Initialize settings from config directory
-            let config_dir = app
-                .path()
-                .app_config_dir()
-                .map_err(|e| format!("Failed to resolve app config directory: {e}"))?;
-            let settings_state = settings::SettingsState::load(&config_dir);
-            app.manage(settings_state);
-
-            // Warm the system font caches from a background task so the
-            // first Settings open returns instantly. font-kit's `all_families`
-            // + per-family `is_monospace` walk would otherwise block the UI
-            // thread for several seconds on macOS at the cold path.
-            settings::prewarm_font_cache();
-
-            // macOS: set up native app menu with "Reset All Settings..."
-            #[cfg(target_os = "macos")]
-            {
-                let native_menu = menu::build(app)?;
-                app.set_menu(native_menu)?;
-                menu::setup_event_handler(app);
-            }
-
-            Ok(())
-        })
+        .manage(file_watch::FileWatchState::new())
+        .setup(setup_app)
         .invoke_handler(tauri::generate_handler![
             greet,
             parse_to_ast,
@@ -486,6 +490,8 @@ pub fn run() {
             dns_lookup::dns_lookup,
             file_inspect::file_inspect,
             hash_batch::hash_file_batch,
+            file_watch::file_watch_start,
+            file_watch::file_watch_stop,
             hex_editor::hex_open,
             hex_editor::hex_read,
             hex_editor::hex_save,

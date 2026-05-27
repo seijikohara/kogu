@@ -46,6 +46,7 @@ import { Route as HttpStatusCodesRouteImport } from './routes/http-status-codes'
 import { Route as HexEditorRouteImport } from './routes/hex-editor';
 import { Route as HashGeneratorRouteImport } from './routes/hash-generator';
 import { Route as GpgKeyGeneratorRouteImport } from './routes/gpg-key-generator';
+import { Route as FileWatchRouteImport } from './routes/file-watch';
 import { Route as FileInspectorRouteImport } from './routes/file-inspector';
 import { Route as EscapeToolRouteImport } from './routes/escape-tool';
 import { Route as EncodingConverterRouteImport } from './routes/encoding-converter';
@@ -246,6 +247,11 @@ const GpgKeyGeneratorRoute = GpgKeyGeneratorRouteImport.update({
 	path: '/gpg-key-generator',
 	getParentRoute: () => rootRouteImport,
 } as any);
+const FileWatchRoute = FileWatchRouteImport.update({
+	id: '/file-watch',
+	path: '/file-watch',
+	getParentRoute: () => rootRouteImport,
+} as any);
 const FileInspectorRoute = FileInspectorRouteImport.update({
 	id: '/file-inspector',
 	path: '/file-inspector',
@@ -332,6 +338,7 @@ export interface FileRoutesByFullPath {
 	'/encoding-converter': typeof EncodingConverterRoute;
 	'/escape-tool': typeof EscapeToolRoute;
 	'/file-inspector': typeof FileInspectorRoute;
+	'/file-watch': typeof FileWatchRoute;
 	'/gpg-key-generator': typeof GpgKeyGeneratorRoute;
 	'/hash-generator': typeof HashGeneratorRoute;
 	'/hex-editor': typeof HexEditorRoute;
@@ -385,6 +392,7 @@ export interface FileRoutesByTo {
 	'/encoding-converter': typeof EncodingConverterRoute;
 	'/escape-tool': typeof EscapeToolRoute;
 	'/file-inspector': typeof FileInspectorRoute;
+	'/file-watch': typeof FileWatchRoute;
 	'/gpg-key-generator': typeof GpgKeyGeneratorRoute;
 	'/hash-generator': typeof HashGeneratorRoute;
 	'/hex-editor': typeof HexEditorRoute;
@@ -439,6 +447,7 @@ export interface FileRoutesById {
 	'/encoding-converter': typeof EncodingConverterRoute;
 	'/escape-tool': typeof EscapeToolRoute;
 	'/file-inspector': typeof FileInspectorRoute;
+	'/file-watch': typeof FileWatchRoute;
 	'/gpg-key-generator': typeof GpgKeyGeneratorRoute;
 	'/hash-generator': typeof HashGeneratorRoute;
 	'/hex-editor': typeof HexEditorRoute;
@@ -494,6 +503,7 @@ export interface FileRouteTypes {
 		| '/encoding-converter'
 		| '/escape-tool'
 		| '/file-inspector'
+		| '/file-watch'
 		| '/gpg-key-generator'
 		| '/hash-generator'
 		| '/hex-editor'
@@ -547,6 +557,7 @@ export interface FileRouteTypes {
 		| '/encoding-converter'
 		| '/escape-tool'
 		| '/file-inspector'
+		| '/file-watch'
 		| '/gpg-key-generator'
 		| '/hash-generator'
 		| '/hex-editor'
@@ -600,6 +611,7 @@ export interface FileRouteTypes {
 		| '/encoding-converter'
 		| '/escape-tool'
 		| '/file-inspector'
+		| '/file-watch'
 		| '/gpg-key-generator'
 		| '/hash-generator'
 		| '/hex-editor'
@@ -654,6 +666,7 @@ export interface RootRouteChildren {
 	EncodingConverterRoute: typeof EncodingConverterRoute;
 	EscapeToolRoute: typeof EscapeToolRoute;
 	FileInspectorRoute: typeof FileInspectorRoute;
+	FileWatchRoute: typeof FileWatchRoute;
 	GpgKeyGeneratorRoute: typeof GpgKeyGeneratorRoute;
 	HashGeneratorRoute: typeof HashGeneratorRoute;
 	HexEditorRoute: typeof HexEditorRoute;
@@ -954,6 +967,13 @@ declare module '@tanstack/react-router' {
 			preLoaderRoute: typeof GpgKeyGeneratorRouteImport;
 			parentRoute: typeof rootRouteImport;
 		};
+		'/file-watch': {
+			id: '/file-watch';
+			path: '/file-watch';
+			fullPath: '/file-watch';
+			preLoaderRoute: typeof FileWatchRouteImport;
+			parentRoute: typeof rootRouteImport;
+		};
 		'/file-inspector': {
 			id: '/file-inspector';
 			path: '/file-inspector';
@@ -1070,6 +1090,7 @@ const rootRouteChildren: RootRouteChildren = {
 	EncodingConverterRoute: EncodingConverterRoute,
 	EscapeToolRoute: EscapeToolRoute,
 	FileInspectorRoute: FileInspectorRoute,
+	FileWatchRoute: FileWatchRoute,
 	GpgKeyGeneratorRoute: GpgKeyGeneratorRoute,
 	HashGeneratorRoute: HashGeneratorRoute,
 	HexEditorRoute: HexEditorRoute,
