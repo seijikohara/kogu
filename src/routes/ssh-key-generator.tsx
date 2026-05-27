@@ -229,6 +229,11 @@ function SshKeyGeneratorPage() {
 								{cliAvailability.ssh_keygen_version}
 							</p>
 						) : null}
+						{cliAvailability?.ssh_keygen_path ? (
+							<p className="mt-0.5 break-all text-xs text-muted-foreground">
+								{cliAvailability.ssh_keygen_path}
+							</p>
+						) : null}
 					</FormSection>
 
 					<FormSection title="Actions">

@@ -255,6 +255,11 @@ function GpgKeyGeneratorPage() {
 						{cliAvailability?.gpg_version ? (
 							<p className="mt-1 text-xs text-muted-foreground">{cliAvailability.gpg_version}</p>
 						) : null}
+						{cliAvailability?.gpg_path ? (
+							<p className="mt-0.5 break-all text-xs text-muted-foreground">
+								{cliAvailability.gpg_path}
+							</p>
+						) : null}
 					</FormSection>
 
 					<FormSection title="Actions">
