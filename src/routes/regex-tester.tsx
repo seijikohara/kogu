@@ -3,7 +3,7 @@ import { Eye, FlaskConical, GitBranch, Info, Search, Sparkles, Workflow } from '
 
 import { CopyButton } from '@/lib/components/action';
 import { FormError, FormInfo, FormSection, FormTextarea } from '@/lib/components/form';
-import { RelatedTools } from '@/lib/components/layout';
+import { RelatedTools, SectionHeader, SplitPane } from '@/lib/components/layout';
 import { PatternEditor, RailroadView } from '@/lib/components/regex';
 import { ToolShell } from '@/lib/components/shell';
 import { EmbeddedEmptyState, StatItem, ValidityBadge } from '@/lib/components/status';
@@ -18,7 +18,6 @@ import { Button } from '@/lib/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/lib/components/ui/card';
 import { ToggleGroup, ToggleGroupItem } from '@/lib/components/ui/toggle-group';
 import { IconTooltip } from '@/lib/components/ui/icon-tooltip';
-import { Rail } from '@/lib/components/ui/rail';
 import { useState } from 'react';
 import { createToolOptionsStore } from '@/lib/stores';
 import { cn } from '@/lib/utils';
@@ -739,58 +738,65 @@ function RegexTesterPage() {
 					</div>
 				</div>
 
-				<div className="flex flex-1 overflow-hidden">
-					<div className="flex flex-1 flex-col gap-4 overflow-auto p-4">
-						<Card density="compact">
-							<CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
-								<div className="flex items-center gap-2">
-									<Eye className="h-4 w-4 text-muted-foreground" />
-									<CardTitle className="text-sm font-medium">Test text</CardTitle>
-									<output aria-live="polite" aria-atomic="true" className="contents">
-										<Badge variant="outline" className="font-mono text-2xs">
-											{matches.length} match{matches.length === 1 ? '' : 'es'}
-										</Badge>
-									</output>
-								</div>
-							</CardHeader>
-							<CardContent className="space-y-3">
-								<FormTextarea
-									label=""
-									value={testText}
-									onValueChange={setTestText}
-									placeholder="Paste text to test against the pattern..."
-									rows={6}
-									className="font-mono text-sm"
-								/>
-								{matches.length > 0 || testText ? <InlinePreview segments={segments} /> : null}
-							</CardContent>
-						</Card>
+				<SplitPane
+					direction="horizontal"
+					defaultSizes={[55, 45]}
+					minSizes={[30, 30]}
+					left={
+						<div className="flex flex-1 flex-col gap-4 overflow-auto p-4">
+							<Card density="compact">
+								<CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+									<div className="flex items-center gap-2">
+										<Eye className="h-4 w-4 text-muted-foreground" />
+										<CardTitle className="text-sm font-medium">Test text</CardTitle>
+										<output aria-live="polite" aria-atomic="true" className="contents">
+											<Badge variant="outline" className="font-mono text-2xs">
+												{matches.length} match{matches.length === 1 ? '' : 'es'}
+											</Badge>
+										</output>
+									</div>
+								</CardHeader>
+								<CardContent className="space-y-3">
+									<FormTextarea
+										label=""
+										value={testText}
+										onValueChange={setTestText}
+										placeholder="Paste text to test against the pattern..."
+										rows={6}
+										className="font-mono text-sm"
+									/>
+									{matches.length > 0 || testText ? <InlinePreview segments={segments} /> : null}
+								</CardContent>
+							</Card>
 
-						<ReplaceCard
-							replaceEnabled={replaceEnabled}
-							onToggle={() => setReplaceEnabled((v) => !v)}
-							replacement={replacement}
-							onReplacementChange={setReplacement}
-							replaceResult={replaceResult}
-							replaceSegments={replaceSegments}
-						/>
-					</div>
-
-					<Rail side="right" size="wide" title="Matches">
-						<div className="px-3">
-							<Accordion type="multiple" defaultValue={['matches', 'explain']} className="w-full">
-								<MatchesAccordion matches={matches} compiledOk={compiled.ok} />
-								<StructureAccordion visualization={visualization} />
-								<ExplainAccordion
-									flags={flags}
-									flagString={flagString}
-									captureGroupCount={captureGroupCount}
-									features={features}
-								/>
-							</Accordion>
+							<ReplaceCard
+								replaceEnabled={replaceEnabled}
+								onToggle={() => setReplaceEnabled((v) => !v)}
+								replacement={replacement}
+								onReplacementChange={setReplacement}
+								replaceResult={replaceResult}
+								replaceSegments={replaceSegments}
+							/>
 						</div>
-					</Rail>
-				</div>
+					}
+					right={
+						<div className="flex h-full min-h-0 flex-col border-l">
+							<SectionHeader title="Inspection" />
+							<div className="flex-1 overflow-auto px-3 pb-3">
+								<Accordion type="multiple" defaultValue={['matches', 'explain']} className="w-full">
+									<MatchesAccordion matches={matches} compiledOk={compiled.ok} />
+									<StructureAccordion visualization={visualization} />
+									<ExplainAccordion
+										flags={flags}
+										flagString={flagString}
+										captureGroupCount={captureGroupCount}
+										features={features}
+									/>
+								</Accordion>
+							</div>
+						</div>
+					}
+				/>
 			</div>
 		</ToolShell>
 	);
