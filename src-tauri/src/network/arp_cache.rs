@@ -3,6 +3,8 @@
 //! Reads the OS ARP (IPv4) and NDP (IPv6) neighbor caches to discover hosts and
 //! their MAC addresses without requiring elevated privileges.
 
+use std::fmt;
+
 use serde::Serialize;
 
 /// An entry from the system ARP/neighbor cache
@@ -14,14 +16,65 @@ pub struct ArpCacheEntry {
     pub interface: Option<String>,
 }
 
+/// Failures that prevent the OS ARP / NDP cache from being read.
+///
+/// Callers receive these instead of an empty `Vec` so the UI can
+/// distinguish a quiet network (cache really is empty) from a probe
+/// failure (cache is unreadable on this host).
+#[derive(Debug, Clone)]
+pub enum ArpError {
+    /// External command (`arp`, `ndp`, `ip`, `netsh`) could not be
+    /// launched, typically because the binary is not on `PATH`.
+    CommandUnavailable {
+        command: &'static str,
+        detail: String,
+    },
+    /// External command launched but exited with a non-zero status.
+    CommandFailed {
+        command: &'static str,
+        detail: String,
+    },
+    /// Filesystem read failed (Linux `/proc/net/arp`).
+    #[cfg(target_os = "linux")]
+    ReadFailed { path: &'static str, detail: String },
+    /// Target OS has no implementation in this build.
+    #[cfg(not(any(target_os = "macos", target_os = "linux", target_os = "windows")))]
+    UnsupportedPlatform,
+}
+
+impl fmt::Display for ArpError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::CommandUnavailable { command, detail } => {
+                write!(f, "`{command}` not available: {detail}")
+            }
+            Self::CommandFailed { command, detail } => {
+                write!(f, "`{command}` failed: {detail}")
+            }
+            #[cfg(target_os = "linux")]
+            Self::ReadFailed { path, detail } => write!(f, "read `{path}` failed: {detail}"),
+            #[cfg(not(any(target_os = "macos", target_os = "linux", target_os = "windows")))]
+            Self::UnsupportedPlatform => f.write_str("unsupported platform"),
+        }
+    }
+}
+
+impl std::error::Error for ArpError {}
+
 /// Read the system ARP cache (IPv4, no privileges required).
 ///
 /// Returns a list of ARP cache entries with IP, MAC, and interface info.
 /// Platform-specific:
-/// - macOS: Parses output of `arp -an`
-/// - Linux: Parses `/proc/net/arp`
-/// - Windows: Parses output of `arp -a`
-pub fn read_arp_cache() -> Vec<ArpCacheEntry> {
+/// - macOS: Parses output of `arp -an`.
+/// - Linux: Parses `/proc/net/arp`, falling back to `ip -4 neigh show`
+///   if the proc entry is empty (some containers).
+/// - Windows: Parses output of `arp -a`.
+///
+/// # Errors
+///
+/// Returns [`ArpError`] when no probe succeeds. An empty `Vec` is a
+/// successful but quiet result, distinct from a failure.
+pub fn read_arp_cache() -> Result<Vec<ArpCacheEntry>, ArpError> {
     #[cfg(target_os = "macos")]
     {
         read_arp_cache_macos()
@@ -36,7 +89,7 @@ pub fn read_arp_cache() -> Vec<ArpCacheEntry> {
     }
     #[cfg(not(any(target_os = "macos", target_os = "linux", target_os = "windows")))]
     {
-        Vec::new()
+        Err(ArpError::UnsupportedPlatform)
     }
 }
 
@@ -44,10 +97,14 @@ pub fn read_arp_cache() -> Vec<ArpCacheEntry> {
 ///
 /// Returns a list of neighbor cache entries with IPv6 address, MAC, and interface info.
 /// Platform-specific:
-/// - macOS: Parses output of `ndp -an`
-/// - Linux: Parses output of `ip -6 neigh show`
-/// - Windows: Parses output of `netsh interface ipv6 show neighbors`
-pub fn read_ndp_cache() -> Vec<ArpCacheEntry> {
+/// - macOS: Parses output of `ndp -an`.
+/// - Linux: Parses output of `ip -6 neigh show`.
+/// - Windows: Parses output of `netsh interface ipv6 show neighbors`.
+///
+/// # Errors
+///
+/// See [`read_arp_cache`].
+pub fn read_ndp_cache() -> Result<Vec<ArpCacheEntry>, ArpError> {
     #[cfg(target_os = "macos")]
     {
         read_ndp_cache_macos()
@@ -62,7 +119,7 @@ pub fn read_ndp_cache() -> Vec<ArpCacheEntry> {
     }
     #[cfg(not(any(target_os = "macos", target_os = "linux", target_os = "windows")))]
     {
-        Vec::new()
+        Err(ArpError::UnsupportedPlatform)
     }
 }
 
@@ -71,7 +128,12 @@ pub fn read_ndp_cache() -> Vec<ArpCacheEntry> {
 /// When the same IP appears in both caches, the last-written entry wins (NDP
 /// entries override ARP entries). The returned vector preserves discovery
 /// ordering of unique IPs: ARP entries first, then any new NDP-only entries.
-pub fn read_neighbor_cache() -> Vec<ArpCacheEntry> {
+///
+/// Returns the merged vector together with an optional error string
+/// describing which probe failed; partial results are still surfaced
+/// (e.g. ARP entries returned when NDP enumeration failed) so the UI
+/// can render what was discovered alongside a warning banner.
+pub fn read_neighbor_cache() -> (Vec<ArpCacheEntry>, Option<String>) {
     use std::collections::HashMap;
 
     let mut by_ip: HashMap<String, ArpCacheEntry> = HashMap::new();
@@ -86,13 +148,41 @@ pub fn read_neighbor_cache() -> Vec<ArpCacheEntry> {
         }
     };
 
-    extend_with(read_arp_cache());
-    extend_with(read_ndp_cache());
+    let mut errors: Vec<String> = Vec::new();
+    match read_arp_cache() {
+        Ok(entries) => extend_with(entries),
+        Err(e) => errors.push(format!("ARP: {e}")),
+    }
+    match read_ndp_cache() {
+        Ok(entries) => extend_with(entries),
+        Err(e) => errors.push(format!("NDP: {e}")),
+    }
 
-    order
+    let merged = order
         .into_iter()
         .filter_map(|ip| by_ip.remove(&ip))
-        .collect()
+        .collect();
+
+    let error = if errors.is_empty() {
+        None
+    } else {
+        Some(errors.join("; "))
+    };
+    (merged, error)
+}
+
+/// Strict MAC validation: matches `xx:xx:xx:xx:xx:xx` where each byte is
+/// a pair of ASCII hex digits. Used together with [`is_incomplete_mac`]
+/// to reject both wrong-format tokens (localized header rows) and
+/// reserved / placeholder values.
+fn is_valid_mac(mac: &str) -> bool {
+    let bytes: Vec<&str> = mac.split(':').collect();
+    if bytes.len() != 6 {
+        return false;
+    }
+    bytes
+        .iter()
+        .all(|b| b.len() == 2 && b.chars().all(|c| c.is_ascii_hexdigit()))
 }
 
 /// Check if a MAC address is incomplete/invalid
@@ -101,6 +191,13 @@ fn is_incomplete_mac(mac: &str) -> bool {
         || mac == "(incomplete)"
         || mac == "ff:ff:ff:ff:ff:ff"
         || mac == "00:00:00:00:00:00"
+}
+
+/// Combined predicate: returns `true` when the token cannot be used as a
+/// routable MAC. Drops malformed strings (covers localized header rows
+/// on Windows / macOS) and reserved / placeholder values.
+fn is_unusable_mac(mac: &str) -> bool {
+    !is_valid_mac(mac) || is_incomplete_mac(mac)
 }
 
 /// Strip an optional `%ifname` zone suffix from an IPv6 address string.
@@ -126,14 +223,22 @@ fn is_acceptable_ipv6(ip: &str) -> bool {
 // =============================================================================
 
 #[cfg(target_os = "macos")]
-fn read_arp_cache_macos() -> Vec<ArpCacheEntry> {
-    let output = match std::process::Command::new("arp").arg("-an").output() {
-        Ok(o) if o.status.success() => o,
-        _ => return Vec::new(),
-    };
-
+fn read_arp_cache_macos() -> Result<Vec<ArpCacheEntry>, ArpError> {
+    let output = std::process::Command::new("arp")
+        .arg("-an")
+        .output()
+        .map_err(|e| ArpError::CommandUnavailable {
+            command: "arp",
+            detail: e.to_string(),
+        })?;
+    if !output.status.success() {
+        return Err(ArpError::CommandFailed {
+            command: "arp",
+            detail: String::from_utf8_lossy(&output.stderr).into_owned(),
+        });
+    }
     let stdout = String::from_utf8_lossy(&output.stdout);
-    parse_arp_macos(&stdout)
+    Ok(parse_arp_macos(&stdout))
 }
 
 /// Parse macOS `arp -an` output.
@@ -155,7 +260,7 @@ fn parse_arp_macos(output: &str) -> Vec<ArpCacheEntry> {
             let mac_end = after_at.find(' ').unwrap_or(after_at.len());
             let mac = &after_at[..mac_end];
 
-            if is_incomplete_mac(mac) {
+            if is_unusable_mac(mac) {
                 return None;
             }
 
@@ -180,14 +285,22 @@ fn parse_arp_macos(output: &str) -> Vec<ArpCacheEntry> {
 // =============================================================================
 
 #[cfg(target_os = "macos")]
-fn read_ndp_cache_macos() -> Vec<ArpCacheEntry> {
-    let output = match std::process::Command::new("ndp").arg("-an").output() {
-        Ok(o) if o.status.success() => o,
-        _ => return Vec::new(),
-    };
-
+fn read_ndp_cache_macos() -> Result<Vec<ArpCacheEntry>, ArpError> {
+    let output = std::process::Command::new("ndp")
+        .arg("-an")
+        .output()
+        .map_err(|e| ArpError::CommandUnavailable {
+            command: "ndp",
+            detail: e.to_string(),
+        })?;
+    if !output.status.success() {
+        return Err(ArpError::CommandFailed {
+            command: "ndp",
+            detail: String::from_utf8_lossy(&output.stderr).into_owned(),
+        });
+    }
     let stdout = String::from_utf8_lossy(&output.stdout);
-    parse_ndp_macos(&stdout)
+    Ok(parse_ndp_macos(&stdout))
 }
 
 /// Parse macOS `ndp -an` output.
@@ -214,7 +327,7 @@ fn parse_ndp_macos(output: &str) -> Vec<ArpCacheEntry> {
             let mac = parts[1];
             let interface = parts.get(2).copied();
 
-            if is_incomplete_mac(mac) {
+            if is_unusable_mac(mac) {
                 return None;
             }
 
@@ -237,12 +350,52 @@ fn parse_ndp_macos(output: &str) -> Vec<ArpCacheEntry> {
 // =============================================================================
 
 #[cfg(target_os = "linux")]
-fn read_arp_cache_linux() -> Vec<ArpCacheEntry> {
-    let content = match std::fs::read_to_string("/proc/net/arp") {
-        Ok(c) => c,
-        Err(_) => return Vec::new(),
-    };
-    parse_arp_linux(&content)
+fn read_arp_cache_linux() -> Result<Vec<ArpCacheEntry>, ArpError> {
+    // Primary source: kernel-exported `/proc/net/arp`. Locale-free and
+    // available on every Linux host that has IPv4 networking.
+    match std::fs::read_to_string("/proc/net/arp") {
+        Ok(content) => {
+            let entries = parse_arp_linux(&content);
+            if !entries.is_empty() {
+                return Ok(entries);
+            }
+            // Fall through: some sandboxed containers mount an empty
+            // proc entry, so try iproute2 as a backup.
+        }
+        Err(e) => {
+            // Even if proc is unreadable, attempt the iproute2 path
+            // before surfacing the error so the network scanner still
+            // produces results when only one source is unavailable.
+            let fallback = read_arp_cache_linux_ip();
+            return match fallback {
+                Ok(entries) => Ok(entries),
+                Err(_) => Err(ArpError::ReadFailed {
+                    path: "/proc/net/arp",
+                    detail: e.to_string(),
+                }),
+            };
+        }
+    }
+    read_arp_cache_linux_ip()
+}
+
+#[cfg(target_os = "linux")]
+fn read_arp_cache_linux_ip() -> Result<Vec<ArpCacheEntry>, ArpError> {
+    let output = std::process::Command::new("ip")
+        .args(["-4", "neigh", "show"])
+        .output()
+        .map_err(|e| ArpError::CommandUnavailable {
+            command: "ip",
+            detail: e.to_string(),
+        })?;
+    if !output.status.success() {
+        return Err(ArpError::CommandFailed {
+            command: "ip",
+            detail: String::from_utf8_lossy(&output.stderr).into_owned(),
+        });
+    }
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    Ok(parse_ip_neigh(&stdout, false))
 }
 
 /// Parse Linux `/proc/net/arp` output.
@@ -261,7 +414,7 @@ fn parse_arp_linux(content: &str) -> Vec<ArpCacheEntry> {
             let mac = parts[3];
             let device = parts[5];
 
-            if is_incomplete_mac(mac) {
+            if is_unusable_mac(mac) {
                 return None;
             }
 
@@ -279,23 +432,32 @@ fn parse_arp_linux(content: &str) -> Vec<ArpCacheEntry> {
 // =============================================================================
 
 #[cfg(target_os = "linux")]
-fn read_ndp_cache_linux() -> Vec<ArpCacheEntry> {
-    let output = match std::process::Command::new("ip")
+fn read_ndp_cache_linux() -> Result<Vec<ArpCacheEntry>, ArpError> {
+    let output = std::process::Command::new("ip")
         .args(["-6", "neigh", "show"])
         .output()
-    {
-        Ok(o) if o.status.success() => o,
-        _ => return Vec::new(),
-    };
-
+        .map_err(|e| ArpError::CommandUnavailable {
+            command: "ip",
+            detail: e.to_string(),
+        })?;
+    if !output.status.success() {
+        return Err(ArpError::CommandFailed {
+            command: "ip",
+            detail: String::from_utf8_lossy(&output.stderr).into_owned(),
+        });
+    }
     let stdout = String::from_utf8_lossy(&output.stdout);
-    parse_ndp_linux(&stdout)
+    Ok(parse_ip_neigh(&stdout, true))
 }
 
-/// Parse Linux `ip -6 neigh show` output.
-/// Format: `fe80::abcd dev wlan0 lladdr aa:bb:cc:dd:ee:ff REACHABLE`
+/// Parse iproute2 `ip [-4|-6] neigh show` output.
+/// Format: `<ip> dev <iface> lladdr <mac> <STATE>`. The format is
+/// identical for IPv4 and IPv6 — only the address family differs.
+///
+/// `ipv6_only` filters out non-routable IPv6 addresses (multicast,
+/// loopback). Pass `false` for the IPv4 path.
 #[cfg(target_os = "linux")]
-fn parse_ndp_linux(content: &str) -> Vec<ArpCacheEntry> {
+fn parse_ip_neigh(content: &str, ipv6_only: bool) -> Vec<ArpCacheEntry> {
     content
         .lines()
         .filter_map(|line| {
@@ -325,12 +487,12 @@ fn parse_ndp_linux(content: &str) -> Vec<ArpCacheEntry> {
                 .position(|t| *t == "lladdr")
                 .and_then(|i| parts.get(i + 1).copied())?;
 
-            if is_incomplete_mac(mac) {
+            if is_unusable_mac(mac) {
                 return None;
             }
 
             let ip = strip_zone_suffix(raw_ip);
-            if !is_acceptable_ipv6(ip) {
+            if ipv6_only && !is_acceptable_ipv6(ip) {
                 return None;
             }
 
@@ -348,14 +510,22 @@ fn parse_ndp_linux(content: &str) -> Vec<ArpCacheEntry> {
 // =============================================================================
 
 #[cfg(target_os = "windows")]
-fn read_arp_cache_windows() -> Vec<ArpCacheEntry> {
-    let output = match std::process::Command::new("arp").arg("-a").output() {
-        Ok(o) if o.status.success() => o,
-        _ => return Vec::new(),
-    };
-
+fn read_arp_cache_windows() -> Result<Vec<ArpCacheEntry>, ArpError> {
+    let output = std::process::Command::new("arp")
+        .arg("-a")
+        .output()
+        .map_err(|e| ArpError::CommandUnavailable {
+            command: "arp",
+            detail: e.to_string(),
+        })?;
+    if !output.status.success() {
+        return Err(ArpError::CommandFailed {
+            command: "arp",
+            detail: String::from_utf8_lossy(&output.stderr).into_owned(),
+        });
+    }
     let stdout = String::from_utf8_lossy(&output.stdout);
-    parse_arp_windows(&stdout)
+    Ok(parse_arp_windows(&stdout))
 }
 
 /// Parse Windows `arp -a` output.
@@ -365,6 +535,13 @@ fn read_arp_cache_windows() -> Vec<ArpCacheEntry> {
 ///   Internet Address      Physical Address      Type
 ///   192.168.1.1           aa-bb-cc-dd-ee-ff     dynamic
 /// ```
+///
+/// On localized Windows builds the `Interface:` and `Internet Address`
+/// header strings are translated (e.g. Japanese `インターフェイス:`).
+/// The data rows themselves use ASCII columns, so the parser does not
+/// require the header strings to match — strict MAC validation in
+/// [`is_unusable_mac`] rejects header rows when their second token is
+/// the translated `Physical Address` label rather than a real MAC.
 #[cfg(target_os = "windows")]
 fn parse_arp_windows(output: &str) -> Vec<ArpCacheEntry> {
     let mut entries = Vec::new();
@@ -373,38 +550,53 @@ fn parse_arp_windows(output: &str) -> Vec<ArpCacheEntry> {
     for line in output.lines() {
         let trimmed = line.trim();
 
-        if trimmed.starts_with("Interface:") {
-            // Extract interface IP
-            current_interface = trimmed.split_whitespace().nth(1).map(|s| s.to_string());
+        // Detect the per-interface block header. The pattern
+        // "<text> <ip> --- 0x<hex>" is locale-free; we only need the
+        // IP token. Any line containing ` --- 0x` is treated as such.
+        if let Some(ip) = parse_arp_windows_interface_line(trimmed) {
+            current_interface = Some(ip);
             continue;
         }
 
         let parts: Vec<&str> = trimmed.split_whitespace().collect();
-        if parts.len() >= 3 {
-            let ip = parts[0];
-            let mac_raw = parts[1];
-
-            // Skip header lines and broadcast
-            if ip == "Internet" || ip == "Address" {
-                continue;
-            }
-
-            // Convert Windows MAC format (aa-bb-cc-dd-ee-ff) to standard (aa:bb:cc:dd:ee:ff)
-            let mac = mac_raw.replace('-', ":");
-
-            if is_incomplete_mac(&mac) {
-                continue;
-            }
-
-            entries.push(ArpCacheEntry {
-                ip: ip.to_string(),
-                mac,
-                interface: current_interface.clone(),
-            });
+        if parts.len() < 3 {
+            continue;
         }
+
+        let ip = parts[0];
+        let mac_raw = parts[1];
+
+        // Convert Windows MAC format (aa-bb-cc-dd-ee-ff) to standard.
+        let mac = mac_raw.replace('-', ":");
+        if is_unusable_mac(&mac) {
+            continue;
+        }
+
+        entries.push(ArpCacheEntry {
+            ip: ip.to_string(),
+            mac,
+            interface: current_interface.clone(),
+        });
     }
 
     entries
+}
+
+/// Extract the local interface IP from a Windows `arp -a` block header
+/// like `Interface: 192.168.1.100 --- 0xc`. The header text varies by
+/// locale; the `--- 0x` marker is the locale-free anchor.
+#[cfg(target_os = "windows")]
+fn parse_arp_windows_interface_line(line: &str) -> Option<String> {
+    if !line.contains("0x") || !line.contains("---") {
+        return None;
+    }
+    let before_dashes = line.split("---").next()?.trim_end();
+    // The IP is the last whitespace-separated token before "---".
+    before_dashes
+        .split_whitespace()
+        .next_back()
+        .map(str::to_string)
+        .filter(|s| s.parse::<std::net::IpAddr>().is_ok())
 }
 
 // =============================================================================
@@ -412,22 +604,31 @@ fn parse_arp_windows(output: &str) -> Vec<ArpCacheEntry> {
 // =============================================================================
 
 #[cfg(target_os = "windows")]
-fn read_ndp_cache_windows() -> Vec<ArpCacheEntry> {
-    let output = match std::process::Command::new("netsh")
+fn read_ndp_cache_windows() -> Result<Vec<ArpCacheEntry>, ArpError> {
+    let output = std::process::Command::new("netsh")
         .args(["interface", "ipv6", "show", "neighbors"])
         .output()
-    {
-        Ok(o) if o.status.success() => o,
-        _ => return Vec::new(),
-    };
-
+        .map_err(|e| ArpError::CommandUnavailable {
+            command: "netsh",
+            detail: e.to_string(),
+        })?;
+    if !output.status.success() {
+        return Err(ArpError::CommandFailed {
+            command: "netsh",
+            detail: String::from_utf8_lossy(&output.stderr).into_owned(),
+        });
+    }
     let stdout = String::from_utf8_lossy(&output.stdout);
-    parse_ndp_windows(&stdout)
+    Ok(parse_ndp_windows(&stdout))
 }
 
 /// Parse Windows `netsh interface ipv6 show neighbors` output.
 /// Output is grouped per interface with three columns:
 /// `Internet Address      Physical Address      Type`
+///
+/// Locale handling mirrors [`parse_arp_windows`]: header rows pass
+/// through the data-row branch and get rejected by [`is_unusable_mac`]
+/// because their MAC column holds a translated label, not a real MAC.
 #[cfg(target_os = "windows")]
 fn parse_ndp_windows(output: &str) -> Vec<ArpCacheEntry> {
     let mut entries = Vec::new();
@@ -436,8 +637,11 @@ fn parse_ndp_windows(output: &str) -> Vec<ArpCacheEntry> {
     for line in output.lines() {
         let trimmed = line.trim();
 
+        // Per-interface header in English builds: "Interface 12: Ethernet".
+        // The "Interface " prefix is locale-dependent, so we only use
+        // this match opportunistically — the interface name is metadata
+        // and missing it does not break data-row parsing.
         if let Some(rest) = trimmed.strip_prefix("Interface ") {
-            // e.g., "Interface 12: Ethernet"
             current_interface = rest
                 .split(':')
                 .nth(1)
@@ -455,11 +659,8 @@ fn parse_ndp_windows(output: &str) -> Vec<ArpCacheEntry> {
         let mac_raw = parts[1];
         let state = parts[2..].join(" ");
 
-        // Header rows have non-IP first token. Skip them.
-        if raw_ip.eq_ignore_ascii_case("Internet")
-            || raw_ip.eq_ignore_ascii_case("Address")
-            || raw_ip.starts_with('-')
-        {
+        // Decorative separator line of dashes.
+        if raw_ip.starts_with('-') {
             continue;
         }
 
@@ -468,7 +669,7 @@ fn parse_ndp_windows(output: &str) -> Vec<ArpCacheEntry> {
         }
 
         let mac = mac_raw.replace('-', ":");
-        if is_incomplete_mac(&mac) {
+        if is_unusable_mac(&mac) {
             continue;
         }
 
@@ -500,6 +701,30 @@ mod tests {
         assert!(is_incomplete_mac("ff:ff:ff:ff:ff:ff"));
         assert!(is_incomplete_mac("00:00:00:00:00:00"));
         assert!(!is_incomplete_mac("aa:bb:cc:dd:ee:ff"));
+    }
+
+    #[test]
+    fn test_is_valid_mac_strict_format() {
+        // Six hex pairs separated by colons.
+        assert!(is_valid_mac("aa:bb:cc:dd:ee:ff"));
+        assert!(is_valid_mac("00:11:22:33:44:55"));
+        // Wrong shape.
+        assert!(!is_valid_mac(""));
+        assert!(!is_valid_mac("aa-bb-cc-dd-ee-ff")); // dashes not converted yet
+        assert!(!is_valid_mac("aabbccddeeff"));
+        assert!(!is_valid_mac("aa:bb:cc:dd:ee"));
+        // Non-hex characters such as a localized header row.
+        assert!(!is_valid_mac("Physical:Address:::"));
+        assert!(!is_valid_mac("物理:アドレス:::"));
+    }
+
+    #[test]
+    fn test_is_unusable_mac_combines_strict_and_placeholder() {
+        assert!(is_unusable_mac(""));
+        assert!(is_unusable_mac("(incomplete)"));
+        assert!(is_unusable_mac("ff:ff:ff:ff:ff:ff"));
+        assert!(is_unusable_mac("Physical Address"));
+        assert!(!is_unusable_mac("aa:bb:cc:dd:ee:ff"));
     }
 
     #[test]
@@ -606,13 +831,13 @@ mod tests {
         }
 
         #[test]
-        fn test_parse_ndp_linux_basic() {
+        fn test_parse_ip_neigh_ipv6() {
             let content = "fe80::aabb dev wlan0 lladdr aa:bb:cc:dd:ee:ff REACHABLE\n\
                            2001:db8::1 dev wlan0 lladdr 11:22:33:44:55:66 STALE\n\
                            fe80::bad dev wlan0  FAILED\n\
                            fe80::pending dev wlan0 lladdr 22:22:22:22:22:22 INCOMPLETE\n\
                            ff02::1 dev wlan0 lladdr 33:33:00:00:00:01 PERMANENT";
-            let entries = parse_ndp_linux(content);
+            let entries = parse_ip_neigh(content, true);
             assert_eq!(entries.len(), 2);
             assert_eq!(entries[0].ip, "fe80::aabb");
             assert_eq!(entries[0].mac, "aa:bb:cc:dd:ee:ff");
@@ -621,8 +846,18 @@ mod tests {
         }
 
         #[test]
-        fn test_parse_ndp_linux_empty() {
-            assert!(parse_ndp_linux("").is_empty());
+        fn test_parse_ip_neigh_ipv4_keeps_addresses() {
+            let content = "192.168.1.10 dev eth0 lladdr aa:bb:cc:dd:ee:ff REACHABLE\n\
+                           192.168.1.11 dev eth0 lladdr 11:22:33:44:55:66 STALE";
+            let entries = parse_ip_neigh(content, false);
+            assert_eq!(entries.len(), 2);
+            assert_eq!(entries[0].ip, "192.168.1.10");
+            assert_eq!(entries[1].ip, "192.168.1.11");
+        }
+
+        #[test]
+        fn test_parse_ip_neigh_empty() {
+            assert!(parse_ip_neigh("", true).is_empty());
         }
     }
 
@@ -663,6 +898,40 @@ mod tests {
             assert_eq!(entries[0].mac, "aa:bb:cc:dd:ee:ff");
             assert_eq!(entries[0].interface.as_deref(), Some("Ethernet"));
             assert_eq!(entries[1].ip, "2001:db8::1");
+        }
+
+        #[test]
+        fn test_parse_arp_windows_japanese_locale_interface_header() {
+            // Simulated ja-JP `arp -a` output. The "インターフェイス:" prefix
+            // replaces the English "Interface:" but the "--- 0x" marker is
+            // locale-free, and the column headers fail strict MAC validation.
+            let output = "\n\
+                インターフェイス: 192.168.1.100 --- 0xc\n\
+                  インターネット アドレス      物理アドレス          種類\n\
+                  192.168.1.1           aa-bb-cc-dd-ee-ff     動的\n\
+                  192.168.1.2           11-22-33-44-55-66     動的\n";
+            let entries = parse_arp_windows(output);
+            assert_eq!(entries.len(), 2);
+            assert_eq!(entries[0].ip, "192.168.1.1");
+            assert_eq!(entries[0].mac, "aa:bb:cc:dd:ee:ff");
+            assert_eq!(entries[0].interface.as_deref(), Some("192.168.1.100"));
+        }
+
+        #[test]
+        fn test_parse_arp_windows_interface_line_helper() {
+            assert_eq!(
+                parse_arp_windows_interface_line("Interface: 10.0.0.5 --- 0x3"),
+                Some("10.0.0.5".to_string())
+            );
+            assert_eq!(
+                parse_arp_windows_interface_line("インターフェイス: 10.0.0.5 --- 0x3"),
+                Some("10.0.0.5".to_string())
+            );
+            assert_eq!(parse_arp_windows_interface_line("not a header line"), None);
+            assert_eq!(
+                parse_arp_windows_interface_line("Interface: not-an-ip --- 0x3"),
+                None
+            );
         }
     }
 }

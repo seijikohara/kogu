@@ -14,8 +14,11 @@ use super::types::{DiscoveryResult, HostMetadata};
 pub(super) fn arp_cache_discovery(targets: &[IpAddr]) -> DiscoveryResult {
     let start = std::time::Instant::now();
 
-    // Read both IPv4 ARP and IPv6 NDP caches to expose MAC addresses for both families
-    let entries = arp_cache::read_neighbor_cache();
+    // Read both IPv4 ARP and IPv6 NDP caches to expose MAC addresses
+    // for both families. The reader returns partial results plus an
+    // optional diagnostic; partial entries are still useful, and the
+    // diagnostic surfaces tool-unavailable errors in the UI.
+    let (entries, probe_error) = arp_cache::read_neighbor_cache();
     let target_set: HashSet<String> = targets.iter().map(ToString::to_string).collect();
 
     let mut hosts = Vec::new();
@@ -56,7 +59,7 @@ pub(super) fn arp_cache_discovery(targets: &[IpAddr]) -> DiscoveryResult {
         host_metadata,
         unreachable: vec![],
         duration_ms: start.elapsed().as_millis() as u64,
-        error: None,
+        error: probe_error,
         requires_privileges: false,
     }
 }
