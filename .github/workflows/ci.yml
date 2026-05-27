@@ -30,7 +30,24 @@ jobs:
       - name: Build
         run: bun run build
 
+  # Branch-protection-friendly aggregate that resolves to a single
+  # "Test Backend" check regardless of how many entries the matrix has.
+  # Without this, renaming the matrix would silently bypass any required
+  # status checks pinned to the old "Test Backend" name.
   test-backend:
+    name: Test Backend
+    if: ${{ always() }}
+    needs: [test-backend-matrix]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verify matrix outcome
+        run: |
+          if [ "${{ needs.test-backend-matrix.result }}" != "success" ]; then
+            echo "test-backend-matrix did not succeed: ${{ needs.test-backend-matrix.result }}"
+            exit 1
+          fi
+
+  test-backend-matrix:
     name: Test Backend (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
     # Run on Ubuntu, macOS, and Windows so cross-platform compile errors
