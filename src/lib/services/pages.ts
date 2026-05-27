@@ -3,6 +3,7 @@
  * Update this file when adding new pages or tabs.
  */
 import {
+	Activity,
 	Aperture,
 	ArchiveRestore,
 	ArrowRightLeft,
@@ -613,6 +614,15 @@ export const PAGES: readonly PageDefinition[] = [
 		url: '/test-data-generator',
 		icon: TestTube,
 		description: 'Generate synthetic N×M datasets (CSV / TSV / JSON / SQL) with typed columns',
+		color: 'text-amber-500',
+		category: 'files',
+	},
+	{
+		id: 'file-watch',
+		title: 'File Watch',
+		url: '/file-watch',
+		icon: Activity,
+		description: 'Monitor filesystem changes in real time',
 		color: 'text-amber-500',
 		category: 'files',
 	},

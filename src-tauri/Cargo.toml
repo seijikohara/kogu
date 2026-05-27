@@ -110,6 +110,9 @@ flate2 = "1"
 bzip2 = "0.6"
 xz2 = "0.1"
 
+# File Watch — recursive filesystem event watcher
+notify = "8"
+
 # Note: no direct `rand_core` dependency.
 #
 # The codebase only needs `OsRng` for `ssh-key` and `pgp` key generation,
