@@ -2,7 +2,7 @@
  * Duplicate File Finder service.
  *
  * Wraps the `duplicate_scan` / `duplicate_delete` /
- * `duplicate_replace_with_symlink` Tauri commands and exposes helpers
+ * `duplicate_replace_with_link` Tauri commands and exposes helpers
  * for the duplicate-finder tool. The Rust backend handles a 3-stage
  * pipeline (size bucket -> partial hash of the first 8 KiB -> full
  * hash). Progress events stream into the UI via the
@@ -64,11 +64,12 @@ export const deleteFiles = (paths: readonly string[]): Promise<number> =>
 	invoke<number>('duplicate_delete', { paths });
 
 /**
- * Replace `source` with a symlink to `target`. Unix-only - the frontend
- * disables the action on Windows.
+ * Replace `source` with a link to `target`. The link kind is
+ * platform-dependent: symbolic link on Unix, hard link on Windows.
+ * Hard links require source and target to live on the same volume.
  */
-export const replaceWithSymlink = (source: string, target: string): Promise<void> =>
-	invoke<void>('duplicate_replace_with_symlink', { source, target });
+export const replaceWithLink = (source: string, target: string): Promise<void> =>
+	invoke<void>('duplicate_replace_with_link', { source, target });
 
 /**
  * Subscribe to scan progress events. Returns an unlisten function the

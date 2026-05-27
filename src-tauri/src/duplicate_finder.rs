@@ -545,17 +545,26 @@ pub fn duplicate_delete(paths: Vec<String>) -> Result<u64, String> {
     }
 }
 
-/// Replace `source` with a symlink to `target`. Both paths must already
-/// exist; `source` is removed and a new symlink with the same name is
-/// created pointing at `target`. Windows callers receive an error - the
-/// frontend already disables the action there.
+/// Replace `source` with a link to `target`. Both paths must already
+/// exist; `source` is removed and a new link with the same name is
+/// created pointing at `target`. The link kind depends on the OS:
+///
+/// - Unix: symbolic link via [`std::os::unix::fs::symlink`].
+/// - Windows: hard link via [`std::fs::hard_link`]. Hard links cannot
+///   span volumes; cross-volume attempts return an error from the OS.
+///
+/// Symbolic and hard links both reclaim duplicate disk space, but their
+/// semantics differ: a symlink mirrors a path (broken if the target
+/// moves); a hardlink shares the inode (broken only if every reference
+/// is removed). The frontend surfaces this distinction in the action
+/// label and About copy.
 ///
 /// # Errors
 ///
 /// Returns a stringified error when the source cannot be removed or the
-/// symlink cannot be created.
+/// link cannot be created (including the Windows cross-volume case).
 #[tauri::command]
-pub fn duplicate_replace_with_symlink(source: String, target: String) -> Result<(), String> {
+pub fn duplicate_replace_with_link(source: String, target: String) -> Result<(), String> {
     let source_path = PathBuf::from(&source);
     let target_path = PathBuf::from(&target);
 
@@ -571,9 +580,19 @@ pub fn duplicate_replace_with_symlink(source: String, target: String) -> Result<
             .map_err(|e| format!("Symlink failed: {e}"))?;
         Ok(())
     }
-    #[cfg(not(unix))]
+    #[cfg(windows)]
     {
-        Err("Symlink replacement is only supported on Unix-like systems".to_string())
+        std::fs::hard_link(&target_path, &source_path).map_err(|e| {
+            format!(
+                "Hard link failed: {e} (hard links cannot span volumes; source and target must \
+                 reside on the same drive)"
+            )
+        })?;
+        Ok(())
+    }
+    #[cfg(not(any(unix, windows)))]
+    {
+        Err("Link replacement is not supported on this platform".to_string())
     }
 }
 
