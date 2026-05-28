@@ -56,12 +56,14 @@ mod file_watch;
 mod folder_tree;
 mod generators;
 mod hash_batch;
+mod hash_text;
 mod hex_editor;
 #[cfg(target_os = "macos")]
 mod menu;
 mod network;
 mod rest_client;
 mod settings;
+mod string_compress;
 mod tls_inspect;
 mod webhook;
 mod websocket;
@@ -500,6 +502,9 @@ pub fn run() {
             drive_info::folder_size_scan,
             file_inspect::file_inspect,
             hash_batch::hash_file_batch,
+            hash_text::hash_text_batch,
+            string_compress::string_compress,
+            string_compress::string_decompress,
             file_watch::file_watch_start,
             file_watch::file_watch_stop,
             folder_tree::folder_walk,

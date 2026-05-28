@@ -1,13 +1,15 @@
 /**
- * Text compression service backed by `CompressionStream` (gzip) and
- * `brotli-wasm` (brotli). All operations are async because the platform
- * compression API and the wasm module are both asynchronous.
+ * Text compression service backed by the Rust `string_compress` /
+ * `string_decompress` Tauri commands (see
+ * `src-tauri/src/string_compress.rs`).
  *
- * Note: `CompressionStream` does not expose a compression-level knob; gzip is
- * always emitted at the platform-default level. The level slider is therefore
- * only consulted for brotli, where it maps to the brotli quality parameter.
+ * The Rust backend exposes a single uniform contract for gzip and
+ * brotli at any level; the previous renderer-side mix of
+ * `CompressionStream` + `brotli-wasm` is gone. CPU work runs on a
+ * `spawn_blocking` worker on the Rust side so the renderer thread
+ * stays free even on multi-megabyte input.
  */
-import brotliPromise from 'brotli-wasm';
+import { invoke } from '@tauri-apps/api/core';
 
 /** Compression algorithm identifier. */
 export type CompressionAlgorithm = 'gzip' | 'brotli';
@@ -51,10 +53,6 @@ export interface CompressionError {
 	readonly error: string;
 }
 
-/** GZIP RFC 1952 magic bytes (`\x1F\x8B`). */
-const GZIP_MAGIC_0 = 0x1f;
-const GZIP_MAGIC_1 = 0x8b;
-
 /** Default level per algorithm. */
 export const DEFAULT_LEVEL: Readonly<Record<CompressionAlgorithm, number>> = {
 	gzip: 6,
@@ -69,47 +67,25 @@ export const LEVEL_RANGE: Readonly<
 	brotli: { min: 0, max: 11 },
 };
 
-const textEncoder = new TextEncoder();
-const textDecoder = new TextDecoder('utf-8', { fatal: false });
-
 const errorMessage = (e: unknown, fallback: string): string => {
 	if (e instanceof Error) return e.message;
 	if (typeof e === 'string') return e;
 	return fallback;
 };
 
-/** Pipe bytes through a Web Streams transformer and collect the result. */
-const runStream = async (
-	input: Uint8Array,
-	transformer: GenericTransformStream
-): Promise<Uint8Array> => {
-	// `Blob` accepts `Uint8Array` at runtime but DOM lib's `BlobPart` only
-	// allows the narrower `Uint8Array<ArrayBuffer>` variant. Reinterpret as
-	// `ArrayBuffer` so the broader `Uint8Array<ArrayBufferLike>` upcasts.
-	const part = new Uint8Array(input.buffer as ArrayBuffer, input.byteOffset, input.byteLength);
-	const inputStream = new Blob([part]).stream();
-	const responseStream = inputStream.pipeThrough(transformer);
-	const buffer = await new Response(responseStream).arrayBuffer();
-	return new Uint8Array(buffer);
-};
+interface CompressBackendResponse {
+	readonly bytesBase64: string;
+	readonly algorithm: CompressionAlgorithm;
+	readonly inputBytes: number;
+	readonly outputBytes: number;
+}
 
-const compressGzip = (bytes: Uint8Array): Promise<Uint8Array> =>
-	runStream(bytes, new CompressionStream('gzip'));
-
-const decompressGzip = (bytes: Uint8Array): Promise<Uint8Array> =>
-	runStream(bytes, new DecompressionStream('gzip'));
-
-const getBrotli = async () => brotliPromise;
-
-const compressBrotli = async (bytes: Uint8Array, quality: number): Promise<Uint8Array> => {
-	const brotli = await getBrotli();
-	return brotli.compress(bytes, { quality });
-};
-
-const decompressBrotli = async (bytes: Uint8Array): Promise<Uint8Array> => {
-	const brotli = await getBrotli();
-	return brotli.decompress(bytes);
-};
+interface DecompressBackendResponse {
+	readonly text: string;
+	readonly algorithm: CompressionAlgorithm;
+	readonly inputBytes: number;
+	readonly outputBytes: number;
+}
 
 /** Compress UTF-8-encoded text under the requested algorithm and level. */
 export const compressText = async (
@@ -119,37 +95,23 @@ export const compressText = async (
 	if (text.length === 0) return { ok: false, error: 'Input is empty' };
 
 	try {
-		const inputBytes = textEncoder.encode(text);
-		const compressed =
-			opts.algorithm === 'gzip'
-				? await compressGzip(inputBytes)
-				: await compressBrotli(inputBytes, clampLevel(opts.level, 'brotli'));
-
-		const inputLen = inputBytes.byteLength;
-		const outputLen = compressed.byteLength;
-
+		const response = await invoke<CompressBackendResponse>('string_compress', {
+			text,
+			algorithm: opts.algorithm,
+			level: clampLevel(opts.level, opts.algorithm),
+		});
+		const bytes = base64ToBytes(response.bytesBase64);
 		return {
 			ok: true,
-			inputBytes: inputLen,
-			outputBytes: outputLen,
-			ratio: inputLen === 0 ? 0 : outputLen / inputLen,
-			bytesSaved: inputLen - outputLen,
-			bytes: compressed,
+			inputBytes: response.inputBytes,
+			outputBytes: response.outputBytes,
+			ratio: response.inputBytes === 0 ? 0 : response.outputBytes / response.inputBytes,
+			bytesSaved: response.inputBytes - response.outputBytes,
+			bytes,
 		};
 	} catch (e) {
 		return { ok: false, error: errorMessage(e, 'Compression failed') };
 	}
-};
-
-/** Sniff the algorithm from a byte prefix. */
-const sniffAlgorithm = (bytes: Uint8Array): CompressionAlgorithm => {
-	if (bytes.byteLength >= 2 && bytes[0] === GZIP_MAGIC_0 && bytes[1] === GZIP_MAGIC_1) {
-		return 'gzip';
-	}
-	// Brotli has no fixed magic prefix — fall through to it on negative gzip
-	// match. If the bytes are neither gzip nor valid brotli the wasm call will
-	// surface a parse error.
-	return 'brotli';
 };
 
 /** Decompress raw bytes; `auto` sniffs gzip magic and falls back to brotli. */
@@ -159,17 +121,17 @@ export const decompressBytes = async (
 ): Promise<DecompressResult | CompressionError> => {
 	if (bytes.byteLength === 0) return { ok: false, error: 'Input is empty' };
 
-	const resolved: CompressionAlgorithm = algorithm === 'auto' ? sniffAlgorithm(bytes) : algorithm;
-
 	try {
-		const out = resolved === 'gzip' ? await decompressGzip(bytes) : await decompressBrotli(bytes);
-		const text = textDecoder.decode(out);
+		const response = await invoke<DecompressBackendResponse>('string_decompress', {
+			bytesBase64: bytesToBase64(bytes),
+			algorithm,
+		});
 		return {
 			ok: true,
-			text,
-			algorithm: resolved,
-			inputBytes: bytes.byteLength,
-			outputBytes: out.byteLength,
+			text: response.text,
+			algorithm: response.algorithm,
+			inputBytes: response.inputBytes,
+			outputBytes: response.outputBytes,
 		};
 	} catch (e) {
 		return { ok: false, error: errorMessage(e, 'Decompression failed') };
@@ -268,7 +230,7 @@ export const dataUriToBytes = (uri: string): Uint8Array => {
 	const body = trimmed.slice(commaIndex + 1);
 	if (header.includes(';base64')) return base64ToBytes(body);
 	// URL-encoded payload: re-use the decoded text path.
-	return textEncoder.encode(decodeURIComponent(body));
+	return new TextEncoder().encode(decodeURIComponent(body));
 };
 
 const CURL_DATA_FLAGS: readonly string[] = [

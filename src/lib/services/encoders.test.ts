@@ -11,8 +11,6 @@ import {
 	encodeUrl,
 	encodeUrlComponent,
 	formatBytes,
-	generateAllHashes,
-	generateHash,
 	parseUrl,
 	SAMPLE_JWT,
 	validateBase64,
@@ -307,65 +305,10 @@ describe('JWT', () => {
 // ============================================================================
 
 describe('Hash', () => {
-	describe('generateHash', () => {
-		const TEST_INPUT = 'Hello, World!';
-
-		it('generates MD5 hash', () => {
-			const hash = generateHash(TEST_INPUT, 'MD5');
-			expect(hash).toBe('65a8e27d8879283831b664bd8b7f0ad4');
-		});
-
-		it('generates SHA1 hash', () => {
-			const hash = generateHash(TEST_INPUT, 'SHA1');
-			expect(hash).toBe('0a0a9f2a6772942557ab5355d76af442f8f65e01');
-		});
-
-		it('generates SHA256 hash', () => {
-			const hash = generateHash(TEST_INPUT, 'SHA256');
-			expect(hash).toBe('dffd6021bb2bd5b0af676290809ec3a53191dd81c7f70a4b28688a362182986f');
-		});
-
-		it('generates consistent hashes for same input', () => {
-			const hash1 = generateHash(TEST_INPUT, 'SHA256');
-			const hash2 = generateHash(TEST_INPUT, 'SHA256');
-			expect(hash1).toBe(hash2);
-		});
-
-		it('generates different hashes for different inputs', () => {
-			const hash1 = generateHash('input1', 'SHA256');
-			const hash2 = generateHash('input2', 'SHA256');
-			expect(hash1).not.toBe(hash2);
-		});
-
-		it('throws error for unknown algorithm', () => {
-			// @ts-expect-error Testing invalid algorithm
-			expect(() => generateHash(TEST_INPUT, 'UNKNOWN')).toThrow('Unknown algorithm');
-		});
-	});
-
-	describe('generateAllHashes', () => {
-		it('generates hashes for all algorithms', () => {
-			const results = generateAllHashes('test');
-
-			expect(results).toHaveLength(6);
-			expect(results.map((r) => r.algorithm)).toEqual([
-				'MD5',
-				'SHA1',
-				'SHA224',
-				'SHA256',
-				'SHA384',
-				'SHA512',
-			]);
-		});
-
-		it('includes bit length for each algorithm', () => {
-			const results = generateAllHashes('test');
-
-			expect(results.find((r) => r.algorithm === 'MD5')?.bits).toBe(128);
-			expect(results.find((r) => r.algorithm === 'SHA256')?.bits).toBe(256);
-			expect(results.find((r) => r.algorithm === 'SHA512')?.bits).toBe(512);
-		});
-	});
+	// `generateHash` / `generateAllHashes` are now delegated to the Rust
+	// `hash_text_batch` Tauri command; per-algorithm digest correctness
+	// is covered by Rust unit tests in `src-tauri/src/hash_text.rs`.
+	// TS-side coverage focuses on the pure comparator below.
 
 	describe('compareHashes', () => {
 		it('returns true for identical hashes', () => {
