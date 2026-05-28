@@ -107,10 +107,13 @@ export const RSSI_DOMAIN: readonly [number, number] = [-100, -20];
 export const RSSI_TICKS: readonly number[] = [-20, -30, -40, -50, -60, -70, -80, -90, -100];
 
 /**
- * Baseline value where the AP bell curve touches zero on the Y axis.
- * Slightly below the minimum tick so the curve visually closes.
+ * Baseline value where the AP bell curve closes on the Y axis. Set
+ * to the minimum tick so the curve tail sits exactly on the bottom
+ * axis line — using a value above the minimum (e.g., -95 with a
+ * domain bottom of -100) leaves a visible gap between the curve
+ * tail and the axis.
  */
-export const BASELINE_DBM = -95;
+export const BASELINE_DBM = -100;
 
 // =============================================================================
 // Pure helpers
