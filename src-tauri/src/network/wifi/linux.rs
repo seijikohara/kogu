@@ -110,9 +110,12 @@ async fn request_scan(
 async fn list_access_points(
     connection: &Connection,
     device_path: &OwnedObjectPath,
-) -> Result<Vec<OwnedObjectPath>, zbus::Error> {
+) -> Result<Vec<OwnedObjectPath>, WifiError> {
     let proxy = build_proxy(connection, device_path.as_str(), NM_WIRELESS_IFACE).await?;
-    proxy.call("GetAllAccessPoints", &()).await
+    proxy
+        .call("GetAllAccessPoints", &())
+        .await
+        .map_err(|e| WifiError::ScanFailed(format!("GetAllAccessPoints failed: {e}")))
 }
 
 async fn active_bssid(
@@ -199,14 +202,19 @@ async fn build_network(
     }))
 }
 
-async fn build_proxy<'a>(
-    connection: &'a Connection,
+async fn build_proxy(
+    connection: &Connection,
     path: &str,
     interface: &str,
-) -> Result<zbus::Proxy<'a>, WifiError> {
-    zbus::Proxy::new(connection, NM_SERVICE, path, interface)
-        .await
-        .map_err(|e| WifiError::ScanFailed(format!("proxy creation failed: {e}")))
+) -> Result<zbus::Proxy<'static>, WifiError> {
+    zbus::Proxy::new(
+        connection,
+        NM_SERVICE.to_string(),
+        path.to_string(),
+        interface.to_string(),
+    )
+    .await
+    .map_err(|e| WifiError::ScanFailed(format!("proxy creation failed: {e}")))
 }
 
 async fn get_property(
