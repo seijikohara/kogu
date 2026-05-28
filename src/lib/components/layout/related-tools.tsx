@@ -34,7 +34,9 @@ export function RelatedTools({ items }: RelatedToolsProps) {
 						<div className="min-w-0 flex-1">
 							<div className="truncate font-medium text-foreground">{page.title}</div>
 							{item.reason ? (
-								<div className="truncate text-2xs text-muted-foreground">{item.reason}</div>
+								<div className="line-clamp-2 text-2xs leading-snug text-muted-foreground">
+									{item.reason}
+								</div>
 							) : null}
 						</div>
 					</Link>
