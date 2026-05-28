@@ -2,7 +2,7 @@ export { DetectedInfo } from './detected-info';
 export type { DetectedInfoProps, DetectedItem } from './detected-info';
 
 export { EmbeddedEmptyState } from './embedded-empty-state';
-export type { EmbeddedEmptyStateProps } from './embedded-empty-state';
+export type { EmbeddedEmptyStateProps, EmbeddedEmptyStateTone } from './embedded-empty-state';
 
 export { EmptyOutputPane } from './empty-output-pane';
 export type { EmptyOutputPaneProps } from './empty-output-pane';

@@ -13,7 +13,7 @@ import {
 	FormSlider,
 } from '@/lib/components/form';
 import { ToolFooter, ToolShell } from '@/lib/components/shell';
-import { EmptyState } from '@/lib/components/status';
+import { EmbeddedEmptyState, EmptyState } from '@/lib/components/status';
 import { useDocumentTitle } from '@/lib/hooks';
 import { usePersistedRail } from '@/lib/stores';
 import {
@@ -232,15 +232,13 @@ function DiffViewerPage() {
 	);
 
 	const identicalState = (
-		<div className="flex flex-1 items-center justify-center text-muted-foreground">
-			<div className="text-center">
-				<div className="mx-auto mb-3 flex h-16 w-16 items-center justify-center rounded-full bg-success/20">
-					<Equal className="h-8 w-8 text-success" />
-				</div>
-				<p className="text-lg font-medium text-success">Files are identical</p>
-				<p className="mt-1 text-xs text-muted-foreground">No differences found</p>
-			</div>
-		</div>
+		<EmbeddedEmptyState
+			icon={Equal}
+			title="Files are identical"
+			description="No differences found"
+			tone="success"
+			fillHeight
+		/>
 	);
 
 	return (
