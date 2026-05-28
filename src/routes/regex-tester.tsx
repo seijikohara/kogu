@@ -24,23 +24,19 @@ import { cn } from '@/lib/utils';
 import { groupColor, matchBackdropColor } from '@/lib/services/regex-design';
 import {
 	compileRegex,
-	countCaptureGroups,
 	DEFAULT_FLAGS,
 	type FeatureUsage,
 	FLAG_INFO,
-	findFeatures,
-	findMatches,
 	flagsToString,
 	type RegexFlags,
 	type RegexMatch,
-	replaceText,
 	type Result,
 	SAMPLE_PATTERN,
 	SAMPLE_REPLACEMENT,
 	SAMPLE_TEST_TEXT,
 } from '@/lib/services/regex';
-import { type VizNode, type VizNodeKind, visualizeRegex } from '@/lib/services/regex-viz';
-import { useDebouncedValue, useDocumentTitle } from '@/lib/hooks';
+import type { VizNode, VizNodeKind } from '@/lib/services/regex-viz';
+import { useDebouncedValue, useDocumentTitle, useRegexWorker } from '@/lib/hooks';
 
 interface Segment {
 	readonly text: string;
@@ -537,26 +533,36 @@ function RegexTesterPage() {
 		setReplacement(SAMPLE_REPLACEMENT);
 	};
 
-	// Debounce expensive inputs at 250ms so regexp-tree AST and railroad
-	// generation do not fire on every keystroke. compileRegex stays on the
-	// raw pattern for the validity badge — `new RegExp()` is cheap enough.
+	// Debounce expensive inputs at 250ms so the worker doesn't enqueue a
+	// fresh job on every keystroke. compileRegex stays on the raw
+	// pattern for the validity badge — `new RegExp()` is cheap and the
+	// badge needs to reflect the live state.
 	const debouncedPattern = useDebouncedValue(pattern, 250);
 	const debouncedTestText = useDebouncedValue(testText, 250);
 	const debouncedReplacement = useDebouncedValue(replacement, 250);
 
 	const flagString = flagsToString(flags);
 	const compiled = compileRegex(pattern, flags);
-	const matchesResult = findMatches(debouncedPattern, flags, debouncedTestText);
-	const matches: readonly RegexMatch[] = matchesResult.ok ? matchesResult.value : [];
-	const replaceResult = replaceText(
-		debouncedPattern,
-		flags,
-		debouncedTestText,
-		debouncedReplacement
-	);
-	const visualization = visualizeRegex(debouncedPattern, flagString);
-	const features = findFeatures(debouncedPattern);
-	const captureGroupCount = countCaptureGroups(debouncedPattern);
+
+	// Heavy work (regexp-tree AST + railroad visualization, plus the
+	// match / replace loops) happens off-thread. Stale responses are
+	// discarded by the hook's monotonic id check.
+	const workerOutput = useRegexWorker({
+		pattern: debouncedPattern,
+		flagString,
+		testText: debouncedTestText,
+		replacement: debouncedReplacement,
+	});
+	const matches: readonly RegexMatch[] = workerOutput.matches;
+	const replaceResult = workerOutput.replaced ?? { ok: true, value: '' };
+	const visualization: typeof workerOutput.viz =
+		workerOutput.viz ??
+		({
+			ok: true,
+			value: { kind: 'sequence', label: '', children: [] },
+		} satisfies { readonly ok: true; readonly value: VizNode });
+	const features = workerOutput.features;
+	const captureGroupCount = workerOutput.captureGroupCount;
 
 	const validity: 'empty' | 'valid' | 'invalid' =
 		pattern.length === 0 ? 'empty' : compiled.ok ? 'valid' : 'invalid';
