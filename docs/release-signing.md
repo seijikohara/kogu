@@ -1,17 +1,22 @@
 # Release Signing and Notarization
 
-This document explains how Kogu's release workflow signs and notarizes
-macOS builds. Without these secrets configured, the workflow still
-produces DMG artifacts using ad-hoc signing (the fallback declared in
-`src-tauri/tauri.conf.json` via `signingIdentity: "-"`). Ad-hoc-signed
-DMGs trigger a Gatekeeper warning on first launch; signed and
-notarized DMGs install cleanly.
+This document explains how Kogu can sign and notarize macOS builds.
+The release workflow currently produces DMGs with **ad-hoc signing**
+(`signingIdentity: "-"` in `src-tauri/tauri.conf.json`); enabling
+Developer ID signing requires both configuring the secrets below and
+re-wiring `.github/workflows/release.yml` to forward them to
+`tauri-apps/tauri-action`. The forwarding step was removed because
+GitHub Actions expressions cannot toggle env keys based on secret
+presence, so passing empty strings caused `security import` to fail
+in repositories where the secrets are not configured. See the
+"Re-enabling signing" section below for the rewire pattern that
+works.
 
 ## Required GitHub repository secrets
 
-The `Build and release` step in `.github/workflows/release.yml` forwards
-the following secrets to `tauri-apps/tauri-action`, which passes them
-to the Tauri bundler. All values are case-sensitive.
+To sign and notarize macOS DMGs, configure the following secrets and
+then re-enable the forwarding step (see below). All values are
+case-sensitive.
 
 | Secret                       | Value                                                                                                                                       |
 | ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -22,13 +27,47 @@ to the Tauri bundler. All values are case-sensitive.
 | `APPLE_PASSWORD`             | App-specific password generated at <https://appleid.apple.com> for the `APPLE_ID` account.                                                  |
 | `APPLE_TEAM_ID`              | Ten-character team identifier shown in the Apple Developer portal.                                                                          |
 
-When any one of these is missing, the bundler skips both signing and
-notarization for that build and falls back to ad-hoc signing.
+## Re-enabling signing once the secrets are set
 
-The secrets are gated on the macOS matrix legs in the workflow, so
-they are never forwarded to the Linux or Windows runners. This limits
-the credentials' reachable surface to the job that actually consumes
-them.
+Once every secret above is configured, restore the forwarding by
+adding a precheck step that flips an output flag when the credentials
+are available, then guard the `tauri-action` step on that flag. This
+keeps env keys absent when secrets are missing, which `tauri-action`
+treats as "skip signing" instead of "import the empty cert":
+
+```yaml
+- name: Check Apple signing secrets
+  id: apple-signing
+  if: runner.os == 'macOS'
+  shell: bash
+  env:
+    HAS_CERT: ${{ secrets.APPLE_CERTIFICATE != '' }}
+  run: echo "available=$HAS_CERT" >> "$GITHUB_OUTPUT"
+
+- name: Build and release (macOS, signed)
+  if: |
+    runner.os == 'macOS' &&
+    steps.apple-signing.outputs.available == 'true'
+  uses: tauri-apps/tauri-action@v0.6.2
+  env:
+    GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
+    # ... rest of APPLE_* secrets ...
+  with:
+    # ...
+
+- name: Build and release (unsigned)
+  if: |
+    runner.os != 'macOS' ||
+    steps.apple-signing.outputs.available != 'true'
+  uses: tauri-apps/tauri-action@v0.6.2
+  env:
+    GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  with:
+    # ...
+```
+
+The remainder of this document covers preparing each secret.
 
 ## Preparing the certificate
 
