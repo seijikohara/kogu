@@ -13,15 +13,9 @@ import { useCallback, useMemo, useState, type DragEvent } from 'react';
 import { toast } from 'sonner';
 
 import { CopyButton } from '@/lib/components/action';
-import {
-	FormCheckbox,
-	FormCheckboxGroup,
-	FormInfo,
-	FormInput,
-	FormSection,
-} from '@/lib/components/form';
-import { RelatedTools, SectionLabel } from '@/lib/components/layout';
-import { ToolShell } from '@/lib/components/shell';
+import { FormCheckbox, FormCheckboxGroup, FormInput, FormSection } from '@/lib/components/form';
+import { SectionLabel } from '@/lib/components/layout';
+import { ToolFooter, ToolShell } from '@/lib/components/shell';
 import { EmbeddedEmptyState, StatItem } from '@/lib/components/status';
 import { Badge } from '@/lib/components/ui/badge';
 import { Button } from '@/lib/components/ui/button';
@@ -273,23 +267,20 @@ function PathToolPage() {
 						</FormCheckboxGroup>
 					</FormSection>
 
-					<FormSection title="Related">
-						<RelatedTools
-							items={[
-								{ id: 'file-inspector', reason: 'Inspect file metadata for this path' },
-								{ id: 'url-encoder', reason: 'Encode / decode generic URLs' },
-								{ id: 'escape-tool', reason: 'Escape strings for shells and code' },
-							]}
-						/>
-					</FormSection>
-
-					<FormSection title="About">
-						<FormInfo>
-							Pure local parsing. Detection inspects the prefix and separator hints. URL form uses
-							RFC 8089 (`file://`) with percent-encoded segments. Shell escapes target bash /
-							zsh-compatible POSIX shells and PowerShell single-quoted strings.
-						</FormInfo>
-					</FormSection>
+					<ToolFooter
+						relatedItems={[
+							{ id: 'file-inspector', reason: 'Inspect file metadata for this path' },
+							{ id: 'url-encoder', reason: 'Encode / decode generic URLs' },
+							{ id: 'escape-tool', reason: 'Escape strings for shells and code' },
+						]}
+						aboutText={
+							<>
+								Pure local parsing. Detection inspects the prefix and separator hints. URL form uses
+								RFC 8089 (`file://`) with percent-encoded segments. Shell escapes target bash /
+								zsh-compatible POSIX shells and PowerShell single-quoted strings.
+							</>
+						}
+					/>
 				</>
 			}
 		>

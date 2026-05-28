@@ -17,15 +17,9 @@ import { useCallback, useEffect, useMemo, useState, type DragEvent } from 'react
 import { toast } from 'sonner';
 
 import { CopyButton } from '@/lib/components/action';
-import {
-	FormCheckbox,
-	FormCheckboxGroup,
-	FormInfo,
-	FormSection,
-	FormSlider,
-} from '@/lib/components/form';
-import { DefinitionList, RelatedTools, SectionLabel } from '@/lib/components/layout';
-import { ToolShell } from '@/lib/components/shell';
+import { FormCheckbox, FormCheckboxGroup, FormSection, FormSlider } from '@/lib/components/form';
+import { DefinitionList, SectionLabel } from '@/lib/components/layout';
+import { ToolFooter, ToolShell } from '@/lib/components/shell';
 import { EmbeddedEmptyState, StatItem } from '@/lib/components/status';
 import { Badge } from '@/lib/components/ui/badge';
 import { Button } from '@/lib/components/ui/button';
@@ -457,22 +451,19 @@ function FileInspectorPage() {
 						</div>
 					</FormSection>
 
-					<FormSection title="Related">
-						<RelatedTools
-							items={[
-								{ id: 'mime-types', reason: "Look up an extension's MIME" },
-								{ id: 'hash-generator', reason: 'Hash arbitrary text' },
-								{ id: 'x509-decoder', reason: "Decode if it's a cert" },
-							]}
-						/>
-					</FormSection>
-
-					<FormSection title="About">
-						<FormInfo>
-							Pure local inspection. No upload. Magic-byte detection uses the MIME Type Explorer
-							catalog. Files larger than 500 MB fall back to head-only hashing.
-						</FormInfo>
-					</FormSection>
+					<ToolFooter
+						relatedItems={[
+							{ id: 'mime-types', reason: "Look up an extension's MIME" },
+							{ id: 'hash-generator', reason: 'Hash arbitrary text' },
+							{ id: 'x509-decoder', reason: "Decode if it's a cert" },
+						]}
+						aboutText={
+							<>
+								Pure local inspection. No upload. Magic-byte detection uses the MIME Type Explorer
+								catalog. Files larger than 500 MB fall back to head-only hashing.
+							</>
+						}
+					/>
 				</>
 			}
 		>

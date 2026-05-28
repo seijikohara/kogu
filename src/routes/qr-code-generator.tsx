@@ -28,8 +28,8 @@ import {
 	FormSlider,
 	FormTextarea,
 } from '@/lib/components/form';
-import { RelatedTools, SectionHeader } from '@/lib/components/layout';
-import { ToolShell } from '@/lib/components/shell';
+import { SectionHeader } from '@/lib/components/layout';
+import { ToolFooter, ToolShell } from '@/lib/components/shell';
 import { EmbeddedEmptyState, LiveStatusRegion, StatItem } from '@/lib/components/status';
 import { Button } from '@/lib/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/lib/components/ui/card';
@@ -675,21 +675,18 @@ function QrCodeGeneratorPage() {
 						/>
 					</FormSection>
 
-					<FormSection title="Related">
-						<RelatedTools
-							items={[
-								{ id: 'image-converter', reason: 'Re-encode the exported PNG' },
-								{ id: 'url-encoder', reason: 'Encode complex payloads before generation' },
-							]}
-						/>
-					</FormSection>
-
-					<FormSection title="About">
-						<FormInfo>
-							Generates QR codes locally with configurable dot, corner, and logo styling. Output is
-							rendered as SVG with PNG export — nothing is uploaded.
-						</FormInfo>
-					</FormSection>
+					<ToolFooter
+						relatedItems={[
+							{ id: 'image-converter', reason: 'Re-encode the exported PNG' },
+							{ id: 'url-encoder', reason: 'Encode complex payloads before generation' },
+						]}
+						aboutText={
+							<>
+								Generates QR codes locally with configurable dot, corner, and logo styling. Output
+								is rendered as SVG with PNG export — nothing is uploaded.
+							</>
+						}
+					/>
 				</>
 			}
 		>

@@ -16,15 +16,9 @@ import {
 import { toast } from 'sonner';
 
 import { CopyButton } from '@/lib/components/action';
-import {
-	FormCheckbox,
-	FormCheckboxGroup,
-	FormInfo,
-	FormSection,
-	FormSelect,
-} from '@/lib/components/form';
-import { RelatedTools, SectionHeader, SectionLabel } from '@/lib/components/layout';
-import { ToolShell } from '@/lib/components/shell';
+import { FormCheckbox, FormCheckboxGroup, FormSection, FormSelect } from '@/lib/components/form';
+import { SectionHeader, SectionLabel } from '@/lib/components/layout';
+import { ToolFooter, ToolShell } from '@/lib/components/shell';
 import { EmptyState, ErrorDisplay, StatItem } from '@/lib/components/status';
 import { Badge } from '@/lib/components/ui/badge';
 import { Button } from '@/lib/components/ui/button';
@@ -257,23 +251,20 @@ function NetworkInterfacesPage() {
 						/>
 					</FormSection>
 
-					<FormSection title="Related">
-						<RelatedTools
-							items={[
-								{ id: 'ip-converter', reason: 'Convert between IPv4 / IPv6 representations' },
-								{ id: 'cidr-calculator', reason: 'Plan subnet ranges from a base address' },
-								{ id: 'mac-lookup', reason: 'Identify a vendor from a MAC address' },
-								{ id: 'network-scanner', reason: 'Discover hosts on this network' },
-							]}
-						/>
-					</FormSection>
-
-					<FormSection title="About">
-						<FormInfo>
-							Read-only snapshot of every network interface the OS reports — IPv4, IPv6, MAC, MTU,
-							gateway, traffic counters. Nothing leaves your machine.
-						</FormInfo>
-					</FormSection>
+					<ToolFooter
+						relatedItems={[
+							{ id: 'ip-converter', reason: 'Convert between IPv4 / IPv6 representations' },
+							{ id: 'cidr-calculator', reason: 'Plan subnet ranges from a base address' },
+							{ id: 'mac-lookup', reason: 'Identify a vendor from a MAC address' },
+							{ id: 'network-scanner', reason: 'Discover hosts on this network' },
+						]}
+						aboutText={
+							<>
+								Read-only snapshot of every network interface the OS reports — IPv4, IPv6, MAC, MTU,
+								gateway, traffic counters. Nothing leaves your machine.
+							</>
+						}
+					/>
 				</>
 			}
 		>

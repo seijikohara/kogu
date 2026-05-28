@@ -12,9 +12,9 @@ import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
 import { CopyButton } from '@/lib/components/action';
-import { FormError, FormInfo, FormInput, FormSection, FormSlider } from '@/lib/components/form';
-import { DefinitionList, RelatedTools, SectionLabel } from '@/lib/components/layout';
-import { ToolShell } from '@/lib/components/shell';
+import { FormError, FormInput, FormSection, FormSlider } from '@/lib/components/form';
+import { DefinitionList, SectionLabel } from '@/lib/components/layout';
+import { ToolFooter, ToolShell } from '@/lib/components/shell';
 import { EmbeddedEmptyState, StatItem } from '@/lib/components/status';
 import { Badge } from '@/lib/components/ui/badge';
 import { Button } from '@/lib/components/ui/button';
@@ -259,21 +259,18 @@ function TlsInspectorPage() {
 						</Button>
 					</FormSection>
 
-					<FormSection title="Related">
-						<RelatedTools
-							items={[
-								{ id: 'x509-decoder', reason: 'Drill into a chain certificate' },
-								{ id: 'dns-lookup', reason: 'Resolve a host before handshake' },
-							]}
-						/>
-					</FormSection>
-
-					<FormSection title="About">
-						<FormInfo>
-							Performs a TLS handshake and dumps the certificate chain. Accepts invalid / expired /
-							self-signed certs for inspection — connections are NOT verified.
-						</FormInfo>
-					</FormSection>
+					<ToolFooter
+						relatedItems={[
+							{ id: 'x509-decoder', reason: 'Drill into a chain certificate' },
+							{ id: 'dns-lookup', reason: 'Resolve a host before handshake' },
+						]}
+						aboutText={
+							<>
+								Performs a TLS handshake and dumps the certificate chain. Accepts invalid / expired
+								/ self-signed certs for inspection — connections are NOT verified.
+							</>
+						}
+					/>
 				</>
 			}
 		>

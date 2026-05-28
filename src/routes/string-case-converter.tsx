@@ -13,7 +13,7 @@ import {
 	FormSelect,
 } from '@/lib/components/form';
 import { SectionHeader } from '@/lib/components/layout';
-import { ToolShell } from '@/lib/components/shell';
+import { ToolFooter, ToolShell } from '@/lib/components/shell';
 import { EmbeddedEmptyState, StatItem } from '@/lib/components/status';
 import { Card, CardContent } from '@/lib/components/ui/card';
 import { useDocumentTitle } from '@/lib/hooks';
@@ -134,16 +134,16 @@ function StringCaseConverterPage() {
 						</FormCheckboxGroup>
 					</FormSection>
 
-					<FormSection title="About">
-						<FormInfo>
+					<ToolFooter
+						aboutText={
 							<ul className="list-inside list-disc space-y-0.5">
 								<li>Converts text to 17+ case formats</li>
 								<li>Handles camelCase, PascalCase, snake_case</li>
 								<li>Supports kebab-case, CONSTANT_CASE, Title Case</li>
 								<li>Automatically detects word boundaries</li>
 							</ul>
-						</FormInfo>
-					</FormSection>
+						}
+					/>
 
 					<FormSection title="Supported Formats">
 						<FormInfo showIcon={false}>

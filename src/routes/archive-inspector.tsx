@@ -17,14 +17,13 @@ import { toast } from 'sonner';
 
 import {
 	FormFolderPicker,
-	FormInfo,
 	FormInput,
 	FormMode,
 	FormSection,
 	FormSelect,
 } from '@/lib/components/form';
-import { RelatedTools, SectionLabel } from '@/lib/components/layout';
-import { ToolShell } from '@/lib/components/shell';
+import { SectionLabel } from '@/lib/components/layout';
+import { ToolFooter, ToolShell } from '@/lib/components/shell';
 import { EmbeddedEmptyState, StatItem } from '@/lib/components/status';
 import { Badge } from '@/lib/components/ui/badge';
 import { Button } from '@/lib/components/ui/button';
@@ -501,21 +500,18 @@ function ArchiveInspectorPage() {
 						</div>
 					</FormSection>
 
-					<FormSection title="Related">
-						<RelatedTools
-							items={[
-								{ id: 'file-inspector', reason: 'Inspect a single file' },
-								{ id: 'hex-editor', reason: 'View binary content' },
-							]}
-						/>
-					</FormSection>
-
-					<FormSection title="About">
-						<FormInfo>
-							Read-only browsing plus selective extract. Supports .zip / .tar / .tar.gz / .tar.bz2 /
-							.tar.xz, and identifies .7z (full 7z browsing is deferred).
-						</FormInfo>
-					</FormSection>
+					<ToolFooter
+						relatedItems={[
+							{ id: 'file-inspector', reason: 'Inspect a single file' },
+							{ id: 'hex-editor', reason: 'View binary content' },
+						]}
+						aboutText={
+							<>
+								Read-only browsing plus selective extract. Supports .zip / .tar / .tar.gz / .tar.bz2
+								/ .tar.xz, and identifies .7z (full 7z browsing is deferred).
+							</>
+						}
+					/>
 				</>
 			}
 		>

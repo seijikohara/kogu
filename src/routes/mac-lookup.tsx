@@ -11,7 +11,7 @@ import {
 	FormMode,
 	FormSection,
 } from '@/lib/components/form';
-import { ToolShell } from '@/lib/components/shell';
+import { ToolFooter, ToolShell } from '@/lib/components/shell';
 import { EmbeddedEmptyState, StatItem } from '@/lib/components/status';
 import { Button } from '@/lib/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/lib/components/ui/card';
@@ -276,20 +276,18 @@ function MacLookupRail({
 				</Button>
 			</FormSection>
 
-			<FormSection title="About">
-				<FormInfo>
-					Vendor lookup uses the bundled IEEE OUI database via a Tauri command. All processing
-					happens locally; no network calls.
-				</FormInfo>
-				{dbInfo ? (
+			{dbInfo ? (
+				<FormSection title="Database">
 					<div className="flex items-center gap-2 text-xs text-muted-foreground">
 						<Database className="h-3.5 w-3.5" />
 						<span>
 							{dbInfo.entries.toLocaleString()} entries — updated {dbInfo.updated}
 						</span>
 					</div>
-				) : null}
-			</FormSection>
+				</FormSection>
+			) : null}
+
+			<ToolFooter aboutText="Vendor lookup uses the bundled IEEE OUI database via a Tauri command. All processing happens locally; no network calls." />
 		</>
 	);
 }

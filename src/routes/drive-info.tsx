@@ -12,9 +12,9 @@ import type { LucideIcon } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
-import { FormCheckbox, FormInfo, FormSection } from '@/lib/components/form';
-import { DefinitionList, RelatedTools, SectionLabel } from '@/lib/components/layout';
-import { ToolShell } from '@/lib/components/shell';
+import { FormCheckbox, FormSection } from '@/lib/components/form';
+import { DefinitionList, SectionLabel } from '@/lib/components/layout';
+import { ToolFooter, ToolShell } from '@/lib/components/shell';
 import { EmbeddedEmptyState, StatItem } from '@/lib/components/status';
 import { Badge } from '@/lib/components/ui/badge';
 import { Button } from '@/lib/components/ui/button';
@@ -167,22 +167,19 @@ function DriveInfoPage() {
 						) : null}
 					</FormSection>
 
-					<FormSection title="Related">
-						<RelatedTools
-							items={[
-								{ id: 'duplicate-finder', reason: 'Reclaim space by removing duplicates' },
-								{ id: 'folder-tree-visualizer', reason: 'Find the largest folders on a drive' },
-								{ id: 'file-inspector', reason: 'Inspect a file on a drive' },
-							]}
-						/>
-					</FormSection>
-
-					<FormSection title="About">
-						<FormInfo>
-							Read-only snapshot of every disk the OS reports. Capacity and free space come from a
-							single stat call per drive; click Refresh to re-query.
-						</FormInfo>
-					</FormSection>
+					<ToolFooter
+						relatedItems={[
+							{ id: 'duplicate-finder', reason: 'Reclaim space by removing duplicates' },
+							{ id: 'folder-tree-visualizer', reason: 'Find the largest folders on a drive' },
+							{ id: 'file-inspector', reason: 'Inspect a file on a drive' },
+						]}
+						aboutText={
+							<>
+								Read-only snapshot of every disk the OS reports. Capacity and free space come from a
+								single stat call per drive; click Refresh to re-query.
+							</>
+						}
+					/>
 				</>
 			}
 		>

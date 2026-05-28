@@ -23,15 +23,13 @@ import {
 	FormCheckbox,
 	FormCheckboxGroup,
 	FormError,
-	FormInfo,
 	FormInput,
 	FormMode,
 	FormSection,
 	FormSlider,
 } from '@/lib/components/form';
-import { RelatedTools } from '@/lib/components/layout';
 import { UnifiedHostDetailPanel, UnifiedHostListItem } from '@/lib/components/network-scanner';
-import { ToolShell } from '@/lib/components/shell';
+import { ToolFooter, ToolShell } from '@/lib/components/shell';
 import { EmptyState, ErrorDisplay, LiveStatusRegion, StatItem } from '@/lib/components/status';
 import {
 	Accordion,
@@ -1666,23 +1664,20 @@ function NetworkScannerPage() {
 				/>
 			) : null}
 
-			<FormSection title="Related">
-				<RelatedTools
-					items={[
-						{ id: 'network-interfaces', reason: 'Inspect this machine’s own interfaces' },
-						{ id: 'cidr-calculator', reason: 'Plan ranges before scanning' },
-						{ id: 'dns-lookup', reason: 'Resolve hostnames for discovered hosts' },
-						{ id: 'tls-inspector', reason: 'Inspect TLS on discovered services' },
-					]}
-				/>
-			</FormSection>
-
-			<FormSection title="About">
-				<FormInfo>
-					Discovers live hosts and open ports on a local network. All probes run from this device;
-					scans against networks you don’t administer may violate policies.
-				</FormInfo>
-			</FormSection>
+			<ToolFooter
+				relatedItems={[
+					{ id: 'network-interfaces', reason: 'Inspect this machine’s own interfaces' },
+					{ id: 'cidr-calculator', reason: 'Plan ranges before scanning' },
+					{ id: 'dns-lookup', reason: 'Resolve hostnames for discovered hosts' },
+					{ id: 'tls-inspector', reason: 'Inspect TLS on discovered services' },
+				]}
+				aboutText={
+					<>
+						Discovers live hosts and open ports on a local network. All probes run from this device;
+						scans against networks you don’t administer may violate policies.
+					</>
+				}
+			/>
 		</>
 	);
 

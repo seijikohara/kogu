@@ -14,9 +14,9 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
 import { CopyButton } from '@/lib/components/action';
-import { FormInfo, FormInput, FormSection, FormTextarea } from '@/lib/components/form';
-import { RelatedTools, SubsectionLabel } from '@/lib/components/layout';
-import { ToolShell } from '@/lib/components/shell';
+import { FormInput, FormSection, FormTextarea } from '@/lib/components/form';
+import { SubsectionLabel } from '@/lib/components/layout';
+import { ToolFooter, ToolShell } from '@/lib/components/shell';
 import { EmbeddedEmptyState, StatItem } from '@/lib/components/status';
 import { Button } from '@/lib/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/lib/components/ui/card';
@@ -348,16 +348,15 @@ function WebhookRail({
 				</Button>
 			</FormSection>
 
-			<FormSection title="Related">
-				<RelatedTools items={[{ id: 'rest-client', reason: 'Replay a captured request' }]} />
-			</FormSection>
-
-			<FormSection title="About">
-				<FormInfo>
-					Binds to 127.0.0.1 only — never reachable from another machine. Restart the app to reset
-					listener state if a command fails.
-				</FormInfo>
-			</FormSection>
+			<ToolFooter
+				relatedItems={[{ id: 'rest-client', reason: 'Replay a captured request' }]}
+				aboutText={
+					<>
+						Binds to 127.0.0.1 only — never reachable from another machine. Restart the app to reset
+						listener state if a command fails.
+					</>
+				}
+			/>
 		</>
 	);
 }

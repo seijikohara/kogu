@@ -12,7 +12,7 @@ import {
 	FormSection,
 	FormSlider,
 } from '@/lib/components/form';
-import { ToolShell } from '@/lib/components/shell';
+import { ToolFooter, ToolShell } from '@/lib/components/shell';
 import { EmbeddedEmptyState, StatItem } from '@/lib/components/status';
 import { Badge } from '@/lib/components/ui/badge';
 import { Button } from '@/lib/components/ui/button';
@@ -463,12 +463,14 @@ function ImageConverterPage() {
 						</div>
 					</FormSection>
 
-					<FormSection title="About">
-						<FormInfo>
-							All processing happens in your browser. Nothing is uploaded. Canvas re-render strips
-							EXIF metadata inherently.
-						</FormInfo>
-					</FormSection>
+					<ToolFooter
+						aboutText={
+							<>
+								All processing happens in your browser. Nothing is uploaded. Canvas re-render strips
+								EXIF metadata inherently.
+							</>
+						}
+					/>
 				</>
 			}
 		>

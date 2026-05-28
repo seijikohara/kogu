@@ -11,7 +11,7 @@ import {
 	FormSection,
 } from '@/lib/components/form';
 import { MasterDetailLayout, SubsectionLabel } from '@/lib/components/layout';
-import { ToolShell } from '@/lib/components/shell';
+import { ToolFooter, ToolShell } from '@/lib/components/shell';
 import { EmbeddedEmptyState, StatItem } from '@/lib/components/status';
 import { Badge } from '@/lib/components/ui/badge';
 import { Button } from '@/lib/components/ui/button';
@@ -197,12 +197,14 @@ function HttpStatusCodesPage() {
 						</div>
 					</FormSection>
 
-					<FormSection title="About">
-						<FormInfo>
-							Status codes are primarily defined in RFC 9110 (HTTP Semantics, June 2022). WebDAV
-							additions come from RFC 4918 / 5842; the IANA registry is the authoritative source.
-						</FormInfo>
-					</FormSection>
+					<ToolFooter
+						aboutText={
+							<>
+								Status codes are primarily defined in RFC 9110 (HTTP Semantics, June 2022). WebDAV
+								additions come from RFC 4918 / 5842; the IANA registry is the authoritative source.
+							</>
+						}
+					/>
 				</>
 			}
 		>

@@ -21,15 +21,14 @@ import { ActionButton } from '@/lib/components/action';
 import {
 	FormCheckbox,
 	FormError,
-	FormInfo,
 	FormInput,
 	FormSection,
 	FormSelect,
 	FormSlider,
 	FormTextarea,
 } from '@/lib/components/form';
-import { RelatedTools, SectionHeader } from '@/lib/components/layout';
-import { ToolShell } from '@/lib/components/shell';
+import { SectionHeader } from '@/lib/components/layout';
+import { ToolFooter, ToolShell } from '@/lib/components/shell';
 import { EmbeddedEmptyState, StatItem } from '@/lib/components/status';
 import { Badge } from '@/lib/components/ui/badge';
 import { Button } from '@/lib/components/ui/button';
@@ -411,18 +410,13 @@ function TestDataGeneratorPage() {
 						</div>
 					</FormSection>
 
-					<FormSection title="Related">
-						<RelatedTools
-							items={[
-								{ id: 'lorem-ipsum', reason: 'Generate placeholder text' },
-								{ id: 'uuid-generator', reason: 'Standalone UUIDs' },
-								{ id: 'regex-tester', reason: 'Test regex patterns first' },
-							]}
-						/>
-					</FormSection>
-
-					<FormSection title="About">
-						<FormInfo>
+					<ToolFooter
+						relatedItems={[
+							{ id: 'lorem-ipsum', reason: 'Generate placeholder text' },
+							{ id: 'uuid-generator', reason: 'Standalone UUIDs' },
+							{ id: 'regex-tester', reason: 'Test regex patterns first' },
+						]}
+						aboutText={
 							<ul className="list-inside list-disc space-y-0.5">
 								<li>20+ column types — numeric, text, date, identity, regex, sequence</li>
 								<li>Locale-aware names and addresses (en / ja / fr / de / es)</li>
@@ -430,8 +424,8 @@ function TestDataGeneratorPage() {
 								<li>Export as CSV / TSV / JSON / NDJSON / SQL INSERT</li>
 								<li>Same seed → same data; randomize the seed for fresh output</li>
 							</ul>
-						</FormInfo>
-					</FormSection>
+						}
+					/>
 				</>
 			}
 		>

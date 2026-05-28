@@ -11,14 +11,8 @@ import {
 } from 'lucide-react';
 
 import { CopyButton } from '@/lib/components/action';
-import {
-	FormCheckbox,
-	FormCheckboxGroup,
-	FormInfo,
-	FormMode,
-	FormSection,
-} from '@/lib/components/form';
-import { ToolShell } from '@/lib/components/shell';
+import { FormCheckbox, FormCheckboxGroup, FormMode, FormSection } from '@/lib/components/form';
+import { ToolFooter, ToolShell } from '@/lib/components/shell';
 import { EmbeddedEmptyState, StatItem } from '@/lib/components/status';
 import { Badge } from '@/lib/components/ui/badge';
 import { Button } from '@/lib/components/ui/button';
@@ -326,15 +320,15 @@ function ListComparerPage() {
 				</div>
 			</FormSection>
 
-			<FormSection title="About">
-				<FormInfo>
+			<ToolFooter
+				aboutText={
 					<ul className="list-inside list-disc space-y-0.5">
 						<li>Set operations on two newline-separated lists</li>
 						<li>Duplicates are folded; first-seen casing is preserved</li>
 						<li>Venn diagram visualises A-only / common / B-only</li>
 					</ul>
-				</FormInfo>
-			</FormSection>
+				}
+			/>
 		</>
 	);
 

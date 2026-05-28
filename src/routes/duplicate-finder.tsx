@@ -7,13 +7,11 @@ import { toast } from 'sonner';
 import {
 	FormFolderPicker,
 	FormGlobFilters,
-	FormInfo,
 	FormMode,
 	FormSection,
 	FormSlider,
 } from '@/lib/components/form';
-import { RelatedTools } from '@/lib/components/layout';
-import { ToolShell } from '@/lib/components/shell';
+import { ToolFooter, ToolShell } from '@/lib/components/shell';
 import { EmbeddedEmptyState, StatItem } from '@/lib/components/status';
 import { Badge } from '@/lib/components/ui/badge';
 import { Button } from '@/lib/components/ui/button';
@@ -494,26 +492,23 @@ function DuplicateFinderPage() {
 						</div>
 					</FormSection>
 
-					<FormSection title="Related">
-						<RelatedTools
-							items={[
-								{ id: 'drive-info', reason: 'See how much space the duplicates occupy' },
-								{ id: 'folder-tree-visualizer', reason: 'Inspect the folder structure first' },
-								{ id: 'file-inspector', reason: 'Inspect a single file in depth' },
-								{ id: 'hash-generator', reason: 'Hash arbitrary text or bytes' },
-							]}
-						/>
-					</FormSection>
-
-					<FormSection title="About">
-						<FormInfo>
-							Files are bucketed by size, then by the SHA-256 / BLAKE3 hash of the first 8 KiB, then
-							by their full-content hash. Scanning, partial hashing, and full hashing all run
-							locally; nothing leaves your machine. Replace-with-link uses a symbolic link on macOS
-							and Linux and a hard link on Windows. Hard links cannot span volumes, so the source
-							and kept file must share the same drive.
-						</FormInfo>
-					</FormSection>
+					<ToolFooter
+						relatedItems={[
+							{ id: 'drive-info', reason: 'See how much space the duplicates occupy' },
+							{ id: 'folder-tree-visualizer', reason: 'Inspect the folder structure first' },
+							{ id: 'file-inspector', reason: 'Inspect a single file in depth' },
+							{ id: 'hash-generator', reason: 'Hash arbitrary text or bytes' },
+						]}
+						aboutText={
+							<>
+								Files are bucketed by size, then by the SHA-256 / BLAKE3 hash of the first 8 KiB,
+								then by their full-content hash. Scanning, partial hashing, and full hashing all run
+								locally; nothing leaves your machine. Replace-with-link uses a symbolic link on
+								macOS and Linux and a hard link on Windows. Hard links cannot span volumes, so the
+								source and kept file must share the same drive.
+							</>
+						}
+					/>
 				</>
 			}
 		>

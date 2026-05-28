@@ -6,13 +6,12 @@ import { toast } from 'sonner';
 import { ActionButton } from '@/lib/components/action';
 import {
 	FormCheckbox,
-	FormInfo,
 	FormInput,
 	FormMode,
 	FormSection,
 	FormTextarea,
 } from '@/lib/components/form';
-import { ToolShell } from '@/lib/components/shell';
+import { ToolFooter, ToolShell } from '@/lib/components/shell';
 import { EmbeddedEmptyState, StatItem } from '@/lib/components/status';
 import { Badge } from '@/lib/components/ui/badge';
 import { Button } from '@/lib/components/ui/button';
@@ -417,12 +416,14 @@ function WebSocketTesterRail({
 				</Button>
 			</FormSection>
 
-			<FormSection title="About">
-				<FormInfo>
-					Local WebSocket client. Connections go directly from your machine. Custom request headers
-					are deferred to a follow-up change.
-				</FormInfo>
-			</FormSection>
+			<ToolFooter
+				aboutText={
+					<>
+						Local WebSocket client. Connections go directly from your machine. Custom request
+						headers are deferred to a follow-up change.
+					</>
+				}
+			/>
 		</>
 	);
 }

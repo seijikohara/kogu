@@ -6,14 +6,13 @@ import { ActionButton, CopyButton } from '@/lib/components/action';
 import {
 	FormCheckbox,
 	FormCheckboxGroup,
-	FormInfo,
 	FormMode,
 	FormSection,
 	FormSelect,
 	FormSlider,
 } from '@/lib/components/form';
 import { SectionHeader } from '@/lib/components/layout';
-import { ToolShell } from '@/lib/components/shell';
+import { ToolFooter, ToolShell } from '@/lib/components/shell';
 import { LiveStatusRegion, StatItem } from '@/lib/components/status';
 import { Card, CardContent, CardHeader, CardTitle } from '@/lib/components/ui/card';
 import { useDocumentTitle } from '@/lib/hooks';
@@ -199,16 +198,16 @@ function LoremIpsumPage() {
 						</div>
 					</FormSection>
 
-					<FormSection title="About">
-						<FormInfo>
+					<ToolFooter
+						aboutText={
 							<ul className="list-inside list-disc space-y-0.5">
 								<li>Six word banks: Latin, food, hipster, pirate, cyberpunk, Japanese</li>
 								<li>Choose unit (paragraphs / sentences / words / bytes) and length</li>
 								<li>Wrap as plain text, HTML, Markdown, JSON, TypeScript, or JSX</li>
 								<li>Status bar reports UTF-8 byte length for accurate CJK / emoji counts</li>
 							</ul>
-						</FormInfo>
-					</FormSection>
+						}
+					/>
 				</>
 			}
 		>

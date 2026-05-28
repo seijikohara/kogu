@@ -11,7 +11,7 @@ import {
 	FormSection,
 } from '@/lib/components/form';
 import { MasterDetailLayout, SubsectionLabel } from '@/lib/components/layout';
-import { ToolShell } from '@/lib/components/shell';
+import { ToolFooter, ToolShell } from '@/lib/components/shell';
 import { EmbeddedEmptyState, StatItem } from '@/lib/components/status';
 import { Button } from '@/lib/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/lib/components/ui/card';
@@ -205,16 +205,16 @@ function MimeTypesPage() {
 						</div>
 					</FormSection>
 
-					<FormSection title="About">
-						<FormInfo>
+					<ToolFooter
+						aboutText={
 							<ul className="list-inside list-disc space-y-0.5">
 								<li>Catalog of {MIME_ENTRIES.length} commonly-encountered MIME types.</li>
 								<li>Magic bytes are the first-N bytes used for file-type sniffing.</li>
 								<li>Alias notes flag deprecated or non-standard variants.</li>
 								<li>All lookups happen in-browser; no external requests.</li>
 							</ul>
-						</FormInfo>
-					</FormSection>
+						}
+					/>
 				</>
 			}
 		>
