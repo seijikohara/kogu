@@ -20,7 +20,12 @@ import {
 	FormSection,
 	FormSlider,
 } from '@/lib/components/form';
-import { WifiChannelChart } from '@/lib/components/wifi-analyzer';
+import {
+	type SortDirection,
+	type SortKey,
+	WifiChannelChart,
+	WifiNetworkTable,
+} from '@/lib/components/wifi-analyzer';
 import { ToolShell } from '@/lib/components/shell';
 import { EmptyState, ErrorDisplay, StatItem } from '@/lib/components/status';
 import {
@@ -35,8 +40,6 @@ import {
 	type WifiScanEvent,
 	bandLabel,
 	cancelWifiScan,
-	displaySsid,
-	securityLabel,
 	startWifiScan,
 } from '@/lib/services/wifi';
 import { createToolOptionsStore, usePersistedRail } from '@/lib/stores';
@@ -45,11 +48,10 @@ export const Route = createFileRoute('/wifi-analyzer')({
 	component: WifiAnalyzerPage,
 });
 
-type WifiSortKey = 'rssi' | 'ssid' | 'channel';
-
 interface WifiAnalyzerOptions {
 	readonly band: WifiBand;
-	readonly sort: WifiSortKey;
+	readonly sortKey: SortKey;
+	readonly sortDirection: SortDirection;
 	readonly filter: string;
 	readonly hideHidden: boolean;
 	readonly highlightConnected: boolean;
@@ -58,7 +60,8 @@ interface WifiAnalyzerOptions {
 
 const DEFAULT_OPTIONS: WifiAnalyzerOptions = {
 	band: 'band24',
-	sort: 'rssi',
+	sortKey: 'rssi',
+	sortDirection: 'desc',
 	filter: '',
 	hideHidden: false,
 	highlightConnected: true,
@@ -76,12 +79,6 @@ const BAND_OPTIONS = [
 	{ value: 'band24', label: '2.4 GHz', description: 'Channels 1–14, 20 MHz primary' },
 	{ value: 'band5', label: '5 GHz', description: 'Channels 36–165' },
 	{ value: 'band6', label: '6 GHz', description: 'Wi-Fi 6E, channels 1–233' },
-] as const;
-
-const SORT_OPTIONS = [
-	{ value: 'rssi', label: 'Signal' },
-	{ value: 'ssid', label: 'SSID' },
-	{ value: 'channel', label: 'Channel' },
 ] as const;
 
 function WifiAnalyzerPage() {
@@ -220,15 +217,6 @@ function WifiAnalyzerPage() {
 						/>
 					</FormSection>
 
-					<FormSection title="Sort">
-						<FormMode<WifiSortKey>
-							layout="stacked"
-							value={prefs.sort}
-							onValueChange={(v) => patch({ sort: v })}
-							options={[...SORT_OPTIONS]}
-						/>
-					</FormSection>
-
 					<FormSection title="About">
 						<FormInfo>
 							Reads the OS Wi-Fi cache via CoreWLAN (macOS), NetworkManager DBus (Linux), or the
@@ -268,8 +256,17 @@ function WifiAnalyzerPage() {
 				</ResizablePanel>
 				<ResizableHandle />
 				<ResizablePanel defaultSize={40} minSize={20}>
-					<PlaceholderTable
+					<WifiNetworkTable
 						networks={filtered}
+						sortKey={prefs.sortKey}
+						sortDirection={prefs.sortDirection}
+						onSortChange={(key) =>
+							patch(
+								key === prefs.sortKey
+									? { sortDirection: prefs.sortDirection === 'asc' ? 'desc' : 'asc' }
+									: { sortKey: key, sortDirection: key === 'rssi' ? 'desc' : 'asc' }
+							)
+						}
 						hoveredBssid={hoveredBssid}
 						onHover={setHoveredBssid}
 					/>
@@ -284,7 +281,7 @@ function applyFilters(
 	prefs: WifiAnalyzerOptions
 ): readonly WifiNetwork[] {
 	const needle = prefs.filter.trim().toLowerCase();
-	const filtered = networks.filter((n) => {
+	return networks.filter((n) => {
 		if (prefs.hideHidden && !n.ssid) return false;
 		if (needle.length > 0) {
 			const haystack = (n.ssid ?? '').toLowerCase();
@@ -292,68 +289,4 @@ function applyFilters(
 		}
 		return true;
 	});
-	return [...filtered].sort((a, b) => {
-		switch (prefs.sort) {
-			case 'rssi':
-				return b.rssiDbm - a.rssiDbm;
-			case 'ssid':
-				return (a.ssid ?? '').localeCompare(b.ssid ?? '');
-			case 'channel':
-				return a.channel - b.channel;
-			default:
-				return 0;
-		}
-	});
-}
-
-interface PlaceholderTableProps {
-	readonly networks: readonly WifiNetwork[];
-	readonly hoveredBssid: string | null;
-	readonly onHover: (bssid: string | null) => void;
-}
-
-/**
- * Minimal raw-HTML table so PR 2 can ship without the polished sort
- * UI. PR 3 replaces this with `WifiNetworkTable` (sortable columns,
- * vendor badges, RSSI bars).
- */
-function PlaceholderTable({ networks, hoveredBssid, onHover }: PlaceholderTableProps) {
-	return (
-		<div className="h-full overflow-auto p-3">
-			<table className="w-full text-sm">
-				<thead className="text-xs uppercase text-muted-foreground">
-					<tr>
-						<th className="px-2 py-1 text-left">SSID</th>
-						<th className="px-2 py-1 text-left">BSSID</th>
-						<th className="px-2 py-1 text-left">Channel</th>
-						<th className="px-2 py-1 text-left">RSSI</th>
-						<th className="px-2 py-1 text-left">Security</th>
-						<th className="px-2 py-1 text-left">Vendor</th>
-					</tr>
-				</thead>
-				<tbody>
-					{networks.map((n) => (
-						<tr
-							key={n.bssid}
-							className={
-								hoveredBssid === n.bssid ? 'bg-accent/30' : n.isConnected ? 'bg-info/10' : ''
-							}
-							onMouseEnter={() => onHover(n.bssid)}
-							onMouseLeave={() => onHover(null)}
-						>
-							<td className="px-2 py-1">{displaySsid(n)}</td>
-							<td className="px-2 py-1 font-mono text-xs">{n.bssid}</td>
-							<td className="px-2 py-1">
-								{n.channel}
-								<span className="ml-1 text-muted-foreground">({n.channelWidthMhz} MHz)</span>
-							</td>
-							<td className="px-2 py-1">{n.rssiDbm} dBm</td>
-							<td className="px-2 py-1">{securityLabel(n.security)}</td>
-							<td className="px-2 py-1 text-muted-foreground">{n.vendor ?? '—'}</td>
-						</tr>
-					))}
-				</tbody>
-			</table>
-		</div>
-	);
 }
