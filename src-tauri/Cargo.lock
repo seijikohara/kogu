@@ -3446,6 +3446,9 @@ dependencies = [
  "mdns-sd",
  "netdev",
  "notify",
+ "objc2 0.6.4",
+ "objc2-core-wlan",
+ "objc2-foundation 0.3.2",
  "pgp",
  "quick-xml 0.40.1",
  "rand 0.10.1",
@@ -3481,9 +3484,11 @@ dependencies = [
  "toml 1.1.2+spec-1.1.0",
  "uuid",
  "walkdir",
+ "windows 0.62.2",
  "x509-parser",
  "xz2",
  "yaml-rust2",
+ "zbus",
  "zip",
 ]
 
@@ -7233,6 +7238,7 @@ dependencies = [
  "signal-hook-registry",
  "socket2",
  "tokio-macros",
+ "tracing",
  "windows-sys 0.61.2",
 ]
 
@@ -9058,6 +9064,7 @@ dependencies = [
  "rustix",
  "serde",
  "serde_repr",
+ "tokio",
  "tracing",
  "uds_windows",
  "uuid",
