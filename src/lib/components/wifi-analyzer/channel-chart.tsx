@@ -164,7 +164,14 @@ function ApCurve({ network, xScale, yScale, hovered, dimmed, onHover }: ApCurveP
 	const x1 = xScale(network.channel + halfSpanChannels);
 	const yBase = yScale(BASELINE_DBM);
 	const yPeak = yScale(network.rssiDbm);
-	const d = `M ${x0} ${yBase} Q ${xc} ${yPeak} ${x1} ${yBase}`;
+	// Quadratic Bezier `Q (xc, yControl) (x1, yBase)` reaches its visual
+	// apex at t=0.5, where the y-coordinate is `0.5 * yBase + 0.5 *
+	// yControl`. To make the curve's *visual* peak land at `yPeak`
+	// (the actual RSSI), the control point must be set to
+	// `2 * yPeak - yBase`. Without this compensation the peak appears
+	// halfway between baseline and the intended RSSI value.
+	const yControl = 2 * yPeak - yBase;
+	const d = `M ${x0} ${yBase} Q ${xc} ${yControl} ${x1} ${yBase}`;
 	const color = bssidColor(network.bssid);
 	const fillOpacity = hovered ? 0.25 : dimmed ? 0.04 : 0.12;
 	const strokeOpacity = hovered ? 1 : dimmed ? 0.3 : 0.7;

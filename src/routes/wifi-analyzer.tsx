@@ -301,6 +301,7 @@ function applyFilters(
 ): readonly WifiNetwork[] {
 	const needle = prefs.filter.trim().toLowerCase();
 	return networks.filter((n) => {
+		if (n.band !== prefs.band) return false;
 		if (prefs.hideHidden && !n.ssid) return false;
 		if (needle.length > 0) {
 			const haystack = (n.ssid ?? '').toLowerCase();
