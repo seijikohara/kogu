@@ -80,6 +80,7 @@ pub enum WifiError {
     /// No wireless interface available on this host.
     NoInterface,
     /// User denied a required OS-level permission (macOS Location Services).
+    #[cfg(target_os = "macos")]
     PermissionDenied,
     /// Scan request itself failed (driver error, NM unavailable, etc.).
     ScanFailed(String),
@@ -92,6 +93,7 @@ impl std::fmt::Display for WifiError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Self::NoInterface => f.write_str("No wireless interface available"),
+            #[cfg(target_os = "macos")]
             Self::PermissionDenied => f.write_str(
                 "Permission to read nearby Wi-Fi networks was denied. \
                  On macOS, grant Location Services access in System Settings.",

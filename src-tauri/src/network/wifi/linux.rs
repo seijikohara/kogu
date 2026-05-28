@@ -100,7 +100,7 @@ async fn request_scan(
 ) -> Result<(), WifiError> {
     let proxy = build_proxy(connection, device_path.as_str(), NM_WIRELESS_IFACE).await?;
     let options: HashMap<String, OwnedValue> = HashMap::new();
-    proxy
+    let _: () = proxy
         .call("RequestScan", &(options,))
         .await
         .map_err(|e| WifiError::ScanFailed(format!("RequestScan failed: {e}")))?;
@@ -240,25 +240,33 @@ fn security_from_flags(flags: u32, wpa_flags: u32, rsn_flags: u32) -> WifiSecuri
     const NM_802_11_AP_SEC_KEY_MGMT_OWE: u32 = 0x800;
 
     let has_privacy = flags & NM_802_11_AP_FLAGS_PRIVACY != 0;
+    let has_sae_or_owe = rsn_flags & NM_802_11_AP_SEC_KEY_MGMT_SAE != 0
+        || rsn_flags & NM_802_11_AP_SEC_KEY_MGMT_OWE != 0;
+    // 802.1X + SAE indicates WPA3-Enterprise (Suite B).
+    if rsn_flags & NM_802_11_AP_SEC_KEY_MGMT_802_1X != 0 && has_sae_or_owe {
+        return WifiSecurity::Wpa3Enterprise;
+    }
     if rsn_flags & NM_802_11_AP_SEC_KEY_MGMT_802_1X != 0 {
         return WifiSecurity::Wpa2Enterprise;
     }
-    if rsn_flags & NM_802_11_AP_SEC_KEY_MGMT_SAE != 0
-        || rsn_flags & NM_802_11_AP_SEC_KEY_MGMT_OWE != 0
-    {
+    if has_sae_or_owe {
         return WifiSecurity::Wpa3;
     }
     if rsn_flags != 0 {
         return WifiSecurity::Wpa2;
     }
     if wpa_flags != 0 {
-        if wpa_flags & NM_802_11_AP_SEC_KEY_MGMT_802_1X != 0 {
-            return WifiSecurity::Wpa;
-        }
         return WifiSecurity::Wpa;
     }
     if has_privacy {
         return WifiSecurity::Wep;
     }
-    WifiSecurity::Open
+    // No advertised RSN/WPA suite and no privacy bit: AP advertises open
+    // access. Reserve [`WifiSecurity::Unknown`] for cases where the flag
+    // bits are non-zero but do not map to any known suite.
+    if flags == 0 && wpa_flags == 0 && rsn_flags == 0 {
+        WifiSecurity::Open
+    } else {
+        WifiSecurity::Unknown
+    }
 }
