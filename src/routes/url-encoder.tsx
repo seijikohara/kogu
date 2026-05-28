@@ -24,7 +24,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/lib/components/ui/ca
 import { Input } from '@/lib/components/ui/input';
 import { IconTooltip } from '@/lib/components/ui/icon-tooltip';
 import { CodeBlock } from '@/lib/components/ui/code-block';
-import { useActiveTab, useTabStore, usePersistedRail } from '@/lib/stores';
+import { createToolOptionsStore, useActiveTab, useTabStore, usePersistedRail } from '@/lib/stores';
 import { useDebouncedValue, useDocumentTitle } from '@/lib/hooks';
 import {
 	buildUrl,
@@ -50,6 +50,34 @@ import {
 type Tab = 'encode' | 'parse' | 'build' | 'reference';
 type Mode = 'encode' | 'decode';
 
+interface UrlEncoderPrefs {
+	readonly mode: Mode;
+	readonly encodeMode: UrlEncodeMode;
+	readonly spaceEncoding: UrlSpaceEncoding;
+	readonly hexCase: UrlHexCase;
+	readonly newlineHandling: UrlNewlineHandling;
+	readonly preserveChars: string;
+	readonly encodeNonAscii: boolean;
+	readonly plusAsSpace: boolean;
+	readonly invalidHandling: UrlInvalidHandling;
+	readonly decodeMultiple: boolean;
+	readonly maxIterations: number;
+}
+
+const useUrlEncoderPrefs = createToolOptionsStore<UrlEncoderPrefs>('url-encoder', {
+	mode: 'encode',
+	encodeMode: defaultUrlEncodeOptions.mode,
+	spaceEncoding: defaultUrlEncodeOptions.spaceEncoding,
+	hexCase: defaultUrlEncodeOptions.hexCase,
+	newlineHandling: defaultUrlEncodeOptions.newlineHandling,
+	preserveChars: defaultUrlEncodeOptions.preserveChars,
+	encodeNonAscii: defaultUrlEncodeOptions.encodeNonAscii,
+	plusAsSpace: defaultUrlDecodeOptions.plusAsSpace,
+	invalidHandling: defaultUrlDecodeOptions.invalidHandling,
+	decodeMultiple: defaultUrlDecodeOptions.decodeMultiple,
+	maxIterations: defaultUrlDecodeOptions.maxIterations,
+});
+
 const TABS = [
 	{ id: 'encode' as const, label: 'Encode/Decode', icon: ArrowRightLeft },
 	{ id: 'parse' as const, label: 'Parse URL', icon: Link2 },
@@ -69,31 +97,23 @@ function UrlEncoderPage() {
 	const activeTab: Tab = (persistedTab as Tab | undefined) ?? 'encode';
 	const handleTabChange = (tab: string) => setActive(PERSIST_KEY, tab);
 
-	const [mode, setMode] = useState<Mode>('encode');
+	const { value: prefs, patch } = useUrlEncoderPrefs();
+	const {
+		mode,
+		encodeMode,
+		spaceEncoding,
+		hexCase,
+		newlineHandling,
+		preserveChars,
+		encodeNonAscii,
+		plusAsSpace,
+		invalidHandling,
+		decodeMultiple,
+		maxIterations,
+	} = prefs;
+
 	const [input, setInput] = useState('');
 	const [showOptions, setShowOptions] = usePersistedRail('url-encoder');
-
-	const [encodeMode, setEncodeMode] = useState<UrlEncodeMode>(defaultUrlEncodeOptions.mode);
-	const [spaceEncoding, setSpaceEncoding] = useState<UrlSpaceEncoding>(
-		defaultUrlEncodeOptions.spaceEncoding
-	);
-	const [hexCase, setHexCase] = useState<UrlHexCase>(defaultUrlEncodeOptions.hexCase);
-	const [newlineHandling, setNewlineHandling] = useState<UrlNewlineHandling>(
-		defaultUrlEncodeOptions.newlineHandling
-	);
-	const [preserveChars, setPreserveChars] = useState(defaultUrlEncodeOptions.preserveChars);
-	const [encodeNonAscii, setEncodeNonAscii] = useState<boolean>(
-		defaultUrlEncodeOptions.encodeNonAscii
-	);
-
-	const [plusAsSpace, setPlusAsSpace] = useState<boolean>(defaultUrlDecodeOptions.plusAsSpace);
-	const [invalidHandling, setInvalidHandling] = useState<UrlInvalidHandling>(
-		defaultUrlDecodeOptions.invalidHandling
-	);
-	const [decodeMultiple, setDecodeMultiple] = useState<boolean>(
-		defaultUrlDecodeOptions.decodeMultiple
-	);
-	const [maxIterations, setMaxIterations] = useState(defaultUrlDecodeOptions.maxIterations);
 
 	const [parseInput, setParseInput] = useState('');
 	const [baseUrl, setBaseUrl] = useState('https://example.com/path');
@@ -194,7 +214,7 @@ function UrlEncoderPage() {
 					<FormMode
 						value={mode}
 						onValueChange={(v) => {
-							setMode(v);
+							patch({ mode: v });
 							setInput('');
 						}}
 						options={[
@@ -210,7 +230,7 @@ function UrlEncoderPage() {
 							<FormSelect
 								label="Mode"
 								value={encodeMode}
-								onValueChange={(v) => setEncodeMode(v as UrlEncodeMode)}
+								onValueChange={(v) => patch({ encodeMode: v as UrlEncodeMode })}
 								options={[
 									{
 										value: 'component',
@@ -235,7 +255,7 @@ function UrlEncoderPage() {
 							<FormSelect
 								label="Space Encoding"
 								value={spaceEncoding}
-								onValueChange={(v) => setSpaceEncoding(v as UrlSpaceEncoding)}
+								onValueChange={(v) => patch({ spaceEncoding: v as UrlSpaceEncoding })}
 								options={[
 									{ value: 'percent', label: '%20', description: 'RFC 3986 standard' },
 									{
@@ -249,7 +269,7 @@ function UrlEncoderPage() {
 							<FormSelect
 								label="Hex Case"
 								value={hexCase}
-								onValueChange={(v) => setHexCase(v as UrlHexCase)}
+								onValueChange={(v) => patch({ hexCase: v as UrlHexCase })}
 								options={[
 									{ value: 'upper', label: 'Uppercase (%2F)' },
 									{ value: 'lower', label: 'Lowercase (%2f)' },
@@ -259,7 +279,7 @@ function UrlEncoderPage() {
 							<FormSelect
 								label="Newline Handling"
 								value={newlineHandling}
-								onValueChange={(v) => setNewlineHandling(v as UrlNewlineHandling)}
+								onValueChange={(v) => patch({ newlineHandling: v as UrlNewlineHandling })}
 								options={[
 									{ value: 'encode', label: 'Encode as-is' },
 									{ value: 'crlf', label: 'Convert to CRLF' },
@@ -272,7 +292,7 @@ function UrlEncoderPage() {
 								<FormCheckbox
 									label="Encode non-ASCII characters"
 									checked={encodeNonAscii}
-									onCheckedChange={setEncodeNonAscii}
+									onCheckedChange={(v) => patch({ encodeNonAscii: v })}
 									size="compact"
 								/>
 							</div>
@@ -283,7 +303,7 @@ function UrlEncoderPage() {
 								<FormInput
 									label="Preserve Characters"
 									value={preserveChars}
-									onValueChange={setPreserveChars}
+									onValueChange={(v) => patch({ preserveChars: v })}
 									placeholder="e.g., -_.~"
 									size="compact"
 								/>
@@ -319,13 +339,13 @@ function UrlEncoderPage() {
 							<FormCheckbox
 								label="Treat + as space"
 								checked={plusAsSpace}
-								onCheckedChange={setPlusAsSpace}
+								onCheckedChange={(v) => patch({ plusAsSpace: v })}
 								size="compact"
 							/>
 							<FormSelect
 								label="Invalid Sequences"
 								value={invalidHandling}
-								onValueChange={(v) => setInvalidHandling(v as UrlInvalidHandling)}
+								onValueChange={(v) => patch({ invalidHandling: v as UrlInvalidHandling })}
 								options={[
 									{ value: 'error', label: 'Throw error' },
 									{ value: 'skip', label: 'Skip (remove)' },
@@ -336,7 +356,7 @@ function UrlEncoderPage() {
 							<FormCheckbox
 								label="Decode multiple layers"
 								checked={decodeMultiple}
-								onCheckedChange={setDecodeMultiple}
+								onCheckedChange={(v) => patch({ decodeMultiple: v })}
 								size="compact"
 							/>
 							{decodeMultiple ? (
@@ -344,7 +364,7 @@ function UrlEncoderPage() {
 									<FormSlider
 										label="Max Iterations"
 										value={maxIterations}
-										onValueChange={setMaxIterations}
+										onValueChange={(v) => patch({ maxIterations: v })}
 										min={1}
 										max={10}
 										step={1}
