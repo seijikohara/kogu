@@ -93,11 +93,18 @@ export const BAND_X_DOMAIN: Record<WifiBand, readonly [number, number]> = {
 	band6: [0, 234],
 };
 
-/** Domain bounds used by the chart's Y axis (RSSI in dBm). */
-export const RSSI_DOMAIN: readonly [number, number] = [-100, -30];
+/**
+ * Domain bounds used by the chart's Y axis (RSSI in dBm). The upper
+ * bound sits at -20 dBm so APs in the same room (which routinely
+ * report -15 to -25 dBm) keep their curve peaks inside the visible
+ * plot area. Without this headroom, the quadratic Bezier control
+ * point lands above the SVG viewport and the curve renders as a
+ * vertical spike that overshoots the chart frame.
+ */
+export const RSSI_DOMAIN: readonly [number, number] = [-100, -20];
 
 /** Y-axis tick marks in dBm, top to bottom. */
-export const RSSI_TICKS: readonly number[] = [-30, -40, -50, -60, -70, -80, -90, -100];
+export const RSSI_TICKS: readonly number[] = [-20, -30, -40, -50, -60, -70, -80, -90, -100];
 
 /**
  * Baseline value where the AP bell curve touches zero on the Y axis.
