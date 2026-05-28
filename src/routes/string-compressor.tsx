@@ -7,7 +7,6 @@ import { CopyButton } from '@/lib/components/action';
 import {
 	FormCheckbox,
 	FormError,
-	FormInfo,
 	FormMode,
 	FormSection,
 	FormSelect,
@@ -15,7 +14,7 @@ import {
 	FormTextarea,
 } from '@/lib/components/form';
 import { SplitPane } from '@/lib/components/layout';
-import { ToolShell } from '@/lib/components/shell';
+import { ToolFooter, ToolShell } from '@/lib/components/shell';
 import { StatItem } from '@/lib/components/status';
 import { Badge } from '@/lib/components/ui/badge';
 import { Button } from '@/lib/components/ui/button';
@@ -435,20 +434,22 @@ function StringCompressorPage() {
 						) : null}
 					</FormSection>
 
-					<FormSection title="About" open={false}>
-						<FormInfo title="How compression is performed">
-							<p>
-								GZIP runs through the browser <code>CompressionStream</code> API, which does not
-								expose a compression-level parameter. Brotli uses a WebAssembly module with a
-								configurable quality from 0 (fastest) to 11 (smallest).
-							</p>
-							<p className="mt-1.5">
-								Text is encoded as UTF-8 before compression. On decompress, auto-detect uses the
-								gzip magic bytes (<code>1F 8B</code>); inputs that do not match are routed to
-								brotli.
-							</p>
-						</FormInfo>
-					</FormSection>
+					<ToolFooter
+						aboutText={
+							<>
+								<p>
+									GZIP runs through the browser <code>CompressionStream</code> API, which does not
+									expose a compression-level parameter. Brotli uses a WebAssembly module with a
+									configurable quality from 0 (fastest) to 11 (smallest).
+								</p>
+								<p className="mt-1.5">
+									Text is encoded as UTF-8 before compression. On decompress, auto-detect uses the
+									gzip magic bytes (<code>1F 8B</code>); inputs that do not match are routed to
+									brotli.
+								</p>
+							</>
+						}
+					/>
 				</>
 			}
 		>
