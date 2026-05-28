@@ -7,13 +7,11 @@
  * hex previews, and magic-byte MIME detection against the existing
  * MIME Type Explorer catalog.
  *
- * BLAKE3 is intentionally not implemented; the existing dependency
- * surface (`crypto-js`, `js-md5`, Web Crypto) already covers four
- * algorithms without adding a WASM payload, and a placeholder is left
- * in [`HashAlgo`] so it can land in a follow-up PR.
+ * Hashing routes SHA-1 / 256 / 512 through `crypto.subtle` (native,
+ * streaming-friendly) and MD5 through `js-md5`. BLAKE3 is left as a
+ * follow-up; the [`HashAlgo`] enum has a placeholder.
  */
 import { invoke } from '@tauri-apps/api/core';
-import CryptoJS from 'crypto-js';
 import { md5 } from 'js-md5';
 
 import { MIME_ENTRIES, type MimeEntry } from './mime';
@@ -71,16 +69,6 @@ export const base64ToBytes = (b64: string): Uint8Array => {
 	return bytes;
 };
 
-/**
- * Convert a [`Uint8Array`] into a CryptoJS WordArray without copying
- * through an intermediate string (which would mis-handle non-UTF-8
- * bytes).
- */
-const bytesToWordArray = (bytes: Uint8Array): CryptoJS.lib.WordArray =>
-	CryptoJS.lib.WordArray.create(
-		bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength) as ArrayBuffer
-	);
-
 const bytesToHex = (bytes: Uint8Array): string =>
 	Array.from(bytes)
 		.map((b) => b.toString(16).padStart(2, '0'))
@@ -89,28 +77,21 @@ const bytesToHex = (bytes: Uint8Array): string =>
 /**
  * Hash an arbitrary byte buffer with one of the supported algorithms.
  *
- * SHA-1 / 256 / 512 go through `crypto.subtle` when available (native,
- * streaming-friendly) and fall back to CryptoJS otherwise. MD5 always
- * uses `js-md5` since `crypto.subtle` does not implement it.
+ * SHA-1 / 256 / 512 go through `crypto.subtle` — universally
+ * available in the Tauri WebView (Chromium / WebKit both ship the
+ * Web Crypto API). MD5 uses `js-md5` since `crypto.subtle` does not
+ * implement it.
  */
 export const hashBytes = async (bytes: Uint8Array, algo: HashAlgo): Promise<string> => {
 	if (algo === 'md5') return md5(bytes);
 
-	const subtle = globalThis.crypto?.subtle;
-	if (subtle) {
-		const algoName: Readonly<Record<Exclude<HashAlgo, 'md5'>, string>> = {
-			sha1: 'SHA-1',
-			sha256: 'SHA-256',
-			sha512: 'SHA-512',
-		};
-		const digest = await subtle.digest(algoName[algo], bytes as BufferSource);
-		return bytesToHex(new Uint8Array(digest));
-	}
-
-	const wa = bytesToWordArray(bytes);
-	if (algo === 'sha1') return CryptoJS.SHA1(wa).toString();
-	if (algo === 'sha256') return CryptoJS.SHA256(wa).toString();
-	return CryptoJS.SHA512(wa).toString();
+	const algoName: Readonly<Record<Exclude<HashAlgo, 'md5'>, string>> = {
+		sha1: 'SHA-1',
+		sha256: 'SHA-256',
+		sha512: 'SHA-512',
+	};
+	const digest = await globalThis.crypto.subtle.digest(algoName[algo], bytes as BufferSource);
+	return bytesToHex(new Uint8Array(digest));
 };
 
 /**

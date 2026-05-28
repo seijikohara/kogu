@@ -112,6 +112,7 @@ bytes = "1"
 zip = { version = "8", default-features = false, features = ["deflate", "bzip2"] }
 tar = "0.4"
 flate2 = "1"
+brotli = "8"
 bzip2 = "0.6"
 xz2 = "0.1"
 

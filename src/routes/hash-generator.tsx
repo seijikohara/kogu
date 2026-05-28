@@ -16,7 +16,7 @@ import {
 	Type,
 	X,
 } from 'lucide-react';
-import { type DragEvent, useCallback, useMemo, useState } from 'react';
+import { type DragEvent, useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
 import { CopyButton } from '@/lib/components/action';
@@ -48,6 +48,7 @@ import {
 	buildShasumBlock,
 	type FileHashResult,
 	generateAllHashes,
+	type HashResult,
 	HASH_ALGORITHMS,
 	hashFileBatch,
 	humanSize,
@@ -130,10 +131,24 @@ function HashGeneratorPage() {
 function TextHashTab() {
 	const [textInput, setTextInput] = useState('');
 	const debouncedTextInput = useDebouncedValue(textInput, 150);
+	const [textHashes, setTextHashes] = useState<readonly HashResult[]>([]);
 
-	const textHashes = useMemo(() => {
-		if (!debouncedTextInput.trim()) return [];
-		return generateAllHashes(debouncedTextInput);
+	useEffect(() => {
+		if (!debouncedTextInput.trim()) {
+			setTextHashes([]);
+			return;
+		}
+		let cancelled = false;
+		generateAllHashes(debouncedTextInput)
+			.then((results) => {
+				if (!cancelled) setTextHashes(results);
+			})
+			.catch(() => {
+				if (!cancelled) setTextHashes([]);
+			});
+		return () => {
+			cancelled = true;
+		};
 	}, [debouncedTextInput]);
 
 	const handlePaste = async () => {

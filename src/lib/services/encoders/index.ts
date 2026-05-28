@@ -26,15 +26,7 @@ export {
 	validateBase64,
 } from './base64';
 export type { HashAlgorithm, HashResult } from './hash';
-export {
-	compareHashes,
-	generateAllFileHashes,
-	generateAllHashes,
-	generateFileHash,
-	generateHash,
-	HASH_ALGORITHMS,
-	SAMPLE_TEXT_FOR_HASH,
-} from './hash';
+export { compareHashes, generateAllHashes, HASH_ALGORITHMS, SAMPLE_TEXT_FOR_HASH } from './hash';
 export type { BatchHashAlgo, FileHashResult, ShasumEntry, VerifyOutcome } from './hash-batch';
 export {
 	BATCH_HASH_ALGO_LABELS,

@@ -3428,6 +3428,7 @@ dependencies = [
  "base64 0.22.1",
  "bcrypt",
  "blake3",
+ "brotli",
  "bytes",
  "bzip2",
  "csnmp",
