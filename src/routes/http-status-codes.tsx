@@ -1,6 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { AlertTriangle, BookOpen, ExternalLink, Search, X } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo } from 'react';
 
 import { ActionButton, CopyButton } from '@/lib/components/action';
 import {
@@ -17,7 +17,7 @@ import { Badge } from '@/lib/components/ui/badge';
 import { Button } from '@/lib/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/lib/components/ui/card';
 import { ToneBadge } from '@/lib/components/ui/tone-badge';
-import { useDocumentTitle } from '@/lib/hooks';
+import { useDebouncedValue, useDocumentTitle } from '@/lib/hooks';
 import {
 	ALL_CATEGORIES,
 	CATEGORY_LABELS,
@@ -66,13 +66,8 @@ function HttpStatusCodesPage() {
 	const { query, categories, includeNonStandard, misuseOnly, selectedCode } = options;
 
 	const [showRail, setShowRail] = usePersistedRail('http-status-codes');
-	const [debouncedQuery, setDebouncedQuery] = useState(query);
-
 	// Debounce text input by 100ms so typing does not thrash the grid.
-	useEffect(() => {
-		const handle = window.setTimeout(() => setDebouncedQuery(query), 100);
-		return () => window.clearTimeout(handle);
-	}, [query]);
+	const debouncedQuery = useDebouncedValue(query, 100);
 
 	const categorySet = useMemo<ReadonlySet<StatusCategory>>(() => new Set(categories), [categories]);
 

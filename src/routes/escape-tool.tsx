@@ -27,7 +27,7 @@ import { StatItem } from '@/lib/components/status';
 import { Button } from '@/lib/components/ui/button';
 import { IconTooltip } from '@/lib/components/ui/icon-tooltip';
 import { Textarea } from '@/lib/components/ui/textarea';
-import { useDocumentTitle } from '@/lib/hooks';
+import { useDebouncedValue, useDocumentTitle } from '@/lib/hooks';
 import { createToolOptionsStore, useActiveTab, useTabStore } from '@/lib/stores';
 import { cn } from '@/lib/utils';
 import { pasteFromClipboard } from '@/lib/utils/file-operations';
@@ -132,23 +132,35 @@ function EscapeToolPage() {
 	const raw = rawByFlavor[activeFlavor];
 	const escaped = escapedByFlavor[activeFlavor];
 
+	// Debounce the textareas separately so character-by-character processing
+	// (escapeByFlavor / unescapeByFlavor traverse every input character) does
+	// not run on every keystroke. Typing remains instant in the textarea
+	// (which renders `raw` / `escaped` directly); only the cross-side sync
+	// lags by 150ms.
+	const debouncedRaw = useDebouncedValue(raw, 150);
+	const debouncedEscaped = useDebouncedValue(escaped, 150);
+
 	// Sync: when the raw side or options change after a raw edit, recompute the
 	// escaped side. Symmetrically, after an escaped edit recompute the raw
-	// side. Driven by `[activeFlavor, persisted.options, raw, escaped]` so
-	// option toggles take effect immediately.
+	// side. Driven by `[activeFlavor, persisted.options, debouncedRaw,
+	// debouncedEscaped]` so option toggles take effect immediately.
 	useEffect(() => {
 		if (lastEditedSideRef.current === 'raw') {
-			const nextEscaped = escapeByFlavor(activeFlavor, raw, persisted.options);
-			if (nextEscaped !== escaped) {
+			const nextEscaped = escapeByFlavor(activeFlavor, debouncedRaw, persisted.options);
+			if (nextEscaped !== escapedByFlavor[activeFlavor]) {
 				setEscapedByFlavor((prev) => ({ ...prev, [activeFlavor]: nextEscaped }));
 			}
 		} else {
-			const nextRaw = unescapeByFlavor(activeFlavor, escaped, persisted.options);
-			if (nextRaw !== raw) {
+			const nextRaw = unescapeByFlavor(activeFlavor, debouncedEscaped, persisted.options);
+			if (nextRaw !== rawByFlavor[activeFlavor]) {
 				setRawByFlavor((prev) => ({ ...prev, [activeFlavor]: nextRaw }));
 			}
 		}
-	}, [activeFlavor, persisted.options, raw, escaped]);
+		// rawByFlavor / escapedByFlavor read inside the effect intentionally
+		// skip the dep array to avoid cycling on the very state this effect
+		// writes; the debounced reads above already provide the trigger.
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [activeFlavor, persisted.options, debouncedRaw, debouncedEscaped]);
 
 	const updateRaw = (value: string) => {
 		lastEditedSideRef.current = 'raw';

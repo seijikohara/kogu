@@ -34,7 +34,7 @@ import { EmbeddedEmptyState, LiveStatusRegion, StatItem } from '@/lib/components
 import { Button } from '@/lib/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/lib/components/ui/card';
 import { IconTooltip } from '@/lib/components/ui/icon-tooltip';
-import { useDocumentTitle } from '@/lib/hooks';
+import { useDebouncedValue, useDocumentTitle } from '@/lib/hooks';
 import { usePersistedRail } from '@/lib/stores';
 import {
 	CONTENT_KINDS,
@@ -120,7 +120,11 @@ function QrCodeGeneratorPage() {
 	useDocumentTitle('QR Code Generator');
 
 	const currentContent = contents[activeKind];
-	const encodedData = encodeQrContent(currentContent);
+	// Debounce the content payload before the qr-code-styling render so
+	// typing a long URL or vCard does not re-render the canvas on every
+	// keystroke. Validity stays on the raw content for instant feedback.
+	const debouncedEncodedData = useDebouncedValue(encodeQrContent(currentContent), 200);
+	const encodedData = debouncedEncodedData;
 	const valid = isContentValid(currentContent);
 	const colorsValid =
 		isValidHexColor(style.foregroundColor) &&

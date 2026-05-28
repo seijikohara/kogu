@@ -40,7 +40,7 @@ import {
 	SAMPLE_TEST_TEXT,
 } from '@/lib/services/regex';
 import { type VizNode, type VizNodeKind, visualizeRegex } from '@/lib/services/regex-viz';
-import { useDocumentTitle } from '@/lib/hooks';
+import { useDebouncedValue, useDocumentTitle } from '@/lib/hooks';
 
 interface Segment {
 	readonly text: string;
@@ -537,14 +537,26 @@ function RegexTesterPage() {
 		setReplacement(SAMPLE_REPLACEMENT);
 	};
 
+	// Debounce expensive inputs at 250ms so regexp-tree AST and railroad
+	// generation do not fire on every keystroke. compileRegex stays on the
+	// raw pattern for the validity badge — `new RegExp()` is cheap enough.
+	const debouncedPattern = useDebouncedValue(pattern, 250);
+	const debouncedTestText = useDebouncedValue(testText, 250);
+	const debouncedReplacement = useDebouncedValue(replacement, 250);
+
 	const flagString = flagsToString(flags);
 	const compiled = compileRegex(pattern, flags);
-	const matchesResult = findMatches(pattern, flags, testText);
+	const matchesResult = findMatches(debouncedPattern, flags, debouncedTestText);
 	const matches: readonly RegexMatch[] = matchesResult.ok ? matchesResult.value : [];
-	const replaceResult = replaceText(pattern, flags, testText, replacement);
-	const visualization = visualizeRegex(pattern, flagString);
-	const features = findFeatures(pattern);
-	const captureGroupCount = countCaptureGroups(pattern);
+	const replaceResult = replaceText(
+		debouncedPattern,
+		flags,
+		debouncedTestText,
+		debouncedReplacement
+	);
+	const visualization = visualizeRegex(debouncedPattern, flagString);
+	const features = findFeatures(debouncedPattern);
+	const captureGroupCount = countCaptureGroups(debouncedPattern);
 
 	const validity: 'empty' | 'valid' | 'invalid' =
 		pattern.length === 0 ? 'empty' : compiled.ok ? 'valid' : 'invalid';

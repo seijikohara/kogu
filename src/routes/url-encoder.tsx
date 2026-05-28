@@ -25,7 +25,7 @@ import { Input } from '@/lib/components/ui/input';
 import { IconTooltip } from '@/lib/components/ui/icon-tooltip';
 import { CodeBlock } from '@/lib/components/ui/code-block';
 import { useActiveTab, useTabStore, usePersistedRail } from '@/lib/stores';
-import { useDocumentTitle } from '@/lib/hooks';
+import { useDebouncedValue, useDocumentTitle } from '@/lib/hooks';
 import {
 	buildUrl,
 	decodeUrlWithOptions,
@@ -120,16 +120,23 @@ function UrlEncoderPage() {
 		maxIterations,
 	};
 
-	const detectedDoubleEncoded = mode === 'decode' && input.trim() ? isDoubleEncoded(input) : false;
-	const detectedEncodingDepth = mode === 'decode' && input.trim() ? getEncodingDepth(input) : 0;
+	// Debounce input feeding the encode / decode helpers so detection and
+	// transform calls do not retrigger on every keystroke. 100ms matches
+	// the cheap-route default for consistency across the app.
+	const debouncedInput = useDebouncedValue(input, 100);
+
+	const detectedDoubleEncoded =
+		mode === 'decode' && debouncedInput.trim() ? isDoubleEncoded(debouncedInput) : false;
+	const detectedEncodingDepth =
+		mode === 'decode' && debouncedInput.trim() ? getEncodingDepth(debouncedInput) : 0;
 
 	const { output, error } = ((): { output: string; error: string } => {
-		if (!input.trim()) return { output: '', error: '' };
+		if (!debouncedInput.trim()) return { output: '', error: '' };
 		try {
 			const result =
 				mode === 'encode'
-					? encodeUrlWithOptions(input, encodeOptions)
-					: decodeUrlWithOptions(input, decodeOptions);
+					? encodeUrlWithOptions(debouncedInput, encodeOptions)
+					: decodeUrlWithOptions(debouncedInput, decodeOptions);
 			return { output: result, error: '' };
 		} catch (e) {
 			return { output: '', error: getErrorMessage(e, 'Invalid input') };
