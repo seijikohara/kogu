@@ -3,6 +3,8 @@ import { useLocation, useNavigate } from '@tanstack/react-router';
 
 import { useActiveTab, useTabStore } from '@/lib/stores';
 
+import { useDebouncedValue } from './use-debounced-value';
+
 export interface TabStats {
 	readonly input: string;
 	readonly valid: boolean | null;
@@ -141,15 +143,20 @@ export const useFormatterPage = <TStats>(
 		[tabStatsHandlers]
 	);
 
+	// Debounce stats recomputation so parsing large JSON / XML / YAML
+	// payloads only fires after the user pauses typing. Parse cost on
+	// medium documents is ~10-30ms; 150ms is invisible to typing but
+	// collapses bursts into a single call.
+	const debouncedSharedInput = useDebouncedValue(sharedInput, 150);
 	const liveStats = useMemo<TStats | null>(() => {
-		const input = sharedInput.trim();
+		const input = debouncedSharedInput.trim();
 		if (!input) return null;
 		try {
 			return calculateStats(input);
 		} catch {
 			return null;
 		}
-	}, [sharedInput, calculateStats]);
+	}, [debouncedSharedInput, calculateStats]);
 
 	useEffect(() => {
 		if (persistKey) setStoredTab(persistKey, activeTab);

@@ -54,7 +54,7 @@ import {
 } from '@/lib/components/ui/dropdown-menu';
 import { ListItemButton } from '@/lib/components/ui/list-item-button';
 import { IconTooltip } from '@/lib/components/ui/icon-tooltip';
-import { useDocumentTitle } from '@/lib/hooks';
+import { useDebouncedValue, useDocumentTitle } from '@/lib/hooks';
 import { usePersistedRail } from '@/lib/stores';
 import {
 	applyFormat,
@@ -272,12 +272,17 @@ function MarkdownEditorPage() {
 	const toc = useMemo(() => generateToc(input), [input]);
 	const valid: boolean | null = input.trim() ? true : null;
 
+	// Debounce the input feeding the preview pipeline so Mermaid / KaTeX /
+	// Lowlight do not recompile on every keystroke. 200ms is short enough to
+	// feel live and long enough to collapse rapid typing into one render.
+	const debouncedInput = useDebouncedValue(input, 200);
+
 	// Render HTML preview asynchronously to support TeX and diagrams. The
 	// cancellation flag lives in a const ref so the cleanup closure can flip
 	// it without a `let` binding.
 	useEffect(() => {
 		const lifecycle = { cancelled: false };
-		markdownToHtmlAsync(input)
+		markdownToHtmlAsync(debouncedInput)
 			.then((result) => {
 				if (!lifecycle.cancelled) setHtmlOutput(result);
 			})
@@ -285,7 +290,7 @@ function MarkdownEditorPage() {
 		return () => {
 			lifecycle.cancelled = true;
 		};
-	}, [input]);
+	}, [debouncedInput]);
 
 	// Mirror markdown into Vizel whenever the source-of-truth string changes
 	// from outside Vizel (Monaco edits, paste, sample, TOC insert, etc.).

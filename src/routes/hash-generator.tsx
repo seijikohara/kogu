@@ -38,7 +38,7 @@ import { Button } from '@/lib/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/lib/components/ui/card';
 import { CodeBlock } from '@/lib/components/ui/code-block';
 import { ToneBadge } from '@/lib/components/ui/tone-badge';
-import { useDocumentTitle } from '@/lib/hooks';
+import { useDebouncedValue, useDocumentTitle } from '@/lib/hooks';
 import {
 	BATCH_HASH_ALGO_LABELS,
 	BATCH_HASH_ALGO_SECURE,
@@ -129,11 +129,12 @@ function HashGeneratorPage() {
 
 function TextHashTab() {
 	const [textInput, setTextInput] = useState('');
+	const debouncedTextInput = useDebouncedValue(textInput, 150);
 
 	const textHashes = useMemo(() => {
-		if (!textInput.trim()) return [];
-		return generateAllHashes(textInput);
-	}, [textInput]);
+		if (!debouncedTextInput.trim()) return [];
+		return generateAllHashes(debouncedTextInput);
+	}, [debouncedTextInput]);
 
 	const handlePaste = async () => {
 		try {

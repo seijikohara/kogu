@@ -1,4 +1,5 @@
 export { useClipboardActions } from './use-clipboard-actions';
+export { useDebouncedCallback, useDebouncedValue } from './use-debounced-value';
 export { useDocumentTitle } from './use-document-title';
 export {
 	useFormatterPage,

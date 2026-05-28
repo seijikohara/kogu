@@ -21,7 +21,7 @@ import { Badge } from '@/lib/components/ui/badge';
 import { Button } from '@/lib/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/lib/components/ui/card';
 import { Textarea } from '@/lib/components/ui/textarea';
-import { useDocumentTitle } from '@/lib/hooks';
+import { useDebouncedValue, useDocumentTitle } from '@/lib/hooks';
 import {
 	type CompressionAlgorithm,
 	type CompressResult,
@@ -225,8 +225,14 @@ function StringCompressorPage() {
 		setDetectedAlgorithm(null);
 	};
 
+	// Debounce the input through the shared hook so compress / decompress
+	// only fire after the user pauses typing. Option toggles (direction /
+	// algorithm / level / outputFormat / autoDetect) flow through the same
+	// effect but do not need debouncing — they change once per click.
+	const debouncedInput = useDebouncedValue(inputText, DEBOUNCE_MS);
+
 	useEffect(() => {
-		const trimmed = inputText.trim();
+		const trimmed = debouncedInput.trim();
 		const apply = (state: DerivedState) => {
 			setOutputText(state.output);
 			setError(state.error);
@@ -243,20 +249,19 @@ function StringCompressorPage() {
 		let cancelled = false;
 		setBusy(true);
 
-		const timer = window.setTimeout(async () => {
+		(async () => {
 			const next =
 				direction === 'compress'
-					? await runCompress(inputText, algorithm, level, outputFormat)
-					: await runDecompress(inputText, algorithm, autoDetect);
+					? await runCompress(debouncedInput, algorithm, level, outputFormat)
+					: await runDecompress(debouncedInput, algorithm, autoDetect);
 			if (cancelled) return;
 			apply(next);
-		}, DEBOUNCE_MS);
+		})();
 
 		return () => {
 			cancelled = true;
-			window.clearTimeout(timer);
 		};
-	}, [inputText, direction, algorithm, level, outputFormat, autoDetect]);
+	}, [debouncedInput, direction, algorithm, level, outputFormat, autoDetect]);
 
 	const valid: boolean | null = inputText.trim().length === 0 ? null : error === null;
 

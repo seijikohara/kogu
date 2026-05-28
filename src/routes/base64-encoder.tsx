@@ -16,7 +16,7 @@ import {
 import { SectionHeader, SplitPane } from '@/lib/components/layout';
 import { ToolShell } from '@/lib/components/shell';
 import { EmbeddedEmptyState, StatItem } from '@/lib/components/status';
-import { useDocumentTitle } from '@/lib/hooks';
+import { useDebouncedValue, useDocumentTitle } from '@/lib/hooks';
 import { usePersistedRail } from '@/lib/stores';
 import {
 	BASE64_MIME_TYPES,
@@ -78,17 +78,25 @@ function Base64EncoderPage() {
 		autoDetectVariant,
 	};
 
-	const detectedVariant = mode === 'decode' && input.trim() ? detectBase64Variant(input) : null;
-	const detectedDataUrl = mode === 'decode' && input.trim() ? isDataUrl(input) : false;
-	const detectedMimeType = detectedDataUrl ? extractMimeType(input) : null;
+	// Debounce the input feeding the encode / decode pipeline so typing
+	// large payloads (data URLs, base64 blobs) does not retrigger the
+	// transform on every keystroke. 100ms is invisible to typing but
+	// collapses fast bursts.
+	const debouncedInput = useDebouncedValue(input, 100);
+
+	const detectedVariant =
+		mode === 'decode' && debouncedInput.trim() ? detectBase64Variant(debouncedInput) : null;
+	const detectedDataUrl =
+		mode === 'decode' && debouncedInput.trim() ? isDataUrl(debouncedInput) : false;
+	const detectedMimeType = detectedDataUrl ? extractMimeType(debouncedInput) : null;
 
 	const { output, error } = ((): { output: string; error: string } => {
-		if (!input.trim()) return { output: '', error: '' };
+		if (!debouncedInput.trim()) return { output: '', error: '' };
 		try {
 			const result =
 				mode === 'encode'
-					? encodeToBase64(input, encodeOptions)
-					: decodeFromBase64(input, decodeOptions);
+					? encodeToBase64(debouncedInput, encodeOptions)
+					: decodeFromBase64(debouncedInput, decodeOptions);
 			return { output: result, error: '' };
 		} catch (e) {
 			return { output: '', error: getErrorMessage(e, 'Invalid input') };
