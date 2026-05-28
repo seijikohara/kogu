@@ -121,6 +121,22 @@ notify = "8"
 # Drive / Disk Info — cross-platform disk enumeration + recursive sizing
 sysinfo = { version = "0.39", default-features = false, features = ["disk"] }
 
+# Wi-Fi scan — platform-native APIs, no shell-outs.
+[target.'cfg(target_os = "macos")'.dependencies]
+objc2 = "0.6"
+objc2-foundation = "0.3"
+objc2-core-wlan = "0.3"
+
+[target.'cfg(target_os = "windows")'.dependencies]
+windows = { version = "0.62", features = [
+    "Win32_NetworkManagement_WiFi",
+    "Win32_Foundation",
+    "Win32_System_Com",
+] }
+
+[target.'cfg(target_os = "linux")'.dependencies]
+zbus = { version = "5", default-features = false, features = ["tokio"] }
+
 # Note: no direct `rand_core` dependency.
 #
 # The codebase only needs `OsRng` for `ssh-key` and `pgp` key generation,

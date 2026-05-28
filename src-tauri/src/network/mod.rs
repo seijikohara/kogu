@@ -66,6 +66,7 @@ pub mod scanner;
 mod snmp;
 mod tls_info;
 pub mod types;
+pub mod wifi;
 mod ws_discovery;
 
 use std::collections::HashMap;

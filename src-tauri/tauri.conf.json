@@ -45,7 +45,8 @@
 		"macOS": {
 			"signingIdentity": "-",
 			"entitlements": "resources/macos/Kogu.entitlements",
-			"minimumSystemVersion": "13.0"
+			"minimumSystemVersion": "13.0",
+			"infoPlist": "resources/macos/Info.plist"
 		}
 	}
 }
