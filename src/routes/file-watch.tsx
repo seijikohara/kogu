@@ -1,14 +1,14 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { open as openDialog } from '@tauri-apps/plugin-dialog';
-import { Activity, FolderOpen, Pause, Play, Trash2 } from 'lucide-react';
+import { Activity, Pause, Play, Trash2 } from 'lucide-react';
 import { useCallback, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
 import {
 	FormCheckbox,
 	FormCheckboxGroup,
+	FormFolderPicker,
 	FormInfo,
-	FormInput,
 	FormSection,
 } from '@/lib/components/form';
 import { RelatedTools } from '@/lib/components/layout';
@@ -135,18 +135,13 @@ function FileWatchPage() {
 			}
 			rail={
 				<>
-					<FormSection title="Watch path">
-						<FormInput
-							label="Path"
-							value={path}
-							placeholder="/path/to/watch"
-							size="compact"
-							onValueChange={setPath}
+					<FormSection title="Folder">
+						<FormFolderPicker
+							picked={path.length > 0}
+							path={path}
+							onPick={handleBrowse}
+							disabled={watching}
 						/>
-						<Button variant="outline" size="sm" onClick={handleBrowse}>
-							<FolderOpen className="h-3.5 w-3.5" />
-							Browse…
-						</Button>
 					</FormSection>
 
 					<FormSection title="Control">

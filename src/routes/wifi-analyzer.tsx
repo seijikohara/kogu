@@ -26,8 +26,9 @@ import {
 	WifiChannelChart,
 	WifiNetworkTable,
 } from '@/lib/components/wifi-analyzer';
+import { RelatedTools } from '@/lib/components/layout';
 import { ToolShell } from '@/lib/components/shell';
-import { EmptyState, ErrorDisplay, StatItem } from '@/lib/components/status';
+import { EmbeddedEmptyState, ErrorDisplay, StatItem } from '@/lib/components/status';
 import {
 	ResizableHandle,
 	ResizablePanel,
@@ -217,6 +218,25 @@ function WifiAnalyzerPage() {
 						/>
 					</FormSection>
 
+					<FormSection title="Related">
+						<RelatedTools
+							items={[
+								{
+									id: 'network-scanner',
+									reason: 'Probe hosts and open ports on the same network',
+								},
+								{
+									id: 'network-interfaces',
+									reason: 'Inspect the local interface this scan ran on',
+								},
+								{
+									id: 'mac-lookup',
+									reason: 'Resolve the BSSID vendor in detail',
+								},
+							]}
+						/>
+					</FormSection>
+
 					<FormSection title="About">
 						<FormInfo>
 							Reads the OS Wi-Fi cache via CoreWLAN (macOS), NetworkManager DBus (Linux), or the
@@ -236,13 +256,12 @@ function WifiAnalyzerPage() {
 							<ErrorDisplay title="Wi-Fi scan failed" message={error} />
 						</div>
 					) : filtered.length === 0 && !scanning ? (
-						<div className="flex h-full items-center justify-center p-4">
-							<EmptyState
-								icon={Wifi}
-								title="No Wi-Fi networks yet"
-								description="Click Scan to detect nearby access points."
-							/>
-						</div>
+						<EmbeddedEmptyState
+							icon={Wifi}
+							title="No Wi-Fi networks yet"
+							description="Click Scan to detect nearby access points."
+							fillHeight
+						/>
 					) : (
 						<div className="h-full p-3 text-foreground">
 							<WifiChannelChart
@@ -282,6 +301,7 @@ function applyFilters(
 ): readonly WifiNetwork[] {
 	const needle = prefs.filter.trim().toLowerCase();
 	return networks.filter((n) => {
+		if (n.band !== prefs.band) return false;
 		if (prefs.hideHidden && !n.ssid) return false;
 		if (needle.length > 0) {
 			const haystack = (n.ssid ?? '').toLowerCase();
