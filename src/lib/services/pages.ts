@@ -62,6 +62,7 @@ import {
 	Settings,
 	Shield,
 	ShieldCheck,
+	Wifi,
 	Sparkles,
 	SplitSquareHorizontal,
 	Table,
@@ -491,6 +492,15 @@ export const PAGES: readonly PageDefinition[] = [
 		icon: Radar,
 		description: 'Scan networks for open ports and services',
 		color: 'text-rose-500',
+		category: 'network',
+	},
+	{
+		id: 'wifi-analyzer',
+		title: 'Wi-Fi Analyzer',
+		url: '/wifi-analyzer',
+		icon: Wifi,
+		description: 'Visualize nearby Wi-Fi networks by channel and RSSI',
+		color: 'text-cyan-500',
 		category: 'network',
 	},
 	{

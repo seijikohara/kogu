@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as YamlFormatterRouteImport } from './routes/yaml-formatter'
 import { Route as XmlFormatterRouteImport } from './routes/xml-formatter'
 import { Route as X509DecoderRouteImport } from './routes/x509-decoder'
+import { Route as WifiAnalyzerRouteImport } from './routes/wifi-analyzer'
 import { Route as WebsocketTesterRouteImport } from './routes/websocket-tester'
 import { Route as WebhookReceiverRouteImport } from './routes/webhook-receiver'
 import { Route as UuidGeneratorRouteImport } from './routes/uuid-generator'
@@ -78,6 +79,11 @@ const XmlFormatterRoute = XmlFormatterRouteImport.update({
 const X509DecoderRoute = X509DecoderRouteImport.update({
   id: '/x509-decoder',
   path: '/x509-decoder',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const WifiAnalyzerRoute = WifiAnalyzerRouteImport.update({
+  id: '/wifi-analyzer',
+  path: '/wifi-analyzer',
   getParentRoute: () => rootRouteImport,
 } as any)
 const WebsocketTesterRoute = WebsocketTesterRouteImport.update({
@@ -394,6 +400,7 @@ export interface FileRoutesByFullPath {
   '/uuid-generator': typeof UuidGeneratorRoute
   '/webhook-receiver': typeof WebhookReceiverRoute
   '/websocket-tester': typeof WebsocketTesterRoute
+  '/wifi-analyzer': typeof WifiAnalyzerRoute
   '/x509-decoder': typeof X509DecoderRoute
   '/xml-formatter': typeof XmlFormatterRoute
   '/yaml-formatter': typeof YamlFormatterRoute
@@ -451,6 +458,7 @@ export interface FileRoutesByTo {
   '/uuid-generator': typeof UuidGeneratorRoute
   '/webhook-receiver': typeof WebhookReceiverRoute
   '/websocket-tester': typeof WebsocketTesterRoute
+  '/wifi-analyzer': typeof WifiAnalyzerRoute
   '/x509-decoder': typeof X509DecoderRoute
   '/xml-formatter': typeof XmlFormatterRoute
   '/yaml-formatter': typeof YamlFormatterRoute
@@ -509,6 +517,7 @@ export interface FileRoutesById {
   '/uuid-generator': typeof UuidGeneratorRoute
   '/webhook-receiver': typeof WebhookReceiverRoute
   '/websocket-tester': typeof WebsocketTesterRoute
+  '/wifi-analyzer': typeof WifiAnalyzerRoute
   '/x509-decoder': typeof X509DecoderRoute
   '/xml-formatter': typeof XmlFormatterRoute
   '/yaml-formatter': typeof YamlFormatterRoute
@@ -568,6 +577,7 @@ export interface FileRouteTypes {
     | '/uuid-generator'
     | '/webhook-receiver'
     | '/websocket-tester'
+    | '/wifi-analyzer'
     | '/x509-decoder'
     | '/xml-formatter'
     | '/yaml-formatter'
@@ -625,6 +635,7 @@ export interface FileRouteTypes {
     | '/uuid-generator'
     | '/webhook-receiver'
     | '/websocket-tester'
+    | '/wifi-analyzer'
     | '/x509-decoder'
     | '/xml-formatter'
     | '/yaml-formatter'
@@ -682,6 +693,7 @@ export interface FileRouteTypes {
     | '/uuid-generator'
     | '/webhook-receiver'
     | '/websocket-tester'
+    | '/wifi-analyzer'
     | '/x509-decoder'
     | '/xml-formatter'
     | '/yaml-formatter'
@@ -740,6 +752,7 @@ export interface RootRouteChildren {
   UuidGeneratorRoute: typeof UuidGeneratorRoute
   WebhookReceiverRoute: typeof WebhookReceiverRoute
   WebsocketTesterRoute: typeof WebsocketTesterRoute
+  WifiAnalyzerRoute: typeof WifiAnalyzerRoute
   X509DecoderRoute: typeof X509DecoderRoute
   XmlFormatterRoute: typeof XmlFormatterRoute
   YamlFormatterRoute: typeof YamlFormatterRoute
@@ -766,6 +779,13 @@ declare module '@tanstack/react-router' {
       path: '/x509-decoder'
       fullPath: '/x509-decoder'
       preLoaderRoute: typeof X509DecoderRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/wifi-analyzer': {
+      id: '/wifi-analyzer'
+      path: '/wifi-analyzer'
+      fullPath: '/wifi-analyzer'
+      preLoaderRoute: typeof WifiAnalyzerRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/websocket-tester': {
@@ -1188,6 +1208,7 @@ const rootRouteChildren: RootRouteChildren = {
   UuidGeneratorRoute: UuidGeneratorRoute,
   WebhookReceiverRoute: WebhookReceiverRoute,
   WebsocketTesterRoute: WebsocketTesterRoute,
+  WifiAnalyzerRoute: WifiAnalyzerRoute,
   X509DecoderRoute: X509DecoderRoute,
   XmlFormatterRoute: XmlFormatterRoute,
   YamlFormatterRoute: YamlFormatterRoute,
