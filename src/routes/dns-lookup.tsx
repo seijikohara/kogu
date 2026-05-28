@@ -13,8 +13,7 @@ import {
 	FormSelect,
 	FormSlider,
 } from '@/lib/components/form';
-import { RelatedTools } from '@/lib/components/layout';
-import { ToolShell } from '@/lib/components/shell';
+import { ToolFooter, ToolShell } from '@/lib/components/shell';
 import { EmbeddedEmptyState, StatItem } from '@/lib/components/status';
 import { Button } from '@/lib/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/lib/components/ui/card';
@@ -331,24 +330,21 @@ function DnsLookupRail({
 				</Button>
 			</FormSection>
 
-			<FormSection title="Related">
-				<RelatedTools
-					items={[
-						{ id: 'tls-inspector', reason: 'Inspect TLS of a resolved host' },
-						{ id: 'rest-client', reason: 'Send HTTP request to a resolved host' },
-						{ id: 'cidr-calculator', reason: 'Analyse a resolved IP address' },
-					]}
-				/>
-			</FormSection>
-
-			<FormSection title="About">
-				<FormInfo>
-					Standard DNS over UDP / TCP. DNS-over-HTTPS, multi-resolver compare, and DNSSEC validation
-					are deferred to a follow-up. The AD badge mirrors the upstream{' '}
-					<code className="font-mono">ad</code> header bit — meaningful only when the upstream
-					itself validates.
-				</FormInfo>
-			</FormSection>
+			<ToolFooter
+				relatedItems={[
+					{ id: 'tls-inspector', reason: 'Inspect TLS of a resolved host' },
+					{ id: 'rest-client', reason: 'Send HTTP request to a resolved host' },
+					{ id: 'cidr-calculator', reason: 'Analyse a resolved IP address' },
+				]}
+				aboutText={
+					<>
+						Standard DNS over UDP / TCP. DNS-over-HTTPS, multi-resolver compare, and DNSSEC
+						validation are deferred to a follow-up. The AD badge mirrors the upstream{' '}
+						<code className="font-mono">ad</code> header bit — meaningful only when the upstream
+						itself validates.
+					</>
+				}
+			/>
 		</>
 	);
 }

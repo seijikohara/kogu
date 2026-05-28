@@ -12,7 +12,7 @@ import {
 	FormSlider,
 } from '@/lib/components/form';
 import { useDocumentTitle } from '@/lib/hooks';
-import { ToolShell } from '@/lib/components/shell';
+import { ToolFooter, ToolShell } from '@/lib/components/shell';
 import { StatItem } from '@/lib/components/status';
 import {
 	Accordion,
@@ -411,16 +411,16 @@ function NumberBaseConverterPage() {
 						</div>
 					</FormSection>
 
-					<FormSection title="About">
-						<FormInfo>
+					<ToolFooter
+						aboutText={
 							<ul className="list-inside list-disc space-y-0.5">
 								<li>Edit any base to update the rest</li>
 								<li>Click bits in the grid to toggle them</li>
 								<li>Signed mode renders two's complement</li>
 								<li>Range: {rangeText}</li>
 							</ul>
-						</FormInfo>
-					</FormSection>
+						}
+					/>
 				</>
 			}
 		>

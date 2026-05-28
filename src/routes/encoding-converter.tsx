@@ -16,8 +16,8 @@ import {
 	FormSelect,
 	type SelectOption,
 } from '@/lib/components/form';
-import { RelatedTools, SplitPane } from '@/lib/components/layout';
-import { ToolShell } from '@/lib/components/shell';
+import { SplitPane } from '@/lib/components/layout';
+import { ToolFooter, ToolShell } from '@/lib/components/shell';
 import { EmbeddedEmptyState, StatItem } from '@/lib/components/status';
 import { useDocumentTitle } from '@/lib/hooks';
 import {
@@ -368,22 +368,19 @@ function EncodingConverterPage() {
 						</div>
 					</FormSection>
 
-					<FormSection title="Related">
-						<RelatedTools
-							items={[
-								{ id: 'file-inspector', reason: 'Inspect file metadata and MIME' },
-								{ id: 'hex-editor', reason: 'Edit raw bytes side-by-side' },
-							]}
-						/>
-					</FormSection>
-
-					<FormSection title="About">
-						<FormInfo>
-							Detection sniffs BOM first, then attempts strict UTF-8, then runs the jschardet
-							heuristic. Shift-JIS, EUC-JP, GBK, and Big5 are read via the platform decoder; their
-							encoders fall back to ASCII-safe placeholders for unmappable characters.
-						</FormInfo>
-					</FormSection>
+					<ToolFooter
+						relatedItems={[
+							{ id: 'file-inspector', reason: 'Inspect file metadata and MIME' },
+							{ id: 'hex-editor', reason: 'Edit raw bytes side-by-side' },
+						]}
+						aboutText={
+							<>
+								Detection sniffs BOM first, then attempts strict UTF-8, then runs the jschardet
+								heuristic. Shift-JIS, EUC-JP, GBK, and Big5 are read via the platform decoder; their
+								encoders fall back to ASCII-safe placeholders for unmappable characters.
+							</>
+						}
+					/>
 				</>
 			}
 		>

@@ -12,7 +12,7 @@ import {
 	FormSection,
 	FormSlider,
 } from '@/lib/components/form';
-import { ToolShell } from '@/lib/components/shell';
+import { ToolFooter, ToolShell } from '@/lib/components/shell';
 import { EmptyState } from '@/lib/components/status';
 import { useDocumentTitle } from '@/lib/hooks';
 import { usePersistedRail } from '@/lib/stores';
@@ -374,15 +374,15 @@ function DiffViewerPage() {
 						</FormInfo>
 					</FormSection>
 
-					<FormSection title="About">
-						<FormInfo>
+					<ToolFooter
+						aboutText={
 							<ul className="list-inside list-disc space-y-0.5">
 								<li>LCS algorithm for line diff</li>
 								<li>Character-level inline diff</li>
 								<li>Git-style hunk grouping</li>
 							</ul>
-						</FormInfo>
-					</FormSection>
+						}
+					/>
 				</>
 			}
 		>

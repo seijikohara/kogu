@@ -12,22 +12,14 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
 import { ActionButton } from '@/lib/components/action';
-import {
-	FormCheckbox,
-	FormInfo,
-	FormInput,
-	FormMode,
-	FormSection,
-	FormSlider,
-} from '@/lib/components/form';
+import { FormCheckbox, FormInput, FormMode, FormSection, FormSlider } from '@/lib/components/form';
 import {
 	type SortDirection,
 	type SortKey,
 	WifiChannelChart,
 	WifiNetworkTable,
 } from '@/lib/components/wifi-analyzer';
-import { RelatedTools } from '@/lib/components/layout';
-import { ToolShell } from '@/lib/components/shell';
+import { ToolFooter, ToolShell } from '@/lib/components/shell';
 import { EmbeddedEmptyState, ErrorDisplay, StatItem } from '@/lib/components/status';
 import {
 	ResizableHandle,
@@ -218,34 +210,31 @@ function WifiAnalyzerPage() {
 						/>
 					</FormSection>
 
-					<FormSection title="Related">
-						<RelatedTools
-							items={[
-								{
-									id: 'network-scanner',
-									reason: 'Probe hosts and open ports on the same network',
-								},
-								{
-									id: 'network-interfaces',
-									reason: 'Inspect the local interface this scan ran on',
-								},
-								{
-									id: 'mac-lookup',
-									reason: 'Resolve the BSSID vendor in detail',
-								},
-							]}
-						/>
-					</FormSection>
-
-					<FormSection title="About">
-						<FormInfo>
-							Reads the OS Wi-Fi cache via CoreWLAN (macOS), NetworkManager DBus (Linux), or the
-							Native Wi-Fi API (Windows). No admin or root required. On macOS, the first scan asks
-							for Location Services access; granting once persists across launches. Set{' '}
-							<code>KOGU_WIFI_FIXTURES=1</code> in the launch environment to render a hand-crafted
-							demo network list when no radio is available.
-						</FormInfo>
-					</FormSection>
+					<ToolFooter
+						relatedItems={[
+							{
+								id: 'network-scanner',
+								reason: 'Probe hosts and open ports on the same network',
+							},
+							{
+								id: 'network-interfaces',
+								reason: 'Inspect the local interface this scan ran on',
+							},
+							{
+								id: 'mac-lookup',
+								reason: 'Resolve the BSSID vendor in detail',
+							},
+						]}
+						aboutText={
+							<>
+								Reads the OS Wi-Fi cache via CoreWLAN (macOS), NetworkManager DBus (Linux), or the
+								Native Wi-Fi API (Windows). No admin or root required. On macOS, the first scan asks
+								for Location Services access; granting once persists across launches. Set{' '}
+								<code>KOGU_WIFI_FIXTURES=1</code> in the launch environment to render a hand-crafted
+								demo network list when no radio is available.
+							</>
+						}
+					/>
 				</>
 			}
 		>

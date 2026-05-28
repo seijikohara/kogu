@@ -27,16 +27,9 @@ import {
 } from 'react';
 import { toast } from 'sonner';
 
-import {
-	FormCheckbox,
-	FormInfo,
-	FormInput,
-	FormMode,
-	FormSection,
-	FormSelect,
-} from '@/lib/components/form';
-import { RelatedTools, SectionLabel } from '@/lib/components/layout';
-import { ToolShell } from '@/lib/components/shell';
+import { FormCheckbox, FormInput, FormMode, FormSection, FormSelect } from '@/lib/components/form';
+import { SectionLabel } from '@/lib/components/layout';
+import { ToolFooter, ToolShell } from '@/lib/components/shell';
 import { EmbeddedEmptyState, StatItem } from '@/lib/components/status';
 import { Badge } from '@/lib/components/ui/badge';
 import { Button } from '@/lib/components/ui/button';
@@ -450,21 +443,18 @@ function CsvToolPage() {
 						</div>
 					</FormSection>
 
-					<FormSection title="Related">
-						<RelatedTools
-							items={[
-								{ id: 'file-inspector', reason: 'Inspect raw file' },
-								{ id: 'hex-editor', reason: 'View bytes' },
-							]}
-						/>
-					</FormSection>
-
-					<FormSection title="About">
-						<FormInfo>
-							Pure local parsing. Drag-drop a CSV / TSV / JSON file, paste text, or open via dialog.
-							Edits update the table in memory; the output preview re-formats live.
-						</FormInfo>
-					</FormSection>
+					<ToolFooter
+						relatedItems={[
+							{ id: 'file-inspector', reason: 'Inspect raw file' },
+							{ id: 'hex-editor', reason: 'View bytes' },
+						]}
+						aboutText={
+							<>
+								Pure local parsing. Drag-drop a CSV / TSV / JSON file, paste text, or open via
+								dialog. Edits update the table in memory; the output preview re-formats live.
+							</>
+						}
+					/>
 				</>
 			}
 		>

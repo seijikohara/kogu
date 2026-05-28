@@ -4,8 +4,7 @@ import { type CSSProperties, type ReactNode, useMemo, useState } from 'react';
 
 import { ActionButton, CopyButton } from '@/lib/components/action';
 import { FormCheckbox, FormError, FormInfo, FormInput, FormSection } from '@/lib/components/form';
-import { RelatedTools } from '@/lib/components/layout';
-import { ToolShell } from '@/lib/components/shell';
+import { ToolFooter, ToolShell } from '@/lib/components/shell';
 import { EmbeddedEmptyState, StatItem } from '@/lib/components/status';
 import { Button } from '@/lib/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/lib/components/ui/card';
@@ -212,25 +211,20 @@ function IpConverterRail({
 				/>
 			</FormSection>
 
-			<FormSection title="Related">
-				<RelatedTools
-					items={[
-						{ id: 'cidr-calculator', reason: 'Compute subnets and ranges' },
-						{ id: 'dns-lookup', reason: 'Resolve a name to an IP' },
-					]}
-				/>
-			</FormSection>
-
-			<FormSection title="About">
-				<FormInfo>
+			<ToolFooter
+				relatedItems={[
+					{ id: 'cidr-calculator', reason: 'Compute subnets and ranges' },
+					{ id: 'dns-lookup', reason: 'Resolve a name to an IP' },
+				]}
+				aboutText={
 					<ul className="list-inside list-disc space-y-0.5">
 						<li>All conversions happen in-browser; no network calls.</li>
 						<li>IPv6 compressed form follows RFC 5952.</li>
 						<li>Embeddings: IPv4-mapped (RFC 4291), 6to4 (RFC 3056), Teredo (RFC 4380).</li>
 						<li>Math runs on bigint; no precision loss for u128.</li>
 					</ul>
-				</FormInfo>
-			</FormSection>
+				}
+			/>
 		</>
 	);
 }

@@ -30,7 +30,7 @@ import {
 	FormTextarea,
 } from '@/lib/components/form';
 import { SectionHeader, SectionLabel } from '@/lib/components/layout';
-import { StatusBar, ToolShell } from '@/lib/components/shell';
+import { StatusBar, ToolFooter, ToolShell } from '@/lib/components/shell';
 import { Rail } from '@/lib/components/ui/rail';
 import { EmbeddedEmptyState, LiveStatusRegion, StatItem } from '@/lib/components/status';
 import { Badge } from '@/lib/components/ui/badge';
@@ -679,18 +679,6 @@ function FileHashRail({
 				</div>
 			</FormSection>
 
-			<FormSection title="About">
-				<FormInfo>
-					<ul className="list-inside list-disc space-y-0.5">
-						<li>Drop files or pick them from the dialog.</li>
-						<li>All algorithms compute together via one streaming read per file.</li>
-						<li>
-							Verify mode reads a `&lt;hash&gt; &lt;filename&gt;` block and matches by basename.
-						</li>
-					</ul>
-				</FormInfo>
-			</FormSection>
-
 			<FormSection title="Security">
 				<FormInfo showIcon={false}>
 					<div className="space-y-1">
@@ -707,6 +695,18 @@ function FileHashRail({
 					</div>
 				</FormInfo>
 			</FormSection>
+
+			<ToolFooter
+				aboutText={
+					<ul className="list-inside list-disc space-y-0.5">
+						<li>Drop files or pick them from the dialog.</li>
+						<li>All algorithms compute together via one streaming read per file.</li>
+						<li>
+							Verify mode reads a `&lt;hash&gt; &lt;filename&gt;` block and matches by basename.
+						</li>
+					</ul>
+				}
+			/>
 		</>
 	);
 }

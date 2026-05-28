@@ -22,7 +22,7 @@ import {
 	FormSelect,
 } from '@/lib/components/form';
 import { SplitPane } from '@/lib/components/layout';
-import { ToolShell } from '@/lib/components/shell';
+import { ToolFooter, ToolShell } from '@/lib/components/shell';
 import { StatItem } from '@/lib/components/status';
 import { Button } from '@/lib/components/ui/button';
 import { IconTooltip } from '@/lib/components/ui/icon-tooltip';
@@ -410,9 +410,7 @@ function EscapeToolPage() {
 				</Button>
 			</FormSection>
 
-			<FormSection title="About">
-				<FormInfo>{FLAVOR_DESCRIPTIONS[activeFlavor]}</FormInfo>
-			</FormSection>
+			<ToolFooter aboutText={FLAVOR_DESCRIPTIONS[activeFlavor]} />
 		</>
 	);
 

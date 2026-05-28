@@ -5,15 +5,9 @@ import { toast } from 'sonner';
 
 import { ActionButton } from '@/lib/components/action';
 import { getErrorMessage } from '@/lib/utils';
-import {
-	FormCheckbox,
-	FormCheckboxGroup,
-	FormInfo,
-	FormSection,
-	FormSlider,
-} from '@/lib/components/form';
+import { FormCheckbox, FormCheckboxGroup, FormSection, FormSlider } from '@/lib/components/form';
 import { GeneratedListPanel } from '@/lib/components/panel';
-import { ToolShell } from '@/lib/components/shell';
+import { ToolFooter, ToolShell } from '@/lib/components/shell';
 import { StatItem } from '@/lib/components/status';
 import { createToolOptionsStore, usePersistedRail } from '@/lib/stores';
 import { useDocumentTitle } from '@/lib/hooks';
@@ -234,16 +228,16 @@ function PasswordGeneratorPage() {
 						</div>
 					</FormSection>
 
-					<FormSection title="About">
-						<FormInfo>
+					<ToolFooter
+						aboutText={
 							<ul className="list-inside list-disc space-y-0.5">
 								<li>Cryptographically secure (Web Crypto)</li>
 								<li>Entropy is log2(pool) × length</li>
 								<li>≥ 60 bits resists offline attacks</li>
 								<li>≥ 128 bits is overkill for human use</li>
 							</ul>
-						</FormInfo>
-					</FormSection>
+						}
+					/>
 				</>
 			}
 		>

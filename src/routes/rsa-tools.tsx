@@ -15,14 +15,8 @@ import { useEffect, useMemo, useState, type DragEvent, type ReactNode } from 're
 import { toast } from 'sonner';
 
 import { CopyButton } from '@/lib/components/action';
-import {
-	FormInfo,
-	FormSection,
-	FormSelect,
-	FormTextarea,
-	type SelectOption,
-} from '@/lib/components/form';
-import { ToolShell } from '@/lib/components/shell';
+import { FormSection, FormSelect, FormTextarea, type SelectOption } from '@/lib/components/form';
+import { ToolFooter, ToolShell } from '@/lib/components/shell';
 import { EmbeddedEmptyState, StatItem } from '@/lib/components/status';
 import { Badge } from '@/lib/components/ui/badge';
 import { Button } from '@/lib/components/ui/button';
@@ -366,14 +360,16 @@ function RsaToolsPage() {
 				</div>
 			</FormSection>
 
-			<FormSection title="About">
-				<FormInfo>
-					All processing happens in your browser. Keys never leave the device. PKCS#1 v1.5
-					encryption is not exposed by Web Crypto — use OAEP. Legacy{' '}
-					<code className="font-mono">RSA PRIVATE KEY</code> (PKCS#1) PEMs are wrapped into PKCS#8
-					automatically.
-				</FormInfo>
-			</FormSection>
+			<ToolFooter
+				aboutText={
+					<>
+						All processing happens in your browser. Keys never leave the device. PKCS#1 v1.5
+						encryption is not exposed by Web Crypto — use OAEP. Legacy{' '}
+						<code className="font-mono">RSA PRIVATE KEY</code> (PKCS#1) PEMs are wrapped into PKCS#8
+						automatically.
+					</>
+				}
+			/>
 		</>
 	);
 

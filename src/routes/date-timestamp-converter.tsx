@@ -16,9 +16,9 @@ import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
 import { ActionButton, CopyButton } from '@/lib/components/action';
-import { FormError, FormInfo, FormInput, FormSection, FormSelect } from '@/lib/components/form';
-import { RelatedTools, SectionLabel } from '@/lib/components/layout';
-import { ToolShell } from '@/lib/components/shell';
+import { FormError, FormInput, FormSection, FormSelect } from '@/lib/components/form';
+import { SectionLabel } from '@/lib/components/layout';
+import { ToolFooter, ToolShell } from '@/lib/components/shell';
 import { EmbeddedEmptyState, StatItem } from '@/lib/components/status';
 import { Badge } from '@/lib/components/ui/badge';
 import { Button } from '@/lib/components/ui/button';
@@ -305,22 +305,17 @@ function DateTimestampConverterPage() {
 				</Button>
 			</FormSection>
 
-			<FormSection title="Related">
-				<RelatedTools
-					items={[{ id: 'cron-expression-builder', reason: 'Edit the cron expression' }]}
-				/>
-			</FormSection>
-
-			<FormSection title="About">
-				<FormInfo>
+			<ToolFooter
+				relatedItems={[{ id: 'cron-expression-builder', reason: 'Edit the cron expression' }]}
+				aboutText={
 					<ul className="list-inside list-disc space-y-0.5">
 						<li>All representations of the same instant, computed on every render.</li>
 						<li>Pick a date in the calendar to set the active timestamp.</li>
 						<li>Multi-timezone cards flag DST boundaries within ±1 hour.</li>
 						<li>Cron preview defers to the Cron Expression Builder for editing.</li>
 					</ul>
-				</FormInfo>
-			</FormSection>
+				}
+			/>
 		</>
 	);
 

@@ -25,9 +25,8 @@ import {
 } from 'react';
 import { toast } from 'sonner';
 
-import { FormCheckbox, FormInfo, FormInput, FormMode, FormSection } from '@/lib/components/form';
-import { RelatedTools } from '@/lib/components/layout';
-import { ToolShell } from '@/lib/components/shell';
+import { FormCheckbox, FormInput, FormMode, FormSection } from '@/lib/components/form';
+import { ToolFooter, ToolShell } from '@/lib/components/shell';
 import { EmbeddedEmptyState, StatItem } from '@/lib/components/status';
 import { Badge } from '@/lib/components/ui/badge';
 import { Button } from '@/lib/components/ui/button';
@@ -668,22 +667,19 @@ function HexEditorPage() {
 						</Button>
 					</FormSection>
 
-					<FormSection title="Related">
-						<RelatedTools
-							items={[
-								{ id: 'file-inspector', reason: 'Inspect metadata' },
-								{ id: 'mime-types', reason: 'Decode magic bytes' },
-							]}
-						/>
-					</FormSection>
-
-					<FormSection title="About">
-						<FormInfo>
-							Virtual scrolling renders only visible rows. Backup .bak is written on save when
-							enabled. Insert / delete operations that change file length are deferred to a future
-							iteration.
-						</FormInfo>
-					</FormSection>
+					<ToolFooter
+						relatedItems={[
+							{ id: 'file-inspector', reason: 'Inspect metadata' },
+							{ id: 'mime-types', reason: 'Decode magic bytes' },
+						]}
+						aboutText={
+							<>
+								Virtual scrolling renders only visible rows. Backup .bak is written on save when
+								enabled. Insert / delete operations that change file length are deferred to a future
+								iteration.
+							</>
+						}
+					/>
 				</>
 			}
 		>

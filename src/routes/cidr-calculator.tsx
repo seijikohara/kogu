@@ -5,8 +5,7 @@ import { toast } from 'sonner';
 
 import { ActionButton, CopyButton } from '@/lib/components/action';
 import { FormInfo, FormInput, FormMode, FormSection } from '@/lib/components/form';
-import { RelatedTools } from '@/lib/components/layout';
-import { ToolShell } from '@/lib/components/shell';
+import { ToolFooter, ToolShell } from '@/lib/components/shell';
 import { EmbeddedEmptyState, StatItem } from '@/lib/components/status';
 import {
 	Accordion,
@@ -205,25 +204,20 @@ function CidrCalculatorPage() {
 						/>
 					</FormSection>
 
-					<FormSection title="Related">
-						<RelatedTools
-							items={[
-								{ id: 'ip-converter', reason: 'Convert IPv4 ↔ IPv6' },
-								{ id: 'dns-lookup', reason: 'Resolve a name to an IP' },
-							]}
-						/>
-					</FormSection>
-
-					<FormSection title="About">
-						<FormInfo>
+					<ToolFooter
+						relatedItems={[
+							{ id: 'ip-converter', reason: 'Convert IPv4 ↔ IPv6' },
+							{ id: 'dns-lookup', reason: 'Resolve a name to an IP' },
+						]}
+						aboutText={
 							<ul className="list-inside list-disc space-y-0.5">
 								<li>All calculations happen in-browser.</li>
 								<li>Supports IPv4 (/0–/32) and IPv6 (/0–/128).</li>
 								<li>Math runs on bigint; no precision loss.</li>
 								<li>Detects RFC 1918 / 6598, loopback, ULA, and more.</li>
 							</ul>
-						</FormInfo>
-					</FormSection>
+						}
+					/>
 				</>
 			}
 		>

@@ -20,13 +20,8 @@ import {
 	FormSlider,
 	FormTextarea,
 } from '@/lib/components/form';
-import {
-	DefinitionList,
-	type DefinitionItem,
-	RelatedTools,
-	SectionLabel,
-} from '@/lib/components/layout';
-import { ToolShell } from '@/lib/components/shell';
+import { DefinitionList, type DefinitionItem, SectionLabel } from '@/lib/components/layout';
+import { ToolFooter, ToolShell } from '@/lib/components/shell';
 import { EmbeddedEmptyState, StatItem } from '@/lib/components/status';
 import {
 	Accordion,
@@ -306,21 +301,18 @@ function X509DecoderPage() {
 						</FormCheckboxGroup>
 					</FormSection>
 
-					<FormSection title="Related">
-						<RelatedTools
-							items={[
-								{ id: 'tls-inspector', reason: 'Fetch a live cert chain from a host' },
-								{ id: 'rsa-tools', reason: 'Verify a signature with the public key' },
-							]}
-						/>
-					</FormSection>
-
-					<FormSection title="About">
-						<FormInfo>
-							All parsing happens in your browser. Nothing is uploaded. Sample certificates are
-							generated locally with fresh keys each time.
-						</FormInfo>
-					</FormSection>
+					<ToolFooter
+						relatedItems={[
+							{ id: 'tls-inspector', reason: 'Fetch a live cert chain from a host' },
+							{ id: 'rsa-tools', reason: 'Verify a signature with the public key' },
+						]}
+						aboutText={
+							<>
+								All parsing happens in your browser. Nothing is uploaded. Sample certificates are
+								generated locally with fresh keys each time.
+							</>
+						}
+					/>
 				</>
 			}
 		>

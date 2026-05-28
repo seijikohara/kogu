@@ -17,14 +17,12 @@ import { CopyButton } from '@/lib/components/action';
 import {
 	FormCheckbox,
 	FormError,
-	FormInfo,
 	FormInput,
 	FormSection,
 	FormSelect,
 	FormSlider,
 } from '@/lib/components/form';
-import { RelatedTools } from '@/lib/components/layout';
-import { ToolShell } from '@/lib/components/shell';
+import { ToolFooter, ToolShell } from '@/lib/components/shell';
 import { EmbeddedEmptyState, StatItem } from '@/lib/components/status';
 import { Badge } from '@/lib/components/ui/badge';
 import { Button } from '@/lib/components/ui/button';
@@ -331,22 +329,19 @@ function RestClientRail({
 				</Button>
 			</FormSection>
 
-			<FormSection title="Related">
-				<RelatedTools
-					items={[
-						{ id: 'http-status-codes', reason: 'Look up a response status code' },
-						{ id: 'mime-types', reason: 'Find a Content-Type or extension' },
-						{ id: 'curl-builder', reason: 'Build or parse a cURL command' },
-					]}
-				/>
-			</FormSection>
-
-			<FormSection title="About">
-				<FormInfo>
-					Local HTTP client. Requests go directly from your machine; not proxied. CORS does not
-					apply (Tauri backend).
-				</FormInfo>
-			</FormSection>
+			<ToolFooter
+				relatedItems={[
+					{ id: 'http-status-codes', reason: 'Look up a response status code' },
+					{ id: 'mime-types', reason: 'Find a Content-Type or extension' },
+					{ id: 'curl-builder', reason: 'Build or parse a cURL command' },
+				]}
+				aboutText={
+					<>
+						Local HTTP client. Requests go directly from your machine; not proxied. CORS does not
+						apply (Tauri backend).
+					</>
+				}
+			/>
 		</>
 	);
 }

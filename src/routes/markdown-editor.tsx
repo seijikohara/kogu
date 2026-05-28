@@ -35,10 +35,10 @@ import '@vizel/core/styles.css';
 import 'katex/dist/katex.min.css';
 
 import { CodeEditor, type CodeEditorHandle } from '@/lib/components/editor';
-import { FormInfo, FormMode, FormSection } from '@/lib/components/form';
+import { FormMode, FormSection } from '@/lib/components/form';
 import { SplitPane } from '@/lib/components/layout';
 import { MarkdownContextMenuItems, Vizel } from '@/lib/components/markdown';
-import { ToolShell } from '@/lib/components/shell';
+import { ToolFooter, ToolShell } from '@/lib/components/shell';
 import { EmbeddedEmptyState, StatItem } from '@/lib/components/status';
 import { Button } from '@/lib/components/ui/button';
 import {
@@ -523,8 +523,8 @@ function MarkdownEditorPage() {
 						</FormSection>
 					) : null}
 
-					<FormSection title="About">
-						<FormInfo>
+					<ToolFooter
+						aboutText={
 							<ul className="list-inside list-disc space-y-0.5">
 								<li>Monaco editor with syntax highlighting</li>
 								<li>Vizel visual editor with rich block content</li>
@@ -533,8 +533,8 @@ function MarkdownEditorPage() {
 								<li>Table of Contents generation</li>
 								<li>Export to HTML</li>
 							</ul>
-						</FormInfo>
-					</FormSection>
+						}
+					/>
 				</>
 			}
 		>

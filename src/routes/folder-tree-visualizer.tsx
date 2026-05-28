@@ -23,13 +23,11 @@ import {
 	FormCheckbox,
 	FormFolderPicker,
 	FormGlobFilters,
-	FormInfo,
 	FormMode,
 	FormSection,
 	FormSlider,
 } from '@/lib/components/form';
-import { RelatedTools } from '@/lib/components/layout';
-import { ToolShell } from '@/lib/components/shell';
+import { ToolFooter, ToolShell } from '@/lib/components/shell';
 import { EmbeddedEmptyState, StatItem } from '@/lib/components/status';
 import { Badge } from '@/lib/components/ui/badge';
 import { Button } from '@/lib/components/ui/button';
@@ -381,24 +379,21 @@ function FolderTreeVisualizerPage() {
 						</div>
 					</FormSection>
 
-					<FormSection title="Related">
-						<RelatedTools
-							items={[
-								{ id: 'duplicate-finder', reason: 'Eliminate duplicates inside the tree' },
-								{ id: 'drive-info', reason: 'See total drive capacity and usage' },
-								{ id: 'file-inspector', reason: 'Drill into a single file' },
-							]}
-						/>
-					</FormSection>
-
-					<FormSection title="About">
-						<FormInfo>
-							All scanning happens locally. Symlinks are never followed. Filters apply to filenames;
-							excluded directories are pruned before descent so deep `node_modules` trees never
-							enter the walk. Files outside the active filter are also excluded from cumulative
-							sizes, so totals reflect the visible tree.
-						</FormInfo>
-					</FormSection>
+					<ToolFooter
+						relatedItems={[
+							{ id: 'duplicate-finder', reason: 'Eliminate duplicates inside the tree' },
+							{ id: 'drive-info', reason: 'See total drive capacity and usage' },
+							{ id: 'file-inspector', reason: 'Drill into a single file' },
+						]}
+						aboutText={
+							<>
+								All scanning happens locally. Symlinks are never followed. Filters apply to
+								filenames; excluded directories are pruned before descent so deep `node_modules`
+								trees never enter the walk. Files outside the active filter are also excluded from
+								cumulative sizes, so totals reflect the visible tree.
+							</>
+						}
+					/>
 				</>
 			}
 		>

@@ -8,11 +8,9 @@ import {
 	FormCheckbox,
 	FormCheckboxGroup,
 	FormFolderPicker,
-	FormInfo,
 	FormSection,
 } from '@/lib/components/form';
-import { RelatedTools } from '@/lib/components/layout';
-import { ToolShell } from '@/lib/components/shell';
+import { ToolFooter, ToolShell } from '@/lib/components/shell';
 import { EmbeddedEmptyState, StatItem } from '@/lib/components/status';
 import { Badge } from '@/lib/components/ui/badge';
 import { Button } from '@/lib/components/ui/button';
@@ -182,22 +180,19 @@ function FileWatchPage() {
 						</FormCheckboxGroup>
 					</FormSection>
 
-					<FormSection title="Related">
-						<RelatedTools
-							items={[
-								{ id: 'file-inspector', reason: 'Inspect a changed file in detail' },
-								{ id: 'hex-editor', reason: 'View raw bytes of an updated file' },
-								{ id: 'folder-tree-visualizer', reason: 'See size impact of the watched tree' },
-							]}
-						/>
-					</FormSection>
-
-					<FormSection title="About">
-						<FormInfo>
-							Recursive filesystem watcher. The most recent {EVENT_RING_CAPACITY} events are
-							buffered in memory; older events are dropped.
-						</FormInfo>
-					</FormSection>
+					<ToolFooter
+						relatedItems={[
+							{ id: 'file-inspector', reason: 'Inspect a changed file in detail' },
+							{ id: 'hex-editor', reason: 'View raw bytes of an updated file' },
+							{ id: 'folder-tree-visualizer', reason: 'See size impact of the watched tree' },
+						]}
+						aboutText={
+							<>
+								Recursive filesystem watcher. The most recent {EVENT_RING_CAPACITY} events are
+								buffered in memory; older events are dropped.
+							</>
+						}
+					/>
 				</>
 			}
 		>
