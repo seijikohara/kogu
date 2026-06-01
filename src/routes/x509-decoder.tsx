@@ -32,6 +32,7 @@ import {
 import { Badge } from '@/lib/components/ui/badge';
 import { Button } from '@/lib/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/lib/components/ui/card';
+import { ToneBadge } from '@/lib/components/ui/tone-badge';
 import { useDocumentTitle } from '@/lib/hooks';
 import { createToolOptionsStore, usePersistedRail } from '@/lib/stores';
 import {
@@ -107,13 +108,6 @@ const buildExpiryBadge = (
 	if (days <= severeDays) return { label: `Expires in ${days} days`, tone: 'destructive' };
 	if (days <= warnDays) return { label: `Expires in ${days} days`, tone: 'warning' };
 	return { label: `Valid (${days} days left)`, tone: 'success' };
-};
-
-const TONE_BADGE_CLASS: Readonly<Record<ExpiryTone, string>> = {
-	success: 'bg-success/10 text-success border-success/30',
-	info: 'bg-info/10 text-info border-info/30',
-	warning: 'bg-warning/10 text-warning border-warning/30',
-	destructive: 'bg-destructive/10 text-destructive border-destructive/30',
 };
 
 const TONE_TIMELINE_CLASS: Readonly<Record<ExpiryTone, string>> = {
@@ -423,7 +417,9 @@ function CertificateCard({ cert, now, prefs }: CertificateCardProps) {
 							SN {serialPreview}
 						</Badge>
 					</div>
-					<Badge className={cn('font-medium', TONE_BADGE_CLASS[badge.tone])}>{badge.label}</Badge>
+					<ToneBadge tone={badge.tone} className="font-medium">
+						{badge.label}
+					</ToneBadge>
 				</div>
 			</CardHeader>
 			<CardContent className="space-y-4">
@@ -662,9 +658,9 @@ function ExtensionRow({ extension }: ExtensionRowProps) {
 					<span className="text-xs font-medium">{extension.name}</span>
 					<span className="font-mono text-2xs text-muted-foreground">{extension.oid}</span>
 					{extension.critical ? (
-						<Badge className={cn('font-mono text-2xs', TONE_BADGE_CLASS.destructive)}>
+						<ToneBadge tone="destructive" className="font-mono text-2xs">
 							Critical
-						</Badge>
+						</ToneBadge>
 					) : null}
 				</div>
 				<ExtensionBody extension={extension} />
