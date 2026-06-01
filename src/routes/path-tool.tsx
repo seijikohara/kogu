@@ -130,7 +130,7 @@ function PathToolPage() {
 			if (text.length > 0) setInput(text);
 		} catch (e) {
 			const message = e instanceof Error ? e.message : String(e);
-			toast.error('Failed to read clipboard', { description: message });
+			toast.error('Failed to paste from clipboard', { description: message });
 		}
 	}, []);
 

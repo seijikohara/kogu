@@ -351,10 +351,10 @@ function FileInspectorPage() {
 		};
 		try {
 			await navigator.clipboard.writeText(JSON.stringify(payload, null, 2));
-			toast.success('Copied metadata as JSON');
+			toast.success('Metadata copied to clipboard');
 		} catch (e) {
 			const message = e instanceof Error ? e.message : String(e);
-			toast.error('Failed to copy', { description: message });
+			toast.error('Failed to copy to clipboard', { description: message });
 		}
 	}, [audioInfo, detectedMime, hashes, imagePreview, mimeInfo, result]);
 

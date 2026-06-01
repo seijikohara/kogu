@@ -470,10 +470,10 @@ function BatchHashTab() {
 	const handleCopyShasum = async () => {
 		try {
 			await navigator.clipboard.writeText(shasumBlock);
-			toast.success(`Copied ${prefs.shasumAlgorithm.toUpperCase()} block`);
+			toast.success(`${prefs.shasumAlgorithm.toUpperCase()} block copied to clipboard`);
 		} catch (e) {
 			const message = e instanceof Error ? e.message : String(e);
-			toast.error('Failed to copy', { description: message });
+			toast.error('Failed to copy to clipboard', { description: message });
 		}
 	};
 

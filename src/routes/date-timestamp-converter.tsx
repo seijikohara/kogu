@@ -182,7 +182,11 @@ function DateTimestampConverterPage() {
 		if (cronExpression.trim().length > 0) {
 			navigator.clipboard
 				.writeText(cronExpression)
-				.then(() => toast.success('Cron expression copied — paste it into the Parse tab.'))
+				.then(() =>
+					toast.success('Cron expression copied to clipboard', {
+						description: 'Paste it into the Parse tab.',
+					})
+				)
 				.catch(() => undefined);
 		}
 	};

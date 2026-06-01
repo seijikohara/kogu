@@ -205,10 +205,10 @@ function EncodingConverterPage() {
 		if (!targetBytes) return;
 		try {
 			await navigator.clipboard.writeText(bytesToBase64(targetBytes));
-			toast.success('Copied base64 to clipboard');
+			toast.success('Base64 copied to clipboard');
 		} catch (e) {
 			const message = e instanceof Error ? e.message : String(e);
-			toast.error('Failed to copy', { description: message });
+			toast.error('Failed to copy to clipboard', { description: message });
 		}
 	};
 

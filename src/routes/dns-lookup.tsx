@@ -144,9 +144,9 @@ function DnsLookupPage() {
 	const handleCopyDig = async () => {
 		try {
 			await navigator.clipboard.writeText(exportAsDig(effectiveRequest));
-			toast.success('Copied dig command');
+			toast.success('dig command copied to clipboard');
 		} catch {
-			toast.error('Failed to copy dig command');
+			toast.error('Failed to copy to clipboard');
 		}
 	};
 
