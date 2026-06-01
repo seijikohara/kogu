@@ -13,11 +13,91 @@
 //! keys in `src-tauri/resources/macos/Info.plist` drive the OS prompt
 //! on the first scan.
 
+use std::sync::OnceLock;
+use std::time::Duration;
+
+use objc2_core_location::{CLAuthorizationStatus, CLLocationManager};
 use objc2_core_wlan::{CWChannelBand, CWChannelWidth, CWSecurity, CWWiFiClient};
 
 use super::channels::freq_mhz_to_channel;
 use super::types::{WifiBand, WifiError, WifiNetwork, WifiSecurity};
 use crate::network::oui;
+
+/// Process-wide singleton `CLLocationManager`. macOS requires the
+/// instance to outlive the authorization request; storing it as a
+/// raw pointer in a `OnceLock` (and never freeing it) keeps the
+/// prompt alive across scan calls without fighting `Retained`'s
+/// non-`Send` constraint.
+fn shared_location_manager() -> &'static CLLocationManager {
+    static MANAGER_PTR: OnceLock<usize> = OnceLock::new();
+    let raw = MANAGER_PTR.get_or_init(|| {
+        let manager = unsafe { CLLocationManager::new() };
+        // Convert to raw and intentionally leak — released on process exit.
+        objc2::rc::Retained::into_raw(manager) as usize
+    });
+    unsafe { &*((*raw) as *const CLLocationManager) }
+}
+
+fn status_name(status: CLAuthorizationStatus) -> &'static str {
+    match status {
+        CLAuthorizationStatus::NotDetermined => "NotDetermined",
+        CLAuthorizationStatus::Restricted => "Restricted",
+        CLAuthorizationStatus::Denied => "Denied",
+        CLAuthorizationStatus::AuthorizedAlways => "AuthorizedAlways",
+        CLAuthorizationStatus::AuthorizedWhenInUse => "AuthorizedWhenInUse",
+        _ => "Unknown",
+    }
+}
+
+/// Synchronously gate the scan path on Location Services. macOS 14+
+/// withholds SSID and BSSID from CoreWLAN callers without "Location
+/// When In Use" authorization, so we explicitly request it via
+/// `CLLocationManager` and poll the status until the user resolves
+/// the prompt (10-second cap).
+fn ensure_location_authorization() -> Result<(), WifiError> {
+    let manager = shared_location_manager();
+    let status = unsafe { manager.authorizationStatus() };
+    if matches!(
+        status,
+        CLAuthorizationStatus::AuthorizedAlways | CLAuthorizationStatus::AuthorizedWhenInUse
+    ) {
+        return Ok(());
+    }
+    if matches!(
+        status,
+        CLAuthorizationStatus::Denied | CLAuthorizationStatus::Restricted
+    ) {
+        return Err(WifiError::ScanFailed(format!(
+            "Location Services {} for Kogu. Open System Settings > Privacy & Security > Location Services and enable Kogu (or click the entry to grant access).",
+            status_name(status)
+        )));
+    }
+
+    // NotDetermined — fire the request and poll.
+    unsafe { manager.requestWhenInUseAuthorization() };
+    for _ in 0..100 {
+        std::thread::sleep(Duration::from_millis(100));
+        let next = unsafe { manager.authorizationStatus() };
+        if matches!(
+            next,
+            CLAuthorizationStatus::AuthorizedAlways | CLAuthorizationStatus::AuthorizedWhenInUse
+        ) {
+            return Ok(());
+        }
+        if matches!(
+            next,
+            CLAuthorizationStatus::Denied | CLAuthorizationStatus::Restricted
+        ) {
+            return Err(WifiError::ScanFailed(format!(
+                "Location Services {} for Kogu after request. Open System Settings > Privacy & Security > Location Services and enable Kogu.",
+                status_name(next)
+            )));
+        }
+    }
+    Err(WifiError::ScanFailed(
+        "Location Services request timed out (no dialog response). On macOS dev builds, the system dialog may not fire — try the release build or manually enable Kogu in System Settings > Privacy & Security > Location Services.".to_string(),
+    ))
+}
 
 pub async fn scan() -> Result<Vec<WifiNetwork>, WifiError> {
     tokio::task::spawn_blocking(scan_blocking)
@@ -26,6 +106,11 @@ pub async fn scan() -> Result<Vec<WifiNetwork>, WifiError> {
 }
 
 fn scan_blocking() -> Result<Vec<WifiNetwork>, WifiError> {
+    // Without "Location When In Use" authorization, macOS 14+ returns
+    // CoreWLAN scan entries with empty `bssid` / `ssid`. Request the
+    // permission first; the dialog fires on the very first call.
+    ensure_location_authorization()?;
+
     // Safety: CoreWLAN API is safe to call from any thread, but the
     // resulting NSObjects must be kept alive on the caller frame, which
     // Retained handles automatically.
@@ -50,7 +135,9 @@ fn scan_blocking() -> Result<Vec<WifiNetwork>, WifiError> {
         }
     };
 
+    let raw_count = networks.count();
     let mut out = Vec::new();
+    let mut all_bssids_empty = true;
     for net in &networks {
         let Some(channel_obj) = (unsafe { net.wlanChannel() }) else {
             continue;
@@ -77,14 +164,18 @@ fn scan_blocking() -> Result<Vec<WifiNetwork>, WifiError> {
         let bssid = unsafe { net.bssid() }
             .map(|s| s.to_string().to_uppercase())
             .unwrap_or_default();
+        if !bssid.is_empty() {
+            all_bssids_empty = false;
+        }
         if bssid.is_empty() {
-            // CoreWLAN occasionally returns BSSID-less entries; skip them.
+            // CoreWLAN withholds BSSID + SSID without Location
+            // Services. Skip per-entry; the "all empty" check below
+            // surfaces a single PermissionDenied for the whole batch.
             continue;
         }
         let ssid = unsafe { net.ssid() }.map(|s| s.to_string());
         let rssi = unsafe { net.rssiValue() } as i32;
         let security = map_security(unsafe { net.supportsSecurity(CWSecurity::None) }, &net);
-
         let is_connected = current_bssid.as_ref().is_some_and(|cur| cur == &bssid);
 
         out.push(WifiNetwork {
@@ -103,6 +194,13 @@ fn scan_blocking() -> Result<Vec<WifiNetwork>, WifiError> {
         // with the canonical IEEE mapping; CoreWLAN can occasionally
         // misreport vendor-specific channels.
         let _ = freq_mhz_to_channel;
+    }
+
+    // The radio saw N networks but every entry was redacted — this is
+    // the macOS 14+ "Location Services not granted" signature. Surface
+    // the actionable error rather than an empty list.
+    if raw_count > 0 && all_bssids_empty {
+        return Err(WifiError::PermissionDenied);
     }
     Ok(out)
 }
