@@ -32,6 +32,7 @@ import {
 	CardHeader,
 	CardTitle,
 } from '@/lib/components/ui/card';
+import { ToneBadge, type ToneBadgeTone } from '@/lib/components/ui/tone-badge';
 import { useActiveTab, useTabStore, createToolOptionsStore } from '@/lib/stores';
 import { cn } from '@/lib/utils';
 import { useDocumentTitle } from '@/lib/hooks';
@@ -92,14 +93,14 @@ export const Route = createFileRoute('/semver-tools')({
 const isSemverTab = (value: string): value is SemverTab =>
 	value === 'parse' || value === 'compare' || value === 'range' || value === 'bump';
 
-const BUMP_TONE: Record<Exclude<DiffKind, null>, string> = {
-	major: 'bg-destructive/10 text-destructive border-destructive/30',
-	minor: 'bg-warning/10 text-warning border-warning/30',
-	patch: 'bg-success/10 text-success border-success/30',
-	premajor: 'bg-destructive/10 text-destructive border-destructive/30',
-	preminor: 'bg-warning/10 text-warning border-warning/30',
-	prepatch: 'bg-info/10 text-info border-info/30',
-	prerelease: 'bg-info/10 text-info border-info/30',
+const BUMP_TONE: Record<Exclude<DiffKind, null>, ToneBadgeTone> = {
+	major: 'destructive',
+	minor: 'warning',
+	patch: 'success',
+	premajor: 'destructive',
+	preminor: 'warning',
+	prepatch: 'info',
+	prerelease: 'info',
 };
 
 const SIGN_TONE: Record<'<' | '=' | '>', string> = {
@@ -115,6 +116,20 @@ const DIRECTION_ICON = {
 } as const;
 
 const formatBump = (bump: DiffKind): string => (bump === null ? 'identical' : bump);
+
+// Bump severity pill: ToneBadge for a real bump, neutral Badge for "identical".
+function BumpBadge({ bump, className }: { readonly bump: DiffKind; readonly className?: string }) {
+	const label = formatBump(bump);
+	return bump ? (
+		<ToneBadge tone={BUMP_TONE[bump]} className={cn('font-mono', className)}>
+			{label}
+		</ToneBadge>
+	) : (
+		<Badge className={cn('border-border bg-muted font-mono text-foreground', className)}>
+			{label}
+		</Badge>
+	);
+}
 
 interface SegmentBadgeProps {
 	readonly label: string;
@@ -410,9 +425,6 @@ function SemverToolsPage() {
 											);
 										}
 										const DirectionIcon = DIRECTION_ICON[step.direction];
-										const tone = step.bump
-											? BUMP_TONE[step.bump]
-											: 'bg-muted text-foreground border-border';
 										return (
 											<li
 												// biome-ignore lint/suspicious/noArrayIndexKey: ordered step list is immutable per render
@@ -425,9 +437,7 @@ function SemverToolsPage() {
 												<code className="font-mono text-xs tabular-nums">{step.from}</code>
 												<DirectionIcon className="h-3.5 w-3.5 text-muted-foreground" />
 												<code className="font-mono text-xs tabular-nums">{step.to}</code>
-												<Badge className={cn('ml-auto text-2xs font-mono', tone)}>
-													{formatBump(step.bump)}
-												</Badge>
+												<BumpBadge bump={step.bump} className="ml-auto text-2xs" />
 											</li>
 										);
 									})}
@@ -505,16 +515,7 @@ function SemverToolsPage() {
 										{compareResult.sign}
 									</div>
 									<div className="flex flex-wrap items-center justify-center gap-2">
-										<Badge
-											className={cn(
-												'text-xs font-mono',
-												compareResult.bump
-													? BUMP_TONE[compareResult.bump]
-													: 'bg-muted text-foreground border-border'
-											)}
-										>
-											{formatBump(compareResult.bump)}
-										</Badge>
+										<BumpBadge bump={compareResult.bump} className="text-xs" />
 										{compareResult.metadataOnly ? (
 											<Badge className="bg-info/10 text-info border-info/30 text-xs">
 												metadata-only
@@ -827,9 +828,9 @@ function SemverToolsPage() {
 										<Card key={row.id} density="compact">
 											<CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
 												<div className="space-y-0.5">
-													<Badge className={cn('text-2xs font-mono', BUMP_TONE[row.id])}>
+													<ToneBadge tone={BUMP_TONE[row.id]} className="text-2xs font-mono">
 														{row.label}
-													</Badge>
+													</ToneBadge>
 													<CardDescription className="text-2xs">{row.hint}</CardDescription>
 												</div>
 												<CopyButton text={value} toastLabel={row.label} size="sm" />
