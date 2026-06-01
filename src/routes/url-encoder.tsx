@@ -18,7 +18,7 @@ import {
 import { SplitPane } from '@/lib/components/layout';
 import { Rail } from '@/lib/components/ui/rail';
 import { ToolFooter, ToolShell } from '@/lib/components/shell';
-import { StatItem } from '@/lib/components/status';
+import { DetectedInfo, StatItem } from '@/lib/components/status';
 import { Button } from '@/lib/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/lib/components/ui/card';
 import { Input } from '@/lib/components/ui/input';
@@ -354,22 +354,20 @@ function UrlEncoderPage() {
 							) : null}
 						</FormSection>
 
-						{detectedDoubleEncoded || detectedEncodingDepth > 1 ? (
-							<FormSection title="Detected">
-								<FormInfo showIcon={false}>
-									{detectedDoubleEncoded ? (
-										<p>
-											<strong>Warning:</strong> Double-encoded content detected
-										</p>
-									) : null}
-									{detectedEncodingDepth > 1 ? (
-										<p className="mt-1">
-											<strong>Encoding Depth:</strong> {detectedEncodingDepth} layers
-										</p>
-									) : null}
-								</FormInfo>
-							</FormSection>
-						) : null}
+						<DetectedInfo
+							items={[
+								{
+									show: detectedDoubleEncoded,
+									label: 'Warning',
+									value: 'Double-encoded content detected',
+								},
+								{
+									show: detectedEncodingDepth > 1,
+									label: 'Encoding Depth',
+									value: `${detectedEncodingDepth} layers`,
+								},
+							]}
+						/>
 					</>
 				)}
 

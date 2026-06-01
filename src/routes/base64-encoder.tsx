@@ -8,14 +8,13 @@ import { getErrorMessage } from '@/lib/utils';
 import {
 	FormCheckbox,
 	FormCheckboxGroup,
-	FormInfo,
 	FormMode,
 	FormSection,
 	FormSelect,
 } from '@/lib/components/form';
 import { SectionHeader, SplitPane } from '@/lib/components/layout';
 import { ToolFooter, ToolShell } from '@/lib/components/shell';
-import { EmbeddedEmptyState, StatItem } from '@/lib/components/status';
+import { DetectedInfo, EmbeddedEmptyState, StatItem } from '@/lib/components/status';
 import { useDebouncedValue, useDocumentTitle } from '@/lib/hooks';
 import { createToolOptionsStore, usePersistedRail } from '@/lib/stores';
 import {
@@ -277,30 +276,21 @@ function Base64EncoderPage() {
 								</FormCheckboxGroup>
 							</FormSection>
 
-							{detectedVariant || detectedDataUrl ? (
-								<FormSection title="Detected">
-									<FormInfo showIcon={false}>
-										{detectedVariant ? (
-											<p>
-												<strong>Variant:</strong>{' '}
-												{detectedVariant === 'url-safe' ? 'URL-safe (-_)' : 'Standard (+/)'}
-											</p>
-										) : null}
-										{detectedDataUrl ? (
-											<>
-												<p className="mt-1">
-													<strong>Format:</strong> Data URL
-												</p>
-												{detectedMimeType ? (
-													<p className="mt-1">
-														<strong>MIME:</strong> {detectedMimeType}
-													</p>
-												) : null}
-											</>
-										) : null}
-									</FormInfo>
-								</FormSection>
-							) : null}
+							<DetectedInfo
+								items={[
+									{
+										show: Boolean(detectedVariant),
+										label: 'Variant',
+										value: detectedVariant === 'url-safe' ? 'URL-safe (-_)' : 'Standard (+/)',
+									},
+									{ show: detectedDataUrl, label: 'Format', value: 'Data URL' },
+									{
+										show: detectedDataUrl && Boolean(detectedMimeType),
+										label: 'MIME',
+										value: detectedMimeType ?? '',
+									},
+								]}
+							/>
 						</>
 					)}
 
