@@ -220,8 +220,13 @@ function X509DecoderPage() {
 		return min;
 	}, [certificates]);
 
+	// Tri-state validity: a decoded certificate is valid, a parse error
+	// with no certificate is invalid, and an empty input is neutral.
+	const valid: boolean | null = certificates.length > 0 ? true : errors.length > 0 ? false : null;
+
 	return (
 		<ToolShell
+			valid={valid}
 			showRail={showRail}
 			onShowRailChange={setShowRail}
 			statusContent={
