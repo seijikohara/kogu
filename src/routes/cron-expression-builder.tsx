@@ -220,7 +220,7 @@ function CronExpressionBuilderPage() {
 									/>
 								)
 							) : (
-								<p className="text-sm text-destructive">{buildNextRuns.error}</p>
+								<FormError message={buildNextRuns.error} className="text-sm" />
 							)}
 						</CardContent>
 					</Card>
@@ -362,7 +362,7 @@ function CronExpressionBuilderPage() {
 									{parseDescription.ok ? (
 										<p className="text-sm">{parseDescription.value}</p>
 									) : (
-										<p className="text-sm text-destructive">{parseDescription.error}</p>
+										<FormError message={parseDescription.error} className="text-sm" />
 									)}
 								</CardContent>
 							</Card>
@@ -410,7 +410,7 @@ function CronExpressionBuilderPage() {
 											<p className="text-sm text-muted-foreground">No upcoming executions.</p>
 										)
 									) : (
-										<p className="text-sm text-destructive">{parseNextRuns.error}</p>
+										<FormError message={parseNextRuns.error} className="text-sm" />
 									)}
 								</CardContent>
 							</Card>

@@ -7,6 +7,7 @@ import { ActionButton } from '@/lib/components/action';
 import {
 	FormCheckbox,
 	FormCheckboxGroup,
+	FormError,
 	FormInfo,
 	FormInput,
 	FormSection,
@@ -521,7 +522,7 @@ function ImageConverterPage() {
 						{error ? (
 							<Card density="compact">
 								<CardContent>
-									<p className="text-sm text-destructive">{error}</p>
+									<FormError message={error} className="text-sm" />
 								</CardContent>
 							</Card>
 						) : null}

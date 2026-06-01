@@ -291,7 +291,7 @@ function StructureAccordion({ visualization }: StructureAccordionProps) {
 				{visualization.ok ? (
 					<RenderNode node={visualization.value} depth={0} />
 				) : (
-					<p className="text-xs text-destructive">{visualization.error}</p>
+					<FormError message={visualization.error} />
 				)}
 			</AccordionContent>
 		</AccordionItem>
@@ -505,7 +505,7 @@ function ReplaceCardBody({
 					</div>
 				</>
 			) : (
-				<p className="text-sm text-destructive">{replaceResult.error}</p>
+				<FormError message={replaceResult.error} className="text-sm" />
 			)}
 		</>
 	);
