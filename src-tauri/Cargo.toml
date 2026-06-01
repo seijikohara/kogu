@@ -127,6 +127,7 @@ sysinfo = { version = "0.39", default-features = false, features = ["disk"] }
 objc2 = "0.6"
 objc2-foundation = "0.3"
 objc2-core-wlan = "0.3"
+objc2-core-location = "0.3"
 
 [target.'cfg(target_os = "windows")'.dependencies]
 windows = { version = "0.62", features = [
