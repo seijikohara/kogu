@@ -26,6 +26,7 @@ import {
 import { toast } from 'sonner';
 
 import { FormCheckbox, FormInput, FormMode, FormSection } from '@/lib/components/form';
+import { DefinitionList } from '@/lib/components/layout';
 import { ToolFooter, ToolShell } from '@/lib/components/shell';
 import { EmbeddedEmptyState, StatItem } from '@/lib/components/status';
 import { Badge } from '@/lib/components/ui/badge';
@@ -924,24 +925,20 @@ function FileBanner({ file, detectedMime, magicHex, dirty, pendingCount }: FileB
 				</CardTitle>
 			</CardHeader>
 			<CardContent>
-				<dl className="grid grid-cols-[110px_1fr] gap-x-3 gap-y-1 text-xs">
-					<dt className="text-muted-foreground">Size</dt>
-					<dd className="font-mono">
-						{humanSize(file.sizeBytes)} ({file.sizeBytes.toLocaleString()} B)
-					</dd>
-					<dt className="text-muted-foreground">Modified</dt>
-					<dd className="font-mono">
-						{file.modifiedMs ? new Date(file.modifiedMs).toLocaleString() : '—'}
-					</dd>
-					<dt className="text-muted-foreground">Detected MIME</dt>
-					<dd className="font-mono">{detectedMime ?? '(unknown)'}</dd>
-					{magicHex ? (
-						<>
-							<dt className="text-muted-foreground">Magic bytes</dt>
-							<dd className="font-mono">{magicHex}</dd>
-						</>
-					) : null}
-				</dl>
+				<DefinitionList
+					items={[
+						{
+							key: 'Size',
+							value: `${humanSize(file.sizeBytes)} (${file.sizeBytes.toLocaleString()} B)`,
+						},
+						{
+							key: 'Modified',
+							value: file.modifiedMs ? new Date(file.modifiedMs).toLocaleString() : '—',
+						},
+						{ key: 'Detected MIME', value: detectedMime ?? '(unknown)' },
+						...(magicHex ? [{ key: 'Magic bytes', value: magicHex }] : []),
+					]}
+				/>
 			</CardContent>
 		</Card>
 	);

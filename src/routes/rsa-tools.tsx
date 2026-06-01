@@ -16,6 +16,7 @@ import { toast } from 'sonner';
 
 import { CopyButton } from '@/lib/components/action';
 import { FormSection, FormSelect, FormTextarea, type SelectOption } from '@/lib/components/form';
+import { DefinitionList } from '@/lib/components/layout';
 import { ToolFooter, ToolShell } from '@/lib/components/shell';
 import { EmbeddedEmptyState, StatItem } from '@/lib/components/status';
 import { Badge } from '@/lib/components/ui/badge';
@@ -459,18 +460,16 @@ function KeyInfoPanel({ info }: KeyInfoPanelProps) {
 	}
 	const fingerprintShort = info.fingerprint.replace(/:/g, '').slice(0, 16);
 	return (
-		<dl className="grid grid-cols-[88px_1fr] gap-x-3 gap-y-1 text-xs">
-			<dt className="font-mono text-muted-foreground">Algorithm</dt>
-			<dd className="font-mono">{info.algorithm}</dd>
-			<dt className="font-mono text-muted-foreground">Type</dt>
-			<dd className="font-mono">{info.type}</dd>
-			<dt className="font-mono text-muted-foreground">Bit length</dt>
-			<dd className="font-mono tabular-nums">{info.bitLength}</dd>
-			<dt className="font-mono text-muted-foreground">Format</dt>
-			<dd className="font-mono uppercase">{info.format}</dd>
-			<dt className="font-mono text-muted-foreground">SHA-256</dt>
-			<dd className="break-all font-mono">{fingerprintShort}…</dd>
-		</dl>
+		<DefinitionList
+			keyColumn="88px"
+			items={[
+				{ key: 'Algorithm', value: info.algorithm },
+				{ key: 'Type', value: info.type },
+				{ key: 'Bit length', value: <span className="tabular-nums">{info.bitLength}</span> },
+				{ key: 'Format', value: <span className="uppercase">{info.format}</span> },
+				{ key: 'SHA-256', value: `${fingerprintShort}…`, break: true },
+			]}
+		/>
 	);
 }
 
