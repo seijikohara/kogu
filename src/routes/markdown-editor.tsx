@@ -524,6 +524,11 @@ function MarkdownEditorPage() {
 					) : null}
 
 					<ToolFooter
+						relatedItems={[
+							{ id: 'diff-viewer', reason: 'Compare two versions of text' },
+							{ id: 'string-case-converter', reason: 'Reformat text into other cases' },
+							{ id: 'lorem-ipsum', reason: 'Generate placeholder body text' },
+						]}
 						aboutText={
 							<ul className="list-inside list-disc space-y-0.5">
 								<li>Monaco editor with syntax highlighting</li>

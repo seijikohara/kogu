@@ -410,7 +410,14 @@ function EscapeToolPage() {
 				</Button>
 			</FormSection>
 
-			<ToolFooter aboutText={FLAVOR_DESCRIPTIONS[activeFlavor]} />
+			<ToolFooter
+				relatedItems={[
+					{ id: 'base64-encoder', reason: 'Encode and decode Base64 text' },
+					{ id: 'url-encoder', reason: 'Percent-encode and decode URLs' },
+					{ id: 'string-compressor', reason: 'Compress and decompress text' },
+				]}
+				aboutText={FLAVOR_DESCRIPTIONS[activeFlavor]}
+			/>
 		</>
 	);
 

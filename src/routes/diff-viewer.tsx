@@ -373,6 +373,11 @@ function DiffViewerPage() {
 					</FormSection>
 
 					<ToolFooter
+						relatedItems={[
+							{ id: 'list-comparer', reason: 'Set operations on two lists' },
+							{ id: 'duplicate-finder', reason: 'Find duplicate files by content' },
+							{ id: 'markdown-editor', reason: 'Edit text with live preview' },
+						]}
 						aboutText={
 							<ul className="list-inside list-disc space-y-0.5">
 								<li>LCS algorithm for line diff</li>

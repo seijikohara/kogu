@@ -435,6 +435,11 @@ function StringCompressorPage() {
 					</FormSection>
 
 					<ToolFooter
+						relatedItems={[
+							{ id: 'base64-encoder', reason: 'Encode and decode Base64 text' },
+							{ id: 'url-encoder', reason: 'Percent-encode and decode URLs' },
+							{ id: 'escape-tool', reason: 'Escape and unescape multi-flavor text' },
+						]}
 						aboutText={
 							<>
 								<p>

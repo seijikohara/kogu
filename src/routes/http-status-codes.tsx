@@ -198,6 +198,10 @@ function HttpStatusCodesPage() {
 					</FormSection>
 
 					<ToolFooter
+						relatedItems={[
+							{ id: 'rest-client', reason: 'Send requests and read response codes' },
+							{ id: 'curl-builder', reason: 'Build and parse cURL commands' },
+						]}
 						aboutText={
 							<>
 								Status codes are primarily defined in RFC 9110 (HTTP Semantics, June 2022). WebDAV
