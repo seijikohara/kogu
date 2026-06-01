@@ -21,7 +21,7 @@ import {
 
 import { CopyButton } from '@/lib/components/action';
 import { FormError, FormInfo, FormInput, FormSection, FormTextarea } from '@/lib/components/form';
-import { ToolShell } from '@/lib/components/shell';
+import { ToolFooter, ToolShell } from '@/lib/components/shell';
 import { EmbeddedEmptyState, StatItem } from '@/lib/components/status';
 import { Badge } from '@/lib/components/ui/badge';
 import { Button } from '@/lib/components/ui/button';
@@ -866,32 +866,6 @@ function SemverToolsPage() {
 
 	const rail = (
 		<>
-			<FormSection title="About SemVer">
-				<FormInfo>
-					Semantic Versioning 2.0.0 — every version is{' '}
-					<code className="font-mono">major.minor.patch</code> with an optional{' '}
-					<code className="font-mono">-prerelease</code> and{' '}
-					<code className="font-mono">+buildmetadata</code>.
-					<ul className="mt-1 list-inside list-disc space-y-0.5">
-						<li>
-							<strong>major</strong> — backwards-incompatible API changes
-						</li>
-						<li>
-							<strong>minor</strong> — backwards-compatible features
-						</li>
-						<li>
-							<strong>patch</strong> — backwards-compatible fixes
-						</li>
-						<li>
-							<strong>prerelease</strong> — lower precedence than the release
-						</li>
-						<li>
-							<strong>build</strong> — metadata, ignored in precedence
-						</li>
-					</ul>
-				</FormInfo>
-			</FormSection>
-
 			<FormSection title="Range syntax">
 				<FormInfo>
 					<ul className="list-inside list-disc space-y-0.5">
@@ -939,13 +913,24 @@ function SemverToolsPage() {
 				</Button>
 			</FormSection>
 
-			<FormSection title="Precedence rules">
-				<FormInfo>
-					Build metadata (everything after <code className="font-mono">+</code>) is ignored when
-					comparing versions. A prerelease (e.g. <code className="font-mono">1.0.0-rc.1</code>) has
-					lower precedence than the same version without one.
-				</FormInfo>
-			</FormSection>
+			<ToolFooter
+				relatedItems={[
+					{ id: 'diff-viewer', reason: 'Diff two version strings or changelogs' },
+					{ id: 'json-formatter', reason: 'Inspect version fields in package manifests' },
+					{ id: 'list-comparer', reason: 'Compare two lists of version tags' },
+				]}
+				aboutText={
+					<>
+						Parses, compares, range-tests, and bumps versions following Semantic Versioning 2.0.0 —{' '}
+						<code className="font-mono">major.minor.patch</code> with an optional{' '}
+						<code className="font-mono">-prerelease</code> and{' '}
+						<code className="font-mono">+buildmetadata</code>. Major marks breaking changes, minor
+						adds backwards-compatible features, and patch covers backwards-compatible fixes. Build
+						metadata is ignored when comparing precedence, and a prerelease ranks below the same
+						version without one.
+					</>
+				}
+			/>
 		</>
 	);
 

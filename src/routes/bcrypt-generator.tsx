@@ -7,7 +7,7 @@ import { ActionButton, CopyButton } from '@/lib/components/action';
 import { getErrorMessage } from '@/lib/utils';
 import { FormInfo, FormInput, FormMode, FormSection, FormSlider } from '@/lib/components/form';
 import { SectionHeader } from '@/lib/components/layout';
-import { ToolShell } from '@/lib/components/shell';
+import { ToolFooter, ToolShell } from '@/lib/components/shell';
 import {
 	EmptyState,
 	ErrorDisplay,
@@ -325,17 +325,6 @@ function BcryptGeneratorPage() {
 						</>
 					)}
 
-					<FormSection title="About BCrypt">
-						<FormInfo>
-							<ul className="list-inside list-disc space-y-0.5">
-								<li>Password hashing algorithm</li>
-								<li>Salted and adaptive</li>
-								<li>Cost factor controls security/speed tradeoff</li>
-								<li>Recommended cost: 10-12 for most use cases</li>
-							</ul>
-						</FormInfo>
-					</FormSection>
-
 					<FormSection title="Cost Recommendations">
 						<FormInfo showIcon={false}>
 							<div className="space-y-0.5">
@@ -362,6 +351,22 @@ function BcryptGeneratorPage() {
 							</div>
 						</FormInfo>
 					</FormSection>
+
+					<ToolFooter
+						relatedItems={[
+							{ id: 'password-generator', reason: 'Generate a strong password to hash' },
+							{ id: 'hash-generator', reason: 'Compute MD5 / SHA digests' },
+							{ id: 'uuid-generator', reason: 'Generate unique identifiers' },
+						]}
+						aboutText={
+							<>
+								BCrypt is an adaptive, salted password-hashing function. The cost factor controls
+								the work per hash, trading speed for resistance to brute-force attacks. A cost of
+								10-12 suits most use cases. Verify checks a password against an existing{' '}
+								<code className="font-mono">$2b$</code> hash.
+							</>
+						}
+					/>
 				</>
 			}
 		>

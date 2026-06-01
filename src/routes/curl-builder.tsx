@@ -21,7 +21,7 @@ import {
 	FormSelect,
 	FormTextarea,
 } from '@/lib/components/form';
-import { ToolShell } from '@/lib/components/shell';
+import { ToolFooter, ToolShell } from '@/lib/components/shell';
 import { EmbeddedEmptyState, StatItem } from '@/lib/components/status';
 import { Badge } from '@/lib/components/ui/badge';
 import { Button } from '@/lib/components/ui/button';
@@ -804,6 +804,21 @@ function CurlBuilderPage() {
 					</ul>
 				</FormInfo>
 			</FormSection>
+
+			<ToolFooter
+				relatedItems={[
+					{ id: 'rest-client', reason: 'Send the request and inspect the response' },
+					{ id: 'websocket-tester', reason: 'Test ws:// or wss:// endpoints interactively' },
+					{ id: 'url-encoder', reason: 'Encode query parameters and form values' },
+				]}
+				aboutText={
+					<>
+						Builds, parses, and converts cURL commands. The Build tab composes a request from form
+						controls, the Parse tab decodes an existing command, and the Code tab emits fetch,
+						Python, and Go snippets. cURL is never executed; the command is generated for copy.
+					</>
+				}
+			/>
 		</>
 	);
 

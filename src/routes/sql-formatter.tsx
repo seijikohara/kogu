@@ -14,7 +14,7 @@ import {
 	FormSelect,
 } from '@/lib/components/form';
 import { SectionHeader, SplitPane } from '@/lib/components/layout';
-import { ToolShell } from '@/lib/components/shell';
+import { ToolFooter, ToolShell } from '@/lib/components/shell';
 import { EmbeddedEmptyState, StatItem } from '@/lib/components/status';
 import { useDocumentTitle } from '@/lib/hooks';
 import { usePersistedRail } from '@/lib/stores';
@@ -263,6 +263,21 @@ function SqlFormatterPage() {
 							/>
 						</FormCheckboxGroup>
 					</FormSection>
+
+					<ToolFooter
+						relatedItems={[
+							{ id: 'json-formatter', reason: 'Format and query JSON documents' },
+							{ id: 'xml-formatter', reason: 'Format and validate XML documents' },
+							{ id: 'yaml-formatter', reason: 'Format and convert YAML documents' },
+						]}
+						aboutText={
+							<>
+								Formats and minifies SQL across 18+ dialects. Dialect, keyword case, indentation,
+								and operator spacing are configurable. Formatting is lexical, so malformed SQL is
+								reformatted on a best-effort basis rather than rejected.
+							</>
+						}
+					/>
 				</>
 			}
 		>

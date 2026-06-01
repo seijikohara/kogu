@@ -14,7 +14,7 @@ import {
 	FormSelect,
 } from '@/lib/components/form';
 import { SectionHeader } from '@/lib/components/layout';
-import { ToolShell } from '@/lib/components/shell';
+import { ToolFooter, ToolShell } from '@/lib/components/shell';
 import {
 	EmptyState,
 	ErrorDisplay,
@@ -271,17 +271,6 @@ function SshKeyGeneratorPage() {
 						</div>
 					</FormSection>
 
-					<FormSection title="About SSH Keys">
-						<FormInfo>
-							<ul className="list-inside list-disc space-y-0.5">
-								<li>Ed25519: Modern, fast, compact (recommended)</li>
-								<li>ECDSA: Good balance of security and compatibility</li>
-								<li>RSA: Wide compatibility, larger key sizes</li>
-								<li>Passphrase encrypts private key at rest</li>
-							</ul>
-						</FormInfo>
-					</FormSection>
-
 					<FormSection title="Algorithm Comparison">
 						<FormInfo showIcon={false}>
 							<div className="space-y-0.5">
@@ -308,6 +297,23 @@ function SshKeyGeneratorPage() {
 							</div>
 						</FormInfo>
 					</FormSection>
+
+					<ToolFooter
+						relatedItems={[
+							{ id: 'gpg-key-generator', reason: 'Generate GPG/PGP keys for signing' },
+							{ id: 'rsa-tools', reason: 'Encrypt, decrypt, sign, and verify with RSA keys' },
+							{ id: 'x509-decoder', reason: 'Decode X.509 / PEM certificates' },
+						]}
+						aboutText={
+							<>
+								Generates SSH key pairs for authentication. Ed25519 is modern, fast, and compact,
+								and is recommended for most use cases; ECDSA balances security and compatibility,
+								while RSA offers the widest compatibility at larger key sizes. An optional
+								passphrase encrypts the private key at rest. Generation runs through the bundled
+								library or a local <code className="font-mono">ssh-keygen</code> when available.
+							</>
+						}
+					/>
 				</>
 			}
 		>
