@@ -4,6 +4,7 @@ import { Calendar, Check, Clock, FlaskConical, Pencil, Search, Sparkles, X } fro
 
 import { CopyButton } from '@/lib/components/action';
 import { FormError, FormInfo, FormInput, FormSection } from '@/lib/components/form';
+import { SubsectionLabel } from '@/lib/components/layout';
 import { ToolFooter, ToolShell } from '@/lib/components/shell';
 import { EmbeddedEmptyState, StatItem } from '@/lib/components/status';
 import { Button } from '@/lib/components/ui/button';
@@ -235,9 +236,7 @@ function CronExpressionBuilderPage() {
 						<CardContent className="space-y-4">
 							{CRON_PRESET_CATEGORIES.map((category) => (
 								<div key={category.label}>
-									<h4 className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-										{category.label}
-									</h4>
+									<SubsectionLabel className="mb-2">{category.label}</SubsectionLabel>
 									<div className="flex flex-wrap gap-2">
 										{category.presets.map((preset) => (
 											<Button
@@ -427,9 +426,7 @@ function CronExpressionBuilderPage() {
 						<CardContent className="space-y-4">
 							{CRON_PRESET_CATEGORIES.map((category) => (
 								<div key={category.label}>
-									<h4 className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-										{category.label}
-									</h4>
+									<SubsectionLabel className="mb-2">{category.label}</SubsectionLabel>
 									<div className="flex flex-wrap gap-2">
 										{category.presets.map((preset) => (
 											<Button
