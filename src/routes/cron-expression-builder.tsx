@@ -6,7 +6,6 @@ import { CopyButton } from '@/lib/components/action';
 import { FormError, FormInfo, FormInput, FormSection } from '@/lib/components/form';
 import { ToolFooter, ToolShell } from '@/lib/components/shell';
 import { EmbeddedEmptyState, StatItem } from '@/lib/components/status';
-import { Badge } from '@/lib/components/ui/badge';
 import { Button } from '@/lib/components/ui/button';
 import {
 	Card,
@@ -15,6 +14,7 @@ import {
 	CardHeader,
 	CardTitle,
 } from '@/lib/components/ui/card';
+import { ToneBadge, type ToneBadgeTone } from '@/lib/components/ui/tone-badge';
 import { useActiveTab, useTabStore } from '@/lib/stores';
 import { cn } from '@/lib/utils';
 import { useDocumentTitle } from '@/lib/hooks';
@@ -45,10 +45,10 @@ export const Route = createFileRoute('/cron-expression-builder')({
 	component: CronExpressionBuilderPage,
 });
 
-const dayBadgeClass = (dayIndex: number, isWeekend: boolean): string => {
-	if (isWeekend) return 'bg-warning/10 text-warning border-warning/30';
-	if (dayIndex === 1) return 'bg-info/10 text-info border-info/30';
-	return 'bg-success/10 text-success border-success/30';
+const dayTone = (dayIndex: number, isWeekend: boolean): ToneBadgeTone => {
+	if (isWeekend) return 'warning';
+	if (dayIndex === 1) return 'info';
+	return 'success';
 };
 
 function CronExpressionBuilderPage() {
@@ -195,14 +195,12 @@ function CronExpressionBuilderPage() {
 													<span className="w-6 text-xs tabular-nums text-muted-foreground">
 														{idx + 1}.
 													</span>
-													<Badge
-														className={cn(
-															'text-2xs font-mono',
-															dayBadgeClass(fmt.dayIndex, fmt.isWeekend)
-														)}
+													<ToneBadge
+														tone={dayTone(fmt.dayIndex, fmt.isWeekend)}
+														className="text-2xs font-mono"
 													>
 														{fmt.dayLabel}
-													</Badge>
+													</ToneBadge>
 													<span className="font-mono text-sm tabular-nums">{fmt.date}</span>
 													<span className="font-mono text-sm tabular-nums text-muted-foreground">
 														{fmt.time}
@@ -391,14 +389,12 @@ function CronExpressionBuilderPage() {
 															<span className="w-6 text-xs tabular-nums text-muted-foreground">
 																{idx + 1}.
 															</span>
-															<Badge
-																className={cn(
-																	'text-2xs font-mono',
-																	dayBadgeClass(fmt.dayIndex, fmt.isWeekend)
-																)}
+															<ToneBadge
+																tone={dayTone(fmt.dayIndex, fmt.isWeekend)}
+																className="text-2xs font-mono"
 															>
 																{fmt.dayLabel}
-															</Badge>
+															</ToneBadge>
 															<span className="font-mono text-sm tabular-nums">{fmt.date}</span>
 															<span className="font-mono text-sm tabular-nums text-muted-foreground">
 																{fmt.time}
