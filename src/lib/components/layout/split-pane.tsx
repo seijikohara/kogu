@@ -26,16 +26,16 @@ export function SplitPane({
 	return (
 		<ResizablePanelGroup orientation={direction} className={cn('h-full flex-1', className)}>
 			<ResizablePanel
-				defaultSize={defaultSizes[0]}
-				minSize={minSizes[0]}
+				defaultSize={String(defaultSizes[0])}
+				minSize={String(minSizes[0])}
 				className="flex h-full flex-col overflow-hidden"
 			>
 				{firstSlot}
 			</ResizablePanel>
 			<ResizableHandle withHandle />
 			<ResizablePanel
-				defaultSize={defaultSizes[1]}
-				minSize={minSizes[1]}
+				defaultSize={String(defaultSizes[1])}
+				minSize={String(minSizes[1])}
 				className="flex h-full flex-col overflow-hidden"
 			>
 				{secondSlot}

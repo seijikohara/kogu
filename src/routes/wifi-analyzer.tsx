@@ -239,7 +239,7 @@ function WifiAnalyzerPage() {
 			}
 		>
 			<ResizablePanelGroup orientation="vertical" className="h-full">
-				<ResizablePanel defaultSize={60} minSize={20}>
+				<ResizablePanel defaultSize="60" minSize="20">
 					{error ? (
 						<div className="flex h-full items-center justify-center p-4">
 							<ErrorDisplay title="Wi-Fi scan failed" message={error} />
@@ -263,7 +263,7 @@ function WifiAnalyzerPage() {
 					)}
 				</ResizablePanel>
 				<ResizableHandle />
-				<ResizablePanel defaultSize={40} minSize={20}>
+				<ResizablePanel defaultSize="40" minSize="20">
 					<WifiNetworkTable
 						networks={filtered}
 						sortKey={prefs.sortKey}
