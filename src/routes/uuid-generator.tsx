@@ -106,7 +106,7 @@ function UuidGeneratorPage() {
 			const message = getErrorMessage(e);
 			setError(message);
 			setResults([]);
-			toast.error('Failed to generate UUID', { description: message });
+			toast.error('Failed to generate UUIDs', { description: message });
 		}
 	};
 
