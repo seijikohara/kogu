@@ -4,7 +4,7 @@ import { Calendar, Check, Clock, FlaskConical, Pencil, Search, Sparkles, X } fro
 
 import { CopyButton } from '@/lib/components/action';
 import { FormError, FormInfo, FormInput, FormSection } from '@/lib/components/form';
-import { ToolShell } from '@/lib/components/shell';
+import { ToolFooter, ToolShell } from '@/lib/components/shell';
 import { EmbeddedEmptyState, StatItem } from '@/lib/components/status';
 import { Badge } from '@/lib/components/ui/badge';
 import { Button } from '@/lib/components/ui/button';
@@ -538,6 +538,22 @@ function CronExpressionBuilderPage() {
 					match, not both. Schedules are evaluated in UTC unless your runtime says otherwise.
 				</FormInfo>
 			</FormSection>
+
+			<ToolFooter
+				relatedItems={[
+					{
+						id: 'date-timestamp-converter',
+						reason: 'Convert a next-execution time across formats and zones',
+					},
+				]}
+				aboutText={
+					<>
+						Builds and parses 5-field cron expressions and previews the next executions for each.
+						The Build tab composes fields with validation; the Parse tab decodes an existing
+						expression. Step, range, and list syntax are supported.
+					</>
+				}
+			/>
 		</>
 	);
 

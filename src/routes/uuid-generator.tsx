@@ -8,14 +8,13 @@ import { getErrorMessage } from '@/lib/utils';
 import {
 	FormCheckbox,
 	FormCheckboxGroup,
-	FormInfo,
 	FormInput,
 	FormSection,
 	FormSelect,
 	FormSlider,
 } from '@/lib/components/form';
 import { GeneratedListPanel } from '@/lib/components/panel';
-import { ToolShell } from '@/lib/components/shell';
+import { ToolFooter, ToolShell } from '@/lib/components/shell';
 import { StatItem } from '@/lib/components/status';
 import { createToolOptionsStore, usePersistedRail } from '@/lib/stores';
 import { useDocumentTitle } from '@/lib/hooks';
@@ -228,16 +227,21 @@ function UuidGeneratorPage() {
 						</div>
 					</FormSection>
 
-					<FormSection title="About UUID">
-						<FormInfo>
-							<ul className="list-inside list-disc space-y-0.5">
-								<li>Universally Unique Identifier (RFC 9562)</li>
-								<li>v4 random is the most common choice</li>
-								<li>v7 is time-ordered, ideal for DB primary keys</li>
-								<li>v3 / v5 are deterministic from namespace + name</li>
-							</ul>
-						</FormInfo>
-					</FormSection>
+					<ToolFooter
+						relatedItems={[
+							{ id: 'hash-generator', reason: 'Hash inputs for v3 / v5 namespacing' },
+							{ id: 'password-generator', reason: 'Generate other secure random values' },
+							{ id: 'test-data-generator', reason: 'Embed identifiers in synthetic datasets' },
+						]}
+						aboutText={
+							<>
+								Generates Universally Unique Identifiers (UUIDs) per RFC 9562. v4 is fully random
+								and the most common choice; v7 is time-ordered and well suited to database primary
+								keys; v1 is timestamp-based; v3 and v5 are deterministic from a namespace and name.
+								Casing, hyphens, and surrounding braces are configurable.
+							</>
+						}
+					/>
 				</>
 			}
 		>

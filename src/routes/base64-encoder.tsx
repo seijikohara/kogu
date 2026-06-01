@@ -14,7 +14,7 @@ import {
 	FormSelect,
 } from '@/lib/components/form';
 import { SectionHeader, SplitPane } from '@/lib/components/layout';
-import { ToolShell } from '@/lib/components/shell';
+import { ToolFooter, ToolShell } from '@/lib/components/shell';
 import { EmbeddedEmptyState, StatItem } from '@/lib/components/status';
 import { useDebouncedValue, useDocumentTitle } from '@/lib/hooks';
 import { createToolOptionsStore, usePersistedRail } from '@/lib/stores';
@@ -251,18 +251,6 @@ function Base64EncoderPage() {
 									</div>
 								) : null}
 							</FormSection>
-
-							<FormSection title="Info" open={false}>
-								<FormInfo title="Standard vs URL-safe">
-									<p>
-										<strong>Standard:</strong> Uses <code>+</code> and <code>/</code> characters.
-									</p>
-									<p className="mt-1">
-										<strong>URL-safe:</strong> Uses <code>-</code> and <code>_</code> instead, safe
-										for URLs and filenames.
-									</p>
-								</FormInfo>
-							</FormSection>
 						</>
 					) : (
 						<>
@@ -315,6 +303,23 @@ function Base64EncoderPage() {
 							) : null}
 						</>
 					)}
+
+					<ToolFooter
+						relatedItems={[
+							{ id: 'url-encoder', reason: 'Percent-encode text for URLs' },
+							{ id: 'jwt-decoder', reason: 'Decode Base64URL-encoded JWT segments' },
+							{ id: 'hash-generator', reason: 'Hash text or files' },
+						]}
+						aboutText={
+							<>
+								Encodes and decodes Base64 with UTF-8 support. The Standard variant uses{' '}
+								<code>+</code> and <code>/</code> (RFC 4648 §4); the URL-safe variant uses{' '}
+								<code>-</code> and <code>_</code> (RFC 4648 §5), safe for URLs and filenames. Output
+								can be wrapped at PEM (64) or MIME (76) line widths and emitted as a Data URL with a
+								selectable MIME type.
+							</>
+						}
+					/>
 				</>
 			}
 		>

@@ -6,7 +6,7 @@ import { CopyButton } from '@/lib/components/action';
 import { CodeEditor } from '@/lib/components/editor';
 import { FormInfo, FormSection } from '@/lib/components/form';
 import { SectionHeader, SplitPane } from '@/lib/components/layout';
-import { ToolShell } from '@/lib/components/shell';
+import { ToolFooter, ToolShell } from '@/lib/components/shell';
 import { EmptyState, LiveStatusRegion } from '@/lib/components/status';
 import { Card, CardContent, CardHeader, CardTitle } from '@/lib/components/ui/card';
 import { IconTooltip } from '@/lib/components/ui/icon-tooltip';
@@ -128,17 +128,6 @@ function JwtDecoderPage() {
 			}
 			rail={
 				<>
-					<FormSection title="About JWT">
-						<FormInfo>
-							<ul className="list-inside list-disc space-y-0.5">
-								<li>JSON Web Token</li>
-								<li>Compact, URL-safe format</li>
-								<li>Three parts: Header.Payload.Signature</li>
-								<li>Self-contained authentication</li>
-							</ul>
-						</FormInfo>
-					</FormSection>
-
 					<FormSection title="Structure">
 						<FormInfo showIcon={false}>
 							<div className="space-y-1.5">
@@ -160,6 +149,22 @@ function JwtDecoderPage() {
 							</div>
 						</FormInfo>
 					</FormSection>
+
+					<ToolFooter
+						relatedItems={[
+							{ id: 'base64-encoder', reason: 'Decode the Base64URL parts manually' },
+							{ id: 'x509-decoder', reason: 'Inspect certificates carrying signing keys' },
+							{ id: 'rsa-tools', reason: 'Verify RS / PS signatures with a PEM key' },
+						]}
+						aboutText={
+							<>
+								Decodes a JSON Web Token (JWT) into its header, payload, and signature. The compact,
+								URL-safe format carries self-contained claims across three Base64URL-encoded parts
+								joined by dots. Decoding is client-side only — signature verification requires the
+								secret or public key and is not performed here.
+							</>
+						}
+					/>
 				</>
 			}
 		>

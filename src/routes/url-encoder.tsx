@@ -17,7 +17,7 @@ import {
 } from '@/lib/components/form';
 import { SplitPane } from '@/lib/components/layout';
 import { Rail } from '@/lib/components/ui/rail';
-import { ToolShell } from '@/lib/components/shell';
+import { ToolFooter, ToolShell } from '@/lib/components/shell';
 import { StatItem } from '@/lib/components/status';
 import { Button } from '@/lib/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/lib/components/ui/card';
@@ -312,26 +312,6 @@ function UrlEncoderPage() {
 								</FormInfo>
 							</FormSection>
 						) : null}
-
-						<FormSection title="Info" open={false}>
-							<FormInfo title="Encoding Modes">
-								<p>
-									<strong>Component:</strong> Encodes all special chars including /, ?, &amp;, =, #
-								</p>
-								<p className="mt-1">
-									<strong>URI:</strong> Preserves URL structure characters (/, ?, &amp;, =, #, :)
-								</p>
-								<p className="mt-1">
-									<strong>Form:</strong> Like component but uses + for spaces
-								</p>
-								<p className="mt-1">
-									<strong>Path:</strong> Preserves / but encodes other special chars
-								</p>
-								<p className="mt-1">
-									<strong>Custom:</strong> Configure preserved characters manually
-								</p>
-							</FormInfo>
-						</FormSection>
 					</>
 				) : (
 					<>
@@ -390,22 +370,26 @@ function UrlEncoderPage() {
 								</FormInfo>
 							</FormSection>
 						) : null}
-
-						<FormSection title="Info" open={false}>
-							<FormInfo title="Decoding Options">
-								<p>
-									<strong>+ as space:</strong> Treats + as space (form data format)
-								</p>
-								<p className="mt-1">
-									<strong>Invalid sequences:</strong> How to handle malformed % sequences
-								</p>
-								<p className="mt-1">
-									<strong>Multiple layers:</strong> Recursively decode double/triple encoded content
-								</p>
-							</FormInfo>
-						</FormSection>
 					</>
 				)}
+
+				<ToolFooter
+					relatedItems={[
+						{ id: 'base64-encoder', reason: 'Encode and decode Base64 text' },
+						{ id: 'escape-tool', reason: 'Escape and unescape across other flavors' },
+						{ id: 'curl-builder', reason: 'Build requests with encoded query parameters' },
+					]}
+					aboutText={
+						<>
+							Encodes, decodes, parses, and builds URLs. Encoding modes range from strict{' '}
+							<strong>Component</strong> (encodes all reserved characters) through{' '}
+							<strong>URI</strong>, <strong>Form</strong>, <strong>Path segment</strong>, and a{' '}
+							<strong>Custom</strong> mode with configurable preserved characters. Space encoding,
+							hex case, newline handling, and non-ASCII encoding are all configurable, and decoding
+							can recursively unwrap multiple encoding layers.
+						</>
+					}
+				/>
 			</Rail>
 
 			<SplitPane

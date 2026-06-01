@@ -15,7 +15,7 @@ import {
 	FormSelect,
 } from '@/lib/components/form';
 import { SectionHeader } from '@/lib/components/layout';
-import { ToolShell } from '@/lib/components/shell';
+import { ToolFooter, ToolShell } from '@/lib/components/shell';
 import {
 	EmptyState,
 	ErrorDisplay,
@@ -298,17 +298,6 @@ function GpgKeyGeneratorPage() {
 						</div>
 					</FormSection>
 
-					<FormSection title="About GPG Keys">
-						<FormInfo>
-							<ul className="list-inside list-disc space-y-0.5">
-								<li>GPG keys enable encryption and digital signatures</li>
-								<li>RSA: Wide compatibility, proven security</li>
-								<li>ECDSA: Smaller keys, faster operations</li>
-								<li>Passphrase protects private key at rest</li>
-							</ul>
-						</FormInfo>
-					</FormSection>
-
 					<FormSection title="Algorithm Comparison">
 						<FormInfo showIcon={false}>
 							<div className="space-y-0.5">
@@ -344,6 +333,23 @@ function GpgKeyGeneratorPage() {
 							<p className="mt-1.5">The User ID identifies the key owner. Comment is optional.</p>
 						</FormInfo>
 					</FormSection>
+
+					<ToolFooter
+						relatedItems={[
+							{ id: 'ssh-key-generator', reason: 'Generate SSH key pairs for authentication' },
+							{ id: 'rsa-tools', reason: 'Encrypt, decrypt, sign, and verify with RSA keys' },
+							{ id: 'x509-decoder', reason: 'Decode X.509 / PEM certificates' },
+						]}
+						aboutText={
+							<>
+								Generates GPG/PGP key pairs for encryption and digital signatures. RSA offers wide
+								compatibility and proven security, while ECDSA produces smaller keys with faster
+								operations. An optional passphrase protects the private key at rest. Generation runs
+								through the bundled library or a local <code className="font-mono">gpg</code> when
+								available.
+							</>
+						}
+					/>
 				</>
 			}
 		>
