@@ -12,9 +12,9 @@ import {
 } from '@/lib/components/form';
 import { ToolFooter, ToolShell } from '@/lib/components/shell';
 import { EmbeddedEmptyState, StatItem } from '@/lib/components/status';
-import { Badge } from '@/lib/components/ui/badge';
 import { Button } from '@/lib/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/lib/components/ui/card';
+import { ToneBadge, type ToneBadgeTone } from '@/lib/components/ui/tone-badge';
 import { useDocumentTitle } from '@/lib/hooks';
 import {
 	EVENT_RING_CAPACITY,
@@ -23,7 +23,6 @@ import {
 	useFileWatch,
 } from '@/lib/services/file-watch';
 import { createToolOptionsStore, usePersistedRail } from '@/lib/stores';
-import { cn } from '@/lib/utils';
 
 const ALL_KINDS: readonly FileWatchEventKind[] = ['create', 'modify', 'delete', 'rename'];
 
@@ -35,11 +34,11 @@ const KIND_LABEL: Readonly<Record<FileWatchEventKind, string>> = {
 };
 
 // Distinct tones per event kind so a long log remains scannable.
-const KIND_BADGE_CLASS: Readonly<Record<FileWatchEventKind, string>> = {
-	create: 'border-success/40 bg-success/10 text-success',
-	modify: 'border-info/40 bg-info/10 text-info',
-	delete: 'border-destructive/40 bg-destructive/10 text-destructive',
-	rename: 'border-warning/40 bg-warning/10 text-warning',
+const KIND_TONE: Readonly<Record<FileWatchEventKind, ToneBadgeTone>> = {
+	create: 'success',
+	modify: 'info',
+	delete: 'destructive',
+	rename: 'warning',
 };
 
 interface FileWatchPrefs {
@@ -239,15 +238,12 @@ function EventLog({ events }: EventLogProps) {
 						<time className="w-24 shrink-0 font-mono text-2xs text-muted-foreground">
 							{formatTime(event.timestamp)}
 						</time>
-						<Badge
-							variant="outline"
-							className={cn(
-								'w-16 shrink-0 justify-center font-mono text-2xs',
-								KIND_BADGE_CLASS[event.kind]
-							)}
+						<ToneBadge
+							tone={KIND_TONE[event.kind]}
+							className="w-16 shrink-0 justify-center font-mono text-2xs"
 						>
 							{KIND_LABEL[event.kind]}
-						</Badge>
+						</ToneBadge>
 						<span className="min-w-0 flex-1 truncate font-mono text-2xs" title={event.path}>
 							{event.path}
 						</span>

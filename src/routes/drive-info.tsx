@@ -20,6 +20,7 @@ import { Badge } from '@/lib/components/ui/badge';
 import { Button } from '@/lib/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/lib/components/ui/card';
 import { Progress } from '@/lib/components/ui/progress';
+import { ToneBadge, type ToneBadgeTone } from '@/lib/components/ui/tone-badge';
 import { useDocumentTitle } from '@/lib/hooks';
 import {
 	type DriveInfo,
@@ -57,10 +58,10 @@ const TIER_TEXT_CLASS: Record<UsageTier, string> = {
 	critical: 'text-destructive',
 };
 
-const TIER_BADGE_CLASS: Record<UsageTier, string> = {
-	normal: 'border-success/40 bg-success/10 text-success',
-	warning: 'border-warning/40 bg-warning/10 text-warning',
-	critical: 'border-destructive/40 bg-destructive/10 text-destructive',
+const TIER_TONE: Record<UsageTier, ToneBadgeTone> = {
+	normal: 'success',
+	warning: 'warning',
+	critical: 'destructive',
 };
 
 export const Route = createFileRoute('/drive-info')({
@@ -329,14 +330,13 @@ function DriveCard({ drive }: { readonly drive: DriveInfo }) {
 				<Progress value={percent} className={cn('h-1.5', TIER_PROGRESS_CLASS[tier])} />
 				<div className="flex items-center justify-between text-xs">
 					<span className={cn('font-mono', TIER_TEXT_CLASS[tier])}>{percent.toFixed(1)}% used</span>
-					<Badge variant="outline" className={cn('font-mono text-2xs', TIER_BADGE_CLASS[tier])}>
-						{tier === 'critical' ? (
-							<ShieldAlert className="h-3 w-3" />
-						) : (
-							<HardDrive className="h-3 w-3" />
-						)}
+					<ToneBadge
+						tone={TIER_TONE[tier]}
+						icon={tier === 'critical' ? ShieldAlert : HardDrive}
+						className="font-mono text-2xs"
+					>
 						{humanSize(drive.availableBytes)} free
-					</Badge>
+					</ToneBadge>
 				</div>
 				<DefinitionList
 					items={[
