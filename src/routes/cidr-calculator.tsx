@@ -4,7 +4,7 @@ import { type CSSProperties, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
 import { ActionButton, CopyButton } from '@/lib/components/action';
-import { FormInfo, FormInput, FormMode, FormSection } from '@/lib/components/form';
+import { FormError, FormInfo, FormInput, FormMode, FormSection } from '@/lib/components/form';
 import { ToolFooter, ToolShell } from '@/lib/components/shell';
 import { EmbeddedEmptyState, StatItem } from '@/lib/components/status';
 import {
@@ -236,7 +236,7 @@ function CidrCalculatorPage() {
 								size="default"
 							/>
 							{!result.ok && input.trim().length > 0 ? (
-								<p className="mt-2 text-xs text-destructive">{result.error}</p>
+								<FormError message={result.error} className="mt-2" />
 							) : null}
 							{result.ok && result.reserved.length > 0 ? (
 								<div className="mt-3 flex flex-wrap gap-1.5">
@@ -525,7 +525,7 @@ function SubnettingPanel({
 								</div>
 							</div>
 							{splitError ? (
-								<p className="text-xs text-destructive">{splitError}</p>
+								<FormError message={splitError} />
 							) : visibleRows && visibleRows.length > 0 ? (
 								<div className="overflow-x-auto">
 									<table className="w-full min-w-max border-collapse text-xs">
@@ -600,7 +600,7 @@ function SubnettingPanel({
 								size="compact"
 							/>
 							{aggregateResult?.error ? (
-								<p className="text-xs text-destructive">{aggregateResult.error}</p>
+								<FormError message={aggregateResult.error} />
 							) : aggregateResult?.cidr ? (
 								<div className="flex items-center justify-between gap-2 rounded-md border bg-success/5 px-2.5 py-1.5">
 									<div className="font-mono text-sm">{aggregateResult.cidr}</div>
