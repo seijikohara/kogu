@@ -134,17 +134,6 @@ function StringCaseConverterPage() {
 						</FormCheckboxGroup>
 					</FormSection>
 
-					<ToolFooter
-						aboutText={
-							<ul className="list-inside list-disc space-y-0.5">
-								<li>Converts text to 17+ case formats</li>
-								<li>Handles camelCase, PascalCase, snake_case</li>
-								<li>Supports kebab-case, CONSTANT_CASE, Title Case</li>
-								<li>Automatically detects word boundaries</li>
-							</ul>
-						}
-					/>
-
 					<FormSection title="Supported Formats">
 						<FormInfo showIcon={false}>
 							<div className="grid grid-cols-2 gap-x-4 gap-y-0.5 text-xs">
@@ -157,6 +146,17 @@ function StringCaseConverterPage() {
 							</div>
 						</FormInfo>
 					</FormSection>
+
+					<ToolFooter
+						aboutText={
+							<ul className="list-inside list-disc space-y-0.5">
+								<li>Converts text to 17+ case formats</li>
+								<li>Handles camelCase, PascalCase, snake_case</li>
+								<li>Supports kebab-case, CONSTANT_CASE, Title Case</li>
+								<li>Automatically detects word boundaries</li>
+							</ul>
+						}
+					/>
 				</>
 			}
 		>
