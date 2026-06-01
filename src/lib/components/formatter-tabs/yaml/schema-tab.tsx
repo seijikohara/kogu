@@ -178,7 +178,7 @@ export function SchemaTab({ input, onInputChange, onStatsChange }: SchemaTabProp
 			const text = await navigator.clipboard.readText();
 			if (text) {
 				setSchemaDefinition(text);
-				toast.success('Pasted');
+				toast.success('Pasted from clipboard');
 			}
 		} catch {
 			// Clipboard access denied.

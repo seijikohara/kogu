@@ -152,9 +152,9 @@ export const copyToClipboard = async (content: string): Promise<void> => {
 
 	try {
 		await writeText(content);
-		toast.success('Copied');
+		toast.success('Copied to clipboard');
 	} catch {
-		toast.error('Copy failed');
+		toast.error('Failed to copy to clipboard');
 	}
 };
 
@@ -164,10 +164,10 @@ export const copyToClipboard = async (content: string): Promise<void> => {
 export const pasteFromClipboard = async (): Promise<string | null> => {
 	try {
 		const text = await readText();
-		toast.success('Pasted');
+		toast.success('Pasted from clipboard');
 		return text;
 	} catch {
-		toast.error('Paste failed');
+		toast.error('Failed to paste from clipboard');
 		return null;
 	}
 };

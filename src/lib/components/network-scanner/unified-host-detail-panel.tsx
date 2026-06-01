@@ -186,7 +186,7 @@ const getServiceName = (port: PortInfo): string => {
 
 const copyToClipboard = async (text: string, label: string) => {
 	await navigator.clipboard.writeText(text);
-	toast.success(`${label} copied`);
+	toast.success(`${label} copied to clipboard`);
 };
 
 const getConfidenceLabel = (classification: DeviceClassification | null): string | null => {

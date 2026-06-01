@@ -350,7 +350,7 @@ export function TreeView({
 			if (copyTimerRef.current) clearTimeout(copyTimerRef.current);
 			copyTimerRef.current = setTimeout(() => setJustCopied(null), 1500);
 		} catch {
-			toast.error('Copy failed');
+			toast.error('Failed to copy to clipboard');
 		}
 	};
 
@@ -358,9 +358,9 @@ export function TreeView({
 		e.stopPropagation();
 		try {
 			await navigator.clipboard.writeText(node.path);
-			toast.success(`Copied: ${node.path}`);
+			toast.success('Path copied to clipboard');
 		} catch {
-			toast.error('Copy failed');
+			toast.error('Failed to copy to clipboard');
 		}
 	};
 

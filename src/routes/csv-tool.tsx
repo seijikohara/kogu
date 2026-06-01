@@ -218,7 +218,7 @@ function CsvToolPage() {
 				toast.success('Pasted from clipboard');
 			}
 		} catch {
-			toast.error('Could not read clipboard');
+			toast.error('Failed to paste from clipboard');
 		}
 	};
 
@@ -280,7 +280,7 @@ function CsvToolPage() {
 			toast.success('Output copied to clipboard');
 		} catch (e) {
 			const message = e instanceof Error ? e.message : String(e);
-			toast.error('Failed to copy output', { description: message });
+			toast.error('Failed to copy to clipboard', { description: message });
 		}
 	};
 

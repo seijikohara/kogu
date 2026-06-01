@@ -140,7 +140,7 @@ function CidrCalculatorPage() {
 		const text = exportDetails(result.details, exportFormat);
 		try {
 			await navigator.clipboard.writeText(text);
-			toast.success(`Copied details as ${exportFormat.toUpperCase()}`);
+			toast.success(`${exportFormat.toUpperCase()} details copied to clipboard`);
 		} catch {
 			toast.error('Failed to copy to clipboard');
 		}

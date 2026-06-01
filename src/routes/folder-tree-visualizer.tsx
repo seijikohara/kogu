@@ -235,10 +235,10 @@ function FolderTreeVisualizerPage() {
 	const copyText = useCallback(async (text: string, label: string) => {
 		try {
 			await navigator.clipboard.writeText(text);
-			toast.success(`Copied ${label}`);
+			toast.success(`${label} copied to clipboard`);
 		} catch (e) {
 			const message = e instanceof Error ? e.message : String(e);
-			toast.error('Failed to copy', { description: message });
+			toast.error('Failed to copy to clipboard', { description: message });
 		}
 	}, []);
 
