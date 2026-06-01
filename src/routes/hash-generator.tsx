@@ -697,6 +697,11 @@ function FileHashRail({
 			</FormSection>
 
 			<ToolFooter
+				relatedItems={[
+					{ id: 'bcrypt-generator', reason: 'Hash and verify passwords with BCrypt' },
+					{ id: 'password-generator', reason: 'Generate secure random passwords' },
+					{ id: 'uuid-generator', reason: 'Generate unique identifiers' },
+				]}
 				aboutText={
 					<ul className="list-inside list-disc space-y-0.5">
 						<li>Drop files or pick them from the dialog.</li>

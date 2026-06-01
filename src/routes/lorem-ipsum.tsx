@@ -199,6 +199,11 @@ function LoremIpsumPage() {
 					</FormSection>
 
 					<ToolFooter
+						relatedItems={[
+							{ id: 'test-data-generator', reason: 'Generate synthetic datasets' },
+							{ id: 'markdown-editor', reason: 'Edit and preview generated text' },
+							{ id: 'string-case-converter', reason: 'Reformat text into other cases' },
+						]}
 						aboutText={
 							<ul className="list-inside list-disc space-y-0.5">
 								<li>Six word banks: Latin, food, hipster, pirate, cyberpunk, Japanese</li>

@@ -321,6 +321,10 @@ function ListComparerPage() {
 			</FormSection>
 
 			<ToolFooter
+				relatedItems={[
+					{ id: 'diff-viewer', reason: 'Line and character diff of two texts' },
+					{ id: 'duplicate-finder', reason: 'Find duplicate files by content' },
+				]}
 				aboutText={
 					<ul className="list-inside list-disc space-y-0.5">
 						<li>Set operations on two newline-separated lists</li>

@@ -206,6 +206,10 @@ function MimeTypesPage() {
 					</FormSection>
 
 					<ToolFooter
+						relatedItems={[
+							{ id: 'file-inspector', reason: 'Detect MIME from real file bytes' },
+							{ id: 'encoding-converter', reason: 'Detect and convert text encoding' },
+						]}
 						aboutText={
 							<ul className="list-inside list-disc space-y-0.5">
 								<li>Catalog of {MIME_ENTRIES.length} commonly-encountered MIME types.</li>

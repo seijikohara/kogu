@@ -229,6 +229,11 @@ function PasswordGeneratorPage() {
 					</FormSection>
 
 					<ToolFooter
+						relatedItems={[
+							{ id: 'bcrypt-generator', reason: 'Hash and verify passwords' },
+							{ id: 'hash-generator', reason: 'Generate MD5/SHA hashes' },
+							{ id: 'uuid-generator', reason: 'Generate unique identifiers' },
+						]}
 						aboutText={
 							<ul className="list-inside list-disc space-y-0.5">
 								<li>Cryptographically secure (Web Crypto)</li>

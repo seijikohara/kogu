@@ -362,6 +362,11 @@ function RsaToolsPage() {
 			</FormSection>
 
 			<ToolFooter
+				relatedItems={[
+					{ id: 'ssh-key-generator', reason: 'Generate SSH key pairs' },
+					{ id: 'gpg-key-generator', reason: 'Generate GPG/PGP key pairs' },
+					{ id: 'x509-decoder', reason: 'Decode X.509 / PEM certificates' },
+				]}
 				aboutText={
 					<>
 						All processing happens in your browser. Keys never leave the device. PKCS#1 v1.5

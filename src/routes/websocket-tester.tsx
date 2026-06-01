@@ -417,6 +417,11 @@ function WebSocketTesterRail({
 			</FormSection>
 
 			<ToolFooter
+				relatedItems={[
+					{ id: 'rest-client', reason: 'Build and send HTTP requests' },
+					{ id: 'curl-builder', reason: 'Build and parse cURL commands' },
+					{ id: 'webhook-receiver', reason: 'Inspect incoming HTTP requests' },
+				]}
 				aboutText={
 					<>
 						Local WebSocket client. Connections go directly from your machine. Custom request

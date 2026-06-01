@@ -148,6 +148,11 @@ function StringCaseConverterPage() {
 					</FormSection>
 
 					<ToolFooter
+						relatedItems={[
+							{ id: 'regex-tester', reason: 'Match and replace text patterns' },
+							{ id: 'diff-viewer', reason: 'Compare two versions of text' },
+							{ id: 'lorem-ipsum', reason: 'Generate placeholder text' },
+						]}
 						aboutText={
 							<ul className="list-inside list-disc space-y-0.5">
 								<li>Converts text to 17+ case formats</li>

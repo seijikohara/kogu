@@ -287,7 +287,14 @@ function MacLookupRail({
 				</FormSection>
 			) : null}
 
-			<ToolFooter aboutText="Vendor lookup uses the bundled IEEE OUI database via a Tauri command. All processing happens locally; no network calls." />
+			<ToolFooter
+				relatedItems={[
+					{ id: 'network-interfaces', reason: 'View local interface MAC addresses' },
+					{ id: 'ip-converter', reason: 'Convert IPv4 ↔ IPv6 addresses' },
+					{ id: 'cidr-calculator', reason: 'Calculate subnets from CIDR notation' },
+				]}
+				aboutText="Vendor lookup uses the bundled IEEE OUI database via a Tauri command. All processing happens locally; no network calls."
+			/>
 		</>
 	);
 }
