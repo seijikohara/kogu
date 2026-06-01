@@ -21,6 +21,7 @@ import { Button } from '@/lib/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/lib/components/ui/card';
 import { Input } from '@/lib/components/ui/input';
 import { Label } from '@/lib/components/ui/label';
+import { ToneBadge } from '@/lib/components/ui/tone-badge';
 import { useDocumentTitle } from '@/lib/hooks';
 import {
 	buildPemBundle,
@@ -81,13 +82,6 @@ const SAN_TYPE_TONE: Readonly<
 };
 
 type ExpiryTone = 'success' | 'info' | 'warning' | 'destructive';
-
-const TONE_BADGE_CLASS: Readonly<Record<ExpiryTone, string>> = {
-	success: 'bg-success/10 text-success border-success/30',
-	info: 'bg-info/10 text-info border-info/30',
-	warning: 'bg-warning/10 text-warning border-warning/30',
-	destructive: 'bg-destructive/10 text-destructive border-destructive/30',
-};
 
 const formatDate = (date: Date): string => date.toLocaleString();
 
@@ -500,7 +494,9 @@ function ChainCertificateCard({ cert, base64Der, role, now }: ChainCertificateCa
 						) : null}
 					</div>
 					<div className="flex items-center gap-2">
-						<Badge className={cn('font-medium', TONE_BADGE_CLASS[badge.tone])}>{badge.label}</Badge>
+						<ToneBadge tone={badge.tone} className="font-medium">
+							{badge.label}
+						</ToneBadge>
 						<CopyButton text={pem} toastLabel="Certificate PEM" size="sm" />
 					</div>
 				</div>
