@@ -17,7 +17,7 @@ import { SectionHeader, SplitPane } from '@/lib/components/layout';
 import { ToolShell } from '@/lib/components/shell';
 import { EmbeddedEmptyState, StatItem } from '@/lib/components/status';
 import { useDebouncedValue, useDocumentTitle } from '@/lib/hooks';
-import { usePersistedRail } from '@/lib/stores';
+import { createToolOptionsStore, usePersistedRail } from '@/lib/stores';
 import {
 	BASE64_MIME_TYPES,
 	type Base64DecodeOptions,
@@ -37,30 +37,50 @@ import {
 
 type Mode = 'encode' | 'decode';
 
+interface Base64Prefs {
+	readonly mode: Mode;
+	readonly variant: Base64Variant;
+	readonly padding: boolean;
+	readonly lineBreak: Base64LineBreak;
+	readonly dataUrl: boolean;
+	readonly mimeType: string;
+	readonly ignoreWhitespace: boolean;
+	readonly ignoreInvalidChars: boolean;
+	readonly autoDetectVariant: boolean;
+}
+
+const useBase64Prefs = createToolOptionsStore<Base64Prefs>('base64-encoder', {
+	mode: 'encode',
+	variant: defaultBase64EncodeOptions.variant,
+	padding: defaultBase64EncodeOptions.padding,
+	lineBreak: defaultBase64EncodeOptions.lineBreak,
+	dataUrl: defaultBase64EncodeOptions.dataUrl,
+	mimeType: defaultBase64EncodeOptions.mimeType,
+	ignoreWhitespace: defaultBase64DecodeOptions.ignoreWhitespace,
+	ignoreInvalidChars: defaultBase64DecodeOptions.ignoreInvalidChars,
+	autoDetectVariant: defaultBase64DecodeOptions.autoDetectVariant,
+});
+
 export const Route = createFileRoute('/base64-encoder')({
 	component: Base64EncoderPage,
 });
 
 function Base64EncoderPage() {
-	const [mode, setMode] = useState<Mode>('encode');
+	const { value: prefs, patch } = useBase64Prefs();
+	const {
+		mode,
+		variant,
+		padding,
+		lineBreak,
+		dataUrl,
+		mimeType,
+		ignoreWhitespace,
+		ignoreInvalidChars,
+		autoDetectVariant,
+	} = prefs;
+
 	const [input, setInput] = useState('');
 	const [showOptions, setShowOptions] = usePersistedRail('base64-encoder');
-
-	const [variant, setVariant] = useState<Base64Variant>(defaultBase64EncodeOptions.variant);
-	const [padding, setPadding] = useState(defaultBase64EncodeOptions.padding);
-	const [lineBreak, setLineBreak] = useState<Base64LineBreak>(defaultBase64EncodeOptions.lineBreak);
-	const [dataUrl, setDataUrl] = useState(defaultBase64EncodeOptions.dataUrl);
-	const [mimeType, setMimeType] = useState(defaultBase64EncodeOptions.mimeType);
-
-	const [ignoreWhitespace, setIgnoreWhitespace] = useState(
-		defaultBase64DecodeOptions.ignoreWhitespace
-	);
-	const [ignoreInvalidChars, setIgnoreInvalidChars] = useState(
-		defaultBase64DecodeOptions.ignoreInvalidChars
-	);
-	const [autoDetectVariant, setAutoDetectVariant] = useState(
-		defaultBase64DecodeOptions.autoDetectVariant
-	);
 
 	useDocumentTitle('Base64 Encoder');
 
@@ -135,7 +155,7 @@ function Base64EncoderPage() {
 	const handleSample = () => setInput(SAMPLE_TEXT_FOR_BASE64);
 
 	const handleModeChange = (newMode: Mode) => {
-		setMode(newMode);
+		patch({ mode: newMode });
 		setInput('');
 	};
 
@@ -176,7 +196,7 @@ function Base64EncoderPage() {
 								<FormSelect
 									label="Variant"
 									value={variant}
-									onValueChange={(v) => setVariant(v as Base64Variant)}
+									onValueChange={(v) => patch({ variant: v as Base64Variant })}
 									options={[
 										{
 											value: 'standard',
@@ -194,7 +214,7 @@ function Base64EncoderPage() {
 								<FormSelect
 									label="Line Break"
 									value={lineBreak}
-									onValueChange={(v) => setLineBreak(v as Base64LineBreak)}
+									onValueChange={(v) => patch({ lineBreak: v as Base64LineBreak })}
 									options={[
 										{ value: 'none', label: 'None', description: 'Single continuous line' },
 										{ value: '64', label: '64 chars', description: 'PEM convention' },
@@ -206,7 +226,7 @@ function Base64EncoderPage() {
 									<FormCheckbox
 										label="Include padding (=)"
 										checked={padding}
-										onCheckedChange={setPadding}
+										onCheckedChange={(v) => patch({ padding: v })}
 										size="compact"
 									/>
 								</div>
@@ -216,7 +236,7 @@ function Base64EncoderPage() {
 								<FormCheckbox
 									label="Output as Data URL"
 									checked={dataUrl}
-									onCheckedChange={setDataUrl}
+									onCheckedChange={(v) => patch({ dataUrl: v })}
 									size="compact"
 								/>
 								{dataUrl ? (
@@ -224,7 +244,7 @@ function Base64EncoderPage() {
 										<FormSelect
 											label="MIME Type"
 											value={mimeType}
-											onValueChange={setMimeType}
+											onValueChange={(v) => patch({ mimeType: v })}
 											options={[...BASE64_MIME_TYPES]}
 											size="compact"
 										/>
@@ -251,19 +271,19 @@ function Base64EncoderPage() {
 									<FormCheckbox
 										label="Ignore whitespace"
 										checked={ignoreWhitespace}
-										onCheckedChange={setIgnoreWhitespace}
+										onCheckedChange={(v) => patch({ ignoreWhitespace: v })}
 										size="compact"
 									/>
 									<FormCheckbox
 										label="Ignore invalid characters"
 										checked={ignoreInvalidChars}
-										onCheckedChange={setIgnoreInvalidChars}
+										onCheckedChange={(v) => patch({ ignoreInvalidChars: v })}
 										size="compact"
 									/>
 									<FormCheckbox
 										label="Auto-detect URL-safe variant"
 										checked={autoDetectVariant}
-										onCheckedChange={setAutoDetectVariant}
+										onCheckedChange={(v) => patch({ autoDetectVariant: v })}
 										size="compact"
 									/>
 								</FormCheckboxGroup>
