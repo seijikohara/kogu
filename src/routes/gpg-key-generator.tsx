@@ -117,7 +117,7 @@ function GpgKeyGeneratorPage() {
 			if (!isCancelledRef.current) {
 				setKeyResult(result);
 				setFlashCounter((c) => c + 1);
-				toast.success('GPG key pair generated successfully');
+				toast.success('Generated GPG key pair');
 			}
 		} catch (e) {
 			if (!isCancelledRef.current) {

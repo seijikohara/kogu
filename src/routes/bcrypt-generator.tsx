@@ -111,7 +111,7 @@ function BcryptGeneratorPage() {
 			if (!generateCancelledRef.current) {
 				setHashResult(result);
 				setFlashCounter((c) => c + 1);
-				toast.success('BCrypt hash generated successfully');
+				toast.success('Generated BCrypt hash');
 			}
 		} catch (e) {
 			if (!generateCancelledRef.current) {

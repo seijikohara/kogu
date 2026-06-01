@@ -116,7 +116,7 @@ function SshKeyGeneratorPage() {
 			if (!isCancelledRef.current) {
 				setKeyResult(result);
 				setFlashCounter((c) => c + 1);
-				toast.success('SSH key pair generated successfully');
+				toast.success('Generated SSH key pair');
 			}
 		} catch (e) {
 			if (!isCancelledRef.current) {
