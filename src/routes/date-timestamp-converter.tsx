@@ -30,6 +30,7 @@ import {
 	CardTitle,
 } from '@/lib/components/ui/card';
 import { Calendar } from '@/lib/components/ui/calendar';
+import { ToneBadge, type ToneBadgeTone } from '@/lib/components/ui/tone-badge';
 import { useDocumentTitle } from '@/lib/hooks';
 import {
 	DEFAULT_TIMEZONES,
@@ -46,7 +47,6 @@ import {
 	zonedClock,
 } from '@/lib/services/date-timestamp';
 import { createToolOptionsStore, usePersistedRail } from '@/lib/stores';
-import { cn } from '@/lib/utils';
 
 interface DateTimestampOptions {
 	readonly timezones: readonly string[];
@@ -69,17 +69,14 @@ export const Route = createFileRoute('/date-timestamp-converter')({
 	component: DateTimestampConverterPage,
 });
 
-const KIND_BADGE: Record<ParsedInput['kind'], { label: string; tone: string }> = {
-	'unix-s': { label: 'Unix seconds', tone: 'bg-info/10 text-info border-info/30' },
-	'unix-ms': { label: 'Unix milliseconds', tone: 'bg-info/10 text-info border-info/30' },
-	'unix-us': { label: 'Unix microseconds', tone: 'bg-info/10 text-info border-info/30' },
-	'unix-ns': { label: 'Unix nanoseconds', tone: 'bg-info/10 text-info border-info/30' },
-	iso: { label: 'ISO 8601', tone: 'bg-success/10 text-success border-success/30' },
-	rfc2822: { label: 'RFC 2822', tone: 'bg-success/10 text-success border-success/30' },
-	invalid: {
-		label: 'Unrecognized',
-		tone: 'bg-destructive/10 text-destructive border-destructive/30',
-	},
+const KIND_BADGE: Record<ParsedInput['kind'], { label: string; tone: ToneBadgeTone }> = {
+	'unix-s': { label: 'Unix seconds', tone: 'info' },
+	'unix-ms': { label: 'Unix milliseconds', tone: 'info' },
+	'unix-us': { label: 'Unix microseconds', tone: 'info' },
+	'unix-ns': { label: 'Unix nanoseconds', tone: 'info' },
+	iso: { label: 'ISO 8601', tone: 'success' },
+	rfc2822: { label: 'RFC 2822', tone: 'success' },
+	invalid: { label: 'Unrecognized', tone: 'destructive' },
 };
 
 function DateTimestampConverterPage() {
@@ -210,9 +207,9 @@ function DateTimestampConverterPage() {
 					className="font-mono"
 				/>
 				<div className="flex items-center gap-2">
-					<Badge className={cn('text-2xs', KIND_BADGE[parsed.kind].tone)}>
+					<ToneBadge tone={KIND_BADGE[parsed.kind].tone} className="text-2xs">
 						{KIND_BADGE[parsed.kind].label}
-					</Badge>
+					</ToneBadge>
 					{parsed.ms !== null ? (
 						<span className="font-mono text-2xs text-muted-foreground">ms = {parsed.ms}</span>
 					) : null}
