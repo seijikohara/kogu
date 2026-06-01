@@ -186,7 +186,7 @@ function UrlEncoderPage() {
 	const handleCopy = async () => {
 		try {
 			await navigator.clipboard.writeText(output);
-			toast.success('Copied to clipboard');
+			toast.success('Output copied to clipboard');
 		} catch {
 			toast.error('Failed to copy to clipboard');
 		}
