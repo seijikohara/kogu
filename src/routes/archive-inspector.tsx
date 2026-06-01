@@ -22,7 +22,7 @@ import {
 	FormSection,
 	FormSelect,
 } from '@/lib/components/form';
-import { SectionLabel } from '@/lib/components/layout';
+import { DefinitionList, SectionLabel } from '@/lib/components/layout';
 import { ToolFooter, ToolShell } from '@/lib/components/shell';
 import { EmbeddedEmptyState, StatItem } from '@/lib/components/status';
 import { Badge } from '@/lib/components/ui/badge';
@@ -701,23 +701,27 @@ function ArchiveBanner({ archive, filename, filteredCount }: ArchiveBannerProps)
 				</CardTitle>
 			</CardHeader>
 			<CardContent>
-				<dl className="grid grid-cols-[140px_1fr] gap-x-3 gap-y-1 text-xs">
-					<dt className="text-muted-foreground">Entries</dt>
-					<dd className="font-mono">
-						{archive.entries.length.toLocaleString()}
-						{filteredCount !== archive.entries.length
-							? ` (${filteredCount.toLocaleString()} shown)`
-							: ''}
-					</dd>
-					<dt className="text-muted-foreground">Uncompressed</dt>
-					<dd className="font-mono">
-						{humanSize(archive.totalUncompressed)} ({archive.totalUncompressed.toLocaleString()} B)
-					</dd>
-					<dt className="text-muted-foreground">Compressed</dt>
-					<dd className="font-mono">
-						{humanSize(archive.totalCompressed)} ({archive.totalCompressed.toLocaleString()} B)
-					</dd>
-				</dl>
+				<DefinitionList
+					keyColumn="140px"
+					items={[
+						{
+							key: 'Entries',
+							value:
+								archive.entries.length.toLocaleString() +
+								(filteredCount !== archive.entries.length
+									? ` (${filteredCount.toLocaleString()} shown)`
+									: ''),
+						},
+						{
+							key: 'Uncompressed',
+							value: `${humanSize(archive.totalUncompressed)} (${archive.totalUncompressed.toLocaleString()} B)`,
+						},
+						{
+							key: 'Compressed',
+							value: `${humanSize(archive.totalCompressed)} (${archive.totalCompressed.toLocaleString()} B)`,
+						},
+					]}
+				/>
 			</CardContent>
 		</Card>
 	);
