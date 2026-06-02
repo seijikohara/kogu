@@ -158,7 +158,6 @@ function DnsLookupPage() {
 	return (
 		<ToolShell
 			valid={validity}
-			error={error ?? undefined}
 			showRail={showRail}
 			onShowRailChange={setShowRail}
 			primaryAction={{
