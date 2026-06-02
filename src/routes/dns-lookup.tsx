@@ -161,6 +161,10 @@ function DnsLookupPage() {
 			error={error ?? undefined}
 			showRail={showRail}
 			onShowRailChange={setShowRail}
+			primaryAction={{
+				run: () => handleLookup().catch(() => undefined),
+				canRun: !loading && name.trim().length > 0,
+			}}
 			statusContent={
 				<DnsLookupStatus result={result} totalRecords={totalRecords} errorCount={errorCount} />
 			}
