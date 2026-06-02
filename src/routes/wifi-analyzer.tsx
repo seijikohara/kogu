@@ -133,7 +133,6 @@ function WifiAnalyzerPage() {
 		<ToolShell
 			showRail={showRail}
 			onShowRailChange={setShowRail}
-			error={error ?? undefined}
 			statusContent={
 				<>
 					<StatItem label="Networks" value={filtered.length.toLocaleString()} />

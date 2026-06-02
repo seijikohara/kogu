@@ -14,7 +14,7 @@ import {
 	FormSlider,
 } from '@/lib/components/form';
 import { ToolFooter, ToolShell } from '@/lib/components/shell';
-import { EmbeddedEmptyState, StatItem } from '@/lib/components/status';
+import { EmbeddedEmptyState, ErrorDisplay, StatItem } from '@/lib/components/status';
 import { Button } from '@/lib/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/lib/components/ui/card';
 import { ToneBadge } from '@/lib/components/ui/tone-badge';
@@ -410,12 +410,7 @@ function DnsLookupMain({
 								</>
 							) : null}
 						</div>
-						{error ? (
-							<div className="flex items-start gap-2 rounded-md border border-destructive/40 bg-destructive/10 px-2.5 py-1.5 text-xs text-destructive">
-								<AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
-								<span>{error}</span>
-							</div>
-						) : null}
+						{error ? <ErrorDisplay variant="banner" icon={AlertCircle} message={error} /> : null}
 					</CardContent>
 				</Card>
 
@@ -469,10 +464,7 @@ function TypeResultCard({ typeResult }: TypeResultCardProps) {
 			</CardHeader>
 			<CardContent className="space-y-2">
 				{hasError ? (
-					<div className="flex items-start gap-2 rounded-md border border-destructive/40 bg-destructive/10 px-2.5 py-1.5 text-xs text-destructive">
-						<AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
-						<span className="break-all">{error}</span>
-					</div>
+					<ErrorDisplay variant="banner" icon={AlertCircle} message={error} />
 				) : records.length === 0 ? (
 					<p className="text-xs text-muted-foreground">
 						No records returned for this type (NOERROR / NXDOMAIN).
