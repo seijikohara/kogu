@@ -48,7 +48,7 @@ export function CopyButton({
 			onClick={handleCopy}
 		>
 			<Copy className={size === 'icon' ? 'h-4 w-4' : 'h-3 w-3'} />
-			{showLabel && size !== 'icon' ? label : null}
+			{showLabel && size !== 'icon' ? label : <span className="sr-only">{label}</span>}
 		</Button>
 	);
 }
