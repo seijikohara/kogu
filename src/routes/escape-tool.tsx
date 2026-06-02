@@ -23,7 +23,7 @@ import {
 } from '@/lib/components/form';
 import { SplitPane } from '@/lib/components/layout';
 import { ToolFooter, ToolShell } from '@/lib/components/shell';
-import { StatItem } from '@/lib/components/status';
+import { EmbeddedEmptyState, StatItem } from '@/lib/components/status';
 import { Button } from '@/lib/components/ui/button';
 import { IconTooltip } from '@/lib/components/ui/icon-tooltip';
 import { Textarea } from '@/lib/components/ui/textarea';
@@ -464,8 +464,13 @@ function EscapeToolPage() {
 	const renderHighlightOverlay = () => {
 		if (segments.length === 0) {
 			return (
-				<div className="pointer-events-none flex h-full items-center justify-center text-xs text-muted-foreground">
-					Enter raw input above to see the escaped output and highlighted changes.
+				<div className="pointer-events-none h-full">
+					<EmbeddedEmptyState
+						icon={FileCode}
+						title="No escaped output yet"
+						description="Enter raw input above to see the escaped output and highlighted changes."
+						fillHeight
+					/>
 				</div>
 			);
 		}

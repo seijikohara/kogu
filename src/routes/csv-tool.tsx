@@ -1011,8 +1011,13 @@ function OutputPane({ output, outputFormat, onCopy, onSave }: OutputPaneProps) {
 						{output}
 					</pre>
 				) : (
-					<div className="flex h-full items-center justify-center p-6 text-2xs text-muted-foreground">
-						Output appears here once a table is loaded.
+					<div className="flex h-full items-center justify-center p-6">
+						<EmbeddedEmptyState
+							icon={TableIcon}
+							title="No output yet"
+							description="Output appears here once a table is loaded."
+							fillHeight
+						/>
 					</div>
 				)}
 			</CardContent>
