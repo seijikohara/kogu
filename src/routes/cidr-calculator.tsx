@@ -1,7 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { Combine, Globe2, Network } from 'lucide-react';
 import { type CSSProperties, useMemo, useState } from 'react';
-import { toast } from 'sonner';
 
 import { ActionButton, CopyButton } from '@/lib/components/action';
 import { FormError, FormInfo, FormInput, FormMode, FormSection } from '@/lib/components/form';
@@ -135,17 +134,6 @@ function CidrCalculatorPage() {
 		return splitIntoSubnets(result.parsed, childPrefix);
 	}, [result, childPrefix]);
 
-	const handleCopyExport = async () => {
-		if (!result.ok) return;
-		const text = exportDetails(result.details, exportFormat);
-		try {
-			await navigator.clipboard.writeText(text);
-			toast.success(`${exportFormat.toUpperCase()} details copied to clipboard`);
-		} catch {
-			toast.error('Failed to copy to clipboard');
-		}
-	};
-
 	const handleLoadSampleV4 = () => setInput(SAMPLE_V4);
 	const handleLoadSampleV6 = () => setInput(SAMPLE_V6);
 	const handleClear = () => setInput('');
@@ -271,11 +259,7 @@ function CidrCalculatorPage() {
 						<>
 							<DetailsGrid details={result.details} />
 							<BitGridCard parsed={result.parsed} />
-							<ExportCard
-								details={result.details}
-								format={exportFormat}
-								onCopy={handleCopyExport}
-							/>
+							<ExportCard details={result.details} format={exportFormat} />
 							<SubnettingPanel
 								parsed={result.parsed}
 								childPrefixText={childPrefixText}
@@ -447,19 +431,20 @@ function BitGridCard({ parsed }: BitGridCardProps) {
 interface ExportCardProps {
 	readonly details: CidrDetails;
 	readonly format: ExportFormat;
-	readonly onCopy: () => void;
 }
 
-function ExportCard({ details, format, onCopy }: ExportCardProps) {
+function ExportCard({ details, format }: ExportCardProps) {
 	const text = useMemo(() => exportDetails(details, format), [details, format]);
 
 	return (
 		<Card density="compact">
 			<CardHeader className="flex flex-row items-center justify-between gap-2 pb-2">
 				<CardTitle>Export ({format.toUpperCase()})</CardTitle>
-				<Button variant="outline" size="sm" onClick={onCopy}>
-					Copy as {format.toUpperCase()}
-				</Button>
+				<CopyButton
+					text={text}
+					label={`Copy as ${format.toUpperCase()}`}
+					toastLabel={`${format.toUpperCase()} details`}
+				/>
 			</CardHeader>
 			<CardContent>
 				<pre className="overflow-x-auto rounded-md border bg-muted/30 p-2 font-mono text-2xs leading-relaxed">

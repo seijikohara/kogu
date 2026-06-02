@@ -1,7 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router';
-import { AlertCircle, Globe, Search, ShieldCheck, Terminal } from 'lucide-react';
+import { AlertCircle, Globe, Search, ShieldCheck } from 'lucide-react';
 import { useMemo, useState } from 'react';
-import { toast } from 'sonner';
 
 import { ActionButton, CopyButton } from '@/lib/components/action';
 import {
@@ -141,15 +140,6 @@ function DnsLookupPage() {
 		patch({ recordTypes: ordered });
 	};
 
-	const handleCopyDig = async () => {
-		try {
-			await navigator.clipboard.writeText(exportAsDig(effectiveRequest));
-			toast.success('dig command copied to clipboard');
-		} catch {
-			toast.error('Failed to copy to clipboard');
-		}
-	};
-
 	const handleLoadSampleDomain = () => {
 		setName(SAMPLE_DOMAIN);
 		setResult(null);
@@ -187,7 +177,7 @@ function DnsLookupPage() {
 					onTimeoutChange={(v) => patch({ timeoutMs: v })}
 					onLoadSampleDomain={handleLoadSampleDomain}
 					onLoadReverseSample={handleLoadReverseSample}
-					onCopyDig={handleCopyDig}
+					digCommand={exportAsDig(effectiveRequest)}
 					onResetOptions={reset}
 				/>
 			}
@@ -239,7 +229,7 @@ interface RailProps {
 	readonly onTimeoutChange: (value: number) => void;
 	readonly onLoadSampleDomain: () => void;
 	readonly onLoadReverseSample: () => void;
-	readonly onCopyDig: () => void;
+	readonly digCommand: string;
 	readonly onResetOptions: () => void;
 }
 
@@ -255,7 +245,7 @@ function DnsLookupRail({
 	onTimeoutChange,
 	onLoadSampleDomain,
 	onLoadReverseSample,
-	onCopyDig,
+	digCommand,
 	onResetOptions,
 }: RailProps) {
 	return (
@@ -324,10 +314,12 @@ function DnsLookupRail({
 			</FormSection>
 
 			<FormSection title="Export">
-				<Button variant="outline" size="sm" className="w-full" onClick={onCopyDig}>
-					<Terminal className="mr-1.5 h-3.5 w-3.5" />
-					Copy as dig
-				</Button>
+				<CopyButton
+					text={digCommand}
+					label="Copy as dig"
+					toastLabel="dig command"
+					className="w-full justify-center"
+				/>
 			</FormSection>
 
 			<ToolFooter

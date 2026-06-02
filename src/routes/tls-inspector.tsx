@@ -162,16 +162,6 @@ function TlsInspectorPage() {
 		setError(null);
 	};
 
-	const handleCopyChain = async () => {
-		if (!result) return;
-		try {
-			await navigator.clipboard.writeText(buildPemBundle(result.peerChainBase64));
-			toast.success('Full chain PEM copied to clipboard');
-		} catch {
-			toast.error('Failed to copy to clipboard');
-		}
-	};
-
 	const now = useMemo(() => new Date(), [result]);
 
 	return (
@@ -242,15 +232,13 @@ function TlsInspectorPage() {
 					</FormSection>
 
 					<FormSection title="Export">
-						<Button
-							variant="outline"
-							size="sm"
-							onClick={handleCopyChain}
+						<CopyButton
+							text={result ? buildPemBundle(result.peerChainBase64) : ''}
+							label="Copy full chain as PEM"
+							toastLabel="Full chain PEM"
+							className="w-full justify-center"
 							disabled={!result || result.peerChainBase64.length === 0}
-							className="w-full"
-						>
-							Copy full chain as PEM
-						</Button>
+						/>
 					</FormSection>
 
 					<ToolFooter

@@ -5,7 +5,6 @@ import {
 	ArrowDown,
 	ArrowUp,
 	ArrowUpDown,
-	ClipboardCopy,
 	ClipboardPaste,
 	FlaskConical,
 	FolderOpen,
@@ -27,6 +26,7 @@ import {
 } from 'react';
 import { toast } from 'sonner';
 
+import { CopyButton } from '@/lib/components/action';
 import { FormCheckbox, FormInput, FormMode, FormSection, FormSelect } from '@/lib/components/form';
 import { SectionLabel } from '@/lib/components/layout';
 import { ToolFooter, ToolShell } from '@/lib/components/shell';
@@ -273,17 +273,6 @@ function CsvToolPage() {
 		setIsDragOver(false);
 	};
 
-	const handleCopyOutput = async () => {
-		if (!output) return;
-		try {
-			await navigator.clipboard.writeText(output);
-			toast.success('Output copied to clipboard');
-		} catch (e) {
-			const message = e instanceof Error ? e.message : String(e);
-			toast.error('Failed to copy to clipboard', { description: message });
-		}
-	};
-
 	const handleSaveOutput = async () => {
 		if (!output) {
 			toast.error('No output to save');
@@ -432,10 +421,13 @@ function CsvToolPage() {
 
 					<FormSection title="Save">
 						<div className="flex flex-col gap-2">
-							<Button variant="outline" size="sm" onClick={handleCopyOutput} disabled={!output}>
-								<ClipboardCopy className="h-3.5 w-3.5" />
-								Copy output
-							</Button>
+							<CopyButton
+								text={output}
+								label="Copy output"
+								toastLabel="Output"
+								className="w-full justify-center"
+								disabled={!output}
+							/>
 							<Button variant="outline" size="sm" onClick={handleSaveOutput} disabled={!output}>
 								<Save className="h-3.5 w-3.5" />
 								Save as file…
@@ -483,7 +475,6 @@ function CsvToolPage() {
 				onRemoveColumn={handleRemoveColumn}
 				output={output}
 				outputFormat={prefs.outputFormat}
-				onCopyOutput={handleCopyOutput}
 				onSaveOutput={handleSaveOutput}
 				isDragOver={isDragOver}
 				onDrop={handleDrop}
@@ -529,7 +520,6 @@ interface MainPaneProps {
 	readonly onRemoveColumn: (colIndex: number) => void;
 	readonly output: string;
 	readonly outputFormat: OutputFormat;
-	readonly onCopyOutput: () => void;
 	readonly onSaveOutput: () => void;
 	readonly isDragOver: boolean;
 	readonly onDrop: (e: DragEvent<HTMLDivElement>) => void;
@@ -563,7 +553,6 @@ function MainPane({
 	onRemoveColumn,
 	output,
 	outputFormat,
-	onCopyOutput,
 	onSaveOutput,
 	isDragOver,
 	onDrop,
@@ -635,12 +624,7 @@ function MainPane({
 				</section>
 
 				<section className="flex min-h-0 flex-1 flex-col overflow-hidden">
-					<OutputPane
-						output={output}
-						outputFormat={outputFormat}
-						onCopy={onCopyOutput}
-						onSave={onSaveOutput}
-					/>
+					<OutputPane output={output} outputFormat={outputFormat} onSave={onSaveOutput} />
 				</section>
 			</div>
 		</div>
@@ -983,11 +967,10 @@ function ColumnStatsTooltip({ stats }: ColumnStatsTooltipProps) {
 interface OutputPaneProps {
 	readonly output: string;
 	readonly outputFormat: OutputFormat;
-	readonly onCopy: () => void;
 	readonly onSave: () => void;
 }
 
-function OutputPane({ output, outputFormat, onCopy, onSave }: OutputPaneProps) {
+function OutputPane({ output, outputFormat, onSave }: OutputPaneProps) {
 	const formatLabel =
 		OUTPUT_FORMAT_OPTIONS.find((opt) => opt.value === outputFormat)?.label ?? outputFormat;
 	return (
@@ -995,10 +978,7 @@ function OutputPane({ output, outputFormat, onCopy, onSave }: OutputPaneProps) {
 			<CardHeader className="flex shrink-0 flex-row items-center justify-between gap-2 border-b">
 				<CardTitle className="text-sm">Output — {formatLabel}</CardTitle>
 				<div className="flex items-center gap-1">
-					<Button variant="outline" size="sm" onClick={onCopy} disabled={!output}>
-						<ClipboardCopy className="h-3 w-3" />
-						Copy
-					</Button>
+					<CopyButton text={output} toastLabel="Output" disabled={!output} />
 					<Button variant="outline" size="sm" onClick={onSave} disabled={!output}>
 						<Save className="h-3 w-3" />
 						Save
