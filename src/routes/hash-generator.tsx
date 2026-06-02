@@ -32,7 +32,12 @@ import {
 import { SectionHeader, SectionLabel } from '@/lib/components/layout';
 import { StatusBar, ToolFooter, ToolShell } from '@/lib/components/shell';
 import { Rail } from '@/lib/components/ui/rail';
-import { EmbeddedEmptyState, LiveStatusRegion, StatItem } from '@/lib/components/status';
+import {
+	EmbeddedEmptyState,
+	ErrorDisplay,
+	LiveStatusRegion,
+	StatItem,
+} from '@/lib/components/status';
 import { Badge } from '@/lib/components/ui/badge';
 import { Button } from '@/lib/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/lib/components/ui/card';
@@ -829,9 +834,8 @@ function FileRow({ entry, enabledHashes, busy, onRemove }: FileRowProps) {
 			<div className="break-all font-mono text-2xs text-muted-foreground">{entry.path}</div>
 
 			{entry.result?.error ? (
-				<div className="mt-2 flex items-start gap-2 rounded-md border border-destructive/40 bg-destructive/10 p-2 text-2xs text-destructive">
-					<AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
-					<span>{entry.result.error}</span>
+				<div className="mt-2">
+					<ErrorDisplay variant="banner" message={entry.result.error} />
 				</div>
 			) : null}
 
