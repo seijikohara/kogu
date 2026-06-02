@@ -6,6 +6,7 @@ import {
 	FormCheckbox,
 	FormCheckboxGroup,
 	FormInfo,
+	FormInput,
 	FormMode,
 	FormSection,
 	FormSelect,
@@ -23,7 +24,6 @@ import {
 import { Button } from '@/lib/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/lib/components/ui/card';
 import { Input } from '@/lib/components/ui/input';
-import { Label } from '@/lib/components/ui/label';
 import { ToneBadge } from '@/lib/components/ui/tone-badge';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/lib/components/ui/tooltip';
 import { createToolOptionsStore, usePersistedRail } from '@/lib/stores';
@@ -338,19 +338,15 @@ function NumberBaseConverterPage() {
 					</FormSection>
 
 					<FormSection title="Bitwise Operand B">
-						<div className="space-y-1">
-							<Label htmlFor="operand-b" className="text-xs text-muted-foreground">
-								Operand B ({BASE_LABEL[primaryBase].toLowerCase()})
-							</Label>
-							<Input
-								id="operand-b"
-								value={draftsB ?? baseFormatted(maskedB, primaryBase)}
-								placeholder={operandBPlaceholder}
-								onChange={(e) => handleOperandBChange(e.target.value)}
-								onBlur={() => setDraftsB(null)}
-								className="h-7 font-mono text-xs"
-							/>
-						</div>
+						<FormInput
+							label={`Operand B (${BASE_LABEL[primaryBase].toLowerCase()})`}
+							value={draftsB ?? baseFormatted(maskedB, primaryBase)}
+							placeholder={operandBPlaceholder}
+							onValueChange={handleOperandBChange}
+							onBlur={() => setDraftsB(null)}
+							size="compact"
+							className="font-mono"
+						/>
 						<FormSlider
 							label="Shift amount (n)"
 							value={clampedShift}
