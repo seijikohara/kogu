@@ -168,6 +168,7 @@ function TlsInspectorPage() {
 		<ToolShell
 			showRail={showRail}
 			onShowRailChange={setShowRail}
+			primaryAction={{ run: () => handleRun().catch(() => undefined), canRun }}
 			statusContent={
 				<>
 					<StatItem label="Version" value={result?.negotiatedVersion ?? '—'} />

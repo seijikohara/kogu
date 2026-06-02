@@ -212,6 +212,7 @@ function RestClientPage() {
 		<ToolShell
 			valid={error ? false : response ? true : null}
 			error={error ?? undefined}
+			primaryAction={{ run: () => handleSend().catch(() => undefined), canRun: canSend }}
 			rail={rail}
 			statusContent={statusContent}
 		>
