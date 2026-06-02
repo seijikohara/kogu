@@ -7,7 +7,7 @@ import { CodeEditor } from '@/lib/components/editor';
 import { FormInfo, FormSection } from '@/lib/components/form';
 import { SectionHeader, SplitPane } from '@/lib/components/layout';
 import { ToolFooter, ToolShell } from '@/lib/components/shell';
-import { EmptyState, LiveStatusRegion } from '@/lib/components/status';
+import { EmptyState, ErrorDisplay, LiveStatusRegion } from '@/lib/components/status';
 import { Card, CardContent, CardHeader, CardTitle } from '@/lib/components/ui/card';
 import { IconTooltip } from '@/lib/components/ui/icon-tooltip';
 import { CodeBlock } from '@/lib/components/ui/code-block';
@@ -192,13 +192,10 @@ function JwtDecoderPage() {
 						{decoded ? (
 							<LiveStatusRegion className="flex-1 space-y-4 overflow-auto p-4">
 								{decoded.isExpired ? (
-									<div className="flex items-center gap-2 rounded-lg border border-destructive/50 bg-destructive/10 p-3 text-sm text-destructive">
-										<AlertTriangle className="h-4 w-4" />
-										<span>
-											This token has expired
-											{decoded.expiresAt ? ` on ${formatDate(decoded.expiresAt)}` : ''}
-										</span>
-									</div>
+									<ErrorDisplay
+										variant="banner"
+										message={`This token has expired${decoded.expiresAt ? ` on ${formatDate(decoded.expiresAt)}` : ''}`}
+									/>
 								) : null}
 
 								<Card density="compact">
