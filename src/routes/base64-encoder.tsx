@@ -299,6 +299,7 @@ function Base64EncoderPage() {
 							{ id: 'url-encoder', reason: 'Percent-encode text for URLs' },
 							{ id: 'jwt-decoder', reason: 'Decode Base64URL-encoded JWT segments' },
 							{ id: 'hash-generator', reason: 'Hash text or files' },
+							{ id: 'escape-tool', reason: 'Escape text in JSON/HTML' },
 						]}
 						aboutText={
 							<>

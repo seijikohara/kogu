@@ -215,6 +215,7 @@ function IpConverterRail({
 				relatedItems={[
 					{ id: 'cidr-calculator', reason: 'Compute subnets and ranges' },
 					{ id: 'dns-lookup', reason: 'Resolve a name to an IP' },
+					{ id: 'mac-lookup', reason: 'Look up MAC vendors' },
 				]}
 				aboutText={
 					<ul className="list-inside list-disc space-y-0.5">
