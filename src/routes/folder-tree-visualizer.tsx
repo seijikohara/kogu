@@ -3,7 +3,6 @@ import { open as openDialog } from '@tauri-apps/plugin-dialog';
 import {
 	ChevronDown,
 	ChevronRight,
-	ClipboardCopy,
 	File as FileIcon,
 	FileCode,
 	FileText,
@@ -19,6 +18,7 @@ import {
 import { useCallback, useEffect, useMemo, useState, type CSSProperties } from 'react';
 import { toast } from 'sonner';
 
+import { CopyButton } from '@/lib/components/action';
 import {
 	FormCheckbox,
 	FormFolderPicker,
@@ -232,26 +232,6 @@ function FolderTreeVisualizerPage() {
 		}
 	}, []);
 
-	const copyText = useCallback(async (text: string, label: string) => {
-		try {
-			await navigator.clipboard.writeText(text);
-			toast.success(`${label} copied to clipboard`);
-		} catch (e) {
-			const message = e instanceof Error ? e.message : String(e);
-			toast.error('Failed to copy to clipboard', { description: message });
-		}
-	}, []);
-
-	const handleCopyText = useCallback(() => {
-		if (!sortedRoot) return;
-		copyText(exportAsText(sortedRoot), 'tree as text').catch(() => undefined);
-	}, [sortedRoot, copyText]);
-
-	const handleCopyJson = useCallback(() => {
-		if (!sortedRoot) return;
-		copyText(exportAsJson(sortedRoot), 'tree as JSON').catch(() => undefined);
-	}, [sortedRoot, copyText]);
-
 	const hasRoot = sortedRoot !== null;
 
 	const sortOptions = useMemo(
@@ -368,14 +348,20 @@ function FolderTreeVisualizerPage() {
 
 					<FormSection title="Export">
 						<div className="flex flex-col gap-2">
-							<Button variant="outline" size="sm" onClick={handleCopyText} disabled={!hasRoot}>
-								<ClipboardCopy className="h-3.5 w-3.5" />
-								Copy as text
-							</Button>
-							<Button variant="outline" size="sm" onClick={handleCopyJson} disabled={!hasRoot}>
-								<ClipboardCopy className="h-3.5 w-3.5" />
-								Copy as JSON
-							</Button>
+							<CopyButton
+								text={sortedRoot ? exportAsText(sortedRoot) : ''}
+								label="Copy as text"
+								toastLabel="tree as text"
+								className="w-full justify-center"
+								disabled={!hasRoot}
+							/>
+							<CopyButton
+								text={sortedRoot ? exportAsJson(sortedRoot) : ''}
+								label="Copy as JSON"
+								toastLabel="tree as JSON"
+								className="w-full justify-center"
+								disabled={!hasRoot}
+							/>
 						</div>
 					</FormSection>
 

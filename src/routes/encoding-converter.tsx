@@ -1,10 +1,11 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { open as openDialog, save as saveDialog } from '@tauri-apps/plugin-dialog';
 import { readFile, writeFile } from '@tauri-apps/plugin-fs';
-import { ClipboardCopy, FolderOpen, Languages, Loader2, Save, Trash2 } from 'lucide-react';
+import { FolderOpen, Languages, Loader2, Save, Trash2 } from 'lucide-react';
 import { useCallback, useMemo, useState, type DragEvent } from 'react';
 import { toast } from 'sonner';
 
+import { CopyButton } from '@/lib/components/action';
 import { Button } from '@/lib/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/lib/components/ui/card';
 import { Badge } from '@/lib/components/ui/badge';
@@ -201,17 +202,6 @@ function EncodingConverterPage() {
 		setIsDragOver(false);
 	};
 
-	const handleCopyBase64 = async () => {
-		if (!targetBytes) return;
-		try {
-			await navigator.clipboard.writeText(bytesToBase64(targetBytes));
-			toast.success('Base64 copied to clipboard');
-		} catch (e) {
-			const message = e instanceof Error ? e.message : String(e);
-			toast.error('Failed to copy to clipboard', { description: message });
-		}
-	};
-
 	const handleSave = async () => {
 		if (!targetBytes) return;
 		try {
@@ -356,15 +346,13 @@ function EncodingConverterPage() {
 								<Save className="h-3.5 w-3.5" />
 								Save bytes…
 							</Button>
-							<Button
-								variant="outline"
-								size="sm"
-								onClick={handleCopyBase64}
+							<CopyButton
+								text={targetBytes ? bytesToBase64(targetBytes) : ''}
+								label="Copy as base64"
+								toastLabel="Base64"
+								className="w-full justify-center"
 								disabled={!hasContent || !targetBytes}
-							>
-								<ClipboardCopy className="h-3.5 w-3.5" />
-								Copy as base64
-							</Button>
+							/>
 						</div>
 					</FormSection>
 
