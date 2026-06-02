@@ -13,9 +13,9 @@ import {
 	FormSection,
 	FormSelect,
 } from '@/lib/components/form';
-import { SectionHeader, SplitPane } from '@/lib/components/layout';
+import { SplitPane } from '@/lib/components/layout';
 import { ToolFooter, ToolShell } from '@/lib/components/shell';
-import { EmbeddedEmptyState, StatItem } from '@/lib/components/status';
+import { EmptyOutputPane, StatItem } from '@/lib/components/status';
 import { useDocumentTitle } from '@/lib/hooks';
 import { usePersistedRail } from '@/lib/stores';
 import {
@@ -298,17 +298,12 @@ function SqlFormatterPage() {
 				}
 				right={
 					!input.trim() ? (
-						<div className="flex h-full flex-col overflow-hidden">
-							<SectionHeader title="Output" />
-							<div className="flex-1">
-								<EmbeddedEmptyState
-									icon={Database}
-									title="Enter SQL to format"
-									description="The formatted (or minified) statement will appear here."
-									fillHeight
-								/>
-							</div>
-						</div>
+						<EmptyOutputPane
+							headerTitle="Output"
+							icon={Database}
+							title="Enter SQL to format"
+							description="The formatted (or minified) statement will appear here."
+						/>
 					) : (
 						<CodeEditor
 							title="Output"

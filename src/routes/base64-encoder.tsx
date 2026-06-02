@@ -12,9 +12,9 @@ import {
 	FormSection,
 	FormSelect,
 } from '@/lib/components/form';
-import { SectionHeader, SplitPane } from '@/lib/components/layout';
+import { SplitPane } from '@/lib/components/layout';
 import { ToolFooter, ToolShell } from '@/lib/components/shell';
-import { DetectedInfo, EmbeddedEmptyState, StatItem } from '@/lib/components/status';
+import { DetectedInfo, EmptyOutputPane, StatItem } from '@/lib/components/status';
 import { useDebouncedValue, useDocumentTitle } from '@/lib/hooks';
 import { createToolOptionsStore, usePersistedRail } from '@/lib/stores';
 import {
@@ -333,21 +333,16 @@ function Base64EncoderPage() {
 				}
 				right={
 					!input.trim() ? (
-						<div className="flex h-full flex-col overflow-hidden">
-							<SectionHeader title={mode === 'encode' ? 'Base64 Output' : 'Decoded Text'} />
-							<div className="flex-1">
-								<EmbeddedEmptyState
-									icon={Code2}
-									title={mode === 'encode' ? 'Enter text to encode' : 'Paste Base64 to decode'}
-									description={
-										mode === 'encode'
-											? 'The Base64-encoded result will appear here.'
-											: 'The decoded plain text will appear here.'
-									}
-									fillHeight
-								/>
-							</div>
-						</div>
+						<EmptyOutputPane
+							headerTitle={mode === 'encode' ? 'Base64 Output' : 'Decoded Text'}
+							icon={Code2}
+							title={mode === 'encode' ? 'Enter text to encode' : 'Paste Base64 to decode'}
+							description={
+								mode === 'encode'
+									? 'The Base64-encoded result will appear here.'
+									: 'The decoded plain text will appear here.'
+							}
+						/>
 					) : (
 						<CodeEditor
 							title={mode === 'encode' ? 'Base64 Output' : 'Decoded Text'}
