@@ -456,6 +456,7 @@ function FileInspectorPage() {
 							{ id: 'mime-types', reason: "Look up an extension's MIME" },
 							{ id: 'hash-generator', reason: 'Hash arbitrary text' },
 							{ id: 'x509-decoder', reason: "Decode if it's a cert" },
+							{ id: 'hex-editor', reason: 'View raw bytes' },
 						]}
 						aboutText={
 							<>
