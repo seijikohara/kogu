@@ -255,6 +255,10 @@ function ImageConverterPage() {
 		<ToolShell
 			showRail={showRail}
 			onShowRailChange={setShowRail}
+			primaryAction={{
+				run: () => handleConvert().catch(() => undefined),
+				canRun: Boolean(source) && prefs.targets.length > 0 && !converting,
+			}}
 			statusContent={
 				<>
 					<StatItem label="Source" value={source ? `${source.width}×${source.height}` : '—'} />
@@ -442,6 +446,7 @@ function ImageConverterPage() {
 								label={converting ? 'Converting…' : 'Convert'}
 								icon={Sparkles}
 								disabled={!source || prefs.targets.length === 0 || converting}
+								shortcutHint
 								onClick={() => {
 									handleConvert().catch(() => undefined);
 								}}

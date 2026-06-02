@@ -133,6 +133,7 @@ function WifiAnalyzerPage() {
 		<ToolShell
 			showRail={showRail}
 			onShowRailChange={setShowRail}
+			primaryAction={{ run: () => runScan().catch(() => undefined), canRun: !scanning }}
 			statusContent={
 				<>
 					<StatItem label="Networks" value={filtered.length.toLocaleString()} />
@@ -158,6 +159,7 @@ function WifiAnalyzerPage() {
 								icon={scanning ? Loader2 : Play}
 								loading={scanning}
 								loadingLabel="Scanning…"
+								shortcutHint
 								onClick={() => {
 									runScan().catch(() => undefined);
 								}}
