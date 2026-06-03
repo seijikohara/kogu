@@ -375,11 +375,14 @@ fn check_discovery_privilege(method: DiscoveryMethod) -> bool {
 ///
 /// # Returns
 /// `AstParseResult` containing the AST and any errors
-#[tauri::command]
-fn parse_to_ast(text: &str, language: &str) -> Result<AstParseResult, String> {
+// Runs off the main thread: parsing a large document into an AST is
+// CPU-bound and would otherwise block the webview event loop. Async
+// Tauri commands require owned arguments, hence `String` over `&str`.
+#[tauri::command(async)]
+fn parse_to_ast(text: String, language: String) -> Result<AstParseResult, String> {
     let lang: AstLanguage = language.parse().map_err(|e: ast::AstError| e.to_string())?;
 
-    Ok(ast::parse_to_ast(text, lang))
+    Ok(ast::parse_to_ast(&text, lang))
 }
 
 /// Bootstrap routine executed inside the Tauri builder's `setup`

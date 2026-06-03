@@ -432,7 +432,10 @@ fn resolve_destination(target: PathBuf, conflict: &str) -> Result<Option<PathBuf
 /// Extract a single named entry to a specified destination file path.
 /// Returns the number of bytes written. Directory entries are created
 /// without contents.
-#[tauri::command]
+///
+/// Runs off the main thread: a single entry can be large, and copying it
+/// to disk would otherwise block the webview event loop.
+#[tauri::command(async)]
 pub fn archive_extract_entry(
     archive_path: String,
     entry_path: String,
