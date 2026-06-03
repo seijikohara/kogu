@@ -5,7 +5,7 @@ import type { ContextMenuItem, EditorMode } from '@/lib/components/editor';
 import { FormMode, FormSection } from '@/lib/components/form';
 import { InputOutputSplit } from '@/lib/components/layout';
 import { Rail } from '@/lib/components/ui/rail';
-import { useClipboardActions, useReportStats } from '@/lib/hooks';
+import { useClipboardActions, useDebouncedValue, useReportStats } from '@/lib/hooks';
 
 import { FormatterAboutFooter } from './formatter-about';
 
@@ -74,9 +74,13 @@ export function FormatTabTemplate<TOptions>({
 
 	const validity = useMemo<boolean | null>(() => validate(input), [validate, input]);
 
+	// Debounce the input feeding the (synchronous, potentially expensive)
+	// formatter so a large paste does not re-parse and re-serialize on every
+	// keystroke. Validation and the live editor still use the immediate value.
+	const debouncedInput = useDebouncedValue(input, 200);
 	const { output, error } = useMemo<FormatResult>(
-		() => computeOutput(input, formatMode, options),
-		[computeOutput, input, formatMode, options]
+		() => computeOutput(debouncedInput, formatMode, options),
+		[computeOutput, debouncedInput, formatMode, options]
 	);
 
 	useReportStats(onStatsChange, input, validity, error);

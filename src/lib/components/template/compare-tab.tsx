@@ -1,7 +1,7 @@
 import { ArrowRightLeft } from 'lucide-react';
 import { useMemo, useState, type ReactNode } from 'react';
 
-import { useReportStats } from '@/lib/hooks';
+import { useDebouncedValue, useReportStats } from '@/lib/hooks';
 import { CodeEditor } from '@/lib/components/editor';
 import { getErrorMessage } from '@/lib/utils';
 import { FormSection } from '@/lib/components/form';
@@ -97,13 +97,18 @@ export function CompareTab({
 		return null;
 	}, [validation1, validation2]);
 
+	// Debounce both inputs feeding the (synchronous, potentially expensive)
+	// compare so two large pastes do not re-parse and re-diff on every keystroke.
+	const debouncedInput = useDebouncedValue(input, 200);
+	const debouncedInput2 = useDebouncedValue(input2, 200);
+
 	// Compare result.
 	const compareResultData = useMemo(() => {
-		if (!input.trim() || !input2.trim()) {
+		if (!debouncedInput.trim() || !debouncedInput2.trim()) {
 			return { diffs: [] as GenericDiffItem[], error: '' };
 		}
 		try {
-			const diffs = compare(input, input2);
+			const diffs = compare(debouncedInput, debouncedInput2);
 			return { diffs, error: '' };
 		} catch (e) {
 			return {
@@ -111,7 +116,7 @@ export function CompareTab({
 				error: getErrorMessage(e, 'Compare failed'),
 			};
 		}
-	}, [input, input2, compare]);
+	}, [debouncedInput, debouncedInput2, compare]);
 
 	const diffResults = compareResultData.diffs;
 	const compareError = compareResultData.error;
