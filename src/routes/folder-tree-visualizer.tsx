@@ -12,10 +12,11 @@ import {
 	Image as ImageIcon,
 	Loader2,
 	RefreshCw,
+	Square,
 	Trash2,
 	TrendingUp,
 } from 'lucide-react';
-import { useCallback, useEffect, useMemo, useState, type CSSProperties } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import { toast } from 'sonner';
 
 import { CopyButton } from '@/lib/components/action';
@@ -34,6 +35,7 @@ import { Button } from '@/lib/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/lib/components/ui/card';
 import { useDocumentTitle } from '@/lib/hooks';
 import {
+	cancelFolderScan,
 	countEntries,
 	exportAsJson,
 	exportAsText,
@@ -101,6 +103,11 @@ function FolderTreeVisualizerPage() {
 	const [expanded, setExpanded] = useState<ReadonlySet<string>>(new Set());
 	const [scanTimeMs, setScanTimeMs] = useState<number | null>(null);
 	const [rootPath, setRootPath] = useState<string | null>(null);
+	const [cancelling, setCancelling] = useState(false);
+
+	// The folder walk and the largest-files ranking run concurrently, so each
+	// registers under its own op id. Cancelling must signal both.
+	const scanOpIdsRef = useRef<{ readonly walk: string; readonly largest: string } | null>(null);
 
 	const includes = useMemo(() => splitPatterns(prefs.includeGlobs), [prefs.includeGlobs]);
 	const excludes = useMemo(() => splitPatterns(prefs.excludeGlobs), [prefs.excludeGlobs]);
@@ -122,19 +129,23 @@ function FolderTreeVisualizerPage() {
 
 	const runScan = useCallback(
 		async (path: string) => {
+			const walkOpId = crypto.randomUUID();
+			const largestOpId = crypto.randomUUID();
+			scanOpIdsRef.current = { walk: walkOpId, largest: largestOpId };
 			setLoading(true);
+			setCancelling(false);
 			setError(null);
 			const startedAt = performance.now();
 			try {
 				const [walked, top] = await Promise.all([
-					walkFolder({
+					walkFolder(walkOpId, {
 						root: path,
 						includeGlobs: includes,
 						excludeGlobs: excludes,
 						maxDepth: prefs.maxDepth,
 						showHidden: prefs.showHidden,
 					}),
-					findLargestFiles(path, TOP_N, includes, excludes),
+					findLargestFiles(largestOpId, path, TOP_N, includes, excludes),
 				]);
 				setRoot(walked);
 				setLargest(top);
@@ -144,14 +155,31 @@ function FolderTreeVisualizerPage() {
 				setScanTimeMs(performance.now() - startedAt);
 			} catch (e) {
 				const message = e instanceof Error ? e.message : String(e);
-				setError(message);
-				toast.error('Failed to scan folder', { description: message });
+				// Cancellation is a user action, not a failure: keep the panel clean.
+				if (message.includes('cancelled')) {
+					toast.info('Scan cancelled');
+				} else {
+					setError(message);
+					toast.error('Failed to scan folder', { description: message });
+				}
 			} finally {
+				scanOpIdsRef.current = null;
 				setLoading(false);
+				setCancelling(false);
 			}
 		},
 		[includes, excludes, prefs.maxDepth, prefs.showHidden]
 	);
+
+	const handleCancel = useCallback(() => {
+		const ids = scanOpIdsRef.current;
+		if (!ids) return;
+		setCancelling(true);
+		// Signal both concurrent operations so the Rust backend stops walking
+		// the tree and ranking the largest files at their next check point.
+		cancelFolderScan(ids.walk).catch(() => undefined);
+		cancelFolderScan(ids.largest).catch(() => undefined);
+	}, []);
 
 	const handlePickFolder = useCallback(async () => {
 		try {
@@ -283,6 +311,12 @@ function FolderTreeVisualizerPage() {
 								onPick={handlePickFolder}
 								disabled={loading}
 							/>
+							{loading ? (
+								<Button variant="outline" size="sm" onClick={handleCancel} disabled={cancelling}>
+									<Square className="h-3.5 w-3.5" />
+									{cancelling ? 'Cancelling…' : 'Cancel'}
+								</Button>
+							) : null}
 							{hasRoot ? (
 								<>
 									<Button variant="outline" size="sm" onClick={handleRefresh} disabled={loading}>

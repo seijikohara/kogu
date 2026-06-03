@@ -32,17 +32,23 @@ export interface LargestFile {
 }
 
 /** Invoke the Tauri command that walks the folder tree. */
-export const walkFolder = (req: WalkRequest): Promise<TreeNode> =>
-	invoke<TreeNode>('folder_walk', { req });
+export const walkFolder = (opId: string, req: WalkRequest): Promise<TreeNode> =>
+	invoke<TreeNode>('folder_walk', { opId, req });
+
+/** Cancel an in-flight folder_walk / folder_largest_files run by its op id. */
+export const cancelFolderScan = (opId: string): Promise<boolean> =>
+	invoke<boolean>('cancel_op', { opId });
 
 /** Invoke the Tauri command that returns the largest individual files. */
 export const findLargestFiles = (
+	opId: string,
 	root: string,
 	limit: number,
 	includeGlobs: readonly string[],
 	excludeGlobs: readonly string[]
 ): Promise<readonly LargestFile[]> =>
 	invoke<readonly LargestFile[]>('folder_largest_files', {
+		opId,
 		root,
 		limit,
 		includeGlobs,

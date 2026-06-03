@@ -198,7 +198,10 @@ fn collect_children(root: &Path) -> Result<Vec<FolderSizeEntry>, String> {
 /// Returns an error string when `path` cannot be opened or is not a
 /// directory. Per-entry I/O errors during the walk are ignored so a
 /// single unreadable file does not abort the scan.
-#[tauri::command]
+// Runs on a worker thread so the recursive directory walk never blocks the
+// UI event loop. (Not currently wired to a route; off-thread keeps it
+// freeze-safe should a caller be added.)
+#[tauri::command(async)]
 pub fn folder_size_scan(
     path: String,
     app: tauri::AppHandle,
