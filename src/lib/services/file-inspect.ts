@@ -35,8 +35,12 @@ export interface FileInspectResult {
  * Invoke the Tauri command that reads a file from disk and returns its
  * metadata, head bytes, and (when small enough) full content.
  */
-export const inspectFile = (path: string): Promise<FileInspectResult> =>
-	invoke<FileInspectResult>('file_inspect', { path });
+export const inspectFile = (opId: string, path: string): Promise<FileInspectResult> =>
+	invoke<FileInspectResult>('file_inspect', { opId, path });
+
+/** Cancel an in-flight file_inspect run by its op id. */
+export const cancelFileInspect = (opId: string): Promise<boolean> =>
+	invoke<boolean>('cancel_op', { opId });
 
 export type HashAlgo = 'md5' | 'sha1' | 'sha256' | 'sha512';
 

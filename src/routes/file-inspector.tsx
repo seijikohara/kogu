@@ -11,9 +11,10 @@ import {
 	ScanLine,
 	ShieldAlert,
 	ShieldCheck,
+	Square,
 	Trash2,
 } from 'lucide-react';
-import { useCallback, useEffect, useMemo, useState, type DragEvent } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type DragEvent } from 'react';
 import { toast } from 'sonner';
 
 import { CopyButton } from '@/lib/components/action';
@@ -35,6 +36,7 @@ import {
 	HASH_ALGO_LABELS,
 	HASH_ALGO_SECURE,
 	type HashAlgo,
+	cancelFileInspect,
 	hashBytes,
 	humanSize,
 	type FileInspectResult,
@@ -83,6 +85,8 @@ function FileInspectorPage() {
 	const [result, setResult] = useState<FileInspectResult | null>(null);
 	const [bytes, setBytes] = useState<Uint8Array | null>(null);
 	const [loading, setLoading] = useState(false);
+	const [cancelling, setCancelling] = useState(false);
+	const inspectOpIdRef = useRef<string | null>(null);
 	const [error, setError] = useState<string | null>(null);
 	const [hashes, setHashes] = useState<Partial<Record<HashAlgo, string>>>({});
 	const [hashing, setHashing] = useState<ReadonlySet<HashAlgo>>(new Set());
@@ -125,23 +129,40 @@ function FileInspectorPage() {
 	}, []);
 
 	const loadFromPath = useCallback(async (path: string) => {
+		const opId = crypto.randomUUID();
+		inspectOpIdRef.current = opId;
 		setLoading(true);
+		setCancelling(false);
 		setError(null);
 		setHashes({});
 		setHashing(new Set());
 		setImagePreview(null);
 		setAudioInfo(null);
 		try {
-			const next = await inspectFile(path);
+			const next = await inspectFile(opId, path);
 			setResult(next);
 			setBytes(next.fullBytesB64 ? base64ToBytes(next.fullBytesB64) : null);
 		} catch (e) {
 			const message = e instanceof Error ? e.message : String(e);
-			setError(message);
-			toast.error('Failed to inspect file', { description: message });
+			// Cancellation is a user action, not a failure.
+			if (message.includes('cancelled')) {
+				toast.info('Inspection cancelled');
+			} else {
+				setError(message);
+				toast.error('Failed to inspect file', { description: message });
+			}
 		} finally {
+			inspectOpIdRef.current = null;
 			setLoading(false);
+			setCancelling(false);
 		}
+	}, []);
+
+	const handleCancel = useCallback(() => {
+		const opId = inspectOpIdRef.current;
+		if (!opId) return;
+		setCancelling(true);
+		cancelFileInspect(opId).catch(() => undefined);
 	}, []);
 
 	const handlePickFile = async () => {
@@ -386,6 +407,12 @@ function FileInspectorPage() {
 								<FolderOpen className="h-3.5 w-3.5" />
 								{hasResult ? 'Choose another' : 'Open file…'}
 							</Button>
+							{loading ? (
+								<Button variant="outline" size="sm" onClick={handleCancel} disabled={cancelling}>
+									<Square className="h-3.5 w-3.5" />
+									{cancelling ? 'Cancelling…' : 'Cancel'}
+								</Button>
+							) : null}
 							{hasResult ? (
 								<Button variant="outline" size="sm" onClick={handleClear}>
 									<Trash2 className="h-3.5 w-3.5" />
