@@ -316,41 +316,43 @@ function NetworkInterfacesPage() {
 													{iface.operState}
 												</span>
 											</div>
-											<div className="flex items-center gap-2">
-												{primaryIpv4 ? (
-													<span className="font-mono text-xs text-muted-foreground">
-														{primaryIpv4}
-													</span>
-												) : (
-													<span className="text-xs text-muted-foreground/50">(no address)</span>
-												)}
-												{iface.ipv6Addresses.length > 0 ? (
-													<span className="rounded bg-muted px-1.5 py-0.5 text-xs text-muted-foreground">
-														IPv6 ×{iface.ipv6Addresses.length}
-													</span>
-												) : null}
-											</div>
-											{iface.macAddress ? (
-												<span className="truncate font-mono text-xs text-muted-foreground/70">
-													{iface.macAddress}
-												</span>
-											) : null}
-											{hasStats(iface) ? (
-												<div className="mt-0.5 flex items-center gap-3 text-xs text-muted-foreground/70">
-													{iface.rxBytes !== null ? (
-														<span className="flex items-center gap-0.5">
-															<ArrowDown className="h-2.5 w-2.5 text-success" />
-															{formatBytes(iface.rxBytes)}
+											<div className="flex items-center gap-2 text-xs">
+												<div className="min-w-0 flex-1 truncate text-muted-foreground">
+													{primaryIpv4 ? (
+														<span className="font-mono">{primaryIpv4}</span>
+													) : (
+														<span className="text-muted-foreground/50">(no address)</span>
+													)}
+													{iface.ipv6Addresses.length > 0 ? (
+														<span className="text-muted-foreground/70">
+															{' '}
+															· IPv6×{iface.ipv6Addresses.length}
 														</span>
 													) : null}
-													{iface.txBytes !== null ? (
-														<span className="flex items-center gap-0.5">
-															<ArrowUp className="h-2.5 w-2.5 text-info" />
-															{formatBytes(iface.txBytes)}
+													{iface.macAddress ? (
+														<span className="font-mono text-muted-foreground/70">
+															{' '}
+															· …{iface.macAddress.split(':').slice(-2).join(':')}
 														</span>
 													) : null}
 												</div>
-											) : null}
+												{hasStats(iface) ? (
+													<div className="flex shrink-0 items-center gap-2 text-muted-foreground/70">
+														{iface.rxBytes !== null ? (
+															<span className="flex items-center gap-0.5">
+																<ArrowDown className="h-2.5 w-2.5 text-success" />
+																{formatBytes(iface.rxBytes)}
+															</span>
+														) : null}
+														{iface.txBytes !== null ? (
+															<span className="flex items-center gap-0.5">
+																<ArrowUp className="h-2.5 w-2.5 text-info" />
+																{formatBytes(iface.txBytes)}
+															</span>
+														) : null}
+													</div>
+												) : null}
+											</div>
 										</div>
 									</ListItemButton>
 								);
