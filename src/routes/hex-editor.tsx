@@ -32,11 +32,11 @@ import { EmbeddedEmptyState, StatItem } from '@/lib/components/status';
 import { Badge } from '@/lib/components/ui/badge';
 import { Button } from '@/lib/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/lib/components/ui/card';
-import { useDocumentTitle } from '@/lib/hooks';
+import { useDebouncedValue, useDocumentTitle } from '@/lib/hooks';
+import { useHexSearchWorker } from '@/lib/hooks/use-hex-search-worker';
 import { detectMimeFromMagic } from '@/lib/services/file-inspect';
 import {
 	bytesToAscii,
-	findAllMatches,
 	formatHexByte,
 	formatOffset,
 	hexOpen,
@@ -204,16 +204,15 @@ function HexEditorPage() {
 	}, [buffer, file]);
 	const detectedMime = mimeInfo?.mime ?? mimeInfo?.expectedFromExtension ?? null;
 
+	const debouncedSearch = useDebouncedValue(searchInput, 250);
 	const searchPattern = useMemo<Uint8Array | null>(() => {
-		if (searchInput.length === 0) return null;
-		if (searchMode === 'hex') return parseHexPattern(searchInput);
-		return textToBytes(searchInput);
-	}, [searchInput, searchMode]);
+		if (debouncedSearch.length === 0) return null;
+		if (searchMode === 'hex') return parseHexPattern(debouncedSearch);
+		return textToBytes(debouncedSearch);
+	}, [debouncedSearch, searchMode]);
 
-	const matches = useMemo(() => {
-		if (!buffer || !searchPattern) return [] as readonly number[];
-		return findAllMatches(buffer, searchPattern);
-	}, [buffer, searchPattern]);
+	// Byte search runs in a worker so scanning a large binary never freezes typing.
+	const { matches } = useHexSearchWorker({ buffer, pattern: searchPattern });
 
 	useEffect(() => {
 		if (matches.length === 0) {
