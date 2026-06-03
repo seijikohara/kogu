@@ -48,6 +48,7 @@
 
 mod archive_inspect;
 mod ast;
+mod cancellation;
 mod dns_lookup;
 mod drive_info;
 mod duplicate_finder;
@@ -283,6 +284,13 @@ fn cancel_network_scan(scan_id: String, state: tauri::State<'_, NetworkScannerSt
     state.cancel(&scan_id)
 }
 
+/// Cancel any cancellable operation registered in the shared
+/// [`cancellation::OperationRegistry`] by its operation id.
+#[tauri::command]
+fn cancel_op(op_id: String, state: tauri::State<'_, cancellation::OperationRegistry>) -> bool {
+    state.cancel(&op_id)
+}
+
 /// Get comprehensive network interface information.
 #[tauri::command]
 fn get_detailed_network_interfaces() -> Vec<serde_json::Value> {
@@ -466,6 +474,7 @@ pub fn run() {
         .manage(websocket::WebSocketState::new())
         .manage(webhook::WebhookState::new())
         .manage(file_watch::FileWatchState::new())
+        .manage(cancellation::OperationRegistry::new())
         .setup(setup_app)
         .invoke_handler(tauri::generate_handler![
             greet,
@@ -479,6 +488,7 @@ pub fn run() {
             check_cli_availability,
             start_network_scan,
             cancel_network_scan,
+            cancel_op,
             get_detailed_network_interfaces,
             get_local_network_interfaces,
             discover_mdns_services,
