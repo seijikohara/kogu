@@ -444,7 +444,10 @@ fn collect_full_buckets(
 /// Returns a stringified error when the root path cannot be read,
 /// globs fail to compile, or the file count exceeds
 /// [`MAX_FILES_SCANNED`].
-#[tauri::command]
+// Runs on a worker thread (not the webview's main/event-loop thread) so the
+// blocking directory walk and per-file hashing never freeze the UI. Progress
+// is streamed to the frontend via the `duplicate-scan-progress` event.
+#[tauri::command(async)]
 pub fn duplicate_scan(app: tauri::AppHandle, req: ScanRequest) -> Result<ScanResult, String> {
     let started = Instant::now();
 
