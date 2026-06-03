@@ -10,9 +10,10 @@ import {
 	Loader2,
 	Package,
 	PackageOpen,
+	Square,
 	Trash2,
 } from 'lucide-react';
-import { useCallback, useEffect, useMemo, useState, type DragEvent } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type DragEvent } from 'react';
 import { toast } from 'sonner';
 
 import {
@@ -35,6 +36,7 @@ import {
 	archiveExtract,
 	archiveOpen,
 	archiveReadEntry,
+	cancelArchiveExtract,
 	type ArchiveEntry,
 	type ArchiveInfo,
 	type ConflictPolicy,
@@ -109,6 +111,8 @@ function ArchiveInspectorPage() {
 	const [previewBytes, setPreviewBytes] = useState<Uint8Array | null>(null);
 	const [previewLoading, setPreviewLoading] = useState(false);
 	const [extracting, setExtracting] = useState(false);
+	const [cancelling, setCancelling] = useState(false);
+	const extractOpIdRef = useRef<string | null>(null);
 
 	const handleClear = useCallback(() => {
 		setArchive(null);
@@ -303,9 +307,12 @@ function ArchiveInspectorPage() {
 			if (!archive) return;
 			const destination = await pickDestination();
 			if (!destination) return;
+			const opId = crypto.randomUUID();
+			extractOpIdRef.current = opId;
 			setExtracting(true);
+			setCancelling(false);
 			try {
-				const count = await archiveExtract({
+				const count = await archiveExtract(opId, {
 					archivePath: archive.path,
 					entries,
 					destinationDir: destination,
@@ -316,13 +323,27 @@ function ArchiveInspectorPage() {
 				});
 			} catch (e) {
 				const message = e instanceof Error ? e.message : String(e);
-				toast.error('Extraction failed', { description: message });
+				// Cancellation is a user action, not a failure.
+				if (message.includes('cancelled')) {
+					toast.info('Extraction cancelled');
+				} else {
+					toast.error('Extraction failed', { description: message });
+				}
 			} finally {
+				extractOpIdRef.current = null;
 				setExtracting(false);
+				setCancelling(false);
 			}
 		},
 		[archive, prefs.conflictPolicy]
 	);
+
+	const handleCancelExtract = useCallback(() => {
+		const opId = extractOpIdRef.current;
+		if (!opId) return;
+		setCancelling(true);
+		cancelArchiveExtract(opId).catch(() => undefined);
+	}, []);
 
 	const handleExtractSelected = () => {
 		if (selected.size === 0) {
@@ -476,6 +497,17 @@ function ArchiveInspectorPage() {
 								<PackageOpen className="h-3.5 w-3.5" />
 								Extract all…
 							</Button>
+							{extracting ? (
+								<Button
+									variant="outline"
+									size="sm"
+									onClick={handleCancelExtract}
+									disabled={cancelling}
+								>
+									<Square className="h-3.5 w-3.5" />
+									{cancelling ? 'Cancelling…' : 'Cancel'}
+								</Button>
+							) : null}
 						</div>
 					</FormSection>
 
