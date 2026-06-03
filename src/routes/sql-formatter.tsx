@@ -1,5 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Database } from 'lucide-react';
 import { toast } from 'sonner';
 import type { SqlLanguage } from 'sql-formatter';
@@ -16,7 +16,7 @@ import {
 import { SplitPane } from '@/lib/components/layout';
 import { ToolFooter, ToolShell } from '@/lib/components/shell';
 import { EmptyOutputPane, StatItem } from '@/lib/components/status';
-import { useDocumentTitle } from '@/lib/hooks';
+import { useDebouncedValue, useDocumentTitle } from '@/lib/hooks';
 import { usePersistedRail } from '@/lib/stores';
 import {
 	calculateSqlStats,
@@ -72,18 +72,32 @@ function SqlFormatterPage() {
 	const expressionWidth = Number.parseInt(expressionWidthStr, 10) || 50;
 	const linesBetweenQueries = Number.parseInt(linesBetweenQueriesStr, 10) || 1;
 
-	const formatOptions: Partial<SqlFormatOptions> = {
-		language,
-		tabWidth,
-		useTabs,
-		keywordCase,
-		indentStyle,
-		logicalOperatorNewline,
-		expressionWidth,
-		linesBetweenQueries,
-		denseOperators,
-		newlineBeforeSemicolon,
-	};
+	const formatOptions = useMemo<Partial<SqlFormatOptions>>(
+		() => ({
+			language,
+			tabWidth,
+			useTabs,
+			keywordCase,
+			indentStyle,
+			logicalOperatorNewline,
+			expressionWidth,
+			linesBetweenQueries,
+			denseOperators,
+			newlineBeforeSemicolon,
+		}),
+		[
+			language,
+			tabWidth,
+			useTabs,
+			keywordCase,
+			indentStyle,
+			logicalOperatorNewline,
+			expressionWidth,
+			linesBetweenQueries,
+			denseOperators,
+			newlineBeforeSemicolon,
+		]
+	);
 
 	const stats = (() => {
 		if (!input.trim()) return null;
@@ -94,15 +108,20 @@ function SqlFormatterPage() {
 		}
 	})();
 
-	const { output, error } = ((): { output: string; error: string } => {
-		if (!input.trim()) return { output: '', error: '' };
+	// Debounce the input feeding the (synchronous) sql-formatter so a large
+	// stored-procedure dump does not re-tokenize on every keystroke. Memoizing
+	// also stops the format from re-running on unrelated option toggles.
+	const debouncedInput = useDebouncedValue(input, 200);
+	const { output, error } = useMemo<{ output: string; error: string }>(() => {
+		if (!debouncedInput.trim()) return { output: '', error: '' };
 		try {
-			const result = mode === 'minify' ? minifySql(input) : formatSql(input, formatOptions);
+			const result =
+				mode === 'minify' ? minifySql(debouncedInput) : formatSql(debouncedInput, formatOptions);
 			return { output: result, error: '' };
 		} catch (e) {
 			return { output: '', error: getErrorMessage(e, 'Invalid SQL') };
 		}
-	})();
+	}, [debouncedInput, mode, formatOptions]);
 
 	const valid: boolean | null = !input.trim() ? null : !error;
 	const selectedLanguageLabel =
