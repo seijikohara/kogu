@@ -268,14 +268,15 @@ function MarkdownEditorPage() {
 
 	useDocumentTitle('Markdown Editor');
 
-	const stats = useMemo(() => getMarkdownStats(input), [input]);
-	const toc = useMemo(() => generateToc(input), [input]);
-	const valid: boolean | null = input.trim() ? true : null;
-
 	// Debounce the input feeding the preview pipeline so Mermaid / KaTeX /
-	// Lowlight do not recompile on every keystroke. 200ms is short enough to
-	// feel live and long enough to collapse rapid typing into one render.
+	// Lowlight do not recompile on every keystroke, and so the stats / TOC
+	// derivations (multiple full-string regex passes plus an O(N×M) heading
+	// line lookup) do not run on every raw keystroke. 200ms feels live.
 	const debouncedInput = useDebouncedValue(input, 200);
+
+	const stats = useMemo(() => getMarkdownStats(debouncedInput), [debouncedInput]);
+	const toc = useMemo(() => generateToc(debouncedInput), [debouncedInput]);
+	const valid: boolean | null = input.trim() ? true : null;
 
 	// Render HTML preview asynchronously to support TeX and diagrams. The
 	// cancellation flag lives in a const ref so the cleanup closure can flip
