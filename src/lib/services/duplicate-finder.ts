@@ -54,8 +54,16 @@ export interface ScanProgress {
  * already lines up with our TypeScript interfaces, so we hand the
  * payload straight through.
  */
-export const scanForDuplicates = (req: ScanRequest): Promise<ScanResult> =>
-	invoke<ScanResult>('duplicate_scan', { req });
+export const scanForDuplicates = (opId: string, req: ScanRequest): Promise<ScanResult> =>
+	invoke<ScanResult>('duplicate_scan', { opId, req });
+
+/**
+ * Request cancellation of an in-flight scan by its operation id. Returns true
+ * when a matching operation was found and signalled. Cancellation is
+ * cooperative: the scan stops at its next check point rather than instantly.
+ */
+export const cancelScan = (opId: string): Promise<boolean> =>
+	invoke<boolean>('cancel_op', { opId });
 
 /**
  * Delete the given files. Returns the total number of bytes freed.

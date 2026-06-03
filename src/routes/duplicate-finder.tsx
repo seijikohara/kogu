@@ -26,6 +26,7 @@ import {
 	onScanProgress,
 	pickKeeper,
 	replaceWithLink,
+	cancelScan,
 	scanForDuplicates,
 	selectDeletablePaths,
 	type DuplicateEntry,
@@ -175,6 +176,7 @@ function DuplicateFinderPage() {
 	const [root, setRoot] = useState<string | null>(null);
 	const [result, setResult] = useState<ScanResult | null>(null);
 	const [scanning, setScanning] = useState(false);
+	const [cancelling, setCancelling] = useState(false);
 	const [error, setError] = useState<string | null>(null);
 	const [progress, setProgress] = useState<ScanProgress | null>(null);
 	const [selected, setSelected] = useState<ReadonlySet<string>>(new Set());
@@ -198,6 +200,7 @@ function DuplicateFinderPage() {
 	// unlisten function is captured in a ref so it remains stable across
 	// renders.
 	const unlistenRef = useRef<(() => void) | null>(null);
+	const scanOpIdRef = useRef<string | null>(null);
 	useEffect(() => {
 		let cancelled = false;
 		onScanProgress((p) => {
@@ -237,13 +240,16 @@ function DuplicateFinderPage() {
 			toast.error('Pick a folder first');
 			return;
 		}
+		const opId = crypto.randomUUID();
+		scanOpIdRef.current = opId;
 		setScanning(true);
+		setCancelling(false);
 		setError(null);
 		setResult(null);
 		setSelected(new Set());
 		setProgress({ phase: 'scanning', current: root, done: 0, total: 0 });
 		try {
-			const next = await scanForDuplicates({
+			const next = await scanForDuplicates(opId, {
 				root,
 				includeGlobs: splitPatterns(prefs.includeGlob),
 				excludeGlobs: splitPatterns(prefs.excludeGlob),
@@ -266,13 +272,26 @@ function DuplicateFinderPage() {
 			}
 		} catch (e) {
 			const message = e instanceof Error ? e.message : String(e);
-			setError(message);
-			toast.error('Scan failed', { description: message });
+			if (message.includes('cancelled')) {
+				toast.info('Scan cancelled');
+			} else {
+				setError(message);
+				toast.error('Scan failed', { description: message });
+			}
 		} finally {
+			scanOpIdRef.current = null;
 			setScanning(false);
+			setCancelling(false);
 			setProgress(null);
 		}
 	}, [root, prefs.includeGlob, prefs.excludeGlob, prefs.algorithm, minSize, maxSize]);
+
+	const handleCancel = useCallback(() => {
+		const opId = scanOpIdRef.current;
+		if (!opId) return;
+		setCancelling(true);
+		cancelScan(opId).catch(() => undefined);
+	}, []);
 
 	const togglePath = useCallback((path: string) => {
 		setSelected((prev) => {
@@ -431,6 +450,12 @@ function DuplicateFinderPage() {
 								)}
 								{scanning ? 'Scanning…' : 'Scan'}
 							</Button>
+							{scanning ? (
+								<Button variant="outline" size="sm" onClick={handleCancel} disabled={cancelling}>
+									<Square className="h-3.5 w-3.5" />
+									{cancelling ? 'Cancelling…' : 'Cancel'}
+								</Button>
+							) : null}
 							{result ? (
 								<Button variant="outline" size="sm" onClick={handleClear} disabled={scanning}>
 									<Square className="h-3.5 w-3.5" />

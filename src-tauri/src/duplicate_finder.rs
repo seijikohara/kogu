@@ -20,6 +20,7 @@ use std::collections::HashMap;
 use std::fs::{self, File};
 use std::io::{BufReader, Read};
 use std::path::{Path, PathBuf};
+use std::sync::Arc;
 use std::time::{Instant, SystemTime, UNIX_EPOCH};
 
 use blake3::Hasher as Blake3Hasher;
@@ -27,6 +28,7 @@ use globset::{Glob, GlobSet, GlobSetBuilder};
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 use tauri::Emitter;
+use tokio_util::sync::CancellationToken;
 use walkdir::WalkDir;
 
 /// Bytes hashed from the head of a file during the partial-hash phase.
@@ -263,8 +265,8 @@ fn emit_progress(app: &tauri::AppHandle, payload: &ScanProgress) {
 /// total number of files inspected post-filter.
 fn collect_size_buckets(
     app: &tauri::AppHandle,
+    token: &CancellationToken,
     root: &Path,
-    root_label: &str,
     includes: &GlobSet,
     excludes: &GlobSet,
     min_size: u64,
@@ -278,13 +280,16 @@ fn collect_size_buckets(
         app,
         &ScanProgress {
             phase: "scanning".to_string(),
-            current: root_label.to_string(),
+            current: root.display().to_string(),
             done: 0,
             total: 0,
         },
     );
 
     for entry in WalkDir::new(root).follow_links(false) {
+        if token.is_cancelled() {
+            return Err("Operation cancelled".to_string());
+        }
         let Ok(entry) = entry else { continue };
 
         let path = entry.path();
@@ -343,15 +348,19 @@ fn collect_size_buckets(
 /// `(size, partial-hash)`.
 fn collect_partial_buckets(
     app: &tauri::AppHandle,
+    token: &CancellationToken,
     candidates: Vec<SizeBucket>,
     algorithm: &str,
-) -> Vec<PartialBucket> {
+) -> Result<Vec<PartialBucket>, String> {
     let mut partial: HashMap<(u64, String), Vec<Candidate>> = HashMap::new();
     let partial_total: u64 = candidates.iter().map(|(_, v)| v.len() as u64).sum();
     let mut partial_done: u64 = 0;
 
     for (size, files) in candidates {
         for (path, modified_ms) in files {
+            if token.is_cancelled() {
+                return Err("Operation cancelled".to_string());
+            }
             partial_done += 1;
             if partial_done.is_multiple_of(PARTIAL_PROGRESS_INTERVAL)
                 || partial_done == partial_total
@@ -375,10 +384,10 @@ fn collect_partial_buckets(
         }
     }
 
-    partial
+    Ok(partial
         .into_iter()
         .filter(|(_, files)| files.len() > 1)
-        .collect()
+        .collect())
 }
 
 /// Phase 3: full-hash every survivor of phase 2 and bucket by
@@ -387,9 +396,10 @@ fn collect_partial_buckets(
 /// already covers the entire content.
 fn collect_full_buckets(
     app: &tauri::AppHandle,
+    token: &CancellationToken,
     candidates: Vec<PartialBucket>,
     algorithm: &str,
-) -> HashMap<(u64, String), Vec<DuplicateEntry>> {
+) -> Result<HashMap<(u64, String), Vec<DuplicateEntry>>, String> {
     let mut groups_map: HashMap<(u64, String), Vec<DuplicateEntry>> = HashMap::new();
     let full_total: u64 = candidates.iter().map(|(_, v)| v.len() as u64).sum();
     let mut full_done: u64 = 0;
@@ -409,6 +419,9 @@ fn collect_full_buckets(
         }
 
         for (path, modified_ms) in files {
+            if token.is_cancelled() {
+                return Err("Operation cancelled".to_string());
+            }
             full_done += 1;
             if full_done.is_multiple_of(FULL_PROGRESS_INTERVAL) || full_done == full_total {
                 emit_progress(
@@ -434,7 +447,7 @@ fn collect_full_buckets(
         }
     }
 
-    groups_map
+    Ok(groups_map)
 }
 
 /// Scan `req.root` for duplicate files.
@@ -448,7 +461,29 @@ fn collect_full_buckets(
 // blocking directory walk and per-file hashing never freeze the UI. Progress
 // is streamed to the frontend via the `duplicate-scan-progress` event.
 #[tauri::command(async)]
-pub fn duplicate_scan(app: tauri::AppHandle, req: ScanRequest) -> Result<ScanResult, String> {
+pub fn duplicate_scan(
+    app: tauri::AppHandle,
+    op_id: String,
+    req: ScanRequest,
+    state: tauri::State<'_, crate::cancellation::OperationRegistry>,
+) -> Result<ScanResult, String> {
+    let token = Arc::new(CancellationToken::new());
+    state.register(op_id.clone(), token.clone());
+
+    // Always unregister afterwards so the registry never leaks tokens, whether
+    // the scan finishes, errors, or is cancelled.
+    let result = run_duplicate_scan(app, &token, &req);
+    state.remove(&op_id);
+    result
+}
+
+/// Run the three-phase scan, checking `token` at loop boundaries so the work
+/// can be cancelled cooperatively (the scan stops at its next check point).
+fn run_duplicate_scan(
+    app: tauri::AppHandle,
+    token: &CancellationToken,
+    req: &ScanRequest,
+) -> Result<ScanResult, String> {
     let started = Instant::now();
 
     let root = PathBuf::from(&req.root);
@@ -468,16 +503,16 @@ pub fn duplicate_scan(app: tauri::AppHandle, req: ScanRequest) -> Result<ScanRes
 
     let (size_buckets, total_files) = collect_size_buckets(
         &app,
+        token,
         &root,
-        &req.root,
         &includes,
         &excludes,
         req.min_size,
         req.max_size,
     )?;
 
-    let partial_buckets = collect_partial_buckets(&app, size_buckets, algorithm);
-    let groups_map = collect_full_buckets(&app, partial_buckets, algorithm);
+    let partial_buckets = collect_partial_buckets(&app, token, size_buckets, algorithm)?;
+    let groups_map = collect_full_buckets(&app, token, partial_buckets, algorithm)?;
 
     let mut groups: Vec<DuplicateGroup> = groups_map
         .into_iter()
