@@ -21,12 +21,8 @@ import { SplitPane } from '@/lib/components/layout';
 import { ToolFooter, ToolShell } from '@/lib/components/shell';
 import { EmbeddedEmptyState, StatItem } from '@/lib/components/status';
 import { useDocumentTitle } from '@/lib/hooks';
+import { useEncodingConverterWorker } from '@/lib/hooks/use-encoding-converter-worker';
 import {
-	applyBomAction,
-	bytesToBase64,
-	decodeBytes,
-	detectEncoding,
-	encodeText,
 	ENCODING_META,
 	formatHexDump,
 	getEncodingMeta,
@@ -100,28 +96,17 @@ function EncodingConverterPage() {
 	const [isDragOver, setIsDragOver] = useState(false);
 	const [showRail, setShowRail] = usePersistedRail('encoding-converter');
 
-	const detected = useMemo<DetectedEncoding | null>(() => {
-		if (!sourceBytes) return null;
-		return detectEncoding(sourceBytes);
-	}, [sourceBytes]);
+	// The detect → decode → encode → base64 pipeline runs in a worker so a
+	// large legacy-encoded file never freezes the UI on load or option change.
+	const { detected, decodedText, targetBytes, targetText, base64 } = useEncodingConverterWorker({
+		sourceBytes,
+		overrideEncoding,
+		targetEncoding: prefs.targetEncoding,
+		lineEnding: prefs.lineEnding,
+		bomAction: prefs.bomAction,
+	});
 
 	const effectiveSourceEncoding = overrideEncoding ?? detected?.encoding ?? 'utf-8';
-
-	const decodedText = useMemo<string | null>(() => {
-		if (!sourceBytes) return null;
-		return decodeBytes(sourceBytes, effectiveSourceEncoding);
-	}, [sourceBytes, effectiveSourceEncoding]);
-
-	const targetBytes = useMemo<Uint8Array | null>(() => {
-		if (decodedText === null) return null;
-		const encoded = encodeText(decodedText, prefs.targetEncoding, prefs.lineEnding);
-		return applyBomAction(encoded, prefs.targetEncoding, prefs.bomAction);
-	}, [decodedText, prefs.targetEncoding, prefs.lineEnding, prefs.bomAction]);
-
-	const targetText = useMemo<string | null>(() => {
-		if (!targetBytes) return null;
-		return decodeBytes(targetBytes, prefs.targetEncoding);
-	}, [targetBytes, prefs.targetEncoding]);
 
 	const hasContent = sourceBytes !== null;
 	const targetWritable = isWritableEncoding(prefs.targetEncoding);
@@ -347,7 +332,7 @@ function EncodingConverterPage() {
 								Save bytes…
 							</Button>
 							<CopyButton
-								text={targetBytes ? bytesToBase64(targetBytes) : ''}
+								text={base64}
 								label="Copy as base64"
 								toastLabel="Base64"
 								className="w-full justify-center"
@@ -381,6 +366,10 @@ function EncodingConverterPage() {
 					sourceEncodingLabel={overrideLabel ? `${overrideLabel} (overridden)` : detectedLabel}
 					targetEncodingLabel={targetLabel}
 				/>
+			) : hasContent ? (
+				<div className="flex h-full items-center justify-center">
+					<Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+				</div>
 			) : (
 				<DropZone
 					loading={loading}
