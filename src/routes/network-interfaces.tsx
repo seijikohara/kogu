@@ -17,18 +17,13 @@ import { toast } from 'sonner';
 
 import { CopyButton } from '@/lib/components/action';
 import { FormCheckbox, FormCheckboxGroup, FormSection, FormSelect } from '@/lib/components/form';
-import { SectionHeader, SectionLabel } from '@/lib/components/layout';
+import { MasterDetailLayout, SectionLabel } from '@/lib/components/layout';
 import { ToolFooter, ToolShell } from '@/lib/components/shell';
 import { EmptyState, ErrorDisplay, StatItem } from '@/lib/components/status';
 import { Badge } from '@/lib/components/ui/badge';
 import { Button } from '@/lib/components/ui/button';
 import { Card, CardContent } from '@/lib/components/ui/card';
 import { ListItemButton } from '@/lib/components/ui/list-item-button';
-import {
-	ResizableHandle,
-	ResizablePanel,
-	ResizablePanelGroup,
-} from '@/lib/components/ui/resizable';
 import { Skeleton } from '@/lib/components/ui/skeleton';
 import {
 	buildScopeIdMap,
@@ -271,111 +266,97 @@ function NetworkInterfacesPage() {
 			<div className="flex h-full flex-col overflow-hidden">
 				<div className="flex-1 overflow-hidden">
 					{filteredInterfaces.length > 0 ? (
-						<ResizablePanelGroup orientation="horizontal" className="h-full">
-							<ResizablePanel defaultSize="42" minSize="20" maxSize="60">
-								<div className="flex h-full flex-col border-r">
-									<SectionHeader title="Interfaces" count={filteredInterfaces.length} />
-									<div
-										className="flex-1 overflow-auto outline-none focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:ring-inset"
-										role="listbox"
-										tabIndex={0}
-										aria-label="Network interfaces"
-										onKeyDown={handleListKeydown}
+						<MasterDetailLayout
+							listTitle="Interfaces"
+							listCount={filteredInterfaces.length}
+							defaultListSize="42"
+							minListSize="20"
+							maxListSize="60"
+							listAriaLabel="Network interfaces"
+							onListKeyDown={handleListKeydown}
+							list={filteredInterfaces.map((iface) => {
+								const TypeIcon = getInterfaceTypeIcon(iface.interfaceType);
+								const isSelected = selectedIndex === iface.index;
+								const primaryIpv4 = iface.ipv4Addresses[0]?.address ?? null;
+								return (
+									<ListItemButton
+										key={iface.index}
+										variant="option"
+										role="option"
+										selected={isSelected}
+										data-iface-index={iface.index}
+										className="items-start"
+										onClick={() => setSelectedIndex(iface.index)}
 									>
-										{filteredInterfaces.map((iface) => {
-											const TypeIcon = getInterfaceTypeIcon(iface.interfaceType);
-											const isSelected = selectedIndex === iface.index;
-											const primaryIpv4 = iface.ipv4Addresses[0]?.address ?? null;
-											return (
-												<ListItemButton
-													key={iface.index}
-													variant="option"
-													role="option"
-													selected={isSelected}
-													data-iface-index={iface.index}
-													className="items-start"
-													onClick={() => setSelectedIndex(iface.index)}
+										<div className="mt-0.5 flex w-8 shrink-0 items-center justify-center">
+											<TypeIcon
+												className={cn(
+													'h-4 w-4',
+													iface.isUp ? 'text-foreground' : 'text-muted-foreground/50'
+												)}
+											/>
+										</div>
+										<div className="min-w-0 flex-1">
+											<div className="flex items-center gap-2">
+												<span className="text-sm font-medium">{iface.name}</span>
+												<span
+													className={cn('h-1.5 w-1.5 shrink-0 rounded-full', getStatusColor(iface))}
+												/>
+												{iface.isDefault ? (
+													<span className="shrink-0 rounded bg-primary/10 px-1.5 py-0.5 text-xs font-medium text-primary">
+														DEFAULT
+													</span>
+												) : null}
+												<span
+													className={cn(
+														'ml-auto shrink-0 rounded px-1.5 py-0.5 text-xs font-medium',
+														getOperStateBadgeClass(iface.operState)
+													)}
 												>
-													<div className="mt-0.5 flex w-8 shrink-0 items-center justify-center">
-														<TypeIcon
-															className={cn(
-																'h-4 w-4',
-																iface.isUp ? 'text-foreground' : 'text-muted-foreground/50'
-															)}
-														/>
-													</div>
-													<div className="min-w-0 flex-1">
-														<div className="flex items-center gap-2">
-															<span className="text-sm font-medium">{iface.name}</span>
-															<span
-																className={cn(
-																	'h-1.5 w-1.5 shrink-0 rounded-full',
-																	getStatusColor(iface)
-																)}
-															/>
-															{iface.isDefault ? (
-																<span className="shrink-0 rounded bg-primary/10 px-1.5 py-0.5 text-xs font-medium text-primary">
-																	DEFAULT
-																</span>
-															) : null}
-															<span
-																className={cn(
-																	'ml-auto shrink-0 rounded px-1.5 py-0.5 text-xs font-medium',
-																	getOperStateBadgeClass(iface.operState)
-																)}
-															>
-																{iface.operState}
-															</span>
-														</div>
-														<div className="flex items-center gap-2">
-															{primaryIpv4 ? (
-																<span className="font-mono text-xs text-muted-foreground">
-																	{primaryIpv4}
-																</span>
-															) : (
-																<span className="text-xs text-muted-foreground/50">
-																	(no address)
-																</span>
-															)}
-															{iface.ipv6Addresses.length > 0 ? (
-																<span className="rounded bg-muted px-1.5 py-0.5 text-xs text-muted-foreground">
-																	IPv6 ×{iface.ipv6Addresses.length}
-																</span>
-															) : null}
-														</div>
-														{iface.macAddress ? (
-															<span className="truncate font-mono text-xs text-muted-foreground/70">
-																{iface.macAddress}
-															</span>
-														) : null}
-														{hasStats(iface) ? (
-															<div className="mt-0.5 flex items-center gap-3 text-xs text-muted-foreground/70">
-																{iface.rxBytes !== null ? (
-																	<span className="flex items-center gap-0.5">
-																		<ArrowDown className="h-2.5 w-2.5 text-success" />
-																		{formatBytes(iface.rxBytes)}
-																	</span>
-																) : null}
-																{iface.txBytes !== null ? (
-																	<span className="flex items-center gap-0.5">
-																		<ArrowUp className="h-2.5 w-2.5 text-info" />
-																		{formatBytes(iface.txBytes)}
-																	</span>
-																) : null}
-															</div>
-														) : null}
-													</div>
-												</ListItemButton>
-											);
-										})}
-									</div>
-								</div>
-							</ResizablePanel>
-
-							<ResizableHandle withHandle />
-
-							<ResizablePanel defaultSize="58" minSize="40">
-								{selectedInterface ? (
+													{iface.operState}
+												</span>
+											</div>
+											<div className="flex items-center gap-2">
+												{primaryIpv4 ? (
+													<span className="font-mono text-xs text-muted-foreground">
+														{primaryIpv4}
+													</span>
+												) : (
+													<span className="text-xs text-muted-foreground/50">(no address)</span>
+												)}
+												{iface.ipv6Addresses.length > 0 ? (
+													<span className="rounded bg-muted px-1.5 py-0.5 text-xs text-muted-foreground">
+														IPv6 ×{iface.ipv6Addresses.length}
+													</span>
+												) : null}
+											</div>
+											{iface.macAddress ? (
+												<span className="truncate font-mono text-xs text-muted-foreground/70">
+													{iface.macAddress}
+												</span>
+											) : null}
+											{hasStats(iface) ? (
+												<div className="mt-0.5 flex items-center gap-3 text-xs text-muted-foreground/70">
+													{iface.rxBytes !== null ? (
+														<span className="flex items-center gap-0.5">
+															<ArrowDown className="h-2.5 w-2.5 text-success" />
+															{formatBytes(iface.rxBytes)}
+														</span>
+													) : null}
+													{iface.txBytes !== null ? (
+														<span className="flex items-center gap-0.5">
+															<ArrowUp className="h-2.5 w-2.5 text-info" />
+															{formatBytes(iface.txBytes)}
+														</span>
+													) : null}
+												</div>
+											) : null}
+										</div>
+									</ListItemButton>
+								);
+							})}
+							detail={
+								selectedInterface ? (
 									(() => {
 										const iface = selectedInterface;
 										const TypeIcon = getInterfaceTypeIcon(iface.interfaceType);
@@ -663,9 +644,9 @@ function NetworkInterfacesPage() {
 									})()
 								) : (
 									<EmptyState icon={Network} title="Select an interface to view details" />
-								)}
-							</ResizablePanel>
-						</ResizablePanelGroup>
+								)
+							}
+						/>
 					) : loading ? (
 						<div
 							className="space-y-1.5 p-2"
