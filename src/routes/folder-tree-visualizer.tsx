@@ -122,6 +122,12 @@ function FolderTreeVisualizerPage() {
 		[sortedRoot, expanded]
 	);
 
+	// Memoize the export strings so the CopyButton text props do not rebuild a
+	// multi-MB string on every render (scroll, hover, expand) — only when the
+	// sorted tree itself changes.
+	const exportText = useMemo(() => (sortedRoot ? exportAsText(sortedRoot) : ''), [sortedRoot]);
+	const exportJson = useMemo(() => (sortedRoot ? exportAsJson(sortedRoot) : ''), [sortedRoot]);
+
 	const totals = useMemo(
 		() => (sortedRoot ? countEntries(sortedRoot) : { files: 0, dirs: 0 }),
 		[sortedRoot]
@@ -383,14 +389,14 @@ function FolderTreeVisualizerPage() {
 					<FormSection title="Export">
 						<div className="flex flex-col gap-2">
 							<CopyButton
-								text={sortedRoot ? exportAsText(sortedRoot) : ''}
+								text={exportText}
 								label="Copy as text"
 								toastLabel="tree as text"
 								className="w-full justify-center"
 								disabled={!hasRoot}
 							/>
 							<CopyButton
-								text={sortedRoot ? exportAsJson(sortedRoot) : ''}
+								text={exportJson}
 								label="Copy as JSON"
 								toastLabel="tree as JSON"
 								className="w-full justify-center"
