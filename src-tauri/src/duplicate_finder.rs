@@ -564,7 +564,9 @@ fn run_duplicate_scan(
 /// Returns a stringified error listing every path that could not be
 /// removed; the operation continues past per-file failures so successful
 /// deletes are not lost.
-#[tauri::command]
+// Runs off the main thread: deleting a large selection of files would
+// otherwise block the webview event loop.
+#[tauri::command(async)]
 pub fn duplicate_delete(paths: Vec<String>) -> Result<u64, String> {
     let mut freed: u64 = 0;
     let mut errors: Vec<String> = Vec::new();
