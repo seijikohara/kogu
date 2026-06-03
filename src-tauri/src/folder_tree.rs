@@ -8,10 +8,12 @@
 
 use std::collections::BinaryHeap;
 use std::path::{Path, PathBuf};
+use std::sync::Arc;
 use std::time::{SystemTime, UNIX_EPOCH};
 
 use globset::{Glob, GlobMatcher};
 use serde::{Deserialize, Serialize};
+use tokio_util::sync::CancellationToken;
 use walkdir::{DirEntry, WalkDir};
 
 /// Hard cap on traversal entries. Protects the IPC channel from
@@ -262,8 +264,20 @@ fn synthesize_root(root_path: &Path, root: &str) -> TreeNode {
 /// Returns a stringified error when the root cannot be opened, when any
 /// supplied glob fails to compile, or when an underlying walk error
 /// occurs that is not silently skippable.
-#[tauri::command]
-pub fn folder_walk(req: WalkRequest) -> Result<TreeNode, String> {
+#[tauri::command(async)]
+pub fn folder_walk(
+    op_id: String,
+    req: WalkRequest,
+    state: tauri::State<'_, crate::cancellation::OperationRegistry>,
+) -> Result<TreeNode, String> {
+    let token = Arc::new(CancellationToken::new());
+    state.register(op_id.clone(), token.clone());
+    let result = run_folder_walk(req, &token);
+    state.remove(&op_id);
+    result
+}
+
+fn run_folder_walk(req: WalkRequest, token: &CancellationToken) -> Result<TreeNode, String> {
     let root_path = Path::new(&req.root);
     let metadata = std::fs::metadata(root_path)
         .map_err(|e| format!("Failed to stat \"{}\": {e}", req.root))?;
@@ -289,6 +303,9 @@ pub fn folder_walk(req: WalkRequest) -> Result<TreeNode, String> {
     let mut truncated_root = false;
 
     for entry in walker {
+        if token.is_cancelled() {
+            return Err("Operation cancelled".to_string());
+        }
         let entry = match entry {
             Ok(e) => e,
             // Skip unreadable directories silently; surface only
@@ -337,12 +354,28 @@ pub fn folder_walk(req: WalkRequest) -> Result<TreeNode, String> {
 ///
 /// Returns a stringified error when the root cannot be opened or when
 /// any supplied glob fails to compile.
-#[tauri::command]
+#[tauri::command(async)]
 pub fn folder_largest_files(
+    op_id: String,
     root: String,
     limit: u32,
     include_globs: Vec<String>,
     exclude_globs: Vec<String>,
+    state: tauri::State<'_, crate::cancellation::OperationRegistry>,
+) -> Result<Vec<LargestFile>, String> {
+    let token = Arc::new(CancellationToken::new());
+    state.register(op_id.clone(), token.clone());
+    let result = run_folder_largest_files(root, limit, include_globs, exclude_globs, &token);
+    state.remove(&op_id);
+    result
+}
+
+fn run_folder_largest_files(
+    root: String,
+    limit: u32,
+    include_globs: Vec<String>,
+    exclude_globs: Vec<String>,
+    token: &CancellationToken,
 ) -> Result<Vec<LargestFile>, String> {
     let root_path = Path::new(&root);
     let metadata =
@@ -372,6 +405,9 @@ pub fn folder_largest_files(
 
     let mut visited = 0_usize;
     for entry in walker.flatten() {
+        if token.is_cancelled() {
+            return Err("Operation cancelled".to_string());
+        }
         visited += 1;
         if visited > MAX_ENTRIES {
             break;
@@ -445,7 +481,7 @@ mod tests {
             max_depth: 5,
             show_hidden: true,
         };
-        let node = folder_walk(req).unwrap();
+        let node = run_folder_walk(req, &CancellationToken::new()).unwrap();
         assert!(node.is_dir);
         assert_eq!(node.size_bytes, 11);
         assert_eq!(node.children.len(), 2);
@@ -465,7 +501,7 @@ mod tests {
             max_depth: 5,
             show_hidden: true,
         };
-        let node = folder_walk(req).unwrap();
+        let node = run_folder_walk(req, &CancellationToken::new()).unwrap();
         assert_eq!(node.size_bytes, 1);
         assert_eq!(node.children.len(), 1);
         assert_eq!(node.children[0].name, "keep.txt");
@@ -484,7 +520,7 @@ mod tests {
             max_depth: 5,
             show_hidden: true,
         };
-        let node = folder_walk(req).unwrap();
+        let node = run_folder_walk(req, &CancellationToken::new()).unwrap();
         let names: Vec<_> = node.children.iter().map(|c| c.name.clone()).collect();
         assert_eq!(names, vec!["a.png"]);
         let _ = fs::remove_dir_all(&dir);
@@ -497,8 +533,14 @@ mod tests {
         write_file(&dir, "big.bin", &vec![0_u8; 1024]);
         write_file(&dir, "mid.bin", &vec![0_u8; 256]);
 
-        let out =
-            folder_largest_files(dir.to_string_lossy().into_owned(), 2, vec![], vec![]).unwrap();
+        let out = run_folder_largest_files(
+            dir.to_string_lossy().into_owned(),
+            2,
+            vec![],
+            vec![],
+            &CancellationToken::new(),
+        )
+        .unwrap();
         assert_eq!(out.len(), 2);
         assert_eq!(out[0].size_bytes, 1024);
         assert_eq!(out[1].size_bytes, 256);
@@ -518,7 +560,7 @@ mod tests {
             max_depth: 1,
             show_hidden: true,
         };
-        assert!(folder_walk(req).is_err());
+        assert!(run_folder_walk(req, &CancellationToken::new()).is_err());
         let _ = fs::remove_dir_all(&dir);
     }
 
@@ -534,9 +576,27 @@ mod tests {
             max_depth: 1,
             show_hidden: false,
         };
-        let node = folder_walk(req).unwrap();
+        let node = run_folder_walk(req, &CancellationToken::new()).unwrap();
         let names: Vec<_> = node.children.iter().map(|c| c.name.clone()).collect();
         assert_eq!(names, vec!["visible.txt"]);
+        let _ = fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn cancelled_token_aborts_walk() {
+        let dir = tempdir("cancel");
+        write_file(&dir, "a.txt", b"x");
+        let req = WalkRequest {
+            root: dir.to_string_lossy().into_owned(),
+            include_globs: vec![],
+            exclude_globs: vec![],
+            max_depth: 5,
+            show_hidden: true,
+        };
+        let token = CancellationToken::new();
+        token.cancel();
+        let result = run_folder_walk(req, &token);
+        assert!(result.is_err_and(|e| e.contains("cancelled")));
         let _ = fs::remove_dir_all(&dir);
     }
 }
