@@ -29,10 +29,12 @@
 use std::fs::{self, File};
 use std::io::{self, Read, Seek, SeekFrom};
 use std::path::{Component, Path, PathBuf};
+use std::sync::Arc;
 
 use bzip2::read::BzDecoder;
 use flate2::read::GzDecoder;
 use serde::{Deserialize, Serialize};
+use tokio_util::sync::CancellationToken;
 use xz2::read::XzDecoder;
 
 /// Cap on bytes returned by `archive_read_entry`. The frontend uses
@@ -254,7 +256,10 @@ fn list_entries(format: &str, path: &Path) -> Result<Vec<ArchiveEntry>, String> 
 }
 
 /// Parse an archive and return its full directory listing.
-#[tauri::command]
+///
+/// Runs off the main thread: parsing a large archive index iterates every
+/// record, which would otherwise block the webview event loop.
+#[tauri::command(async)]
 pub fn archive_open(path: String) -> Result<ArchiveInfo, String> {
     let path_buf = Path::new(&path).to_path_buf();
     let format = detect_format(&path_buf)?;
@@ -513,8 +518,20 @@ fn extract_tar_one_stream<R: Read>(
 /// Extract a selection of entries (or every entry when the selection
 /// is empty) to a destination directory. Returns the number of files
 /// actually written; skipped entries do not count.
-#[tauri::command]
-pub fn archive_extract(req: ExtractRequest) -> Result<u64, String> {
+#[tauri::command(async)]
+pub fn archive_extract(
+    op_id: String,
+    req: ExtractRequest,
+    state: tauri::State<'_, crate::cancellation::OperationRegistry>,
+) -> Result<u64, String> {
+    let token = Arc::new(CancellationToken::new());
+    state.register(op_id.clone(), token.clone());
+    let result = run_archive_extract(req, &token);
+    state.remove(&op_id);
+    result
+}
+
+fn run_archive_extract(req: ExtractRequest, token: &CancellationToken) -> Result<u64, String> {
     let archive = Path::new(&req.archive_path).to_path_buf();
     let dest_root = Path::new(&req.destination_dir).to_path_buf();
     fs::create_dir_all(&dest_root)
@@ -530,22 +547,40 @@ pub fn archive_extract(req: ExtractRequest) -> Result<u64, String> {
     let conflict = req.conflict.as_str();
 
     match format {
-        "zip" => extract_zip_all(&archive, &dest_root, filter.as_ref(), conflict),
+        "zip" => extract_zip_all(&archive, &dest_root, filter.as_ref(), conflict, token),
         "tar" => {
             let file = File::open(&archive).map_err(|e| format!("Failed to open tar: {e}"))?;
-            extract_tar_all_stream(file, &dest_root, filter.as_ref(), conflict)
+            extract_tar_all_stream(file, &dest_root, filter.as_ref(), conflict, token)
         }
         "tar.gz" => {
             let file = File::open(&archive).map_err(|e| format!("Failed to open tar.gz: {e}"))?;
-            extract_tar_all_stream(GzDecoder::new(file), &dest_root, filter.as_ref(), conflict)
+            extract_tar_all_stream(
+                GzDecoder::new(file),
+                &dest_root,
+                filter.as_ref(),
+                conflict,
+                token,
+            )
         }
         "tar.bz2" => {
             let file = File::open(&archive).map_err(|e| format!("Failed to open tar.bz2: {e}"))?;
-            extract_tar_all_stream(BzDecoder::new(file), &dest_root, filter.as_ref(), conflict)
+            extract_tar_all_stream(
+                BzDecoder::new(file),
+                &dest_root,
+                filter.as_ref(),
+                conflict,
+                token,
+            )
         }
         "tar.xz" => {
             let file = File::open(&archive).map_err(|e| format!("Failed to open tar.xz: {e}"))?;
-            extract_tar_all_stream(XzDecoder::new(file), &dest_root, filter.as_ref(), conflict)
+            extract_tar_all_stream(
+                XzDecoder::new(file),
+                &dest_root,
+                filter.as_ref(),
+                conflict,
+                token,
+            )
         }
         "7z" => Err("7z extraction is not yet supported.".to_string()),
         other => Err(format!("Unsupported archive format: {other}")),
@@ -557,6 +592,7 @@ fn extract_zip_all(
     dest_root: &Path,
     filter: Option<&std::collections::HashSet<String>>,
     conflict: &str,
+    token: &CancellationToken,
 ) -> Result<u64, String> {
     let file = File::open(archive).map_err(|e| format!("Failed to open zip: {e}"))?;
     let mut zip = zip::ZipArchive::new(file).map_err(|e| format!("Failed to parse zip: {e}"))?;
@@ -564,6 +600,9 @@ fn extract_zip_all(
     let indices: Vec<usize> = (0..zip.len()).collect();
     let mut written: u64 = 0;
     for i in indices {
+        if token.is_cancelled() {
+            return Err("Operation cancelled".to_string());
+        }
         let mut entry = zip
             .by_index(i)
             .map_err(|e| format!("Failed to read zip entry: {e}"))?;
@@ -597,6 +636,7 @@ fn extract_tar_all_stream<R: Read>(
     dest_root: &Path,
     filter: Option<&std::collections::HashSet<String>>,
     conflict: &str,
+    token: &CancellationToken,
 ) -> Result<u64, String> {
     let mut archive = tar::Archive::new(reader);
     let entries = archive
@@ -604,6 +644,9 @@ fn extract_tar_all_stream<R: Read>(
         .map_err(|e| format!("Failed to read tar entries: {e}"))?;
     let mut written: u64 = 0;
     for entry_result in entries {
+        if token.is_cancelled() {
+            return Err("Operation cancelled".to_string());
+        }
         let mut entry = entry_result.map_err(|e| format!("Failed to iterate tar entry: {e}"))?;
         let path_string = entry
             .path()

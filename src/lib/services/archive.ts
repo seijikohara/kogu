@@ -51,8 +51,12 @@ export const archiveReadEntry = (
 		(arr) => new Uint8Array(arr)
 	);
 
-export const archiveExtract = (params: ExtractParams): Promise<number> =>
-	invoke('archive_extract', { req: params });
+export const archiveExtract = (opId: string, params: ExtractParams): Promise<number> =>
+	invoke('archive_extract', { opId, req: params });
+
+/** Cancel an in-flight archive_extract run by its op id. */
+export const cancelArchiveExtract = (opId: string): Promise<boolean> =>
+	invoke<boolean>('cancel_op', { opId });
 
 export const archiveExtractEntry = (
 	archivePath: string,
