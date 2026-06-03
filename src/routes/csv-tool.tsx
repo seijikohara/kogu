@@ -18,7 +18,6 @@ import {
 	type ChangeEvent,
 	type DragEvent,
 	type KeyboardEvent,
-	useCallback,
 	useEffect,
 	useMemo,
 	useRef,
@@ -37,20 +36,17 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/lib/components/ui/ca
 import { Input } from '@/lib/components/ui/input';
 import { Textarea } from '@/lib/components/ui/textarea';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/lib/components/ui/tooltip';
-import { useDocumentTitle } from '@/lib/hooks';
+import { useDebouncedValue, useDocumentTitle } from '@/lib/hooks';
+import { useCsvToolWorker } from '@/lib/hooks/use-csv-tool-worker';
 import {
 	addColumn,
 	addRow,
 	type ColumnType,
-	computeColumnStats,
 	computeDisplayOrder,
 	type Delimiter,
-	detectColumnTypes,
-	formatTable,
 	getDelimiterLabel,
 	type OutputFormat,
 	type ParsedTable,
-	parseTable,
 	removeColumn,
 	removeRow,
 	renameHeader,
@@ -135,37 +131,33 @@ function CsvToolPage() {
 
 	const textareaRef = useRef<HTMLTextAreaElement | null>(null);
 
-	const handleParse = useCallback(
-		(text: string) => {
-			if (text.trim() === '') {
-				setTable(null);
-				return;
-			}
-			const hint =
-				prefs.delimiterOverride === 'auto' ? undefined : { delimiter: prefs.delimiterOverride };
-			const parsed = parseTable(text, { ...hint, hasHeader: prefs.hasHeader });
-			setTable(parsed);
-			setSort(null);
-		},
-		[prefs.delimiterOverride, prefs.hasHeader]
-	);
+	// Parsing and formatting run in a worker so a large CSV never freezes the UI.
+	const { parse, format, parseResult, output: workerOutput } = useCsvToolWorker();
+	const debouncedRawText = useDebouncedValue(rawText, 300);
 
-	// Re-parse whenever the raw text or the user-controlled hints change.
-	// Inline cell edits bypass this effect by mutating `table` directly via
-	// the handlers below.
+	// Re-parse whenever the debounced text or the user-controlled hints change.
+	// Inline cell edits bypass this and mutate `table` directly via the handlers
+	// below; the format effect re-runs on that change.
 	useEffect(() => {
-		if (rawText.trim() === '') {
+		if (debouncedRawText.trim() === '') {
 			setTable(null);
 			return;
 		}
-		handleParse(rawText);
-	}, [rawText, handleParse]);
+		const hint =
+			prefs.delimiterOverride === 'auto'
+				? { hasHeader: prefs.hasHeader }
+				: { delimiter: prefs.delimiterOverride, hasHeader: prefs.hasHeader };
+		parse(debouncedRawText, hint);
+		setSort(null);
+	}, [debouncedRawText, prefs.delimiterOverride, prefs.hasHeader, parse]);
 
-	const columnTypes = useMemo<readonly ColumnType[]>(
-		() => (table ? detectColumnTypes(table) : []),
-		[table]
-	);
-	const columnStats = useMemo(() => (table ? computeColumnStats(table) : []), [table]);
+	// Adopt the worker's parsed table as editable local state.
+	useEffect(() => {
+		if (parseResult) setTable(parseResult.table);
+	}, [parseResult]);
+
+	const columnTypes: readonly ColumnType[] = parseResult?.columnTypes ?? [];
+	const columnStats = parseResult?.columnStats ?? [];
 
 	const displayOrder = useMemo<readonly number[]>(() => {
 		if (!table) return [];
@@ -189,10 +181,13 @@ function CsvToolPage() {
 		return set;
 	}, [table]);
 
-	const output = useMemo(() => {
-		if (!table) return '';
-		return formatTable(table, prefs.outputFormat, { sqlTableName: prefs.sqlTableName });
-	}, [table, prefs.outputFormat, prefs.sqlTableName]);
+	// Re-format off-thread when the table or output options change (covers
+	// inline edits, which mutate `table` directly).
+	useEffect(() => {
+		if (table) format(table, prefs.outputFormat, { sqlTableName: prefs.sqlTableName });
+	}, [table, prefs.outputFormat, prefs.sqlTableName, format]);
+
+	const output = table ? workerOutput : '';
 
 	const errorCount = table?.errors.length ?? 0;
 	const valid = table ? errorCount === 0 : null;
