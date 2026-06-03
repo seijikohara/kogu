@@ -1,10 +1,9 @@
 import { createFileRoute } from '@tanstack/react-router';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Code2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { CodeEditor } from '@/lib/components/editor';
-import { getErrorMessage } from '@/lib/utils';
 import {
 	FormCheckbox,
 	FormCheckboxGroup,
@@ -16,6 +15,7 @@ import { SplitPane } from '@/lib/components/layout';
 import { ToolFooter, ToolShell } from '@/lib/components/shell';
 import { DetectedInfo, EmptyOutputPane, StatItem } from '@/lib/components/status';
 import { useDebouncedValue, useDocumentTitle } from '@/lib/hooks';
+import { useBase64Worker } from '@/lib/hooks/use-base64-worker';
 import { createToolOptionsStore, usePersistedRail } from '@/lib/stores';
 import {
 	BASE64_MIME_TYPES,
@@ -24,11 +24,9 @@ import {
 	type Base64LineBreak,
 	type Base64Variant,
 	calculateBase64Stats,
-	decodeFromBase64,
 	defaultBase64DecodeOptions,
 	defaultBase64EncodeOptions,
 	detectBase64Variant,
-	encodeToBase64,
 	extractMimeType,
 	isDataUrl,
 	SAMPLE_TEXT_FOR_BASE64,
@@ -83,19 +81,15 @@ function Base64EncoderPage() {
 
 	useDocumentTitle('Base64 Encoder');
 
-	const encodeOptions: Partial<Base64EncodeOptions> = {
-		variant,
-		padding,
-		lineBreak,
-		dataUrl,
-		mimeType,
-	};
+	const encodeOptions = useMemo<Partial<Base64EncodeOptions>>(
+		() => ({ variant, padding, lineBreak, dataUrl, mimeType }),
+		[variant, padding, lineBreak, dataUrl, mimeType]
+	);
 
-	const decodeOptions: Partial<Base64DecodeOptions> = {
-		ignoreWhitespace,
-		ignoreInvalidChars,
-		autoDetectVariant,
-	};
+	const decodeOptions = useMemo<Partial<Base64DecodeOptions>>(
+		() => ({ ignoreWhitespace, ignoreInvalidChars, autoDetectVariant }),
+		[ignoreWhitespace, ignoreInvalidChars, autoDetectVariant]
+	);
 
 	// Debounce the input feeding the encode / decode pipeline so typing
 	// large payloads (data URLs, base64 blobs) does not retrigger the
@@ -109,18 +103,13 @@ function Base64EncoderPage() {
 		mode === 'decode' && debouncedInput.trim() ? isDataUrl(debouncedInput) : false;
 	const detectedMimeType = detectedDataUrl ? extractMimeType(debouncedInput) : null;
 
-	const { output, error } = ((): { output: string; error: string } => {
-		if (!debouncedInput.trim()) return { output: '', error: '' };
-		try {
-			const result =
-				mode === 'encode'
-					? encodeToBase64(debouncedInput, encodeOptions)
-					: decodeFromBase64(debouncedInput, decodeOptions);
-			return { output: result, error: '' };
-		} catch (e) {
-			return { output: '', error: getErrorMessage(e, 'Invalid input') };
-		}
-	})();
+	// Encoding / decoding runs in a worker so a large Data URL never freezes typing.
+	const { output, error } = useBase64Worker({
+		mode,
+		input: debouncedInput,
+		encodeOptions,
+		decodeOptions,
+	});
 
 	const stats =
 		input.trim() && output
