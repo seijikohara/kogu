@@ -3,6 +3,8 @@ export { useDebouncedCallback, useDebouncedValue } from './use-debounced-value';
 export { useDocumentTitle } from './use-document-title';
 export { useRegexWorker } from './use-regex-worker';
 export type { UseRegexWorkerInput, UseRegexWorkerOutput } from './use-regex-worker';
+export { useFileInspectWorker } from './use-file-inspect-worker';
+export type { FileHashOutput, UseFileInspectWorker } from './use-file-inspect-worker';
 export {
 	useFormatterPage,
 	FORMATTER_TABS,

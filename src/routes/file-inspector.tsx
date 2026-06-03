@@ -25,7 +25,7 @@ import { EmbeddedEmptyState, StatItem } from '@/lib/components/status';
 import { Badge } from '@/lib/components/ui/badge';
 import { Button } from '@/lib/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/lib/components/ui/card';
-import { useDocumentTitle } from '@/lib/hooks';
+import { useDocumentTitle, useFileInspectWorker } from '@/lib/hooks';
 import { createToolOptionsStore, usePersistedRail } from '@/lib/stores';
 import {
 	base64ToBytes,
@@ -35,9 +35,9 @@ import {
 	formatTimestamp,
 	HASH_ALGO_LABELS,
 	HASH_ALGO_SECURE,
+	MAX_FULL_BYTES,
 	type HashAlgo,
 	cancelFileInspect,
-	hashBytes,
 	humanSize,
 	type FileInspectResult,
 	inspectFile,
@@ -88,8 +88,13 @@ function FileInspectorPage() {
 	const [cancelling, setCancelling] = useState(false);
 	const inspectOpIdRef = useRef<string | null>(null);
 	const [error, setError] = useState<string | null>(null);
-	const [hashes, setHashes] = useState<Partial<Record<HashAlgo, string>>>({});
-	const [hashing, setHashing] = useState<ReadonlySet<HashAlgo>>(new Set());
+	// Decoding and hashing run in a worker so a large file never freezes the UI.
+	const {
+		output: { hashes, hashing },
+		decode: decodeFile,
+		hash: hashBuffer,
+		reset: resetHashWorker,
+	} = useFileInspectWorker();
 	const [imagePreview, setImagePreview] = useState<ImagePreview | null>(null);
 	const [audioInfo, setAudioInfo] = useState<{
 		readonly duration: number;
@@ -119,44 +124,55 @@ function FileInspectorPage() {
 	}, [mimeInfo]);
 
 	const handleClear = useCallback(() => {
+		// Discard any in-flight worker response for the previous file.
+		resetHashWorker();
 		setResult(null);
 		setBytes(null);
 		setError(null);
-		setHashes({});
-		setHashing(new Set());
 		setImagePreview(null);
 		setAudioInfo(null);
-	}, []);
+	}, [resetHashWorker]);
 
-	const loadFromPath = useCallback(async (path: string) => {
-		const opId = crypto.randomUUID();
-		inspectOpIdRef.current = opId;
-		setLoading(true);
-		setCancelling(false);
-		setError(null);
-		setHashes({});
-		setHashing(new Set());
-		setImagePreview(null);
-		setAudioInfo(null);
-		try {
-			const next = await inspectFile(opId, path);
-			setResult(next);
-			setBytes(next.fullBytesB64 ? base64ToBytes(next.fullBytesB64) : null);
-		} catch (e) {
-			const message = e instanceof Error ? e.message : String(e);
-			// Cancellation is a user action, not a failure.
-			if (message.includes('cancelled')) {
-				toast.info('Inspection cancelled');
-			} else {
-				setError(message);
-				toast.error('Failed to inspect file', { description: message });
-			}
-		} finally {
-			inspectOpIdRef.current = null;
-			setLoading(false);
+	const loadFromPath = useCallback(
+		async (path: string) => {
+			const opId = crypto.randomUUID();
+			inspectOpIdRef.current = opId;
+			// Drop any in-flight worker response so the previous file's decoded
+			// bytes cannot be applied once this file's request resolves.
+			resetHashWorker();
+			setBytes(null);
+			setLoading(true);
 			setCancelling(false);
-		}
-	}, []);
+			setError(null);
+			setImagePreview(null);
+			setAudioInfo(null);
+			try {
+				const next = await inspectFile(opId, path);
+				setResult(next);
+				if (next.fullBytesB64) {
+					// Decode off-thread; onBuffer hands the decoded bytes back for the
+					// image / audio preview. Hashing is driven by the effect below.
+					decodeFile(next.fullBytesB64, (buffer) => {
+						setBytes(new Uint8Array(buffer));
+					});
+				}
+			} catch (e) {
+				const message = e instanceof Error ? e.message : String(e);
+				// Cancellation is a user action, not a failure.
+				if (message.includes('cancelled')) {
+					toast.info('Inspection cancelled');
+				} else {
+					setError(message);
+					toast.error('Failed to inspect file', { description: message });
+				}
+			} finally {
+				inspectOpIdRef.current = null;
+				setLoading(false);
+				setCancelling(false);
+			}
+		},
+		[decodeFile, resetHashWorker]
+	);
 
 	const handleCancel = useCallback(() => {
 		const opId = inspectOpIdRef.current;
@@ -205,48 +221,15 @@ function FileInspectorPage() {
 		setIsDragOver(false);
 	};
 
-	// Compute hashes whenever the file bytes or the enabled-hashes
-	// preference changes. Each algorithm runs as an independent async
-	// task so SHA-256 does not have to wait for SHA-512 to finish.
+	// Hash the decoded bytes off-thread — on initial decode and whenever the
+	// user toggles algorithms. A copy of the buffer goes to the worker as a
+	// transferable so hashing never blocks the main thread and the preview's
+	// own `bytes` copy is untouched. Keyed on bytes + enabledHashes only (never
+	// on the hash results), which is what avoids the old render-churn loop.
 	useEffect(() => {
 		if (!bytes) return;
-		const enabled = new Set(prefs.enabledHashes);
-		// Track which algorithms are still pending; algorithms already
-		// computed for the current buffer are skipped.
-		setHashing((prev) => {
-			const next = new Set(prev);
-			for (const algo of enabled) {
-				if (hashes[algo] === undefined) next.add(algo);
-			}
-			return next;
-		});
-
-		let cancelled = false;
-		for (const algo of enabled) {
-			if (hashes[algo] !== undefined) continue;
-			hashBytes(bytes, algo)
-				.then((hex) => {
-					if (cancelled) return;
-					setHashes((prev) => ({ ...prev, [algo]: hex }));
-					setHashing((prev) => {
-						const next = new Set(prev);
-						next.delete(algo);
-						return next;
-					});
-				})
-				.catch(() => {
-					if (cancelled) return;
-					setHashing((prev) => {
-						const next = new Set(prev);
-						next.delete(algo);
-						return next;
-					});
-				});
-		}
-		return () => {
-			cancelled = true;
-		};
-	}, [bytes, prefs.enabledHashes, hashes]);
+		hashBuffer(bytes.buffer.slice(0) as ArrayBuffer, prefs.enabledHashes);
+	}, [bytes, prefs.enabledHashes, hashBuffer]);
 
 	// Image-format extraction: dimensions, EXIF. Audio-format
 	// extraction: duration, sample rate, channel count.
@@ -498,7 +481,6 @@ function FileInspectorPage() {
 			{hasResult ? (
 				<ResultView
 					result={result}
-					bytes={bytes}
 					headBytes={headBytes}
 					detectedMime={detectedMime}
 					mimeInfo={mimeInfo}
@@ -574,7 +556,6 @@ function DropZone({ loading, isDragOver, onDrop, onDragOver, onDragLeave, onPick
 
 interface ResultViewProps {
 	readonly result: FileInspectResult;
-	readonly bytes: Uint8Array | null;
 	readonly headBytes: Uint8Array | null;
 	readonly detectedMime: string | null;
 	readonly mimeInfo: {
@@ -603,7 +584,6 @@ interface ResultViewProps {
 
 function ResultView({
 	result,
-	bytes,
 	headBytes,
 	detectedMime,
 	mimeInfo,
@@ -618,7 +598,7 @@ function ResultView({
 	onCopyJson,
 	onReveal,
 }: ResultViewProps) {
-	const isLargeFile = bytes === null && result.sizeBytes > 0;
+	const isLargeFile = result.sizeBytes > MAX_FULL_BYTES;
 
 	return (
 		<div className="flex h-full flex-col overflow-hidden">

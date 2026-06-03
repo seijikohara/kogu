@@ -2,17 +2,15 @@
  * File Inspector service.
  *
  * Wraps the `file_inspect` Tauri command and provides browser-side
- * helpers for the inspector tool: byte conversion, hash computation
- * (MD5 / SHA-1 / SHA-256 / SHA-512), human-readable size formatting,
- * hex previews, and magic-byte MIME detection against the existing
- * MIME Type Explorer catalog.
+ * helpers for the inspector tool: byte conversion, the hash-algorithm
+ * catalog, human-readable size formatting, hex previews, and magic-byte
+ * MIME detection against the existing MIME Type Explorer catalog.
  *
- * Hashing routes SHA-1 / 256 / 512 through `crypto.subtle` (native,
- * streaming-friendly) and MD5 through `js-md5`. BLAKE3 is left as a
- * follow-up; the [`HashAlgo`] enum has a placeholder.
+ * Hashing itself runs in `file-inspect.worker.ts` (off the main thread)
+ * so decoding and digesting a large file never freezes the webview. This
+ * module only describes the supported algorithms via [`HashAlgo`].
  */
 import { invoke } from '@tauri-apps/api/core';
-import { md5 } from 'js-md5';
 
 import { MIME_ENTRIES, type MimeEntry } from './mime';
 
@@ -30,6 +28,13 @@ export interface FileInspectResult {
 	readonly headBytesB64: string;
 	readonly fullBytesB64: string | null;
 }
+
+/**
+ * Maximum file size for which the backend returns the full content as base64.
+ * Files larger than this return only the head bytes, so hashing the whole file
+ * is unavailable. Mirrors `MAX_FULL_BYTES` in `src-tauri/src/file_inspect.rs`.
+ */
+export const MAX_FULL_BYTES = 500 * 1024 * 1024;
 
 /**
  * Invoke the Tauri command that reads a file from disk and returns its
@@ -71,31 +76,6 @@ export const base64ToBytes = (b64: string): Uint8Array => {
 		bytes[i] = binary.charCodeAt(i);
 	}
 	return bytes;
-};
-
-const bytesToHex = (bytes: Uint8Array): string =>
-	Array.from(bytes)
-		.map((b) => b.toString(16).padStart(2, '0'))
-		.join('');
-
-/**
- * Hash an arbitrary byte buffer with one of the supported algorithms.
- *
- * SHA-1 / 256 / 512 go through `crypto.subtle` — universally
- * available in the Tauri WebView (Chromium / WebKit both ship the
- * Web Crypto API). MD5 uses `js-md5` since `crypto.subtle` does not
- * implement it.
- */
-export const hashBytes = async (bytes: Uint8Array, algo: HashAlgo): Promise<string> => {
-	if (algo === 'md5') return md5(bytes);
-
-	const algoName: Readonly<Record<Exclude<HashAlgo, 'md5'>, string>> = {
-		sha1: 'SHA-1',
-		sha256: 'SHA-256',
-		sha512: 'SHA-512',
-	};
-	const digest = await globalThis.crypto.subtle.digest(algoName[algo], bytes as BufferSource);
-	return bytesToHex(new Uint8Array(digest));
 };
 
 /**
