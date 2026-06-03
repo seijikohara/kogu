@@ -5,6 +5,8 @@ export { useRegexWorker } from './use-regex-worker';
 export type { UseRegexWorkerInput, UseRegexWorkerOutput } from './use-regex-worker';
 export { useFileInspectWorker } from './use-file-inspect-worker';
 export type { FileHashOutput, UseFileInspectWorker } from './use-file-inspect-worker';
+export { useDiffWorker } from './use-diff-worker';
+export type { UseDiffWorkerInput, UseDiffWorkerOutput } from './use-diff-worker';
 export {
 	useFormatterPage,
 	FORMATTER_TABS,

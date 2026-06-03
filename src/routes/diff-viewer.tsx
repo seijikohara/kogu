@@ -1,5 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Equal, GitCompare, Layers, Minus, Plus, SplitSquareHorizontal } from 'lucide-react';
 import { readText } from '@tauri-apps/plugin-clipboard-manager';
 
@@ -14,11 +14,9 @@ import {
 } from '@/lib/components/form';
 import { ToolFooter, ToolShell } from '@/lib/components/shell';
 import { EmbeddedEmptyState, EmptyState } from '@/lib/components/status';
-import { useDocumentTitle } from '@/lib/hooks';
+import { useDiffWorker, useDocumentTitle } from '@/lib/hooks';
 import { usePersistedRail } from '@/lib/stores';
 import {
-	areTextsIdentical,
-	computeEnhancedDiff,
 	type DiffOptions,
 	type DiffSegment,
 	defaultDiffOptions,
@@ -65,22 +63,23 @@ function DiffViewerPage() {
 
 	useDocumentTitle('Diff Viewer');
 
-	const diffOptions: Partial<DiffOptions> = { ignoreWhitespace, ignoreCase, trimLines };
+	const diffOptions = useMemo<Partial<DiffOptions>>(
+		() => ({ ignoreWhitespace, ignoreCase, trimLines }),
+		[ignoreWhitespace, ignoreCase, trimLines]
+	);
 
-	const enhancedDiff =
-		!leftInput && !rightInput
-			? null
-			: computeEnhancedDiff(leftInput, rightInput, diffOptions, contextLines);
-
-	const isIdentical = (() => {
-		if (!leftInput && !rightInput) return null;
-		return areTextsIdentical(leftInput, rightInput, diffOptions);
-	})();
+	// Diffing runs in a worker so two large pastes never freeze the editor.
+	const { enhancedDiff, isIdentical } = useDiffWorker({
+		leftText: leftInput,
+		rightText: rightInput,
+		options: diffOptions,
+		contextLines,
+	});
 
 	const stats = enhancedDiff?.stats ?? null;
 	const valid: boolean | null = !leftInput && !rightInput ? null : isIdentical === true;
 
-	const unifiedWithSegments: readonly UnifiedLineWithSegments[] = (() => {
+	const unifiedWithSegments = useMemo<readonly UnifiedLineWithSegments[]>(() => {
 		if (!enhancedDiff) return [];
 		const lines: UnifiedLineWithSegments[] = [];
 
@@ -163,7 +162,7 @@ function DiffViewerPage() {
 		});
 
 		return lines;
-	})();
+	}, [enhancedDiff]);
 
 	const handleLeftPaste = async () => {
 		try {
