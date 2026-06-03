@@ -89,7 +89,9 @@ pub fn hex_open(path: String) -> Result<HexFileInfo, String> {
 ///
 /// Returns a stringified error when the file cannot be opened, the
 /// requested range is out of bounds, or reading fails.
-#[tauri::command]
+// Runs off the main thread: reading a large window or a slow disk would
+// otherwise block the webview event loop.
+#[tauri::command(async)]
 pub fn hex_read(path: String, offset: u64, length: u64) -> Result<Vec<u8>, String> {
     let path_buf = Path::new(&path).to_path_buf();
     let metadata = fs::metadata(&path_buf).map_err(|e| format!("Failed to stat file: {e}"))?;
@@ -189,7 +191,9 @@ fn apply_op(buffer: Vec<u8>, op: &HexEditOp) -> Result<Vec<u8>, String> {
 ///
 /// Returns a stringified error when reading the file fails, any op is
 /// out of bounds, the backup rename fails, or the final write fails.
-#[tauri::command]
+// Runs off the main thread: rewriting a large file would otherwise block
+// the webview event loop.
+#[tauri::command(async)]
 pub fn hex_save(path: String, ops: Vec<HexEditOp>, backup: bool) -> Result<String, String> {
     let path_buf = Path::new(&path).to_path_buf();
     let original = fs::read(&path_buf).map_err(|e| format!("Failed to read file: {e}"))?;

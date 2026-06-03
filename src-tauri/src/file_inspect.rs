@@ -11,12 +11,15 @@
 //! whole file. Beyond that threshold only the first 4096 bytes are
 //! returned, which still supports magic-byte sniffing and previews.
 
-use std::fs;
+use std::fs::{self, File};
+use std::io::Read;
 use std::path::Path;
+use std::sync::Arc;
 use std::time::{SystemTime, UNIX_EPOCH};
 
 use base64::Engine as _;
 use serde::Serialize;
+use tokio_util::sync::CancellationToken;
 
 /// Maximum byte count returned in `full_bytes_b64`. Anything larger is
 /// considered too costly to ship through the IPC boundary in one shot.
@@ -116,8 +119,27 @@ fn read_head(path: &Path, size: u64) -> Result<Vec<u8>, String> {
     Ok(bytes.into_iter().take(usize_take).collect())
 }
 
-fn read_full(path: &Path) -> Result<Vec<u8>, String> {
-    fs::read(path).map_err(|e| format!("Failed to read file: {e}"))
+/// Read the whole file in 1 MiB chunks, checking the cancellation token
+/// between chunks. A single `fs::read` of a 500 MB file cannot be
+/// interrupted, so chunking is what lets a cancel actually stop the read.
+fn read_full(path: &Path, size: u64, token: &CancellationToken) -> Result<Vec<u8>, String> {
+    const CHUNK: usize = 1024 * 1024;
+    let mut file = File::open(path).map_err(|e| format!("Failed to open file: {e}"))?;
+    let mut buf = Vec::with_capacity(usize::try_from(size).unwrap_or(0));
+    let mut chunk = vec![0_u8; CHUNK];
+    loop {
+        if token.is_cancelled() {
+            return Err("Operation cancelled".to_string());
+        }
+        let read = file
+            .read(&mut chunk)
+            .map_err(|e| format!("Failed to read file: {e}"))?;
+        if read == 0 {
+            break;
+        }
+        buf.extend_from_slice(&chunk[..read]);
+    }
+    Ok(buf)
 }
 
 /// Inspect a file and return its metadata, head bytes, and (when small
@@ -127,8 +149,20 @@ fn read_full(path: &Path) -> Result<Vec<u8>, String> {
 ///
 /// Returns a stringified error when the path cannot be opened, the
 /// file metadata cannot be queried, or reading the bytes fails.
-#[tauri::command]
-pub fn file_inspect(path: String) -> Result<FileInspectResult, String> {
+#[tauri::command(async)]
+pub fn file_inspect(
+    op_id: String,
+    path: String,
+    state: tauri::State<'_, crate::cancellation::OperationRegistry>,
+) -> Result<FileInspectResult, String> {
+    let token = Arc::new(CancellationToken::new());
+    state.register(op_id.clone(), token.clone());
+    let result = run_file_inspect(path, &token);
+    state.remove(&op_id);
+    result
+}
+
+fn run_file_inspect(path: String, token: &CancellationToken) -> Result<FileInspectResult, String> {
     let path_buf = Path::new(&path).to_path_buf();
     let metadata = fs::metadata(&path_buf).map_err(|e| format!("Failed to stat file: {e}"))?;
 
@@ -163,7 +197,7 @@ pub fn file_inspect(path: String) -> Result<FileInspectResult, String> {
     // magic detection and previews; only the full-buffer hashing path
     // degrades.
     let full_bytes = if size_bytes <= MAX_FULL_BYTES {
-        Some(read_full(&path_buf)?)
+        Some(read_full(&path_buf, size_bytes, token)?)
     } else {
         None
     };
@@ -220,5 +254,20 @@ mod tests {
         assert_eq!(format_rwx(0o4_655), "rwSr-xr-x");
         // Sticky bit with exec on other.
         assert_eq!(format_rwx(0o1_777), "rwxrwxrwt");
+    }
+
+    #[test]
+    fn read_full_aborts_when_cancelled() {
+        let dir = std::env::temp_dir().join(format!("kogu-file-inspect-{}", std::process::id()));
+        let _ = fs::remove_dir_all(&dir);
+        fs::create_dir_all(&dir).unwrap();
+        let file = dir.join("data.bin");
+        fs::write(&file, vec![0_u8; 4096]).unwrap();
+
+        let token = CancellationToken::new();
+        token.cancel();
+        let result = read_full(&file, 4096, &token);
+        assert!(result.is_err_and(|e| e.contains("cancelled")));
+        let _ = fs::remove_dir_all(&dir);
     }
 }
