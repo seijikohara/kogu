@@ -21,6 +21,7 @@ import { Button } from '@/lib/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/lib/components/ui/card';
 import { Textarea } from '@/lib/components/ui/textarea';
 import { useDebouncedValue, useDocumentTitle } from '@/lib/hooks';
+import { useCompressionWorker } from '@/lib/hooks/use-compression-worker';
 import {
 	type CompressionAlgorithm,
 	type CompressResult,
@@ -29,9 +30,6 @@ import {
 	type OutputFormat,
 	SAMPLE_TEXT,
 	base64ToBytes,
-	bytesToBase64,
-	bytesToDataUri,
-	bytesToHex,
 	clampLevel,
 	compressText,
 	dataUriToBytes,
@@ -89,13 +87,6 @@ const decodeInputForDecompress = (input: string): Uint8Array => {
 	return base64ToBytes(trimmed);
 };
 
-const formatCompressedBytes = (bytes: Uint8Array, format: OutputFormat): string => {
-	if (format === 'hex')
-		return bytesToHex(bytes, { upper: true, group: HEX_GROUP_SIZE, separator: HEX_SEPARATOR });
-	if (format === 'data-uri') return bytesToDataUri(bytes, 'application/octet-stream');
-	return bytesToBase64(bytes);
-};
-
 interface DerivedState {
 	readonly output: string;
 	readonly error: string | null;
@@ -121,12 +112,20 @@ const runCompress = async (
 	text: string,
 	algorithm: CompressionAlgorithm,
 	level: number,
-	outputFormat: OutputFormat
+	outputFormat: OutputFormat,
+	formatOutput: (
+		bytes: Uint8Array,
+		format: OutputFormat,
+		hexGroup: number,
+		hexSeparator: string
+	) => Promise<string>
 ): Promise<DerivedState> => {
 	const result = await compressText(text, { algorithm, level });
 	if (!result.ok) return errorState(result.error);
 	return {
-		output: formatCompressedBytes(result.bytes, outputFormat),
+		// Format the compressed bytes off the main thread (hex of a multi-MB
+		// buffer would otherwise block the UI).
+		output: await formatOutput(result.bytes, outputFormat, HEX_GROUP_SIZE, HEX_SEPARATOR),
 		error: null,
 		result,
 		detectedAlgorithm: null,
@@ -184,6 +183,9 @@ function StringCompressorPage() {
 	const [detectedAlgorithm, setDetectedAlgorithm] = useState<CompressionAlgorithm | null>(null);
 	const [busy, setBusy] = useState(false);
 	const [showRail, setShowRail] = usePersistedRail('string-compressor');
+
+	// Off-thread output formatting (aliased to avoid the byte-size formatBytes).
+	const { formatBytes: formatCompressedOutput } = useCompressionWorker();
 
 	const handleAlgorithmChange = (next: CompressionAlgorithm) => {
 		// Re-clamp level into the new algorithm's range so the slider stays valid.
@@ -251,7 +253,13 @@ function StringCompressorPage() {
 		(async () => {
 			const next =
 				direction === 'compress'
-					? await runCompress(debouncedInput, algorithm, level, outputFormat)
+					? await runCompress(
+							debouncedInput,
+							algorithm,
+							level,
+							outputFormat,
+							formatCompressedOutput
+						)
 					: await runDecompress(debouncedInput, algorithm, autoDetect);
 			if (cancelled) return;
 			apply(next);
@@ -260,7 +268,15 @@ function StringCompressorPage() {
 		return () => {
 			cancelled = true;
 		};
-	}, [debouncedInput, direction, algorithm, level, outputFormat, autoDetect]);
+	}, [
+		debouncedInput,
+		direction,
+		algorithm,
+		level,
+		outputFormat,
+		autoDetect,
+		formatCompressedOutput,
+	]);
 
 	const valid: boolean | null = inputText.trim().length === 0 ? null : error === null;
 
