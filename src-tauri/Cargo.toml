@@ -70,7 +70,7 @@ dns-lookup = "3"
 uuid = { version = "1", features = ["v4"] }
 if-addrs = "0.15"
 mdns-sd = "0.20"
-netdev = { version = "0.44", features = ["gateway"] }
+netdev = { version = "0.45", features = ["gateway"] }
 
 # UPnP Device Description Fetch
 reqwest = { version = "0.13", default-features = false, features = ["rustls"] }
