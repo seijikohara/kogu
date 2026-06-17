@@ -29,6 +29,7 @@ import {
 } from 'lucide-react';
 import { readText, writeText } from '@tauri-apps/plugin-clipboard-manager';
 import { toast } from 'sonner';
+import { useTheme } from 'next-themes';
 import type { Editor as VizelEditor } from '@vizel/core';
 import { getVizelMarkdown, setVizelMarkdown } from '@vizel/core';
 import '@vizel/core/styles.css';
@@ -267,6 +268,11 @@ function MarkdownEditorPage() {
 	inputRef.current = input;
 
 	useDocumentTitle('Markdown Editor');
+
+	// Vizel v2 themes via the `data-vizel-theme` attribute and no longer reads
+	// the host `.dark` class, so bridge next-themes' resolved theme explicitly.
+	const { resolvedTheme } = useTheme();
+	const vizelTheme = resolvedTheme === 'dark' ? 'dark' : 'light';
 
 	// Debounce the input feeding the preview pipeline so Mermaid / KaTeX /
 	// Lowlight do not recompile on every keystroke, and so the stats / TOC
@@ -673,7 +679,10 @@ function MarkdownEditorPage() {
 											Active
 										</span>
 									) : null}
-									<div className="vizel-container h-full overflow-auto">
+									<div
+										className="vizel-container h-full overflow-auto"
+										data-vizel-theme={vizelTheme}
+									>
 										<Vizel
 											placeholder="Start writing..."
 											editable={true}
@@ -715,12 +724,17 @@ function MarkdownEditorPage() {
 			</div>
 
 			<style>{`
-				.vizel-container {
-					--vizel-bg: hsl(var(--background));
-					--vizel-text: hsl(var(--foreground));
-					--vizel-placeholder: hsl(var(--muted-foreground));
+				/*
+				 * Vizel v2 renamed its CSS variables and switched theming to the
+				 * [data-vizel-theme] attribute (it no longer reads the host .dark class).
+				 * Bridge the app's neutral surface tokens; data-vizel-theme drives the
+				 * rest of Vizel's catalogue (code blocks, accents) per light/dark.
+				 */
+				.vizel-container[data-vizel-theme] {
+					--vizel-background: hsl(var(--background));
+					--vizel-foreground: hsl(var(--foreground));
+					--vizel-muted-foreground: hsl(var(--muted-foreground));
 					--vizel-border: hsl(var(--border));
-					--vizel-primary: hsl(var(--primary));
 				}
 				.vizel-container .vizel-editor {
 					min-height: 100%;
