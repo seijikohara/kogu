@@ -7,14 +7,13 @@ import { ActionButton } from '@/lib/components/action';
 import {
 	FormCheckbox,
 	FormCheckboxGroup,
-	FormError,
 	FormInfo,
 	FormInput,
 	FormSection,
 	FormSlider,
 } from '@/lib/components/form';
 import { ToolFooter, ToolShell } from '@/lib/components/shell';
-import { EmbeddedEmptyState, StatItem } from '@/lib/components/status';
+import { EmbeddedEmptyState, ErrorDisplay, StatItem } from '@/lib/components/status';
 import { Badge } from '@/lib/components/ui/badge';
 import { Button } from '@/lib/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/lib/components/ui/card';
@@ -524,13 +523,7 @@ function ImageConverterPage() {
 					</section>
 				) : (
 					<div className="flex flex-col gap-4 overflow-auto">
-						{error ? (
-							<Card density="compact">
-								<CardContent>
-									<FormError message={error} className="text-sm" />
-								</CardContent>
-							</Card>
-						) : null}
+						{error ? <ErrorDisplay variant="banner" message={error} /> : null}
 						<div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
 							<Card density="compact">
 								<CardHeader>
