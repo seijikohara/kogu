@@ -28,6 +28,7 @@ import {
 	FormSection,
 	FormSlider,
 } from '@/lib/components/form';
+import { SubsectionLabel } from '@/lib/components/layout';
 import { UnifiedHostDetailPanel, UnifiedHostListItem } from '@/lib/components/network-scanner';
 import { ToolFooter, ToolShell } from '@/lib/components/shell';
 import { EmptyState, ErrorDisplay, LiveStatusRegion, StatItem } from '@/lib/components/status';
@@ -595,9 +596,7 @@ function PortScanSection({
 			) : null}
 
 			<div className="mt-3 border-t border-border/30 pt-3">
-				<p className="mb-2 text-xs font-semibold uppercase tracking-wide text-foreground/70">
-					Scan Settings
-				</p>
+				<SubsectionLabel className="mb-2">Scan Settings</SubsectionLabel>
 				<FormSlider
 					label="Concurrency"
 					value={concurrency}
