@@ -12,7 +12,7 @@ import { SplitPane } from '@/lib/components/layout';
 import { Rail } from '@/lib/components/ui/rail';
 
 import { FormatterAboutFooter } from '@/lib/components/template';
-import { Button } from '@/lib/components/ui/button';
+import { ActionButton } from '@/lib/components/action';
 import { inferJsonSchema } from '@/lib/services/formatters';
 import { cn } from '@/lib/utils';
 import { getErrorMessage } from '@/lib/utils';
@@ -194,25 +194,20 @@ export function SchemaTab({ input, onInputChange, onStatsChange }: SchemaTabProp
 			>
 				<FormSection title="Actions">
 					<div className="flex flex-col gap-1.5">
-						<Button
-							variant="default"
+						<ActionButton
+							label="Validate against Schema"
+							icon={FileCheck}
 							size="sm"
-							className="w-full gap-1.5 text-xs"
 							onClick={handleValidateSchema}
-						>
-							<FileCheck className="h-3.5 w-3.5" />
-							Validate against Schema
-						</Button>
+						/>
 						{inferredSchema ? (
-							<Button
+							<ActionButton
+								label="Use Inferred Schema"
+								icon={Wand2}
 								variant="outline"
 								size="sm"
-								className="w-full gap-1.5 text-xs"
 								onClick={handleUseInferredSchema}
-							>
-								<Wand2 className="h-3.5 w-3.5" />
-								Use Inferred Schema
-							</Button>
+							/>
 						) : null}
 					</div>
 					{schemaValidationResult ? (
