@@ -725,17 +725,13 @@ function MarkdownEditorPage() {
 
 			<style>{`
 				/*
-				 * Vizel v2 renamed its CSS variables and switched theming to the
-				 * [data-vizel-theme] attribute (it no longer reads the host .dark class).
-				 * Bridge the app's neutral surface tokens; data-vizel-theme drives the
-				 * rest of Vizel's catalogue (code blocks, accents) per light/dark.
+				 * Vizel v2 themes via the data-vizel-theme attribute set on the
+				 * container above (it no longer reads the host .dark class). The
+				 * attribute drives Vizel's full, valid token catalogue per light/dark,
+				 * so no per-variable bridge is needed. The app's design tokens are
+				 * OKLCH values and are not hsl()-compatible, so they must not be
+				 * wrapped and assigned to Vizel's --vizel-* variables here.
 				 */
-				.vizel-container[data-vizel-theme] {
-					--vizel-background: hsl(var(--background));
-					--vizel-foreground: hsl(var(--foreground));
-					--vizel-muted-foreground: hsl(var(--muted-foreground));
-					--vizel-border: hsl(var(--border));
-				}
 				.vizel-container .vizel-editor {
 					min-height: 100%;
 					padding: 1rem;
