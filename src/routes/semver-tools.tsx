@@ -517,9 +517,9 @@ function SemverToolsPage() {
 									<div className="flex flex-wrap items-center justify-center gap-2">
 										<BumpBadge bump={compareResult.bump} className="text-xs" />
 										{compareResult.metadataOnly ? (
-											<Badge className="bg-info/10 text-info border-info/30 text-xs">
+											<ToneBadge tone="info" className="text-xs">
 												metadata-only
-											</Badge>
+											</ToneBadge>
 										) : null}
 									</div>
 									<p className="text-center text-xs text-muted-foreground">
@@ -683,21 +683,13 @@ function SemverToolsPage() {
 						<>
 							<Card density="compact">
 								<CardContent className="flex flex-col items-center gap-3 py-6">
-									<Badge
-										className={cn(
-											'px-4 py-1 text-base font-medium',
-											rangeResult.satisfies
-												? 'bg-success/10 text-success border-success/30'
-												: 'bg-destructive/10 text-destructive border-destructive/30'
-										)}
+									<ToneBadge
+										tone={rangeResult.satisfies ? 'success' : 'destructive'}
+										icon={rangeResult.satisfies ? Check : X}
+										className="px-4 py-1 text-base font-medium"
 									>
-										{rangeResult.satisfies ? (
-											<Check className="mr-1 h-4 w-4" />
-										) : (
-											<X className="mr-1 h-4 w-4" />
-										)}
 										{rangeResult.satisfies ? 'Satisfies' : 'Does not satisfy'}
-									</Badge>
+									</ToneBadge>
 									<p className="text-center text-xs text-muted-foreground">
 										<code className="font-mono">{rangeResult.version}</code>{' '}
 										{rangeResult.satisfies ? 'matches' : 'does not match'}{' '}
