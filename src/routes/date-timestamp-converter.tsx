@@ -501,10 +501,9 @@ function TimezonesSection({ timezones, activeMs, nowMs }: TimezonesSectionProps)
 										{render.relative}
 									</Badge>
 									{render.isDstBoundary ? (
-										<Badge className="bg-warning/10 text-warning border-warning/30 gap-1">
-											<AlertTriangle className="h-3 w-3" />
+										<ToneBadge tone="warning" icon={AlertTriangle}>
 											DST boundary
-										</Badge>
+										</ToneBadge>
 									) : null}
 								</div>
 							</CardContent>
@@ -575,9 +574,9 @@ function CronSection({
 											<span className="w-6 text-xs tabular-nums text-muted-foreground">
 												{idx + 1}.
 											</span>
-											<Badge className="bg-info/10 text-info border-info/30 text-2xs font-mono">
+											<ToneBadge tone="info" className="text-2xs font-mono">
 												{clock.day}
-											</Badge>
+											</ToneBadge>
 											<span className="font-mono text-sm tabular-nums">{clock.date}</span>
 											<span className="font-mono text-sm tabular-nums text-muted-foreground">
 												{clock.time}
