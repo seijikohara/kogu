@@ -34,14 +34,7 @@ import {
 } from '@/lib/components/ui/command';
 import { Label } from '@/lib/components/ui/label';
 import { Popover, PopoverContent, PopoverTrigger } from '@/lib/components/ui/popover';
-import {
-	Select,
-	SelectContent,
-	SelectItem,
-	SelectTrigger,
-	SelectValue,
-} from '@/lib/components/ui/select';
-import { FormCheckbox, FormSlider } from '@/lib/components/form';
+import { FormCheckbox, FormSelect, FormSlider } from '@/lib/components/form';
 import {
 	applyAllSettings,
 	DEFAULT_SETTINGS,
@@ -208,28 +201,16 @@ function SettingsPage() {
 							<CardDescription>Theme and fonts used throughout the application</CardDescription>
 						</CardHeader>
 						<CardContent className="space-y-6">
-							<div className="space-y-1.5">
-								<Label className="text-sm font-medium">Theme</Label>
-								<Select value={theme ?? 'system'} onValueChange={setTheme}>
-									<SelectTrigger className="w-full">
-										<SelectValue />
-									</SelectTrigger>
-									<SelectContent>
-										<SelectItem value="system">
-											<Monitor className="h-4 w-4" />
-											System
-										</SelectItem>
-										<SelectItem value="light">
-											<Sun className="h-4 w-4" />
-											Light
-										</SelectItem>
-										<SelectItem value="dark">
-											<Moon className="h-4 w-4" />
-											Dark
-										</SelectItem>
-									</SelectContent>
-								</Select>
-							</div>
+							<FormSelect
+								label="Theme"
+								value={theme ?? 'system'}
+								onValueChange={setTheme}
+								options={[
+									{ value: 'system', label: 'System', icon: Monitor },
+									{ value: 'light', label: 'Light', icon: Sun },
+									{ value: 'dark', label: 'Dark', icon: Moon },
+								]}
+							/>
 
 							<div className="space-y-1.5">
 								<Label className="text-sm font-medium">UI Font Family</Label>
