@@ -87,7 +87,7 @@ base64 = "0.22"
 # Cryptographic Hash Algorithms (file batch hashing)
 md-5 = "0.10"
 sha1 = "0.10"
-sha2 = "0.10"
+sha2 = "0.11"
 hex = "0.4"
 
 # DNS PTR Reverse Lookup
