@@ -4,7 +4,6 @@ import {
 	AlertTriangle,
 	Check,
 	CheckCircle2,
-	ClipboardCopy,
 	FileDigit,
 	FilePlus,
 	FolderOpen,
@@ -472,16 +471,6 @@ function BatchHashTab() {
 	const completedCount = entries.filter((e) => e.status === 'done').length;
 	const errorCount = entries.filter((e) => e.status === 'error').length;
 
-	const handleCopyShasum = async () => {
-		try {
-			await navigator.clipboard.writeText(shasumBlock);
-			toast.success(`${prefs.shasumAlgorithm.toUpperCase()} block copied to clipboard`);
-		} catch (e) {
-			const message = e instanceof Error ? e.message : String(e);
-			toast.error('Failed to copy to clipboard', { description: message });
-		}
-	};
-
 	const valid = entries.length > 0 ? allDone : null;
 	const hasFiles = entries.length > 0;
 
@@ -535,11 +524,7 @@ function BatchHashTab() {
 						) : null}
 
 						{prefs.fileMode === 'compute' && allDone && completedResults.length > 0 ? (
-							<ShasumBlockCard
-								algorithm={prefs.shasumAlgorithm}
-								block={shasumBlock}
-								onCopy={handleCopyShasum}
-							/>
+							<ShasumBlockCard algorithm={prefs.shasumAlgorithm} block={shasumBlock} />
 						) : null}
 
 						{prefs.fileMode === 'verify' ? (
@@ -905,10 +890,9 @@ function FileStatusBadge({ status }: { readonly status: FileEntry['status'] }) {
 interface ShasumBlockCardProps {
 	readonly algorithm: BatchHashAlgo;
 	readonly block: string;
-	readonly onCopy: () => void;
 }
 
-function ShasumBlockCard({ algorithm, block, onCopy }: ShasumBlockCardProps) {
+function ShasumBlockCard({ algorithm, block }: ShasumBlockCardProps) {
 	if (!block) return null;
 	return (
 		<Card density="compact">
@@ -921,10 +905,11 @@ function ShasumBlockCard({ algorithm, block, onCopy }: ShasumBlockCardProps) {
 						Compatible with <code className="font-mono">{algorithm}sum -c</code>
 					</span>
 				</div>
-				<Button variant="outline" size="sm" onClick={onCopy}>
-					<ClipboardCopy className="h-3.5 w-3.5" />
-					Copy block
-				</Button>
+				<CopyButton
+					text={block}
+					toastLabel={`${BATCH_HASH_ALGO_LABELS[algorithm]}sum block`}
+					size="sm"
+				/>
 			</CardHeader>
 			<CardContent>
 				<CodeBlock as="pre" padding="md" size="xs" maxHeight="md">
