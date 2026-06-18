@@ -14,6 +14,7 @@ import {
 import { ToolFooter, ToolShell } from '@/lib/components/shell';
 import { EmbeddedEmptyState, StatItem } from '@/lib/components/status';
 import { Badge } from '@/lib/components/ui/badge';
+import { ToneBadge } from '@/lib/components/ui/tone-badge';
 import { Button } from '@/lib/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/lib/components/ui/card';
 import { Checkbox } from '@/lib/components/ui/checkbox';
@@ -728,9 +729,9 @@ function GroupRow({ entry, isKeeper, isSelected, onToggle }: GroupRowProps) {
 						{entry.path}
 					</span>
 					{isKeeper ? (
-						<Badge variant="outline" className="shrink-0 font-mono text-2xs text-success">
+						<ToneBadge tone="success" className="shrink-0 font-mono text-2xs">
 							Keeper
-						</Badge>
+						</ToneBadge>
 					) : null}
 				</div>
 				<div className="text-2xs text-muted-foreground">

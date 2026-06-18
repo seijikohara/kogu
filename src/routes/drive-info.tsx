@@ -315,13 +315,9 @@ function DriveCard({ drive }: { readonly drive: DriveInfo }) {
 							</Badge>
 						) : null}
 						{drive.isReadOnly ? (
-							<Badge
-								variant="outline"
-								className="gap-1 border-warning/40 bg-warning/10 font-mono text-2xs text-warning"
-							>
-								<Lock className="h-3 w-3" />
+							<ToneBadge tone="warning" icon={Lock} className="font-mono text-2xs">
 								Read only
-							</Badge>
+							</ToneBadge>
 						) : null}
 					</div>
 				</CardTitle>
