@@ -16,14 +16,13 @@ import { toast } from 'sonner';
 import { CopyButton } from '@/lib/components/action';
 import {
 	FormCheckbox,
-	FormError,
 	FormInput,
 	FormSection,
 	FormSelect,
 	FormSlider,
 } from '@/lib/components/form';
 import { ToolFooter, ToolShell } from '@/lib/components/shell';
-import { EmbeddedEmptyState, StatItem } from '@/lib/components/status';
+import { EmbeddedEmptyState, ErrorDisplay, StatItem } from '@/lib/components/status';
 import { Badge } from '@/lib/components/ui/badge';
 import { Button } from '@/lib/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/lib/components/ui/card';
@@ -211,7 +210,6 @@ function RestClientPage() {
 	return (
 		<ToolShell
 			valid={error ? false : response ? true : null}
-			error={error ?? undefined}
 			primaryAction={{ run: () => handleSend().catch(() => undefined), canRun: canSend }}
 			rail={rail}
 			statusContent={statusContent}
@@ -241,7 +239,7 @@ function RestClientPage() {
 							onBodyChange={(e) => patch({ body: e.target.value })}
 						/>
 
-						{error ? <ErrorCard message={error} /> : null}
+						{error ? <ErrorDisplay variant="banner" message={error} /> : null}
 
 						<ResponseCard
 							response={response}
@@ -587,23 +585,6 @@ function HeaderRow({ entry, onChange, onRemove }: HeaderRowProps) {
 				<Trash2 className="h-3.5 w-3.5" />
 			</Button>
 		</div>
-	);
-}
-
-interface ErrorCardProps {
-	readonly message: string;
-}
-
-function ErrorCard({ message }: ErrorCardProps) {
-	return (
-		<Card density="compact" variant="destructive">
-			<CardHeader className="pb-3">
-				<CardTitle className="text-sm font-medium text-destructive">Request failed</CardTitle>
-			</CardHeader>
-			<CardContent>
-				<FormError message={message} />
-			</CardContent>
-		</Card>
 	);
 }
 

@@ -100,7 +100,6 @@ function JwtDecoderPage() {
 	return (
 		<ToolShell
 			valid={valid}
-			error={error || undefined}
 			showRail={showOptions}
 			onShowRailChange={setShowOptions}
 			statusContent={
@@ -321,12 +320,7 @@ function JwtDecoderPage() {
 						) : (
 							<div className="flex-1">
 								{error ? (
-									<div className="flex h-full items-center justify-center text-muted-foreground">
-										<div className="text-center">
-											<AlertTriangle className="mx-auto mb-2 h-8 w-8 text-destructive" />
-											<p className="text-sm">{error}</p>
-										</div>
-									</div>
+									<ErrorDisplay variant="centered" message={error} />
 								) : (
 									<EmptyState icon={KeyRound} title="Enter a JWT token to decode" />
 								)}
