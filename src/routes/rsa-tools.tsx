@@ -14,11 +14,11 @@ import {
 import { useEffect, useMemo, useState, type DragEvent, type ReactNode } from 'react';
 import { toast } from 'sonner';
 
-import { CopyButton } from '@/lib/components/action';
+import { ActionButton, CopyButton } from '@/lib/components/action';
 import { FormSection, FormSelect, FormTextarea, type SelectOption } from '@/lib/components/form';
 import { DefinitionList } from '@/lib/components/layout';
 import { ToolFooter, ToolShell } from '@/lib/components/shell';
-import { EmbeddedEmptyState, StatItem } from '@/lib/components/status';
+import { EmbeddedEmptyState, ErrorDisplay, StatItem } from '@/lib/components/status';
 import { Badge } from '@/lib/components/ui/badge';
 import { Button } from '@/lib/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/lib/components/ui/card';
@@ -438,6 +438,19 @@ function RsaToolsPage() {
 		);
 	};
 
+	const tabHandlers: Record<RsaTab, () => Promise<void>> = {
+		encrypt: handleEncrypt,
+		decrypt: handleDecrypt,
+		sign: handleSign,
+		verify: handleVerify,
+	};
+	const tabCanRun: Record<RsaTab, boolean> = {
+		encrypt: Boolean(prefs.publicPem && plaintext),
+		decrypt: Boolean(prefs.privatePem && ciphertext),
+		sign: Boolean(prefs.privatePem && message),
+		verify: Boolean(prefs.publicPem && message && signature),
+	};
+
 	return (
 		<ToolShell
 			layout="tabbed"
@@ -448,7 +461,10 @@ function RsaToolsPage() {
 			statusContent={statusContent}
 			renderTabContent={renderTabContent}
 			valid={activeTab === 'verify' ? verifyResult : error ? false : null}
-			error={error ?? undefined}
+			primaryAction={{
+				run: () => tabHandlers[activeTab]().catch(() => undefined),
+				canRun: !busy && tabCanRun[activeTab],
+			}}
 		/>
 	);
 }
@@ -576,10 +592,15 @@ function EncryptTab({
 						placeholder="Text to encrypt"
 						rows={5}
 					/>
-					<Button onClick={onRun} disabled={busy || !publicPem || !plaintext} className="w-full">
-						<Lock className="h-3.5 w-3.5" />
-						Encrypt
-					</Button>
+					<ActionButton
+						label="Encrypt"
+						icon={Lock}
+						loading={busy}
+						loadingLabel="Encrypting…"
+						disabled={busy || !publicPem || !plaintext}
+						shortcutHint
+						onClick={onRun}
+					/>
 					<OutputBlock label="Ciphertext" value={output} error={error} icon={Lock} />
 				</>
 			}
@@ -632,10 +653,15 @@ function DecryptTab({
 						rows={5}
 						className="font-mono text-xs"
 					/>
-					<Button onClick={onRun} disabled={busy || !privatePem || !ciphertext} className="w-full">
-						<KeyRound className="h-3.5 w-3.5" />
-						Decrypt
-					</Button>
+					<ActionButton
+						label="Decrypt"
+						icon={KeyRound}
+						loading={busy}
+						loadingLabel="Decrypting…"
+						disabled={busy || !privatePem || !ciphertext}
+						shortcutHint
+						onClick={onRun}
+					/>
 					<OutputBlock label="Plaintext" value={output} error={error} icon={Sparkles} />
 				</>
 			}
@@ -687,10 +713,15 @@ function SignTab({
 						placeholder="Text to sign"
 						rows={5}
 					/>
-					<Button onClick={onRun} disabled={busy || !privatePem || !message} className="w-full">
-						<Pencil className="h-3.5 w-3.5" />
-						Sign
-					</Button>
+					<ActionButton
+						label="Sign"
+						icon={Pencil}
+						loading={busy}
+						loadingLabel="Signing…"
+						disabled={busy || !privatePem || !message}
+						shortcutHint
+						onClick={onRun}
+					/>
 					<OutputBlock label="Signature" value={output} error={error} icon={ShieldCheck} />
 				</>
 			}
@@ -754,14 +785,15 @@ function VerifyTab({
 						rows={4}
 						className="font-mono text-xs"
 					/>
-					<Button
-						onClick={onRun}
+					<ActionButton
+						label="Verify"
+						icon={ShieldCheck}
+						loading={busy}
+						loadingLabel="Verifying…"
 						disabled={busy || !publicPem || !message || !signature}
-						className="w-full"
-					>
-						<ShieldCheck className="h-3.5 w-3.5" />
-						Verify
-					</Button>
+						shortcutHint
+						onClick={onRun}
+					/>
 					<VerifyResultBadge result={result} error={error} />
 				</>
 			}
@@ -776,15 +808,7 @@ interface VerifyResultBadgeProps {
 
 function VerifyResultBadge({ result, error }: VerifyResultBadgeProps) {
 	if (error) {
-		return (
-			<div className="rounded-md border border-destructive/30 bg-destructive/5 p-4">
-				<div className="flex items-center gap-2 text-destructive">
-					<XCircle className="h-5 w-5" />
-					<span className="text-sm font-medium">Error</span>
-				</div>
-				<p className="mt-1.5 break-words text-xs text-muted-foreground">{error}</p>
-			</div>
-		);
+		return <ErrorDisplay variant="banner" icon={XCircle} title="Error" message={error} />;
 	}
 	if (result === null) {
 		return (
@@ -830,15 +854,7 @@ interface OutputBlockProps {
 
 function OutputBlock({ label, value, error, icon: Icon }: OutputBlockProps) {
 	if (error) {
-		return (
-			<div className="rounded-md border border-destructive/30 bg-destructive/5 p-3">
-				<div className="flex items-center gap-2 text-destructive">
-					<XCircle className="h-4 w-4" />
-					<span className="text-xs font-medium">Error</span>
-				</div>
-				<p className="mt-1 break-words text-xs text-muted-foreground">{error}</p>
-			</div>
-		);
+		return <ErrorDisplay variant="banner" icon={XCircle} title="Error" message={error} />;
 	}
 	if (!value) {
 		return (
