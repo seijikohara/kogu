@@ -30,6 +30,7 @@ import { DefinitionList } from '@/lib/components/layout';
 import { ToolFooter, ToolShell } from '@/lib/components/shell';
 import { EmbeddedEmptyState, StatItem } from '@/lib/components/status';
 import { Badge } from '@/lib/components/ui/badge';
+import { ToneBadge } from '@/lib/components/ui/tone-badge';
 import { Button } from '@/lib/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/lib/components/ui/card';
 import { useDebouncedValue, useDocumentTitle } from '@/lib/hooks';
@@ -917,9 +918,9 @@ function FileBanner({ file, detectedMime, magicHex, dirty, pendingCount }: FileB
 				<CardTitle className="flex items-center gap-2 text-sm">
 					<span className="truncate font-mono">{filename}</span>
 					{dirty ? (
-						<Badge variant="outline" className="border-warning/50 bg-warning/10 text-warning">
+						<ToneBadge tone="warning">
 							{pendingCount} pending edit{pendingCount > 1 ? 's' : ''}
-						</Badge>
+						</ToneBadge>
 					) : null}
 				</CardTitle>
 			</CardHeader>
