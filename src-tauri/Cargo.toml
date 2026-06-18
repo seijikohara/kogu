@@ -43,7 +43,7 @@ roxmltree = "0.21"
 serde_yaml = "0.9"
 yaml-rust2 = "0.11"
 sqlparser = "0.62"
-tauri-plugin-mcp-bridge = "0.11.1"
+tauri-plugin-mcp-bridge = "0.11.2"
 tauri-plugin-dialog = "2.7.1"
 tauri-plugin-fs = "2.5.1"
 tauri-plugin-shell = "2"
@@ -85,9 +85,9 @@ x509-parser = "0.18"
 base64 = "0.22"
 
 # Cryptographic Hash Algorithms (file batch hashing)
-md-5 = "0.10"
-sha1 = "0.10"
-sha2 = "0.10"
+md-5 = "0.11"
+sha1 = "0.11"
+sha2 = "0.11"
 hex = "0.4"
 
 # DNS PTR Reverse Lookup

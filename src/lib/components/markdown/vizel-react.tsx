@@ -101,10 +101,6 @@ export function Vizel({
 			...(features !== undefined && { features }),
 			createSlashMenuRenderer: createNoopSlashMenuRenderer,
 			onCreate: ({ editor: e }) => callbacksRef.current.onCreate?.({ editor: e }),
-			onUpdate: ({ editor: e }) => callbacksRef.current.onUpdate?.({ editor: e }),
-			onFocus: ({ editor: e }) => callbacksRef.current.onFocus?.({ editor: e }),
-			onBlur: ({ editor: e }) => callbacksRef.current.onBlur?.({ editor: e }),
-			onSelectionUpdate: ({ editor: e }) => callbacksRef.current.onSelectionUpdate?.({ editor: e }),
 			onError: (error) => callbacksRef.current.onError?.(error),
 		})
 			.then((result) => {
@@ -112,8 +108,24 @@ export function Vizel({
 					result.editor.destroy();
 					return;
 				}
-				lifecycle.instance = result.editor;
-				setEditor(result.editor);
+				const editorInstance = result.editor;
+				// Attach runtime event listeners only after creation. Vizel installs its
+				// Markdown surface (editor.getMarkdown / editor.markdown) in the markdown
+				// extension's deferred onCreate hook, so passing these as factory options
+				// would deliver in-construction updates to an editor without getMarkdown
+				// and crash getVizelMarkdown. Subscribing here mirrors @vizel/react.
+				editorInstance.on('update', ({ editor: e }) =>
+					callbacksRef.current.onUpdate?.({ editor: e })
+				);
+				editorInstance.on('selectionUpdate', ({ editor: e }) =>
+					callbacksRef.current.onSelectionUpdate?.({ editor: e })
+				);
+				editorInstance.on('focus', ({ editor: e }) =>
+					callbacksRef.current.onFocus?.({ editor: e })
+				);
+				editorInstance.on('blur', ({ editor: e }) => callbacksRef.current.onBlur?.({ editor: e }));
+				lifecycle.instance = editorInstance;
+				setEditor(editorInstance);
 			})
 			.catch((error: unknown) => {
 				if (lifecycle.mounted) {

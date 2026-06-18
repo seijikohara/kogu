@@ -208,7 +208,7 @@ fn hash_bytes(bytes: &[u8], algorithm: &str) -> String {
     }
     let mut hasher = Sha256::new();
     hasher.update(bytes);
-    format!("{:x}", hasher.finalize())
+    hex::encode(hasher.finalize())
 }
 
 /// Stream-hash the full file contents.
@@ -241,7 +241,7 @@ fn full_hash(path: &Path, algorithm: &str) -> Result<String, String> {
         }
         hasher.update(&buf[..n]);
     }
-    Ok(format!("{:x}", hasher.finalize()))
+    Ok(hex::encode(hasher.finalize()))
 }
 
 /// Sort group entries so the shortest path comes first. Ties are broken
