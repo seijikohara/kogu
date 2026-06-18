@@ -27,6 +27,7 @@ import { DefinitionList, SectionLabel } from '@/lib/components/layout';
 import { ToolFooter, ToolShell } from '@/lib/components/shell';
 import { EmbeddedEmptyState, StatItem } from '@/lib/components/status';
 import { Badge } from '@/lib/components/ui/badge';
+import { ToneBadge } from '@/lib/components/ui/tone-badge';
 import { Button } from '@/lib/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/lib/components/ui/card';
 import { Checkbox } from '@/lib/components/ui/checkbox';
@@ -723,13 +724,9 @@ function ArchiveBanner({ archive, filename, filteredCount }: ArchiveBannerProps)
 					<Badge variant="outline" className="text-2xs uppercase">
 						{archive.format}
 					</Badge>
-					<Badge
-						variant="outline"
-						className="border-info/40 bg-info/10 text-info text-2xs"
-						title="Overall compression ratio"
-					>
+					<ToneBadge tone="info" title="Overall compression ratio" className="text-2xs">
 						{ratio} saved
-					</Badge>
+					</ToneBadge>
 				</CardTitle>
 			</CardHeader>
 			<CardContent>

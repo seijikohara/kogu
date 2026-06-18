@@ -14,6 +14,7 @@ interface ToneBadgeProps {
 	// "Weak"). Renders at 12px on the left of the label.
 	readonly icon?: LucideIcon;
 	readonly className?: string;
+	readonly title?: string;
 	readonly children: ReactNode;
 }
 
@@ -29,9 +30,9 @@ const TONE_CLASS: Record<Tone, string> = {
 // `<Badge variant="outline" className="gap-1 bg-success/10 text-success">…`
 // that appeared verbatim across the hash / ssh / gpg result panes — a single
 // place to evolve tone treatment going forward.
-export function ToneBadge({ tone, icon: Icon, className, children }: ToneBadgeProps) {
+export function ToneBadge({ tone, icon: Icon, title, className, children }: ToneBadgeProps) {
 	return (
-		<Badge variant="outline" className={cn('gap-1', TONE_CLASS[tone], className)}>
+		<Badge variant="outline" title={title} className={cn('gap-1', TONE_CLASS[tone], className)}>
 			{Icon ? <Icon className="h-3 w-3" /> : null}
 			{children}
 		</Badge>
