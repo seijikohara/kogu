@@ -6,7 +6,6 @@ import { toast } from 'sonner';
 import { CopyButton } from '@/lib/components/action';
 import {
 	FormCheckbox,
-	FormError,
 	FormMode,
 	FormSection,
 	FormSelect,
@@ -17,6 +16,7 @@ import { SplitPane } from '@/lib/components/layout';
 import { ToolFooter, ToolShell } from '@/lib/components/shell';
 import { StatItem } from '@/lib/components/status';
 import { Badge } from '@/lib/components/ui/badge';
+import { ToneBadge } from '@/lib/components/ui/tone-badge';
 import { Button } from '@/lib/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/lib/components/ui/card';
 import { Textarea } from '@/lib/components/ui/textarea';
@@ -493,19 +493,14 @@ function StringCompressorPage() {
 								</span>
 							</div>
 							<div className="flex items-center gap-2">
-								<Badge
-									variant="outline"
-									className={cn(
-										'font-mono tabular-nums',
-										fillSavings
-											? 'border-success/40 bg-success/10 text-success'
-											: 'border-warning/40 bg-warning/10 text-warning'
-									)}
+								<ToneBadge
+									tone={fillSavings ? 'success' : 'warning'}
+									className="font-mono tabular-nums"
 								>
 									{fillSavings ? '−' : '+'}
 									{formatBytes(Math.abs(savings))} ({fillSavings ? '−' : '+'}
 									{Math.abs(savingsPercent).toFixed(1)}%)
-								</Badge>
+								</ToneBadge>
 								<Badge variant="outline" className="font-mono tabular-nums">
 									Ratio {ratioPercent.toFixed(1)}%
 								</Badge>
@@ -608,7 +603,6 @@ function StringCompressorPage() {
 									className="flex-1 resize-none font-mono text-xs"
 									aria-label="Output"
 								/>
-								<FormError message={error} className="pt-2" />
 							</CardContent>
 						</Card>
 					}
