@@ -11,7 +11,7 @@ import {
 import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
-import { CopyButton } from '@/lib/components/action';
+import { ActionButton, CopyButton } from '@/lib/components/action';
 import { FormError, FormInput, FormSection, FormSlider } from '@/lib/components/form';
 import { DefinitionList, SectionLabel } from '@/lib/components/layout';
 import { ToolFooter, ToolShell } from '@/lib/components/shell';
@@ -180,14 +180,15 @@ function TlsInspectorPage() {
 			rail={
 				<>
 					<FormSection title="Run">
-						<Button onClick={handleRun} disabled={!canRun} className="w-full">
-							{running ? (
-								<Loader2 className="h-4 w-4 animate-spin" />
-							) : (
-								<ShieldCheck className="h-4 w-4" />
-							)}
-							{running ? 'Inspecting…' : 'Inspect'}
-						</Button>
+						<ActionButton
+							label="Inspect"
+							icon={ShieldCheck}
+							loading={running}
+							loadingLabel="Inspecting…"
+							disabled={!canRun}
+							shortcutHint
+							onClick={handleRun}
+						/>
 					</FormSection>
 
 					<FormSection title="SNI override">

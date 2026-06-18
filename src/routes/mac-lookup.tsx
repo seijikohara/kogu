@@ -270,10 +270,7 @@ function MacLookupRail({
 					size="compact"
 					onValueChange={(v) => onPatch({ randomVendorOui: v })}
 				/>
-				<Button variant="default" size="sm" className="w-full" onClick={onGenerateRandom}>
-					<Dice5 className="mr-1.5 h-3.5 w-3.5" />
-					Generate random
-				</Button>
+				<ActionButton label="Generate random" icon={Dice5} size="sm" onClick={onGenerateRandom} />
 			</FormSection>
 
 			{dbInfo ? (
