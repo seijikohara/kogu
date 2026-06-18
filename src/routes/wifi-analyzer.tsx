@@ -115,7 +115,7 @@ function WifiAnalyzerPage() {
 		const id = scanIdRef.current;
 		if (!id) return;
 		const cancelled = await cancelWifiScan(id);
-		if (cancelled) toast.message('Scan cancelled');
+		if (cancelled) toast.info('Scan cancelled');
 	}, []);
 
 	// Auto-refresh loop. Disabled when autoRefreshSec === 0.
@@ -242,9 +242,7 @@ function WifiAnalyzerPage() {
 			<ResizablePanelGroup orientation="vertical" className="h-full">
 				<ResizablePanel defaultSize="60" minSize="20">
 					{error ? (
-						<div className="flex h-full items-center justify-center p-4">
-							<ErrorDisplay title="Wi-Fi scan failed" message={error} />
-						</div>
+						<ErrorDisplay variant="centered" title="Wi-Fi scan failed" message={error} />
 					) : filtered.length === 0 && !scanning ? (
 						<EmbeddedEmptyState
 							icon={Wifi}
