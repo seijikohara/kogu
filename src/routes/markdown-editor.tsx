@@ -737,16 +737,6 @@ function MarkdownEditorPage() {
 					padding: 1rem;
 				}
 
-				/* Tailwind preflight resets ul/ol list markers globally; restore them for
-				   the editor's regular bullet / ordered lists. Task lists keep their own
-				   marker-less styling via Vizel's [data-type="taskList"] rules. */
-				.vizel-container .ProseMirror ul:not([data-type='taskList']) {
-					list-style-type: disc;
-				}
-				.vizel-container .ProseMirror ol {
-					list-style-type: decimal;
-				}
-
 				.markdown-preview h1 {
 					font-size: 1.75rem;
 					font-weight: 700;
