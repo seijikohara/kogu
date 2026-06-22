@@ -345,6 +345,13 @@ function MarkdownEditorPage() {
 
 	const handleVizelUpdate = useCallback(({ editor }: { editor: VizelEditor }) => {
 		vizelEditorRef.current = editor as unknown as TiptapEditor;
+		// The Markdown surface (editor.getMarkdown) is installed in the markdown
+		// extension's deferred onCreate. An `update` can fire before that runs
+		// (autofocus, the initial content transaction), and getVizelMarkdown only
+		// null-checks the editor — not the method — so reading it too early throws
+		// "getMarkdown is not a function". Skip construction-time updates; the first
+		// update after the surface is ready syncs the content back.
+		if (typeof (editor as { getMarkdown?: unknown }).getMarkdown !== 'function') return;
 		const md = getVizelMarkdown(editor);
 		lastSyncedToVizelRef.current = md;
 		setInput(md);
