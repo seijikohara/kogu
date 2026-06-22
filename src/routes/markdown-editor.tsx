@@ -558,7 +558,7 @@ function MarkdownEditorPage() {
 			}
 		>
 			<div className="flex h-full flex-col overflow-hidden">
-				<div className="flex h-9 shrink-0 items-center gap-0.5 border-b bg-surface-3 px-2">
+				<div className="flex h-8 shrink-0 items-center gap-0.5 border-b border-border/60 bg-surface-2 px-3">
 					{textFormatButtons.map((btn) => {
 						const Icon = btn.icon;
 						return (
@@ -707,9 +707,9 @@ function MarkdownEditorPage() {
 							</ContextMenu>
 						) : (
 							<div className="flex h-full flex-col">
-								<div className="flex h-9 shrink-0 items-center border-b bg-surface-3 px-3">
+								<div className="flex h-8 shrink-0 items-center border-b border-border/60 bg-surface-2 px-3">
 									<Eye className="mr-2 h-3.5 w-3.5 text-muted-foreground" />
-									<span className="text-xs font-medium text-muted-foreground">Preview</span>
+									<span className="text-xs font-semibold text-muted-foreground">Preview</span>
 								</div>
 								<div className="markdown-preview flex-1 overflow-auto p-4">
 									{input.trim() ? (
