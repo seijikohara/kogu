@@ -237,6 +237,12 @@ export type MotionTokenName = keyof typeof MOTION;
 export const cssVar = (name: ColorTokenName | LayoutTokenName | MotionTokenName): string =>
 	`var(--${camelToKebab(name)})`;
 
-const camelToKebab = (s: string): string => s.replace(/[A-Z]/g, (m) => `-${m.toLowerCase()}`);
+// Insert a hyphen at letter→digit boundaries before lowercasing uppercase
+// letters so digit-suffixed keys (`surface2`, `chart1`) render as kebab-case
+// (`--surface-2`, `--chart-1`). `app.css` references the hyphenated form, so
+// omitting the boundary leaves `--surface2` undefined and every `bg-surface-*`
+// / `bg-chart-*` utility resolves to transparent.
+const camelToKebab = (s: string): string =>
+	s.replace(/([a-zA-Z])(\d)/g, '$1-$2').replace(/[A-Z]/g, (m) => `-${m.toLowerCase()}`);
 
 export { camelToKebab };
