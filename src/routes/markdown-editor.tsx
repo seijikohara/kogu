@@ -30,13 +30,21 @@ import {
 import { readText, writeText } from '@tauri-apps/plugin-clipboard-manager';
 import { toast } from 'sonner';
 import { useTheme } from 'next-themes';
-import type { Editor as VizelEditor } from '@vizel/core';
-import { getVizelMarkdown, setVizelMarkdown } from '@vizel/core';
+import type { Editor as VizelEditor, VizelMarkdownFlavor } from '@vizel/core';
+import {
+	getVizelMarkdown,
+	setVizelMarkdown,
+	vizelCommonMarkFlavor,
+	vizelDocusaurusFlavor,
+	vizelGfmFlavor,
+	vizelObsidianFlavor,
+	vizelPandocFlavor,
+} from '@vizel/core';
 import '@vizel/core/styles.css';
 import 'katex/dist/katex.min.css';
 
 import { CodeEditor, type CodeEditorHandle } from '@/lib/components/editor';
-import { FormMode, FormSection } from '@/lib/components/form';
+import { FormMode, FormSection, FormSelect } from '@/lib/components/form';
 import { SplitPane } from '@/lib/components/layout';
 import { MarkdownContextMenuItems, Vizel } from '@/lib/components/markdown';
 import { ToolFooter, ToolShell } from '@/lib/components/shell';
@@ -56,7 +64,7 @@ import {
 import { ListItemButton } from '@/lib/components/ui/list-item-button';
 import { IconTooltip } from '@/lib/components/ui/icon-tooltip';
 import { useDebouncedValue, useDocumentTitle } from '@/lib/hooks';
-import { usePersistedRail } from '@/lib/stores';
+import { createToolOptionsStore, usePersistedRail } from '@/lib/stores';
 import {
 	applyFormat,
 	exportAsHtml,
@@ -76,6 +84,34 @@ import {
 
 type RightPanelMode = 'editor' | 'preview';
 type ActiveEditor = 'monaco' | 'vizel' | null;
+
+// Vizel Markdown flavors. The flavor controls serialization (Vizel -> Markdown);
+// the parser stays tolerant of all formats on input. Selecting a flavor remounts
+// the editor so the new serializers take effect (see the `key` on <Vizel>).
+const FLAVOR_MAP = {
+	gfm: vizelGfmFlavor,
+	commonmark: vizelCommonMarkFlavor,
+	obsidian: vizelObsidianFlavor,
+	docusaurus: vizelDocusaurusFlavor,
+	pandoc: vizelPandocFlavor,
+} satisfies Record<string, VizelMarkdownFlavor>;
+
+type FlavorName = keyof typeof FLAVOR_MAP;
+
+const FLAVOR_OPTIONS: readonly { readonly value: FlavorName; readonly label: string }[] = [
+	{ value: 'gfm', label: 'GitHub Flavored (GFM)' },
+	{ value: 'commonmark', label: 'CommonMark' },
+	{ value: 'obsidian', label: 'Obsidian' },
+	{ value: 'docusaurus', label: 'Docusaurus' },
+	{ value: 'pandoc', label: 'Pandoc' },
+];
+
+const isFlavorName = (value: string): value is FlavorName => value in FLAVOR_MAP;
+
+const useMarkdownEditorPrefs = createToolOptionsStore<{ readonly flavor: FlavorName }>(
+	'markdown-editor',
+	{ flavor: 'gfm' }
+);
 
 // Vizel format command types (subset of Tiptap commands).
 type VizelFormatCommand =
@@ -250,6 +286,8 @@ function MarkdownEditorPage() {
 	const [input, setInput] = useState('');
 	const [rightPanelMode, setRightPanelMode] = useState<RightPanelMode>('editor');
 	const [showOptions, setShowOptions] = usePersistedRail('markdown-editor');
+	const flavor = useMarkdownEditorPrefs((s) => s.value.flavor);
+	const patchPrefs = useMarkdownEditorPrefs((s) => s.patch);
 	const [activeEditor, setActiveEditor] = useState<ActiveEditor>(null);
 	const [htmlOutput, setHtmlOutput] = useState('');
 
@@ -411,6 +449,13 @@ function MarkdownEditorPage() {
 	const handleClear = useCallback(() => setInput(''), []);
 	const handleSample = useCallback(() => setInput(SAMPLE_MARKDOWN), []);
 
+	const handleFlavorChange = useCallback(
+		(value: string) => {
+			if (isFlavorName(value)) patchPrefs({ flavor: value });
+		},
+		[patchPrefs]
+	);
+
 	const handleCopyMarkdown = useCallback(() => {
 		writeText(input)
 			.then(() => toast.success('Markdown copied to clipboard'))
@@ -482,6 +527,18 @@ function MarkdownEditorPage() {
 								{ value: 'preview', label: 'Preview' },
 							]}
 						/>
+					</FormSection>
+
+					<FormSection title="Markdown Flavor">
+						<FormSelect
+							value={flavor}
+							options={FLAVOR_OPTIONS}
+							onValueChange={handleFlavorChange}
+							size="compact"
+						/>
+						<p className="mt-1.5 text-xs text-muted-foreground">
+							Controls how the visual editor serializes Markdown. The parser reads all formats.
+						</p>
 					</FormSection>
 
 					<FormSection title="Export">
@@ -692,6 +749,11 @@ function MarkdownEditorPage() {
 										data-vizel-theme={vizelTheme}
 									>
 										<Vizel
+											// Remount on flavor change so the new serializers take effect;
+											// initialMarkdown re-seeds the fresh editor from the current text.
+											key={`vizel-${flavor}`}
+											markdownFlavor={FLAVOR_MAP[flavor]}
+											initialMarkdown={input}
 											placeholder="Start writing..."
 											editable={true}
 											autofocus={false}

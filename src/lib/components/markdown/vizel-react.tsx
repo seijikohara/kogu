@@ -16,6 +16,7 @@ import {
 	initVizelIconRenderer,
 	type VizelError,
 	type VizelFeatureOptions,
+	type VizelMarkdownFlavor,
 } from '@vizel/core';
 import { VizelBubbleMenu } from './vizel-bubble-menu';
 import { createReactSlashMenuRenderer } from './vizel-slash-menu';
@@ -30,6 +31,13 @@ interface VizelProps {
 	readonly editable?: boolean;
 	readonly autofocus?: boolean | 'start' | 'end' | 'all' | number;
 	readonly features?: VizelFeatureOptions;
+	// Markdown serialization flavor (output syntax). The parser stays tolerant of
+	// all formats; only `getMarkdown` output follows the flavor. Captured at
+	// creation — change it by remounting with a new `key`.
+	readonly markdownFlavor?: VizelMarkdownFlavor;
+	// Seed content for a freshly created editor. Used so a flavor-driven remount
+	// repopulates from the current markdown instead of starting empty.
+	readonly initialMarkdown?: string;
 	readonly className?: string;
 	readonly onCreate?: (args: { readonly editor: VizelEditor }) => void;
 	readonly onUpdate?: (args: { readonly editor: VizelEditor }) => void;
@@ -44,6 +52,8 @@ export function Vizel({
 	editable = true,
 	autofocus = false,
 	features,
+	markdownFlavor,
+	initialMarkdown,
 	className,
 	onCreate,
 	onUpdate,
@@ -89,6 +99,8 @@ export function Vizel({
 			editable,
 			autofocus,
 			...(features !== undefined && { features }),
+			...(markdownFlavor !== undefined && { markdown: { flavor: markdownFlavor } }),
+			...(initialMarkdown !== undefined && { initialMarkdown }),
 			createSlashMenuRenderer: createReactSlashMenuRenderer,
 			onCreate: ({ editor: e }) => callbacksRef.current.onCreate?.({ editor: e }),
 			onError: (error) => callbacksRef.current.onError?.(error),
