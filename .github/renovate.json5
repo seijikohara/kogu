@@ -1,44 +1,108 @@
 {
-	// Renovate configuration.
-	// Schema reference: https://docs.renovatebot.com/renovate-schema.json
+	// Shared Renovate policy across seijikohara repositories.
+	// Schema: https://docs.renovatebot.com/renovate-schema.json
 	$schema: 'https://docs.renovatebot.com/renovate-schema.json',
-
-	extends: ['config:recommended', ':semanticCommits'],
-
+	extends: [
+		// Maintainer-recommended superset of config:recommended. Pins GitHub Action
+		// and Docker digests, enables config migration, dev-dependency pinning,
+		// weekly lock file maintenance, and the npm minimum-release-age cooldown.
+		'config:best-practices',
+		// Conventional Commits with a unified `chore(deps): ...` subject.
+		':semanticCommits',
+		':semanticCommitTypeAll(chore)',
+		':semanticCommitScope(deps)',
+	],
 	timezone: 'Asia/Tokyo',
 	schedule: ['before 9am on monday'],
-
-	// Apply the "dependencies" label so release notes categorize updates correctly.
 	labels: ['dependencies'],
-
-	// Auto-merge updates using GitHub's native auto-merge with rebase strategy.
-	automerge: true,
-	automergeType: 'pr',
+	// Keep update branches rebased on main and merge via rebase once CI passes.
+	rebaseWhen: 'behind-base-branch',
+	platformAutomerge: true,
 	automergeStrategy: 'rebase',
-
-	// Surface vulnerability updates with a label and keep them out of auto-merge
-	// so a human can assess impact before it lands.
-	vulnerabilityAlerts: {
-		labels: ['security'],
-		automerge: false,
-	},
-
-	// Use Conventional Commits types without scope so release notes categorize updates correctly.
+	// Hold every release for 3 days so a hijacked publish cannot ride automerge on day zero.
+	minimumReleaseAge: '3 days',
+	// Auto-merge the weekly lock file refresh together with regular updates.
+	lockFileMaintenance: { automerge: true },
 	packageRules: [
 		{
+			description: 'Auto-merge non-major updates once CI passes',
+			matchUpdateTypes: ['minor', 'patch', 'pin', 'digest'],
+			automerge: true,
+		},
+		{
+			description: 'Hold major updates for manual review via the dependency dashboard',
+			matchUpdateTypes: ['major'],
+			automerge: false,
+			dependencyDashboardApproval: true,
+			addLabels: ['major'],
+		},
+		{
+			description: 'Group and label GitHub Actions updates',
 			matchManagers: ['github-actions'],
-			semanticCommitType: 'ci',
-			semanticCommitScope: null,
+			groupName: 'github-actions',
+			addLabels: ['github-actions'],
 		},
 		{
-			matchManagers: ['npm', 'bun'],
-			semanticCommitType: 'deps',
-			semanticCommitScope: null,
-		},
-		{
+			description: 'Group the Rust (Cargo) backend dependencies',
 			matchManagers: ['cargo'],
-			semanticCommitType: 'deps',
-			semanticCommitScope: null,
+			groupName: 'rust',
+		},
+		{
+			description: 'Group the Tauri frontend packages',
+			groupName: 'tauri',
+			matchPackageNames: ['@tauri-apps/*'],
+		},
+		{
+			description: 'Group React and its Vite plugin',
+			groupName: 'react',
+			matchPackageNames: ['react', 'react-dom', '@vitejs/plugin-react'],
+		},
+		{
+			description: 'Group the TanStack packages',
+			groupName: 'tanstack',
+			matchPackageNames: ['@tanstack/*'],
+		},
+		{
+			description: 'Group the Tiptap editor packages',
+			groupName: 'tiptap',
+			matchPackageNames: ['@tiptap/*'],
+		},
+		{
+			description: 'Group the visx visualization packages',
+			groupName: 'visx',
+			matchPackageNames: ['@visx/*'],
+		},
+		{
+			description: 'Group Tailwind CSS packages',
+			groupName: 'tailwind',
+			matchPackageNames: ['tailwindcss', '@tailwindcss/*'],
+		},
+		{
+			description: 'Group the test toolchain',
+			groupName: 'testing',
+			matchPackageNames: ['vitest', '@vitest/*', '@testing-library/*', 'jsdom'],
+		},
+		{
+			description: 'Group linting and formatting tools',
+			groupName: 'linting and formatting',
+			matchPackageNames: ['@biomejs/biome', 'prettier'],
+		},
+		{
+			description: 'Group the build toolchain',
+			groupName: 'build toolchain',
+			matchPackageNames: ['vite', 'vite-plugin-*', 'esbuild', 'typescript'],
+		},
+		{
+			description: 'Group TypeScript type definitions',
+			groupName: 'type definitions',
+			matchPackageNames: ['@types/*'],
 		},
 	],
+	vulnerabilityAlerts: {
+		description: 'Raise security fixes immediately and require manual review',
+		schedule: ['at any time'],
+		minimumReleaseAge: null,
+		addLabels: ['security'],
+		automerge: false,
+	},
 }
