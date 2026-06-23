@@ -92,21 +92,18 @@ import {
 	TIMEOUT_MIN_MS,
 	TIMEOUT_STEP_MS,
 } from '@/lib/services/rest-client';
-import { createToolOptionsStore } from '@/lib/stores';
+import {
+	createToolOptionsStore,
+	type HistoryEntry,
+	type RequestSnapshot,
+	useRestClientHistory,
+} from '@/lib/stores';
 import { cn, getErrorMessage } from '@/lib/utils';
 import { downloadTextFile } from '@/lib/utils/file-operations';
 
-interface RestClientOptions {
-	readonly method: HttpMethod;
-	readonly url: string;
-	readonly headers: readonly HeaderEntry[];
-	readonly auth: AuthConfig;
-	readonly bodyMode: BodyMode;
-	readonly body: string;
-	readonly formFields: readonly HeaderEntry[];
-	readonly followRedirects: boolean;
-	readonly timeoutMs: number;
-}
+// The persisted options bag is exactly a restorable request snapshot, so the
+// history store and the editor share one shape.
+type RestClientOptions = RequestSnapshot;
 
 const DEFAULT_HEADERS: readonly HeaderEntry[] = [
 	{ id: 'hdr_default_accept', key: 'Accept', value: '*/*', enabled: true },
@@ -136,7 +133,8 @@ type RequestTab = 'params' | 'auth' | 'headers' | 'body';
 type ResponseTab = 'body' | 'headers' | 'cookies';
 
 function RestClientPage() {
-	const { value: options, patch } = useRestClientOptions();
+	const { value: options, patch, set } = useRestClientOptions();
+	const recordHistory = useRestClientHistory((s) => s.record);
 	const { method, url, headers, body, followRedirects, timeoutMs } = options;
 	// `auth`, `bodyMode`, and `formFields` were added after the options store
 	// shipped; persisted state from before that lacks the fields, so fall back to
@@ -295,16 +293,33 @@ function RestClientPage() {
 		setError(null);
 		const request = buildEffectiveRequest();
 		setSentUrl(request.url);
+		// Snapshot the editor state (with resolved fallbacks) so a restored
+		// history entry reproduces the exact form, not the auth-folded wire URL.
+		const snapshot: RequestSnapshot = { ...options, auth, bodyMode, formFields };
 		try {
 			const res = await sendRequest(request);
 			setResponse(res);
 			setResponseTab('body');
+			recordHistory(snapshot, {
+				status: res.status,
+				statusText: res.statusText,
+				elapsedMs: res.elapsedMs,
+			});
 		} catch (e) {
 			setError(getErrorMessage(e));
 			setResponse(null);
 		} finally {
 			setSending(false);
 		}
+	};
+
+	// Restore a past request into the editor. Clearing the error and response
+	// avoids showing a stale outcome next to the freshly loaded request.
+	const handleRestoreHistory = (entry: HistoryEntry) => {
+		set(entry.request);
+		setError(null);
+		setResponse(null);
+		setRequestTab(entry.request.bodyMode === 'none' ? 'params' : 'body');
 	};
 
 	const rail = (
@@ -319,6 +334,7 @@ function RestClientPage() {
 			onLoadPostSample={handleLoadPostSample}
 			onCopyCurl={handleCopyCurl}
 			onImportCurl={handleImportCurl}
+			onRestoreHistory={handleRestoreHistory}
 		/>
 	);
 
@@ -396,6 +412,7 @@ interface RestClientRailProps {
 	readonly onLoadPostSample: () => void;
 	readonly onCopyCurl: () => void;
 	readonly onImportCurl: (imported: CurlImport) => void;
+	readonly onRestoreHistory: (entry: HistoryEntry) => void;
 }
 
 function RestClientRail({
@@ -409,6 +426,7 @@ function RestClientRail({
 	onLoadPostSample,
 	onCopyCurl,
 	onImportCurl,
+	onRestoreHistory,
 }: RestClientRailProps) {
 	return (
 		<>
@@ -464,6 +482,10 @@ function RestClientRail({
 					<Code2 className="h-3.5 w-3.5" />
 					Copy as cURL
 				</Button>
+			</FormSection>
+
+			<FormSection title="History">
+				<HistoryPanel onRestore={onRestoreHistory} />
 			</FormSection>
 
 			<ToolFooter
@@ -554,6 +576,81 @@ function ImportCurlDialog({ onImport }: ImportCurlDialogProps) {
 				</DialogFooter>
 			</DialogContent>
 		</Dialog>
+	);
+}
+
+const METHOD_CLASS: Record<HttpMethod, string> = {
+	GET: 'text-info',
+	POST: 'text-success',
+	PUT: 'text-warning',
+	PATCH: 'text-warning',
+	DELETE: 'text-destructive',
+	HEAD: 'text-muted-foreground',
+	OPTIONS: 'text-muted-foreground',
+};
+
+// Compact relative time for the history list; falls back to a date once an
+// entry is older than a day so the label stays meaningful across sessions.
+function formatTimeAgo(at: number): string {
+	const seconds = Math.round((Date.now() - at) / 1000);
+	if (seconds < 60) return 'just now';
+	if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`;
+	if (seconds < 86_400) return `${Math.floor(seconds / 3600)}h ago`;
+	return new Date(at).toLocaleDateString();
+}
+
+interface HistoryPanelProps {
+	readonly onRestore: (entry: HistoryEntry) => void;
+}
+
+function HistoryPanel({ onRestore }: HistoryPanelProps) {
+	const entries = useRestClientHistory((s) => s.entries);
+	const remove = useRestClientHistory((s) => s.remove);
+	const clear = useRestClientHistory((s) => s.clear);
+
+	if (entries.length === 0) {
+		return <p className="text-xs text-muted-foreground">Sent requests appear here.</p>;
+	}
+
+	return (
+		<div className="space-y-1.5">
+			{entries.map((entry) => (
+				<div key={entry.id} className="group flex items-center gap-1">
+					<button
+						type="button"
+						className="flex min-w-0 flex-1 items-center gap-2 rounded-md px-2 py-1.5 text-left hover:bg-accent"
+						onClick={() => onRestore(entry)}
+						title={`${entry.request.method} ${entry.request.url} — ${entry.status} ${entry.statusText} · ${entry.elapsedMs} ms · ${formatTimeAgo(entry.at)}`}
+					>
+						<span
+							className={cn(
+								'w-10 shrink-0 font-mono text-2xs font-medium',
+								METHOD_CLASS[entry.request.method]
+							)}
+						>
+							{entry.request.method}
+						</span>
+						<span className="min-w-0 flex-1 truncate font-mono text-xs">{entry.request.url}</span>
+						<ToneBadge tone={statusTone(entry.status)} className="shrink-0 font-mono text-2xs">
+							{entry.status}
+						</ToneBadge>
+					</button>
+					<Button
+						variant="ghost"
+						size="icon-sm"
+						className="h-7 w-7 shrink-0 text-muted-foreground opacity-0 hover:text-destructive group-hover:opacity-100"
+						onClick={() => remove(entry.id)}
+						aria-label="Remove from history"
+					>
+						<Trash2 className="h-3.5 w-3.5" />
+					</Button>
+				</div>
+			))}
+			<Button variant="outline" size="sm" className="w-full" onClick={clear}>
+				<Trash2 className="h-3.5 w-3.5" />
+				Clear history
+			</Button>
+		</div>
 	);
 }
 
