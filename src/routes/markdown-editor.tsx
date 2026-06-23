@@ -549,6 +549,7 @@ function MarkdownEditorPage() {
 								<li>Vizel visual editor with rich block content</li>
 								<li>Real-time bidirectional sync</li>
 								<li>Formatting toolbar &amp; context menu</li>
+								<li>Slash commands (/) &amp; selection bubble menu</li>
 								<li>Table of Contents generation</li>
 								<li>Export to HTML</li>
 							</ul>
