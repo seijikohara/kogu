@@ -75,14 +75,17 @@ export function VizelBubbleMenu({ editor }: VizelBubbleMenuProps) {
 	}, [editor]);
 
 	return (
-		// The plugin toggles visibility and positions this element; start hidden so
-		// it does not flash at the document origin before the first update.
+		// `absolute` keeps the toolbar out of the editor's flow — without it the
+		// hidden element reserves vertical space at the top of the scroll
+		// container, shifting the content down and throwing the drag handle off the
+		// cursor. The plugin toggles visibility and positions it via top/left;
+		// start hidden so it does not flash at the origin before the first update.
 		<div
 			ref={elementRef}
 			role="toolbar"
 			aria-label="Text formatting"
 			style={{ visibility: 'hidden' }}
-			className="flex items-center gap-0.5 rounded-md border bg-popover p-1 text-popover-foreground shadow-md"
+			className="absolute flex items-center gap-0.5 rounded-md border bg-popover p-1 text-popover-foreground shadow-md"
 		>
 			{actionGroups.map((group, groupIndex) => (
 				<div key={group[0]?.id ?? groupIndex} className="flex items-center gap-0.5">
