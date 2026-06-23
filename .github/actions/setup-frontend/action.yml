@@ -5,12 +5,12 @@ runs:
   using: composite
   steps:
     - name: Setup Bun
-      uses: oven-sh/setup-bun@v2
+      uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
       with:
         bun-version: latest
 
     - name: Cache Bun dependencies
-      uses: actions/cache@v5
+      uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
       # actions/cache#1754: the Windows runner image rolled out in May 2026
       # randomly exits the cache step with no error output, killing the job.
       # `continue-on-error: true` lets `bun install` fall back to a fresh
