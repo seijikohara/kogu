@@ -1140,7 +1140,7 @@ function ResponseCard({ response, activeTab, onTabChange }: ResponseCardProps) {
 				</div>
 				{response ? (
 					<div className="flex items-center gap-3 text-xs text-muted-foreground">
-						<span>{response.elapsedMs} ms</span>
+						<TimingSummary response={response} />
 						<span>{formatBytes(response.bytesReceived)}</span>
 					</div>
 				) : null}
@@ -1157,6 +1157,30 @@ function ResponseCard({ response, activeTab, onTabChange }: ResponseCardProps) {
 				)}
 			</CardContent>
 		</Card>
+	);
+}
+
+interface TimingSummaryProps {
+	readonly response: RestResponse;
+}
+
+// Show the total elapsed time, plus the wait/download split when the body read
+// took a measurable slice. The breakdown helps separate a slow server (high
+// TTFB) from a large or slow transfer (high download time).
+function TimingSummary({ response }: TimingSummaryProps): ReactNode {
+	const showBreakdown = response.downloadMs > 0;
+	return (
+		<span
+			title={`Wait ${response.ttfbMs} ms · Download ${response.downloadMs} ms`}
+			className="font-mono"
+		>
+			{response.elapsedMs} ms
+			{showBreakdown ? (
+				<span className="ml-1 text-muted-foreground/70">
+					({response.ttfbMs} + {response.downloadMs})
+				</span>
+			) : null}
+		</span>
 	);
 }
 
@@ -1364,6 +1388,7 @@ function StatusBarContent({ response }: StatusBarContentProps): ReactNode {
 				variant={statusVariant}
 			/>
 			<StatItem label="Elapsed" value={`${response.elapsedMs} ms`} />
+			<StatItem label="TTFB" value={`${response.ttfbMs} ms`} />
 			<StatItem label="Size" value={formatBytes(response.bytesReceived)} />
 		</>
 	);

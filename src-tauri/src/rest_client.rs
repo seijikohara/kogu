@@ -43,6 +43,12 @@ pub struct RestResponse {
     pub bytes_received: u64,
     /// Elapsed wall-clock time from request build to body read, in milliseconds.
     pub elapsed_ms: u128,
+    /// Time to first byte: request build until the response headers arrive,
+    /// in milliseconds. Covers DNS, connect, TLS, and server processing.
+    pub ttfb_ms: u128,
+    /// Time spent reading the response body after the headers arrived, in
+    /// milliseconds (`elapsed_ms - ttfb_ms`).
+    pub download_ms: u128,
     /// Final URL after redirects (matches `url` when redirects are disabled).
     pub final_url: String,
 }
@@ -92,6 +98,11 @@ pub async fn rest_client_send(req: RestRequest) -> Result<RestResponse, String> 
         .await
         .map_err(|e| format!("Request failed: {e}"))?;
 
+    // The response future resolves once the status and headers have arrived, so
+    // the elapsed time here is the time to first byte (DNS + connect + TLS +
+    // server processing). The body is streamed separately below.
+    let ttfb_ms = started.elapsed().as_millis();
+
     let status = response.status();
     let status_text = status.canonical_reason().unwrap_or("").to_string();
     let headers: Vec<(String, String)> = response
@@ -108,13 +119,17 @@ pub async fn rest_client_send(req: RestRequest) -> Result<RestResponse, String> 
     let bytes_received = bytes.len() as u64;
     let body = String::from_utf8_lossy(&bytes).into_owned();
 
+    let elapsed_ms = started.elapsed().as_millis();
+
     Ok(RestResponse {
         status: status.as_u16(),
         status_text,
         headers,
         body,
         bytes_received,
-        elapsed_ms: started.elapsed().as_millis(),
+        elapsed_ms,
+        ttfb_ms,
+        download_ms: elapsed_ms.saturating_sub(ttfb_ms),
         final_url,
     })
 }

@@ -187,6 +187,10 @@ export interface RestResponse {
 	readonly body: string;
 	readonly bytesReceived: number;
 	readonly elapsedMs: number;
+	/** Time to first byte: DNS, connect, TLS, and server processing (ms). */
+	readonly ttfbMs: number;
+	/** Time spent reading the response body after the headers arrived (ms). */
+	readonly downloadMs: number;
 	readonly finalUrl: string;
 }
 
