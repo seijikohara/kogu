@@ -5,6 +5,7 @@ import {
 	FileText,
 	FlaskConical,
 	Globe,
+	KeyRound,
 	Link2,
 	Loader2,
 	Plus,
@@ -34,9 +35,14 @@ import { Textarea } from '@/lib/components/ui/textarea';
 import { ToneBadge } from '@/lib/components/ui/tone-badge';
 import { useDocumentTitle } from '@/lib/hooks';
 import {
+	type ApiKeyLocation,
+	applyAuth,
+	type AuthConfig,
+	type AuthType,
 	buildUrlWithParams,
 	createEmptyHeader,
 	createHeaderId,
+	DEFAULT_AUTH,
 	exportAsCurl,
 	formatBytes,
 	formatResponseBody,
@@ -66,6 +72,7 @@ interface RestClientOptions {
 	readonly method: HttpMethod;
 	readonly url: string;
 	readonly headers: readonly HeaderEntry[];
+	readonly auth: AuthConfig;
 	readonly body: string;
 	readonly followRedirects: boolean;
 	readonly timeoutMs: number;
@@ -79,6 +86,7 @@ const DEFAULTS: RestClientOptions = {
 	method: 'GET',
 	url: '',
 	headers: DEFAULT_HEADERS,
+	auth: DEFAULT_AUTH,
 	body: '',
 	followRedirects: true,
 	timeoutMs: TIMEOUT_DEFAULT_MS,
@@ -92,12 +100,16 @@ export const Route = createFileRoute('/rest-client')({
 	component: RestClientPage,
 });
 
-type RequestTab = 'params' | 'headers' | 'body';
+type RequestTab = 'params' | 'auth' | 'headers' | 'body';
 type ResponseTab = 'body' | 'headers';
 
 function RestClientPage() {
 	const { value: options, patch } = useRestClientOptions();
 	const { method, url, headers, body, followRedirects, timeoutMs } = options;
+	// `auth` was added after the options store shipped; persisted state from
+	// before that lacks the field, so fall back to the default to stay
+	// backward-compatible with rehydrated stores.
+	const auth = options.auth ?? DEFAULT_AUTH;
 
 	const [response, setResponse] = useState<RestResponse | null>(null);
 	const [error, setError] = useState<string | null>(null);
@@ -196,10 +208,11 @@ function RestClientPage() {
 			toast.error('Enter a URL first');
 			return;
 		}
+		const effective = applyAuth(headersToTuples(headers), url, auth);
 		const command = exportAsCurl({
 			method,
-			url,
-			headers: headersToTuples(headers),
+			url: effective.url,
+			headers: effective.headers,
 			body,
 			followRedirects,
 			timeoutMs,
@@ -217,10 +230,11 @@ function RestClientPage() {
 		setSending(true);
 		setError(null);
 		try {
+			const effective = applyAuth(headersToTuples(headers), url, auth);
 			const res = await sendRequest({
 				method,
-				url,
-				headers: headersToTuples(headers),
+				url: effective.url,
+				headers: effective.headers,
 				body,
 				followRedirects,
 				timeoutMs,
@@ -276,12 +290,14 @@ function RestClientPage() {
 							onTabChange={setRequestTab}
 							params={paramRows}
 							enabledParamCount={enabledParamCount}
+							auth={auth}
 							headers={headers}
 							enabledHeaderCount={enabledHeaderCount}
 							body={body}
 							onParamChange={handleParamChange}
 							onParamRemove={handleParamRemove}
 							onParamAdd={handleParamAdd}
+							onAuthChange={(delta) => patch({ auth: { ...auth, ...delta } })}
 							onHeaderChange={handleHeaderChange}
 							onHeaderRemove={handleHeaderRemove}
 							onHeaderAdd={() => patch({ headers: [...headers, createEmptyHeader()] })}
@@ -477,12 +493,14 @@ interface RequestPanelProps {
 	readonly onTabChange: (tab: RequestTab) => void;
 	readonly params: readonly QueryParam[];
 	readonly enabledParamCount: number;
+	readonly auth: AuthConfig;
 	readonly headers: readonly HeaderEntry[];
 	readonly enabledHeaderCount: number;
 	readonly body: string;
 	readonly onParamChange: (id: string, delta: Partial<QueryParam>) => void;
 	readonly onParamRemove: (id: string) => void;
 	readonly onParamAdd: () => void;
+	readonly onAuthChange: (delta: Partial<AuthConfig>) => void;
 	readonly onHeaderChange: (id: string, delta: Partial<HeaderEntry>) => void;
 	readonly onHeaderRemove: (id: string) => void;
 	readonly onHeaderAdd: () => void;
@@ -494,32 +512,43 @@ function RequestPanel({
 	onTabChange,
 	params,
 	enabledParamCount,
+	auth,
 	headers,
 	enabledHeaderCount,
 	body,
 	onParamChange,
 	onParamRemove,
 	onParamAdd,
+	onAuthChange,
 	onHeaderChange,
 	onHeaderRemove,
 	onHeaderAdd,
 	onBodyChange,
 }: RequestPanelProps) {
 	const handleValueChange = (v: string) => {
-		if (v === 'params' || v === 'headers' || v === 'body') onTabChange(v);
+		if (v === 'params' || v === 'auth' || v === 'headers' || v === 'body') onTabChange(v);
 	};
 
 	return (
 		<Card density="compact">
 			<CardContent className="space-y-3">
 				<Tabs value={activeTab} onValueChange={handleValueChange} className="contents">
-					<TabsList className="grid w-full grid-cols-3">
+					<TabsList className="grid w-full grid-cols-4">
 						<TabsTrigger value="params" className="gap-2">
 							<Link2 className="h-3.5 w-3.5" />
 							Params
 							{enabledParamCount > 0 ? (
 								<Badge variant="secondary" className="ml-1 h-4 px-1.5 text-2xs">
 									{enabledParamCount}
+								</Badge>
+							) : null}
+						</TabsTrigger>
+						<TabsTrigger value="auth" className="gap-2">
+							<KeyRound className="h-3.5 w-3.5" />
+							Auth
+							{auth.type !== 'none' ? (
+								<Badge variant="secondary" className="ml-1 h-4 px-1.5 text-2xs uppercase">
+									{auth.type}
 								</Badge>
 							) : null}
 						</TabsTrigger>
@@ -550,6 +579,10 @@ function RequestPanel({
 							onParamRemove={onParamRemove}
 							onParamAdd={onParamAdd}
 						/>
+					</TabsContent>
+
+					<TabsContent value="auth" className="space-y-3 pt-3">
+						<AuthEditor auth={auth} onAuthChange={onAuthChange} />
 					</TabsContent>
 
 					<TabsContent value="headers" className="space-y-2 pt-3">
@@ -742,6 +775,104 @@ function ParamRow({ entry, onChange, onRemove }: ParamRowProps) {
 				<Trash2 className="h-3.5 w-3.5" />
 			</Button>
 		</div>
+	);
+}
+
+const AUTH_TYPE_OPTIONS: readonly { readonly value: AuthType; readonly label: string }[] = [
+	{ value: 'none', label: 'No Auth' },
+	{ value: 'bearer', label: 'Bearer Token' },
+	{ value: 'basic', label: 'Basic Auth' },
+	{ value: 'apikey', label: 'API Key' },
+];
+
+const API_KEY_LOCATION_OPTIONS: readonly {
+	readonly value: ApiKeyLocation;
+	readonly label: string;
+}[] = [
+	{ value: 'header', label: 'Header' },
+	{ value: 'query', label: 'Query parameter' },
+];
+
+interface AuthEditorProps {
+	readonly auth: AuthConfig;
+	readonly onAuthChange: (delta: Partial<AuthConfig>) => void;
+}
+
+function AuthEditor({ auth, onAuthChange }: AuthEditorProps) {
+	const handleTypeChange = (v: string) => {
+		if (v === 'none' || v === 'bearer' || v === 'basic' || v === 'apikey')
+			onAuthChange({ type: v });
+	};
+	const handleLocationChange = (v: string) => {
+		if (v === 'header' || v === 'query') onAuthChange({ apiKeyLocation: v });
+	};
+
+	return (
+		<>
+			<FormSelect
+				label="Type"
+				value={auth.type}
+				options={AUTH_TYPE_OPTIONS}
+				onValueChange={handleTypeChange}
+				size="compact"
+			/>
+
+			{auth.type === 'bearer' ? (
+				<FormInput
+					label="Token"
+					type="password"
+					value={auth.token}
+					placeholder="Bearer token"
+					onValueChange={(v) => onAuthChange({ token: v })}
+				/>
+			) : null}
+
+			{auth.type === 'basic' ? (
+				<>
+					<FormInput
+						label="Username"
+						value={auth.username}
+						onValueChange={(v) => onAuthChange({ username: v })}
+					/>
+					<FormInput
+						label="Password"
+						type="password"
+						value={auth.password}
+						onValueChange={(v) => onAuthChange({ password: v })}
+					/>
+				</>
+			) : null}
+
+			{auth.type === 'apikey' ? (
+				<>
+					<FormInput
+						label="Key"
+						value={auth.apiKeyName}
+						placeholder="X-API-Key"
+						onValueChange={(v) => onAuthChange({ apiKeyName: v })}
+					/>
+					<FormInput
+						label="Value"
+						type="password"
+						value={auth.apiKeyValue}
+						onValueChange={(v) => onAuthChange({ apiKeyValue: v })}
+					/>
+					<FormSelect
+						label="Add to"
+						value={auth.apiKeyLocation}
+						options={API_KEY_LOCATION_OPTIONS}
+						onValueChange={handleLocationChange}
+						size="compact"
+					/>
+				</>
+			) : null}
+
+			{auth.type === 'none' ? (
+				<p className="text-xs text-muted-foreground">
+					This request will be sent without authentication.
+				</p>
+			) : null}
+		</>
 	);
 }
 
