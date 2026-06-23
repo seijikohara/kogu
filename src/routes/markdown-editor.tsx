@@ -72,7 +72,7 @@ import {
 	generateToc,
 	getMarkdownStats,
 	markdownToHtmlAsync,
-	SAMPLE_MARKDOWN,
+	SAMPLE_MARKDOWN_BY_FLAVOR,
 	type TocItem,
 	tocToMarkdown,
 } from '@/lib/services/markdown';
@@ -447,7 +447,7 @@ function MarkdownEditorPage() {
 	}, []);
 
 	const handleClear = useCallback(() => setInput(''), []);
-	const handleSample = useCallback(() => setInput(SAMPLE_MARKDOWN), []);
+	const handleSample = useCallback(() => setInput(SAMPLE_MARKDOWN_BY_FLAVOR[flavor]), [flavor]);
 
 	const handleFlavorChange = useCallback(
 		(value: string) => {

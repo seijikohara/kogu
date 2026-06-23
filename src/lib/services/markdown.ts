@@ -59,254 +59,141 @@ export interface FormatAction {
 }
 
 // Constants
-export const SAMPLE_MARKDOWN = `# Markdown Feature Showcase
 
-This document demonstrates **all Markdown features** supported by the editor.
+// Shared skeleton for the per-flavor samples: formatting, a heading, a quote, a
+// code block, math, and a diagram — all flavor-independent. `distinctive` adds
+// the syntax that the selected flavor renders idiomatically.
+const buildFlavorSample = (title: string, distinctive: string): string =>
+	`# ${title}
 
-## Text Formatting
+Text supports **bold**, _italic_, \`inline code\`, and a [link](https://example.com).
 
-### Emphasis Styles
+## Headings
 
-- **Bold text** using double asterisks
-- __Bold text__ using double underscores
-- *Italic text* using single asterisks
-- _Italic text_ using single underscores
-- ***Bold and italic*** combined
-- ___Bold and italic___ with underscores
-- ~~Strikethrough text~~ using tildes
+### A subsection
 
-### Inline Elements
+> A short blockquote for context.
 
-Use \`inline code\` for code snippets within text.
+## Code
 
-Visit the [Kogu GitHub Repository](https://github.com/seijikohara/kogu) for more information.
-
-Here's an image: ![Placeholder](https://placehold.co/150x50?text=Sample+Image)
-
-## Headings (H1-H6)
-
-# Heading Level 1
-## Heading Level 2
-### Heading Level 3
-#### Heading Level 4
-##### Heading Level 5
-###### Heading Level 6
-
-## Lists
-
-### Unordered Lists
-
-- First item
-- Second item
-  - Nested item 2.1
-  - Nested item 2.2
-    - Deep nested item
-- Third item
-
-* Alternative syntax with asterisks
-* Another item
-
-### Ordered Lists
-
-1. First step
-2. Second step
-   1. Sub-step 2.1
-   2. Sub-step 2.2
-3. Third step
-
-### Task Lists
-
-- [x] Completed task
-- [x] Another completed task
-- [ ] Pending task
-- [ ] Future task
-
-## Code Blocks
-
-### JavaScript
-
-\`\`\`javascript
-function greet(name) {
-  return \`Hello, \${name}!\`;
-}
-
-const result = greet('World');
-console.log(result); // Hello, World!
+\`\`\`ts
+const greet = (name: string) => \`Hello, \${name}\`;
 \`\`\`
 
-### TypeScript
+## Math
 
-\`\`\`typescript
-interface User {
-  readonly id: number;
-  readonly name: string;
-  readonly email: string;
-}
+Inline $a^2 + b^2 = c^2$ and a display block:
 
-const getUser = (id: number): User => ({
-  id,
-  name: 'John Doe',
-  email: 'john@example.com',
-});
+$$
+\\int_0^1 x^2 \\, dx = \\frac{1}{3}
+$$
+
+## Diagram
+
+\`\`\`mermaid
+flowchart LR
+  A[Edit] --> B[Preview]
 \`\`\`
 
-### Python
+${distinctive}
+`;
 
-\`\`\`python
-def fibonacci(n: int) -> list[int]:
-    """Generate Fibonacci sequence."""
-    if n <= 0:
-        return []
-    sequence = [0, 1]
-    while len(sequence) < n:
-        sequence.append(sequence[-1] + sequence[-2])
-    return sequence[:n]
-\`\`\`
+/**
+ * Per-flavor sample documents. Each pairs the shared skeleton with the syntax
+ * the selected Vizel flavor serializes idiomatically, so loading a sample after
+ * picking a flavor demonstrates that flavor's distinctive Markdown.
+ */
+export const SAMPLE_MARKDOWN_BY_FLAVOR = {
+	commonmark: buildFlavorSample(
+		'CommonMark Sample',
+		`## Lists
 
-### Rust
-
-\`\`\`rust
-fn main() {
-    let numbers: Vec<i32> = (1..=10).collect();
-    let sum: i32 = numbers.iter().sum();
-    println!("Sum: {}", sum);
-}
-\`\`\`
-
-## Blockquotes
-
-> This is a simple blockquote.
-> It can span multiple lines.
-
-> **Nested formatting** works inside blockquotes.
->
-> - Lists work too
-> - Inside blockquotes
-
-## Horizontal Rules
-
-Content above the line.
+1. Ordered item
+2. Second item
+   - Nested bullet
+   - Another nested bullet
 
 ---
 
-Content below the line.
+CommonMark keeps to the core syntax: headings, emphasis, lists, blockquotes, code, links, images, and thematic breaks.`
+	),
+	gfm: buildFlavorSample(
+		'GitHub Flavored Markdown Sample',
+		`## Task List
 
-***
+- [x] Build the editor
+- [ ] Write the docs
 
-Another separator style.
+## Table
 
-## Tables (Extended Markdown)
+| Feature     | Supported     |
+| ----------- | ------------- |
+| Tables      | Yes           |
+| Task lists  | Yes           |
+| ~~Old way~~ | Strikethrough |
 
-| Feature | Status | Notes |
-|---------|--------|-------|
-| Bold | ✅ | Fully supported |
-| Italic | ✅ | Fully supported |
-| Links | ✅ | Opens in new tab |
-| Images | ✅ | With alt text |
-| Code | ✅ | Syntax highlighting |
+## Alerts
 
-## Special Characters
+> [!NOTE]
+> GitHub-style alerts are a GFM extension.
 
-- Ampersand: &
-- Less than: <
-- Greater than: >
-- Backslash escape: \\*not italic\\*
+> [!WARNING]
+> Use them sparingly.`
+	),
+	obsidian: buildFlavorSample(
+		'Obsidian Sample',
+		`## Wiki Links
 
-## Mathematics (TeX/LaTeX)
+Link to [[Getting Started]], or use an alias with [[Reference Guide|the reference]].
 
-### Inline Math
+## Callouts
 
-The quadratic formula is $x = \\frac{-b \\pm \\sqrt{b^2-4ac}}{2a}$ which solves $ax^2 + bx + c = 0$.
+> [!note]
+> Linked notes form a knowledge graph.
 
-Einstein's famous equation: $E = mc^2$
+> [!tip]
+> Wrap a page name in [[double brackets]] to link it.`
+	),
+	docusaurus: buildFlavorSample(
+		'Docusaurus Sample',
+		`## Admonitions
 
-### Display Math
+:::note
+General information worth highlighting.
+:::
 
-The Gaussian integral:
+:::tip
+A helpful tip for the reader.
+:::
 
-$$\\int_{-\\infty}^{\\infty} e^{-x^2} dx = \\sqrt{\\pi}$$
+:::warning
+Proceed with caution here.
+:::`
+	),
+	pandoc: buildFlavorSample(
+		'Pandoc Sample',
+		`## Footnotes
 
-Maxwell's equations in differential form:
+Pandoc adds footnotes[^1] to the prose.
 
-$$\\nabla \\cdot \\mathbf{E} = \\frac{\\rho}{\\varepsilon_0}$$
+[^1]: And the footnote text lives down here.
 
-$$\\nabla \\times \\mathbf{B} - \\frac{1}{c^2}\\frac{\\partial \\mathbf{E}}{\\partial t} = \\mu_0 \\mathbf{J}$$
+## Definition List
 
-## Diagrams
+Markdown
+: A lightweight markup language.
 
-### Mermaid Flowchart
+Pandoc
+: A universal document converter.
 
-\`\`\`mermaid
-graph TD
-    A[Start] --> B{Is it working?}
-    B -->|Yes| C[Great!]
-    B -->|No| D[Debug]
-    D --> B
-    C --> E[End]
-\`\`\`
+## Sub / Superscript
 
-### Mermaid Sequence Diagram
+Water is H~2~O, and energy scales like x^2^.`
+	),
+} as const satisfies Record<string, string>;
 
-\`\`\`mermaid
-sequenceDiagram
-    participant User
-    participant App
-    participant API
-    User->>App: Click button
-    App->>API: Send request
-    API-->>App: Return data
-    App-->>User: Display result
-\`\`\`
-
-### GraphViz (DOT)
-
-\`\`\`graphviz
-digraph G {
-    rankdir=LR;
-    node [shape=box, style=rounded];
-
-    A -> B -> C;
-    B -> D;
-    C -> E;
-    D -> E;
-}
-\`\`\`
-
-### PlantUML Class Diagram
-
-\`\`\`plantuml
-@startuml
-class User {
-  +id: number
-  +name: string
-  +email: string
-  +login(): void
-}
-
-class Admin extends User {
-  +permissions: string[]
-  +manageUsers(): void
-}
-
-User --> Admin
-@enduml
-\`\`\`
-
-## Summary
-
-This sample covers:
-
-1. **Text formatting**: bold, italic, strikethrough
-2. **Headings**: H1 through H6
-3. **Lists**: ordered, unordered, task lists, nested
-4. **Code**: inline and fenced blocks with syntax highlighting
-5. **Links and images**: clickable links, embedded images
-6. **Blockquotes**: single and multi-line
-7. **Horizontal rules**: section separators
-8. **Tables**: formatted data display
-9. **Mathematics**: inline and display TeX/LaTeX expressions
-10. **Diagrams**: Mermaid, GraphViz, and PlantUML
-`;
+// Backward-compatible default sample (GitHub Flavored Markdown).
+export const SAMPLE_MARKDOWN = SAMPLE_MARKDOWN_BY_FLAVOR.gfm;
 
 export const FORMAT_ACTIONS: Record<FormatAction['type'], FormatAction> = {
 	bold: { type: 'bold', prefix: '**', suffix: '**', placeholder: 'bold text' },
