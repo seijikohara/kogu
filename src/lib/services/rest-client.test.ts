@@ -7,6 +7,7 @@ import {
 	DEFAULT_AUTH,
 	encodeFormBody,
 	formatJson,
+	formatResponseBody,
 	type HeaderEntry,
 	type HeaderTuple,
 	importCurl,
@@ -295,6 +296,37 @@ describe('parseSetCookie', () => {
 	it('drops segments without a valid name', () => {
 		expect(parseSetCookie([cookie('Set-Cookie', 'noequalssign')])).toEqual([]);
 		expect(parseSetCookie([cookie('Set-Cookie', '=novalue')])).toEqual([]);
+	});
+});
+
+describe('formatResponseBody', () => {
+	it('returns the body unchanged without a content type', () => {
+		expect(formatResponseBody('{"a":1}', undefined)).toBe('{"a":1}');
+	});
+
+	it('pretty-prints JSON for a JSON content type', () => {
+		const result = formatResponseBody('{"a":1}', 'application/json; charset=utf-8');
+		expect(result).toContain('\n');
+		expect(result).toContain('"a"');
+	});
+
+	it('pretty-prints a JSON suffix content type', () => {
+		const result = formatResponseBody('{"a":1}', 'application/vnd.api+json');
+		expect(result).toContain('\n');
+	});
+
+	it('pretty-prints XML for an XML content type', () => {
+		const result = formatResponseBody('<a><b>1</b></a>', 'application/xml');
+		expect(result).toContain('\n');
+		expect(result).toContain('<b>1</b>');
+	});
+
+	it('returns unparseable XML unchanged', () => {
+		expect(formatResponseBody('plain text, not xml', 'text/xml')).toBe('plain text, not xml');
+	});
+
+	it('leaves a plain-text body unchanged', () => {
+		expect(formatResponseBody('hello world', 'text/plain')).toBe('hello world');
 	});
 });
 

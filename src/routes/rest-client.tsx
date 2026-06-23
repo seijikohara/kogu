@@ -140,6 +140,9 @@ function RestClientPage() {
 	const formFields = options.formFields ?? [];
 
 	const [response, setResponse] = useState<RestResponse | null>(null);
+	// The effective URL sent with the last request, captured so the response can
+	// flag a redirect by comparing it against the backend's `finalUrl`.
+	const [sentUrl, setSentUrl] = useState<string | null>(null);
 	const [error, setError] = useState<string | null>(null);
 	const [sending, setSending] = useState(false);
 	const [requestTab, setRequestTab] = useState<RequestTab>('params');
@@ -283,8 +286,10 @@ function RestClientPage() {
 		if (!canSend) return;
 		setSending(true);
 		setError(null);
+		const request = buildEffectiveRequest();
+		setSentUrl(request.url);
 		try {
-			const res = await sendRequest(buildEffectiveRequest());
+			const res = await sendRequest(request);
 			setResponse(res);
 			setResponseTab('body');
 		} catch (e) {
@@ -362,6 +367,7 @@ function RestClientPage() {
 
 						<ResponseCard
 							response={response}
+							requestUrl={sentUrl}
 							activeTab={responseTab}
 							onTabChange={setResponseTab}
 						/>
@@ -1122,11 +1128,14 @@ function AuthEditor({ auth, onAuthChange }: AuthEditorProps) {
 
 interface ResponseCardProps {
 	readonly response: RestResponse | null;
+	readonly requestUrl: string | null;
 	readonly activeTab: ResponseTab;
 	readonly onTabChange: (tab: ResponseTab) => void;
 }
 
-function ResponseCard({ response, activeTab, onTabChange }: ResponseCardProps) {
+function ResponseCard({ response, requestUrl, activeTab, onTabChange }: ResponseCardProps) {
+	const redirected = response !== null && requestUrl !== null && response.finalUrl !== requestUrl;
+
 	return (
 		<Card density="compact">
 			<CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
@@ -1145,7 +1154,8 @@ function ResponseCard({ response, activeTab, onTabChange }: ResponseCardProps) {
 					</div>
 				) : null}
 			</CardHeader>
-			<CardContent>
+			<CardContent className="space-y-3">
+				{redirected ? <RedirectNotice finalUrl={response.finalUrl} /> : null}
 				{response ? (
 					<ResponseTabs response={response} activeTab={activeTab} onTabChange={onTabChange} />
 				) : (
@@ -1157,6 +1167,22 @@ function ResponseCard({ response, activeTab, onTabChange }: ResponseCardProps) {
 				)}
 			</CardContent>
 		</Card>
+	);
+}
+
+interface RedirectNoticeProps {
+	readonly finalUrl: string;
+}
+
+// Surface the post-redirect destination so a 200 that silently moved (HTTPS
+// upgrade, trailing-slash, auth redirect) is not mistaken for a direct hit.
+function RedirectNotice({ finalUrl }: RedirectNoticeProps) {
+	return (
+		<div className="flex items-center gap-2 rounded-md border bg-info/10 px-3 py-2 text-xs">
+			<Link2 className="h-3.5 w-3.5 shrink-0 text-info" />
+			<span className="text-muted-foreground">Redirected to</span>
+			<span className="break-all font-mono text-foreground">{finalUrl}</span>
+		</div>
 	);
 }
 

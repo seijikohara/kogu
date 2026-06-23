@@ -1,6 +1,7 @@
 import { invoke } from '@tauri-apps/api/core';
 
 import { type ParsedCurl, parseCurl, type Result } from './curl';
+import { formatXml } from './formatters/xml';
 
 export type HttpMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE' | 'HEAD' | 'OPTIONS';
 
@@ -326,20 +327,38 @@ export const parseSetCookie = (headers: readonly HeaderTuple[]): readonly Parsed
 		.map(([, v]) => parseCookieString(v))
 		.filter((c): c is ParsedCookie => c !== null);
 
+const isJsonContentType = (lower: string): boolean =>
+	lower.includes('application/json') || lower.includes('+json');
+
+const isXmlContentType = (lower: string): boolean =>
+	lower.includes('xml') || lower.includes('text/html');
+
 /**
- * Pretty-print a response body when the Content-Type indicates JSON.
- * Returns the original body unchanged for non-JSON or invalid JSON payloads.
+ * Pretty-print a response body based on its Content-Type. JSON and XML/HTML
+ * payloads are reformatted with indentation; every other type, and any payload
+ * that fails to parse, is returned unchanged so the raw bytes are never lost.
  */
 export const formatResponseBody = (body: string, contentType: string | undefined): string => {
 	if (!contentType) return body;
 	const lower = contentType.toLowerCase();
-	if (!lower.includes('application/json') && !lower.includes('+json')) return body;
-	try {
-		const parsed = JSON.parse(body) as unknown;
-		return JSON.stringify(parsed, null, 2);
-	} catch {
-		return body;
+	if (isJsonContentType(lower)) {
+		try {
+			return JSON.stringify(JSON.parse(body) as unknown, null, 2);
+		} catch {
+			return body;
+		}
 	}
+	if (isXmlContentType(lower)) {
+		try {
+			// Keep leaf text inline (collapseContent) so data-style XML stays
+			// compact and readable rather than exploding every value onto its own
+			// line. xml-formatter throws on unparseable input; fall back to raw.
+			return formatXml(body, { collapseContent: true });
+		} catch {
+			return body;
+		}
+	}
+	return body;
 };
 
 /** Tone classification used by the response status badge. */
