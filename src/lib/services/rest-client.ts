@@ -281,6 +281,45 @@ export const headerValue = (headers: readonly HeaderTuple[], name: string): stri
 	return headers.find(([k]) => k.toLowerCase() === lower)?.[1];
 };
 
+/** A single cookie parsed from a Set-Cookie response header. */
+export interface ParsedCookie {
+	readonly name: string;
+	readonly value: string;
+	/** Attribute pairs in source order. Boolean flags carry an empty value. */
+	readonly attributes: readonly HeaderTuple[];
+}
+
+/**
+ * Parse one Set-Cookie header value into a name/value pair plus attributes.
+ * Returns null when the segment has no valid `name=value` lead.
+ */
+const parseCookieString = (raw: string): ParsedCookie | null => {
+	const segments = raw
+		.split(';')
+		.map((s) => s.trim())
+		.filter((s) => s.length > 0);
+	const [nameValue, ...attrSegments] = segments;
+	if (!nameValue) return null;
+	const eq = nameValue.indexOf('=');
+	if (eq < 0) return null;
+	const name = nameValue.slice(0, eq).trim();
+	if (name.length === 0) return null;
+	const value = nameValue.slice(eq + 1).trim();
+	const attributes = attrSegments.map((seg): HeaderTuple => {
+		const i = seg.indexOf('=');
+		if (i < 0) return [seg, ''];
+		return [seg.slice(0, i).trim(), seg.slice(i + 1).trim()];
+	});
+	return { name, value, attributes };
+};
+
+/** Extract and parse every Set-Cookie header from a response. */
+export const parseSetCookie = (headers: readonly HeaderTuple[]): readonly ParsedCookie[] =>
+	headers
+		.filter(([k]) => k.toLowerCase() === 'set-cookie')
+		.map(([, v]) => parseCookieString(v))
+		.filter((c): c is ParsedCookie => c !== null);
+
 /**
  * Pretty-print a response body when the Content-Type indicates JSON.
  * Returns the original body unchanged for non-JSON or invalid JSON payloads.
