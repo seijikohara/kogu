@@ -33,6 +33,7 @@ import { Checkbox } from '@/lib/components/ui/checkbox';
 import { Input } from '@/lib/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/lib/components/ui/tabs';
 import { Textarea } from '@/lib/components/ui/textarea';
+import { ToggleGroup, ToggleGroupItem } from '@/lib/components/ui/toggle-group';
 import { ToneBadge } from '@/lib/components/ui/tone-badge';
 import { useDocumentTitle } from '@/lib/hooks';
 import {
@@ -1111,7 +1112,7 @@ function ResponseTabs({ response, activeTab, onTabChange }: ResponseTabsProps) {
 			</TabsList>
 
 			<TabsContent value="body" className="pt-3">
-				<ResponseBody body={formattedBody} contentType={contentType} />
+				<ResponseBody raw={response.body} formatted={formattedBody} contentType={contentType} />
 			</TabsContent>
 
 			<TabsContent value="headers" className="pt-3">
@@ -1125,23 +1126,51 @@ function ResponseTabs({ response, activeTab, onTabChange }: ResponseTabsProps) {
 	);
 }
 
+type BodyView = 'pretty' | 'raw';
+
 interface ResponseBodyProps {
-	readonly body: string;
+	readonly raw: string;
+	readonly formatted: string;
 	readonly contentType: string | undefined;
 }
 
-function ResponseBody({ body, contentType }: ResponseBodyProps) {
+function ResponseBody({ raw, formatted, contentType }: ResponseBodyProps) {
+	const [view, setView] = useState<BodyView>('pretty');
+	// Offer the toggle only when pretty-printing actually changed the payload.
+	const canPretty = formatted !== raw;
+	const shown = canPretty && view === 'pretty' ? formatted : raw;
+
 	return (
 		<div className="space-y-2">
 			<div className="flex items-center justify-between gap-2">
 				<span className="font-mono text-xs text-muted-foreground">
 					{contentType ?? 'no content-type'}
 				</span>
-				<CopyButton text={body} toastLabel="Response body" size="sm" />
+				<div className="flex items-center gap-2">
+					{canPretty ? (
+						<ToggleGroup
+							type="single"
+							size="sm"
+							variant="outline"
+							value={view}
+							onValueChange={(v) => {
+								if (v === 'pretty' || v === 'raw') setView(v);
+							}}
+						>
+							<ToggleGroupItem value="pretty" className="text-xs">
+								Pretty
+							</ToggleGroupItem>
+							<ToggleGroupItem value="raw" className="text-xs">
+								Raw
+							</ToggleGroupItem>
+						</ToggleGroup>
+					) : null}
+					<CopyButton text={shown} toastLabel="Response body" size="sm" />
+				</div>
 			</div>
-			{body.length > 0 ? (
+			{shown.length > 0 ? (
 				<pre className="max-h-96 overflow-auto rounded-md bg-muted p-3 font-mono text-xs">
-					{body}
+					{shown}
 				</pre>
 			) : (
 				<p className="text-sm text-muted-foreground">Empty response body.</p>
