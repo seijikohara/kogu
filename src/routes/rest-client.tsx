@@ -4,6 +4,7 @@ import {
 	ClipboardPaste,
 	Code2,
 	Cookie,
+	Download,
 	FileText,
 	FlaskConical,
 	Globe,
@@ -11,6 +12,7 @@ import {
 	Link2,
 	Loader2,
 	Plus,
+	Search,
 	Send,
 	Settings2,
 	Trash2,
@@ -53,6 +55,7 @@ import {
 	type AuthType,
 	type BodyMode,
 	buildUrlWithParams,
+	countMatches,
 	createEmptyHeader,
 	createHeaderId,
 	type CurlImport,
@@ -62,6 +65,7 @@ import {
 	formatBytes,
 	formatJson,
 	formatResponseBody,
+	type HighlightSegment,
 	HTTP_METHODS,
 	type HeaderEntry,
 	type HttpMethod,
@@ -73,7 +77,9 @@ import {
 	parseSetCookie,
 	type QueryParam,
 	resolveBody,
+	responseFilename,
 	type RestResponse,
+	splitHighlight,
 	validateJson,
 	withContentType,
 	SAMPLE_GET_URL,
@@ -88,6 +94,7 @@ import {
 } from '@/lib/services/rest-client';
 import { createToolOptionsStore } from '@/lib/stores';
 import { cn, getErrorMessage } from '@/lib/utils';
+import { downloadTextFile } from '@/lib/utils/file-operations';
 
 interface RestClientOptions {
 	readonly method: HttpMethod;
@@ -1275,9 +1282,17 @@ interface ResponseBodyProps {
 
 function ResponseBody({ raw, formatted, contentType }: ResponseBodyProps) {
 	const [view, setView] = useState<BodyView>('pretty');
+	const [query, setQuery] = useState('');
 	// Offer the toggle only when pretty-printing actually changed the payload.
 	const canPretty = formatted !== raw;
 	const shown = canPretty && view === 'pretty' ? formatted : raw;
+
+	const segments = useMemo(() => splitHighlight(shown, query), [shown, query]);
+	const matchCount = useMemo(() => countMatches(shown, query), [shown, query]);
+
+	const handleDownload = () => {
+		downloadTextFile(shown, responseFilename(contentType)).catch(() => undefined);
+	};
 
 	return (
 		<div className="space-y-2">
@@ -1304,18 +1319,69 @@ function ResponseBody({ raw, formatted, contentType }: ResponseBodyProps) {
 							</ToggleGroupItem>
 						</ToggleGroup>
 					) : null}
+					<Button
+						variant="ghost"
+						size="icon-sm"
+						className="h-8 w-8 text-muted-foreground"
+						onClick={handleDownload}
+						disabled={shown.length === 0}
+						aria-label="Download response body"
+					>
+						<Download className="h-3.5 w-3.5" />
+					</Button>
 					<CopyButton text={shown} toastLabel="Response body" size="sm" />
 				</div>
 			</div>
 			{shown.length > 0 ? (
-				<pre className="max-h-96 overflow-auto rounded-md bg-muted p-3 font-mono text-xs">
-					{shown}
-				</pre>
+				<>
+					<div className="relative">
+						<Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+						<Input
+							value={query}
+							placeholder="Search response body"
+							className="h-8 pl-8 font-mono text-xs"
+							onChange={(e) => setQuery(e.target.value)}
+						/>
+						{query.length > 0 ? (
+							<span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-2xs text-muted-foreground">
+								{matchCount} {matchCount === 1 ? 'match' : 'matches'}
+							</span>
+						) : null}
+					</div>
+					<pre className="max-h-96 overflow-auto rounded-md bg-muted p-3 font-mono text-xs">
+						<HighlightedBody segments={segments} />
+					</pre>
+				</>
 			) : (
 				<p className="text-sm text-muted-foreground">Empty response body.</p>
 			)}
 		</div>
 	);
+}
+
+interface HighlightedBodyProps {
+	readonly segments: readonly HighlightSegment[];
+}
+
+// Render the body with matched runs wrapped in <mark>. A plain (empty-query)
+// body is a single non-match segment, so this collapses to a bare string. Keys
+// come from the running character offset (strictly increasing) so they stay
+// unique and stable without relying on the array index.
+function HighlightedBody({ segments }: HighlightedBodyProps): ReactNode {
+	return segments.reduce<{ readonly offset: number; readonly nodes: readonly ReactNode[] }>(
+		(acc, segment) => {
+			const key = `${acc.offset}:${segment.text.length}`;
+			const node = segment.match ? (
+				<mark key={key} className="rounded-[2px] bg-warning/40 text-foreground">
+					{segment.text}
+				</mark>
+			) : (
+				<span key={key}>{segment.text}</span>
+			);
+			return { offset: acc.offset + segment.text.length, nodes: [...acc.nodes, node] };
+		},
+		{ offset: 0, nodes: [] }
+	).nodes;
 }
 
 interface ResponseHeadersProps {

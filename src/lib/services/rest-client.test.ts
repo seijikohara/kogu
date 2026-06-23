@@ -6,11 +6,14 @@ import {
 	buildUrlWithParams,
 	DEFAULT_AUTH,
 	encodeFormBody,
+	countMatches,
 	formatJson,
 	formatResponseBody,
 	type HeaderEntry,
 	type HeaderTuple,
 	importCurl,
+	responseFilename,
+	splitHighlight,
 	parseQueryParams,
 	parseSetCookie,
 	type QueryParam,
@@ -327,6 +330,69 @@ describe('formatResponseBody', () => {
 
 	it('leaves a plain-text body unchanged', () => {
 		expect(formatResponseBody('hello world', 'text/plain')).toBe('hello world');
+	});
+});
+
+describe('splitHighlight', () => {
+	it('returns the whole text as one non-match segment for an empty query', () => {
+		expect(splitHighlight('hello world', '')).toEqual([{ text: 'hello world', match: false }]);
+	});
+
+	it('marks matched runs case-insensitively', () => {
+		expect(splitHighlight('Hello hello', 'hello')).toEqual([
+			{ text: 'Hello', match: true },
+			{ text: ' ', match: false },
+			{ text: 'hello', match: true },
+		]);
+	});
+
+	it('treats regex metacharacters literally', () => {
+		expect(splitHighlight('a.b.c', '.')).toEqual([
+			{ text: 'a', match: false },
+			{ text: '.', match: true },
+			{ text: 'b', match: false },
+			{ text: '.', match: true },
+			{ text: 'c', match: false },
+		]);
+	});
+
+	it('reassembles to the original text', () => {
+		const text = 'the quick brown fox';
+		const joined = splitHighlight(text, 'o')
+			.map((s) => s.text)
+			.join('');
+		expect(joined).toBe(text);
+	});
+});
+
+describe('countMatches', () => {
+	it('counts case-insensitive occurrences', () => {
+		expect(countMatches('aAaA', 'a')).toBe(4);
+	});
+
+	it('returns zero for an empty query', () => {
+		expect(countMatches('anything', '')).toBe(0);
+	});
+
+	it('returns zero when there is no match', () => {
+		expect(countMatches('abc', 'z')).toBe(0);
+	});
+});
+
+describe('responseFilename', () => {
+	it('defaults to a text extension without a content type', () => {
+		expect(responseFilename(undefined)).toBe('response.txt');
+	});
+
+	it.each([
+		['application/json; charset=utf-8', 'response.json'],
+		['application/vnd.api+json', 'response.json'],
+		['text/html', 'response.html'],
+		['application/xml', 'response.xml'],
+		['text/csv', 'response.csv'],
+		['text/plain', 'response.txt'],
+	])('maps %s to %s', (contentType, expected) => {
+		expect(responseFilename(contentType)).toBe(expected);
 	});
 });
 

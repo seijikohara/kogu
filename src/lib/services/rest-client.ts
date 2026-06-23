@@ -361,6 +361,46 @@ export const formatResponseBody = (body: string, contentType: string | undefined
 	return body;
 };
 
+/** A run of body text tagged with whether it matches the active search query. */
+export interface HighlightSegment {
+	readonly text: string;
+	readonly match: boolean;
+}
+
+const escapeRegExp = (input: string): string => input.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+/**
+ * Split `text` into alternating non-match / match segments for the given
+ * case-insensitive query. An empty query yields the whole text as a single
+ * non-match segment. The capturing split places matches at odd indices, so the
+ * parity of the index marks each segment.
+ */
+export const splitHighlight = (text: string, query: string): readonly HighlightSegment[] => {
+	if (query.length === 0) return [{ text, match: false }];
+	const pattern = new RegExp(`(${escapeRegExp(query)})`, 'gi');
+	return text
+		.split(pattern)
+		.map((part, index) => ({ text: part, match: index % 2 === 1 }))
+		.filter((segment) => segment.text.length > 0);
+};
+
+/** Count case-insensitive occurrences of `query` in `text` (0 for an empty query). */
+export const countMatches = (text: string, query: string): number => {
+	if (query.length === 0) return 0;
+	return splitHighlight(text, query).filter((segment) => segment.match).length;
+};
+
+/** Suggest a download filename for a response body from its Content-Type. */
+export const responseFilename = (contentType: string | undefined): string => {
+	if (!contentType) return 'response.txt';
+	const lower = contentType.toLowerCase();
+	if (isJsonContentType(lower)) return 'response.json';
+	if (lower.includes('html')) return 'response.html';
+	if (lower.includes('xml')) return 'response.xml';
+	if (lower.includes('csv')) return 'response.csv';
+	return 'response.txt';
+};
+
 /** Tone classification used by the response status badge. */
 export type StatusTone = 'success' | 'info' | 'warning' | 'destructive';
 
