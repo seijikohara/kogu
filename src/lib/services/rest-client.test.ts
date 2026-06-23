@@ -8,7 +8,9 @@ import {
 	encodeFormBody,
 	formatJson,
 	type HeaderEntry,
+	type HeaderTuple,
 	parseQueryParams,
+	parseSetCookie,
 	type QueryParam,
 	resolveBody,
 	validateJson,
@@ -244,5 +246,53 @@ describe('formatJson', () => {
 
 	it('returns invalid JSON unchanged', () => {
 		expect(formatJson('{a:1}')).toBe('{a:1}');
+	});
+});
+
+describe('parseSetCookie', () => {
+	const cookie = (key: string, value: string): HeaderTuple => [key, value];
+
+	it('ignores responses without Set-Cookie headers', () => {
+		expect(parseSetCookie([cookie('Content-Type', 'text/html')])).toEqual([]);
+	});
+
+	it('matches the Set-Cookie header case-insensitively', () => {
+		const cookies = parseSetCookie([cookie('set-cookie', 'sid=abc')]);
+		expect(cookies).toMatchObject([{ name: 'sid', value: 'abc', attributes: [] }]);
+	});
+
+	it('parses attributes and boolean flags in order', () => {
+		const cookies = parseSetCookie([
+			cookie('Set-Cookie', 'sid=abc; Path=/; HttpOnly; Secure; SameSite=Lax'),
+		]);
+		expect(cookies[0]).toMatchObject({
+			name: 'sid',
+			value: 'abc',
+			attributes: [
+				['Path', '/'],
+				['HttpOnly', ''],
+				['Secure', ''],
+				['SameSite', 'Lax'],
+			],
+		});
+	});
+
+	it('keeps a value that contains an equals sign', () => {
+		const cookies = parseSetCookie([cookie('Set-Cookie', 'token=a=b=c; Path=/')]);
+		expect(cookies[0]).toMatchObject({ name: 'token', value: 'a=b=c' });
+	});
+
+	it('collects every Set-Cookie header', () => {
+		const cookies = parseSetCookie([
+			cookie('Set-Cookie', 'a=1'),
+			cookie('Content-Type', 'text/html'),
+			cookie('Set-Cookie', 'b=2'),
+		]);
+		expect(cookies.map((c) => c.name)).toEqual(['a', 'b']);
+	});
+
+	it('drops segments without a valid name', () => {
+		expect(parseSetCookie([cookie('Set-Cookie', 'noequalssign')])).toEqual([]);
+		expect(parseSetCookie([cookie('Set-Cookie', '=novalue')])).toEqual([]);
 	});
 });

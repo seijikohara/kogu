@@ -2,6 +2,7 @@ import { createFileRoute } from '@tanstack/react-router';
 import { useEffect, useMemo, useRef, useState, type ChangeEvent, type ReactNode } from 'react';
 import {
 	Code2,
+	Cookie,
 	FileText,
 	FlaskConical,
 	Globe,
@@ -54,7 +55,9 @@ import {
 	headerValue,
 	headersToTuples,
 	isHttpMethod,
+	type ParsedCookie,
 	parseQueryParams,
+	parseSetCookie,
 	type QueryParam,
 	resolveBody,
 	type RestResponse,
@@ -110,7 +113,7 @@ export const Route = createFileRoute('/rest-client')({
 });
 
 type RequestTab = 'params' | 'auth' | 'headers' | 'body';
-type ResponseTab = 'body' | 'headers';
+type ResponseTab = 'body' | 'headers' | 'cookies';
 
 function RestClientPage() {
 	const { value: options, patch } = useRestClientOptions();
@@ -1076,14 +1079,15 @@ interface ResponseTabsProps {
 function ResponseTabs({ response, activeTab, onTabChange }: ResponseTabsProps) {
 	const contentType = headerValue(response.headers, 'content-type');
 	const formattedBody = formatResponseBody(response.body, contentType);
+	const cookies = parseSetCookie(response.headers);
 
 	const handleValueChange = (v: string) => {
-		if (v === 'body' || v === 'headers') onTabChange(v);
+		if (v === 'body' || v === 'headers' || v === 'cookies') onTabChange(v);
 	};
 
 	return (
 		<Tabs value={activeTab} onValueChange={handleValueChange} className="contents">
-			<TabsList className="grid w-full grid-cols-2">
+			<TabsList className="grid w-full grid-cols-3">
 				<TabsTrigger value="body" className="gap-2">
 					<FileText className="h-3.5 w-3.5" />
 					Body
@@ -1095,6 +1099,15 @@ function ResponseTabs({ response, activeTab, onTabChange }: ResponseTabsProps) {
 						{response.headers.length}
 					</Badge>
 				</TabsTrigger>
+				<TabsTrigger value="cookies" className="gap-2">
+					<Cookie className="h-3.5 w-3.5" />
+					Cookies
+					{cookies.length > 0 ? (
+						<Badge variant="secondary" className="ml-1 h-4 px-1.5 text-2xs">
+							{cookies.length}
+						</Badge>
+					) : null}
+				</TabsTrigger>
 			</TabsList>
 
 			<TabsContent value="body" className="pt-3">
@@ -1103,6 +1116,10 @@ function ResponseTabs({ response, activeTab, onTabChange }: ResponseTabsProps) {
 
 			<TabsContent value="headers" className="pt-3">
 				<ResponseHeaders headers={response.headers} />
+			</TabsContent>
+
+			<TabsContent value="cookies" className="pt-3">
+				<ResponseCookies cookies={cookies} />
 			</TabsContent>
 		</Tabs>
 	);
@@ -1158,6 +1175,51 @@ function ResponseHeaders({ headers }: ResponseHeadersProps): ReactNode {
 				>
 					<span className="break-all font-mono text-xs font-medium">{row.key}</span>
 					<span className="break-all font-mono text-xs text-muted-foreground">{row.value}</span>
+				</div>
+			))}
+		</div>
+	);
+}
+
+interface ResponseCookiesProps {
+	readonly cookies: readonly ParsedCookie[];
+}
+
+function ResponseCookies({ cookies }: ResponseCookiesProps): ReactNode {
+	if (cookies.length === 0) {
+		return <p className="text-sm text-muted-foreground">No cookies set by this response.</p>;
+	}
+	// Disambiguate cookies that share a name so React keys stay stable across
+	// re-renders, mirroring the occurrence-counting in ResponseHeaders.
+	const seen = new Map<string, number>();
+	const rows = cookies.map((cookie) => {
+		const occurrence = (seen.get(cookie.name) ?? 0) + 1;
+		seen.set(cookie.name, occurrence);
+		return { id: `${cookie.name}#${occurrence}`, cookie };
+	});
+	return (
+		<div className="space-y-2">
+			{rows.map(({ id, cookie }) => (
+				<div key={id} className="space-y-1.5 rounded-md border px-3 py-2">
+					<div className="flex items-baseline gap-2">
+						<span className="break-all font-mono text-xs font-medium">{cookie.name}</span>
+						<span className="break-all font-mono text-xs text-muted-foreground">
+							{cookie.value}
+						</span>
+					</div>
+					{cookie.attributes.length > 0 ? (
+						<div className="flex flex-wrap gap-1">
+							{cookie.attributes.map(([key, value]) => (
+								<Badge
+									key={`${id}:${key}`}
+									variant="outline"
+									className="font-mono text-2xs font-normal"
+								>
+									{value.length > 0 ? `${key}=${value}` : key}
+								</Badge>
+							))}
+						</div>
+					) : null}
 				</div>
 			))}
 		</div>
