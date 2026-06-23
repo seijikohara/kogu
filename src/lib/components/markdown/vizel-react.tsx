@@ -3,10 +3,10 @@
  *
  * Vizel ships no React binding, so this component drives a Tiptap editor via
  * `createVizelEditorInstance` and mounts it through `EditorContent` from
- * `@tiptap/react`. Vizel's built-in bubble menu and slash menu are not
- * reusable here and the wrapper deliberately omits them — formatting
- * commands stay reachable through the page-level toolbar and the
- * right-click context menu.
+ * `@tiptap/react`. The slash command menu (`/`) is supplied through the
+ * factory's `createSlashMenuRenderer` hook, and the selection bubble menu is
+ * registered after creation — both implemented in React (see
+ * `vizel-slash-menu.tsx` / `vizel-bubble-menu.tsx`).
  */
 import { useEffect, useRef, useState } from 'react';
 import { EditorContent } from '@tiptap/react';
@@ -17,23 +17,13 @@ import {
 	type VizelError,
 	type VizelFeatureOptions,
 } from '@vizel/core';
+import { VizelBubbleMenu } from './vizel-bubble-menu';
+import { createReactSlashMenuRenderer } from './vizel-slash-menu';
 
 // Wire Vizel's default icon renderer at module load. Without this call,
 // Vizel internals warn "Icon renderer not set" and emit empty placeholders
 // for menu / drag-handle / list-item icons.
 initVizelIconRenderer();
-
-// A no-op slash menu renderer satisfies the required factory parameter.
-// We rely on the toolbar / context menu for command discovery instead of
-// replicating Vizel's slash popup in React.
-const createNoopSlashMenuRenderer = () => ({
-	render: () => ({
-		onStart: () => {},
-		onUpdate: () => {},
-		onKeyDown: () => false,
-		onExit: () => {},
-	}),
-});
 
 interface VizelProps {
 	readonly placeholder?: string;
@@ -99,7 +89,7 @@ export function Vizel({
 			editable,
 			autofocus,
 			...(features !== undefined && { features }),
-			createSlashMenuRenderer: createNoopSlashMenuRenderer,
+			createSlashMenuRenderer: createReactSlashMenuRenderer,
 			onCreate: ({ editor: e }) => callbacksRef.current.onCreate?.({ editor: e }),
 			onError: (error) => callbacksRef.current.onError?.(error),
 		})
@@ -147,5 +137,10 @@ export function Vizel({
 		editor?.setEditable(editable);
 	}, [editor, editable]);
 
-	return <EditorContent editor={editor} className={className} />;
+	return (
+		<>
+			{editor ? <VizelBubbleMenu editor={editor} /> : null}
+			<EditorContent editor={editor} className={className} />
+		</>
+	);
 }
