@@ -39,12 +39,14 @@ import {
 	applyAuth,
 	type AuthConfig,
 	type AuthType,
+	type BodyMode,
 	buildUrlWithParams,
 	createEmptyHeader,
 	createHeaderId,
 	DEFAULT_AUTH,
 	exportAsCurl,
 	formatBytes,
+	formatJson,
 	formatResponseBody,
 	HTTP_METHODS,
 	type HeaderEntry,
@@ -54,7 +56,10 @@ import {
 	isHttpMethod,
 	parseQueryParams,
 	type QueryParam,
+	resolveBody,
 	type RestResponse,
+	validateJson,
+	withContentType,
 	SAMPLE_GET_URL,
 	SAMPLE_POST_BODY,
 	SAMPLE_POST_URL,
@@ -73,7 +78,9 @@ interface RestClientOptions {
 	readonly url: string;
 	readonly headers: readonly HeaderEntry[];
 	readonly auth: AuthConfig;
+	readonly bodyMode: BodyMode;
 	readonly body: string;
+	readonly formFields: readonly HeaderEntry[];
 	readonly followRedirects: boolean;
 	readonly timeoutMs: number;
 }
@@ -87,7 +94,9 @@ const DEFAULTS: RestClientOptions = {
 	url: '',
 	headers: DEFAULT_HEADERS,
 	auth: DEFAULT_AUTH,
+	bodyMode: 'none',
 	body: '',
+	formFields: [],
 	followRedirects: true,
 	timeoutMs: TIMEOUT_DEFAULT_MS,
 };
@@ -106,10 +115,13 @@ type ResponseTab = 'body' | 'headers';
 function RestClientPage() {
 	const { value: options, patch } = useRestClientOptions();
 	const { method, url, headers, body, followRedirects, timeoutMs } = options;
-	// `auth` was added after the options store shipped; persisted state from
-	// before that lacks the field, so fall back to the default to stay
-	// backward-compatible with rehydrated stores.
+	// `auth`, `bodyMode`, and `formFields` were added after the options store
+	// shipped; persisted state from before that lacks the fields, so fall back to
+	// defaults to stay backward-compatible with rehydrated stores. An existing
+	// body with no mode keeps sending as raw rather than silently dropping.
 	const auth = options.auth ?? DEFAULT_AUTH;
+	const bodyMode = options.bodyMode ?? (body.trim().length > 0 ? 'raw' : 'none');
+	const formFields = options.formFields ?? [];
 
 	const [response, setResponse] = useState<RestResponse | null>(null);
 	const [error, setError] = useState<string | null>(null);
@@ -180,27 +192,43 @@ function RestClientPage() {
 		patch({ headers: headers.filter((h) => h.id !== id) });
 	};
 
+	const handleFormFieldChange = (id: string, delta: Partial<HeaderEntry>) => {
+		patch({ formFields: formFields.map((f) => (f.id === id ? { ...f, ...delta } : f)) });
+	};
+
+	const handleFormFieldRemove = (id: string) => {
+		patch({ formFields: formFields.filter((f) => f.id !== id) });
+	};
+
+	const handleFormatJson = () => {
+		patch({ body: formatJson(body) });
+	};
+
 	const handleLoadGetSample = () => {
-		patch({ method: 'GET', url: SAMPLE_GET_URL, body: '' });
-		setRequestTab('headers');
+		patch({ method: 'GET', url: SAMPLE_GET_URL, bodyMode: 'none', body: '' });
+		setRequestTab('params');
 	};
 
 	const handleLoadPostSample = () => {
-		patch({
-			method: 'POST',
-			url: SAMPLE_POST_URL,
-			body: SAMPLE_POST_BODY,
-			headers: [
-				...headers.filter((h) => h.key.trim().toLowerCase() !== 'content-type' || !h.enabled),
-				{
-					id: createHeaderId(),
-					key: 'Content-Type',
-					value: 'application/json',
-					enabled: true,
-				},
-			],
-		});
+		// The JSON body mode supplies Content-Type at send time, so the sample no
+		// longer needs to inject a header row.
+		patch({ method: 'POST', url: SAMPLE_POST_URL, bodyMode: 'json', body: SAMPLE_POST_BODY });
 		setRequestTab('body');
+	};
+
+	// Compose the wire request: fold auth into headers/URL, resolve the body for
+	// the selected mode, and add the mode's Content-Type unless the user set one.
+	const buildEffectiveRequest = () => {
+		const withAuth = applyAuth(headersToTuples(headers), url, auth);
+		const resolved = resolveBody(bodyMode, body, formFields);
+		return {
+			method,
+			url: withAuth.url,
+			headers: withContentType(withAuth.headers, resolved.contentType),
+			body: resolved.body,
+			followRedirects,
+			timeoutMs,
+		};
 	};
 
 	const handleCopyCurl = async () => {
@@ -208,15 +236,7 @@ function RestClientPage() {
 			toast.error('Enter a URL first');
 			return;
 		}
-		const effective = applyAuth(headersToTuples(headers), url, auth);
-		const command = exportAsCurl({
-			method,
-			url: effective.url,
-			headers: effective.headers,
-			body,
-			followRedirects,
-			timeoutMs,
-		});
+		const command = exportAsCurl(buildEffectiveRequest());
 		try {
 			await navigator.clipboard.writeText(command);
 			toast.success('cURL command copied to clipboard');
@@ -230,15 +250,7 @@ function RestClientPage() {
 		setSending(true);
 		setError(null);
 		try {
-			const effective = applyAuth(headersToTuples(headers), url, auth);
-			const res = await sendRequest({
-				method,
-				url: effective.url,
-				headers: effective.headers,
-				body,
-				followRedirects,
-				timeoutMs,
-			});
+			const res = await sendRequest(buildEffectiveRequest());
 			setResponse(res);
 			setResponseTab('body');
 		} catch (e) {
@@ -293,7 +305,9 @@ function RestClientPage() {
 							auth={auth}
 							headers={headers}
 							enabledHeaderCount={enabledHeaderCount}
+							bodyMode={bodyMode}
 							body={body}
+							formFields={formFields}
 							onParamChange={handleParamChange}
 							onParamRemove={handleParamRemove}
 							onParamAdd={handleParamAdd}
@@ -301,7 +315,12 @@ function RestClientPage() {
 							onHeaderChange={handleHeaderChange}
 							onHeaderRemove={handleHeaderRemove}
 							onHeaderAdd={() => patch({ headers: [...headers, createEmptyHeader()] })}
+							onBodyModeChange={(m) => patch({ bodyMode: m })}
 							onBodyChange={(e) => patch({ body: e.target.value })}
+							onFormFieldChange={handleFormFieldChange}
+							onFormFieldRemove={handleFormFieldRemove}
+							onFormFieldAdd={() => patch({ formFields: [...formFields, createEmptyHeader()] })}
+							onFormatJson={handleFormatJson}
 						/>
 
 						{error ? <ErrorDisplay variant="banner" message={error} /> : null}
@@ -496,7 +515,9 @@ interface RequestPanelProps {
 	readonly auth: AuthConfig;
 	readonly headers: readonly HeaderEntry[];
 	readonly enabledHeaderCount: number;
+	readonly bodyMode: BodyMode;
 	readonly body: string;
+	readonly formFields: readonly HeaderEntry[];
 	readonly onParamChange: (id: string, delta: Partial<QueryParam>) => void;
 	readonly onParamRemove: (id: string) => void;
 	readonly onParamAdd: () => void;
@@ -504,7 +525,12 @@ interface RequestPanelProps {
 	readonly onHeaderChange: (id: string, delta: Partial<HeaderEntry>) => void;
 	readonly onHeaderRemove: (id: string) => void;
 	readonly onHeaderAdd: () => void;
+	readonly onBodyModeChange: (mode: BodyMode) => void;
 	readonly onBodyChange: (e: ChangeEvent<HTMLTextAreaElement>) => void;
+	readonly onFormFieldChange: (id: string, delta: Partial<HeaderEntry>) => void;
+	readonly onFormFieldRemove: (id: string) => void;
+	readonly onFormFieldAdd: () => void;
+	readonly onFormatJson: () => void;
 }
 
 function RequestPanel({
@@ -515,7 +541,9 @@ function RequestPanel({
 	auth,
 	headers,
 	enabledHeaderCount,
+	bodyMode,
 	body,
+	formFields,
 	onParamChange,
 	onParamRemove,
 	onParamAdd,
@@ -523,7 +551,12 @@ function RequestPanel({
 	onHeaderChange,
 	onHeaderRemove,
 	onHeaderAdd,
+	onBodyModeChange,
 	onBodyChange,
+	onFormFieldChange,
+	onFormFieldRemove,
+	onFormFieldAdd,
+	onFormatJson,
 }: RequestPanelProps) {
 	const handleValueChange = (v: string) => {
 		if (v === 'params' || v === 'auth' || v === 'headers' || v === 'body') onTabChange(v);
@@ -564,9 +597,9 @@ function RequestPanel({
 						<TabsTrigger value="body" className="gap-2">
 							<FileText className="h-3.5 w-3.5" />
 							Body
-							{body.trim().length > 0 ? (
-								<Badge variant="secondary" className="ml-1 h-4 px-1.5 text-2xs">
-									{body.length}
+							{bodyMode !== 'none' ? (
+								<Badge variant="secondary" className="ml-1 h-4 px-1.5 text-2xs uppercase">
+									{bodyMode}
 								</Badge>
 							) : null}
 						</TabsTrigger>
@@ -594,18 +627,18 @@ function RequestPanel({
 						/>
 					</TabsContent>
 
-					<TabsContent value="body" className="space-y-2 pt-3">
-						<Textarea
-							value={body}
-							placeholder='{"key": "value"}'
-							rows={10}
-							className="font-mono text-sm"
-							onChange={onBodyChange}
+					<TabsContent value="body" className="space-y-3 pt-3">
+						<BodyEditor
+							bodyMode={bodyMode}
+							body={body}
+							formFields={formFields}
+							onBodyModeChange={onBodyModeChange}
+							onBodyChange={onBodyChange}
+							onFormFieldChange={onFormFieldChange}
+							onFormFieldRemove={onFormFieldRemove}
+							onFormFieldAdd={onFormFieldAdd}
+							onFormatJson={onFormatJson}
 						/>
-						<p className="text-xs text-muted-foreground">
-							Content-Type defaults to <code className="font-mono">text/plain</code> unless set in
-							Headers.
-						</p>
 					</TabsContent>
 				</Tabs>
 			</CardContent>
@@ -776,6 +809,124 @@ function ParamRow({ entry, onChange, onRemove }: ParamRowProps) {
 			</Button>
 		</div>
 	);
+}
+
+const BODY_MODE_OPTIONS: readonly { readonly value: BodyMode; readonly label: string }[] = [
+	{ value: 'none', label: 'None' },
+	{ value: 'json', label: 'JSON' },
+	{ value: 'form', label: 'Form URL-encoded' },
+	{ value: 'raw', label: 'Raw' },
+];
+
+interface BodyEditorProps {
+	readonly bodyMode: BodyMode;
+	readonly body: string;
+	readonly formFields: readonly HeaderEntry[];
+	readonly onBodyModeChange: (mode: BodyMode) => void;
+	readonly onBodyChange: (e: ChangeEvent<HTMLTextAreaElement>) => void;
+	readonly onFormFieldChange: (id: string, delta: Partial<HeaderEntry>) => void;
+	readonly onFormFieldRemove: (id: string) => void;
+	readonly onFormFieldAdd: () => void;
+	readonly onFormatJson: () => void;
+}
+
+function BodyEditor({
+	bodyMode,
+	body,
+	formFields,
+	onBodyModeChange,
+	onBodyChange,
+	onFormFieldChange,
+	onFormFieldRemove,
+	onFormFieldAdd,
+	onFormatJson,
+}: BodyEditorProps) {
+	const handleModeChange = (v: string) => {
+		if (v === 'none' || v === 'json' || v === 'form' || v === 'raw') onBodyModeChange(v);
+	};
+	const jsonValid = bodyMode === 'json' ? validateJson(body) : null;
+
+	return (
+		<>
+			<FormSelect
+				label="Body type"
+				value={bodyMode}
+				options={BODY_MODE_OPTIONS}
+				onValueChange={handleModeChange}
+				size="compact"
+			/>
+
+			{bodyMode === 'none' ? (
+				<p className="text-xs text-muted-foreground">This request will be sent without a body.</p>
+			) : null}
+
+			{bodyMode === 'json' ? (
+				<>
+					<div className="flex items-center justify-between gap-2">
+						<JsonValidity valid={jsonValid} />
+						<Button
+							variant="outline"
+							size="sm"
+							onClick={onFormatJson}
+							disabled={jsonValid !== true}
+						>
+							Format
+						</Button>
+					</div>
+					<Textarea
+						value={body}
+						placeholder='{"key": "value"}'
+						rows={10}
+						className="font-mono text-sm"
+						onChange={onBodyChange}
+					/>
+				</>
+			) : null}
+
+			{bodyMode === 'form' ? (
+				<>
+					{formFields.length === 0 ? (
+						<EmbeddedEmptyState
+							icon={FileText}
+							title="No form fields"
+							description="Add fields sent as application/x-www-form-urlencoded."
+						/>
+					) : (
+						<div className="space-y-1.5">
+							{formFields.map((entry) => (
+								<ParamRow
+									key={entry.id}
+									entry={entry}
+									onChange={(delta) => onFormFieldChange(entry.id, delta)}
+									onRemove={() => onFormFieldRemove(entry.id)}
+								/>
+							))}
+						</div>
+					)}
+					<Button variant="outline" size="sm" onClick={onFormFieldAdd}>
+						<Plus className="h-3.5 w-3.5" />
+						Add field
+					</Button>
+				</>
+			) : null}
+
+			{bodyMode === 'raw' ? (
+				<Textarea
+					value={body}
+					placeholder="Raw request body"
+					rows={10}
+					className="font-mono text-sm"
+					onChange={onBodyChange}
+				/>
+			) : null}
+		</>
+	);
+}
+
+function JsonValidity({ valid }: { readonly valid: boolean | null }): ReactNode {
+	if (valid === true) return <ToneBadge tone="success">Valid JSON</ToneBadge>;
+	if (valid === false) return <ToneBadge tone="destructive">Invalid JSON</ToneBadge>;
+	return <span className="text-xs text-muted-foreground">Enter a JSON body</span>;
 }
 
 const AUTH_TYPE_OPTIONS: readonly { readonly value: AuthType; readonly label: string }[] = [
