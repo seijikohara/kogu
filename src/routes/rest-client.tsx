@@ -1,10 +1,11 @@
 import { createFileRoute } from '@tanstack/react-router';
-import { useMemo, useState, type ChangeEvent, type ReactNode } from 'react';
+import { useEffect, useMemo, useRef, useState, type ChangeEvent, type ReactNode } from 'react';
 import {
 	Code2,
 	FileText,
 	FlaskConical,
 	Globe,
+	Link2,
 	Loader2,
 	Plus,
 	Send,
@@ -33,6 +34,7 @@ import { Textarea } from '@/lib/components/ui/textarea';
 import { ToneBadge } from '@/lib/components/ui/tone-badge';
 import { useDocumentTitle } from '@/lib/hooks';
 import {
+	buildUrlWithParams,
 	createEmptyHeader,
 	createHeaderId,
 	exportAsCurl,
@@ -44,6 +46,8 @@ import {
 	headerValue,
 	headersToTuples,
 	isHttpMethod,
+	parseQueryParams,
+	type QueryParam,
 	type RestResponse,
 	SAMPLE_GET_URL,
 	SAMPLE_POST_BODY,
@@ -88,7 +92,7 @@ export const Route = createFileRoute('/rest-client')({
 	component: RestClientPage,
 });
 
-type RequestTab = 'headers' | 'body';
+type RequestTab = 'params' | 'headers' | 'body';
 type ResponseTab = 'body' | 'headers';
 
 function RestClientPage() {
@@ -98,8 +102,29 @@ function RestClientPage() {
 	const [response, setResponse] = useState<RestResponse | null>(null);
 	const [error, setError] = useState<string | null>(null);
 	const [sending, setSending] = useState(false);
-	const [requestTab, setRequestTab] = useState<RequestTab>('headers');
+	const [requestTab, setRequestTab] = useState<RequestTab>('params');
 	const [responseTab, setResponseTab] = useState<ResponseTab>('body');
+
+	// Query parameters are an editable view of the URL's query string. Keeping a
+	// local model (instead of re-parsing on every render) preserves input focus
+	// while typing. The effect re-syncs only when the URL changes from outside
+	// the table (paste, sample, history), guarded so table edits don't loop.
+	const [paramRows, setParamRows] = useState<readonly QueryParam[]>(() => parseQueryParams(url));
+	const paramsFromTableRef = useRef(false);
+
+	useEffect(() => {
+		if (paramsFromTableRef.current) {
+			paramsFromTableRef.current = false;
+			return;
+		}
+		setParamRows(parseQueryParams(url));
+	}, [url]);
+
+	const commitParams = (next: readonly QueryParam[]) => {
+		setParamRows(next);
+		paramsFromTableRef.current = true;
+		patch({ url: buildUrlWithParams(url, next) });
+	};
 
 	useDocumentTitle('HTTP REST Client');
 
@@ -109,6 +134,25 @@ function RestClientPage() {
 		() => headers.filter((h) => h.enabled && h.key.trim().length > 0).length,
 		[headers]
 	);
+
+	const enabledParamCount = useMemo(
+		() => paramRows.filter((p) => p.enabled && p.key.trim().length > 0).length,
+		[paramRows]
+	);
+
+	const handleParamChange = (id: string, delta: Partial<QueryParam>) => {
+		commitParams(paramRows.map((p) => (p.id === id ? { ...p, ...delta } : p)));
+	};
+
+	const handleParamRemove = (id: string) => {
+		commitParams(paramRows.filter((p) => p.id !== id));
+	};
+
+	const handleParamAdd = () => {
+		// New rows live in the local model until they gain a key; an empty key is
+		// filtered out of the rebuilt URL by buildUrlWithParams.
+		setParamRows([...paramRows, { id: createHeaderId(), key: '', value: '', enabled: true }]);
+	};
 
 	const handleMethodChange = (value: string) => {
 		if (isHttpMethod(value)) patch({ method: value });
@@ -230,9 +274,14 @@ function RestClientPage() {
 						<RequestPanel
 							activeTab={requestTab}
 							onTabChange={setRequestTab}
+							params={paramRows}
+							enabledParamCount={enabledParamCount}
 							headers={headers}
 							enabledHeaderCount={enabledHeaderCount}
 							body={body}
+							onParamChange={handleParamChange}
+							onParamRemove={handleParamRemove}
+							onParamAdd={handleParamAdd}
 							onHeaderChange={handleHeaderChange}
 							onHeaderRemove={handleHeaderRemove}
 							onHeaderAdd={() => patch({ headers: [...headers, createEmptyHeader()] })}
@@ -426,9 +475,14 @@ function RequestBar({
 interface RequestPanelProps {
 	readonly activeTab: RequestTab;
 	readonly onTabChange: (tab: RequestTab) => void;
+	readonly params: readonly QueryParam[];
+	readonly enabledParamCount: number;
 	readonly headers: readonly HeaderEntry[];
 	readonly enabledHeaderCount: number;
 	readonly body: string;
+	readonly onParamChange: (id: string, delta: Partial<QueryParam>) => void;
+	readonly onParamRemove: (id: string) => void;
+	readonly onParamAdd: () => void;
 	readonly onHeaderChange: (id: string, delta: Partial<HeaderEntry>) => void;
 	readonly onHeaderRemove: (id: string) => void;
 	readonly onHeaderAdd: () => void;
@@ -438,23 +492,37 @@ interface RequestPanelProps {
 function RequestPanel({
 	activeTab,
 	onTabChange,
+	params,
+	enabledParamCount,
 	headers,
 	enabledHeaderCount,
 	body,
+	onParamChange,
+	onParamRemove,
+	onParamAdd,
 	onHeaderChange,
 	onHeaderRemove,
 	onHeaderAdd,
 	onBodyChange,
 }: RequestPanelProps) {
 	const handleValueChange = (v: string) => {
-		if (v === 'headers' || v === 'body') onTabChange(v);
+		if (v === 'params' || v === 'headers' || v === 'body') onTabChange(v);
 	};
 
 	return (
 		<Card density="compact">
 			<CardContent className="space-y-3">
 				<Tabs value={activeTab} onValueChange={handleValueChange}>
-					<TabsList className="grid w-full grid-cols-2">
+					<TabsList className="grid w-full grid-cols-3">
+						<TabsTrigger value="params" className="gap-2">
+							<Link2 className="h-3.5 w-3.5" />
+							Params
+							{enabledParamCount > 0 ? (
+								<Badge variant="secondary" className="ml-1 h-4 px-1.5 text-2xs">
+									{enabledParamCount}
+								</Badge>
+							) : null}
+						</TabsTrigger>
 						<TabsTrigger value="headers" className="gap-2">
 							<Settings2 className="h-3.5 w-3.5" />
 							Headers
@@ -474,6 +542,15 @@ function RequestPanel({
 							) : null}
 						</TabsTrigger>
 					</TabsList>
+
+					<TabsContent value="params" className="space-y-2 pt-3">
+						<ParamsEditor
+							params={params}
+							onParamChange={onParamChange}
+							onParamRemove={onParamRemove}
+							onParamAdd={onParamAdd}
+						/>
+					</TabsContent>
 
 					<TabsContent value="headers" className="space-y-2 pt-3">
 						<HeadersEditor
@@ -581,6 +658,86 @@ function HeaderRow({ entry, onChange, onRemove }: HeaderRowProps) {
 				className="h-8 w-8 text-muted-foreground hover:text-destructive"
 				onClick={onRemove}
 				aria-label="Remove header"
+			>
+				<Trash2 className="h-3.5 w-3.5" />
+			</Button>
+		</div>
+	);
+}
+
+interface ParamsEditorProps {
+	readonly params: readonly QueryParam[];
+	readonly onParamChange: (id: string, delta: Partial<QueryParam>) => void;
+	readonly onParamRemove: (id: string) => void;
+	readonly onParamAdd: () => void;
+}
+
+function ParamsEditor({ params, onParamChange, onParamRemove, onParamAdd }: ParamsEditorProps) {
+	return (
+		<>
+			{params.length === 0 ? (
+				<EmbeddedEmptyState
+					icon={Link2}
+					title="No query parameters"
+					description="Add parameters or type them after ? in the URL."
+				/>
+			) : (
+				<div className="space-y-1.5">
+					{params.map((entry) => (
+						<ParamRow
+							key={entry.id}
+							entry={entry}
+							onChange={(delta) => onParamChange(entry.id, delta)}
+							onRemove={() => onParamRemove(entry.id)}
+						/>
+					))}
+				</div>
+			)}
+			<Button variant="outline" size="sm" onClick={onParamAdd}>
+				<Plus className="h-3.5 w-3.5" />
+				Add parameter
+			</Button>
+		</>
+	);
+}
+
+interface ParamRowProps {
+	readonly entry: QueryParam;
+	readonly onChange: (delta: Partial<QueryParam>) => void;
+	readonly onRemove: () => void;
+}
+
+function ParamRow({ entry, onChange, onRemove }: ParamRowProps) {
+	return (
+		<div
+			className={cn(
+				'grid grid-cols-[auto_minmax(0,1fr)_minmax(0,2fr)_auto] items-center gap-2',
+				!entry.enabled && 'opacity-50'
+			)}
+		>
+			<Checkbox
+				checked={entry.enabled}
+				onCheckedChange={(v) => onChange({ enabled: Boolean(v) })}
+				aria-label="Include parameter"
+			/>
+			<Input
+				value={entry.key}
+				placeholder="Key"
+				className="h-8 font-mono text-xs"
+				onChange={(e) => onChange({ key: e.target.value })}
+			/>
+			<Input
+				value={entry.value}
+				placeholder="Value"
+				className="h-8 font-mono text-xs"
+				onChange={(e) => onChange({ value: e.target.value })}
+			/>
+			<Button
+				variant="ghost"
+				size="icon-sm"
+				className="h-8 w-8 text-muted-foreground hover:text-destructive"
+				onClick={onRemove}
+				aria-label="Remove parameter"
 			>
 				<Trash2 className="h-3.5 w-3.5" />
 			</Button>
