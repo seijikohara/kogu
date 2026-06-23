@@ -512,7 +512,7 @@ function RequestPanel({
 	return (
 		<Card density="compact">
 			<CardContent className="space-y-3">
-				<Tabs value={activeTab} onValueChange={handleValueChange}>
+				<Tabs value={activeTab} onValueChange={handleValueChange} className="contents">
 					<TabsList className="grid w-full grid-cols-3">
 						<TabsTrigger value="params" className="gap-2">
 							<Link2 className="h-3.5 w-3.5" />
@@ -800,7 +800,7 @@ function ResponseTabs({ response, activeTab, onTabChange }: ResponseTabsProps) {
 	};
 
 	return (
-		<Tabs value={activeTab} onValueChange={handleValueChange}>
+		<Tabs value={activeTab} onValueChange={handleValueChange} className="contents">
 			<TabsList className="grid w-full grid-cols-2">
 				<TabsTrigger value="body" className="gap-2">
 					<FileText className="h-3.5 w-3.5" />
