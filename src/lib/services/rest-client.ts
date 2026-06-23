@@ -31,6 +31,72 @@ export interface HeaderEntry {
 /** Tuple form transmitted over IPC. */
 export type HeaderTuple = readonly [string, string];
 
+/**
+ * Single query-parameter row derived from the URL. Rows are parsed from the
+ * URL's query string on render and written back on edit, so the URL field stays
+ * the single source of truth (no separate persisted parameter state).
+ */
+export interface QueryParam {
+	readonly id: string;
+	readonly key: string;
+	readonly value: string;
+	readonly enabled: boolean;
+}
+
+/** Split a URL into its base (scheme + path), query string, and `#fragment`. */
+const splitUrl = (url: string): { base: string; query: string; fragment: string } => {
+	const hashIndex = url.indexOf('#');
+	const fragment = hashIndex === -1 ? '' : url.slice(hashIndex);
+	const withoutFragment = hashIndex === -1 ? url : url.slice(0, hashIndex);
+	const queryIndex = withoutFragment.indexOf('?');
+	const base = queryIndex === -1 ? withoutFragment : withoutFragment.slice(0, queryIndex);
+	const query = queryIndex === -1 ? '' : withoutFragment.slice(queryIndex + 1);
+	return { base, query, fragment };
+};
+
+const decodeComponent = (value: string): string => {
+	try {
+		return decodeURIComponent(value.replace(/\+/g, ' '));
+	} catch {
+		return value;
+	}
+};
+
+/**
+ * Parse the query string of `url` into editable rows. Disabled rows are never
+ * represented in a URL, so every parsed row is enabled. Returns an empty array
+ * when the URL carries no query string.
+ */
+export const parseQueryParams = (url: string): readonly QueryParam[] => {
+	const { query } = splitUrl(url);
+	if (query.length === 0) return [];
+	return query.split('&').map((pair, index) => {
+		const eq = pair.indexOf('=');
+		const rawKey = eq === -1 ? pair : pair.slice(0, eq);
+		const rawValue = eq === -1 ? '' : pair.slice(eq + 1);
+		return {
+			id: `qp_${index}`,
+			key: decodeComponent(rawKey),
+			value: decodeComponent(rawValue),
+			enabled: true,
+		};
+	});
+};
+
+/**
+ * Rebuild a URL from its base and the supplied parameter rows. Enabled rows
+ * with a non-empty key are encoded into the query string; the original
+ * `#fragment` is preserved.
+ */
+export const buildUrlWithParams = (url: string, params: readonly QueryParam[]): string => {
+	const { base, fragment } = splitUrl(url);
+	const query = params
+		.filter((p) => p.enabled && p.key.trim().length > 0)
+		.map((p) => `${encodeURIComponent(p.key.trim())}=${encodeURIComponent(p.value)}`)
+		.join('&');
+	return `${base}${query.length > 0 ? `?${query}` : ''}${fragment}`;
+};
+
 export interface RestRequest {
 	readonly method: HttpMethod | string;
 	readonly url: string;
