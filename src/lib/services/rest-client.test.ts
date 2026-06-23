@@ -5,9 +5,22 @@ import {
 	type AuthConfig,
 	buildUrlWithParams,
 	DEFAULT_AUTH,
+	encodeFormBody,
+	formatJson,
+	type HeaderEntry,
 	parseQueryParams,
 	type QueryParam,
+	resolveBody,
+	validateJson,
+	withContentType,
 } from './rest-client';
+
+const field = (key: string, value: string, enabled = true): HeaderEntry => ({
+	id: `${key}-${value}`,
+	key,
+	value,
+	enabled,
+});
 
 const auth = (overrides: Partial<AuthConfig>): AuthConfig => ({ ...DEFAULT_AUTH, ...overrides });
 
@@ -150,5 +163,86 @@ describe('applyAuth', () => {
 			headers: base,
 			url,
 		});
+	});
+});
+
+describe('encodeFormBody', () => {
+	it('url-encodes enabled rows', () => {
+		expect(encodeFormBody([field('a', '1'), field('q', 'hello world')])).toBe(
+			'a=1&q=hello%20world'
+		);
+	});
+
+	it('drops disabled and empty-key rows', () => {
+		expect(encodeFormBody([field('a', '1'), field('b', '2', false), field('', 'x')])).toBe('a=1');
+	});
+});
+
+describe('resolveBody', () => {
+	const fields = [field('a', '1')];
+
+	it('sends nothing for none', () => {
+		expect(resolveBody('none', 'ignored', fields)).toEqual({ body: '', contentType: null });
+	});
+
+	it('keeps the raw body with no implied type', () => {
+		expect(resolveBody('raw', 'plain', fields)).toEqual({ body: 'plain', contentType: null });
+	});
+
+	it('applies the JSON content type', () => {
+		expect(resolveBody('json', '{"a":1}', fields)).toEqual({
+			body: '{"a":1}',
+			contentType: 'application/json',
+		});
+	});
+
+	it('encodes form fields with the urlencoded type', () => {
+		expect(resolveBody('form', 'ignored', fields)).toEqual({
+			body: 'a=1',
+			contentType: 'application/x-www-form-urlencoded',
+		});
+	});
+});
+
+describe('withContentType', () => {
+	it('appends the type when none is present', () => {
+		expect(withContentType([['Accept', '*/*']], 'application/json')).toContainEqual([
+			'Content-Type',
+			'application/json',
+		]);
+	});
+
+	it('respects an existing Content-Type (case-insensitive)', () => {
+		const headers = [['content-type', 'text/plain']] as const;
+		expect(withContentType(headers, 'application/json')).toEqual(headers);
+	});
+
+	it('is a no-op when the type is null', () => {
+		const headers = [['Accept', '*/*']] as const;
+		expect(withContentType(headers, null)).toBe(headers);
+	});
+});
+
+describe('validateJson', () => {
+	it('returns null for empty input', () => {
+		expect(validateJson('   ')).toBeNull();
+	});
+
+	it('returns true for valid JSON', () => {
+		expect(validateJson('{"a":1}')).toBe(true);
+	});
+
+	it('returns false for invalid JSON', () => {
+		expect(validateJson('{a:1}')).toBe(false);
+	});
+});
+
+describe('formatJson', () => {
+	it('pretty-prints valid JSON', () => {
+		expect(formatJson('{"a":1}')).toBe('{\n\t"a": 1\n}'.replace(/\t/g, '  '));
+	});
+
+	it('returns invalid JSON unchanged', () => {
+		expect(formatJson('{a:1}')).toBe('{a:1}');
 	});
 });

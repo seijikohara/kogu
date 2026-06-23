@@ -212,6 +212,69 @@ export const headersToTuples = (entries: readonly HeaderEntry[]): readonly Heade
 		.filter((h) => h.enabled && h.key.trim().length > 0)
 		.map((h) => [h.key.trim(), h.value] as const);
 
+/** How the request body is composed. */
+export type BodyMode = 'none' | 'json' | 'form' | 'raw';
+
+/** Encode key/value rows as an `application/x-www-form-urlencoded` body. */
+export const encodeFormBody = (fields: readonly HeaderEntry[]): string =>
+	fields
+		.filter((f) => f.enabled && f.key.trim().length > 0)
+		.map((f) => `${encodeURIComponent(f.key.trim())}=${encodeURIComponent(f.value)}`)
+		.join('&');
+
+/**
+ * Resolve the effective request body for a body mode, plus the Content-Type the
+ * mode implies (`null` when the mode dictates none). `json` and `form` carry a
+ * canonical type; `raw` leaves the type to the user's headers; `none` sends no
+ * body.
+ */
+export const resolveBody = (
+	mode: BodyMode,
+	body: string,
+	formFields: readonly HeaderEntry[]
+): { readonly body: string; readonly contentType: string | null } => {
+	if (mode === 'none') return { body: '', contentType: null };
+	if (mode === 'json') return { body, contentType: 'application/json' };
+	if (mode === 'form') {
+		return { body: encodeFormBody(formFields), contentType: 'application/x-www-form-urlencoded' };
+	}
+	return { body, contentType: null };
+};
+
+/**
+ * Append a Content-Type header only when the request does not already declare
+ * one (case-insensitive), so an explicit user header always wins over the body
+ * mode's implied type.
+ */
+export const withContentType = (
+	headers: readonly HeaderTuple[],
+	contentType: string | null
+): readonly HeaderTuple[] => {
+	if (contentType === null) return headers;
+	const hasContentType = headers.some(([k]) => k.toLowerCase() === 'content-type');
+	return hasContentType ? headers : [...headers, ['Content-Type', contentType]];
+};
+
+/** Validate a JSON string. Returns null for an empty string (nothing to check). */
+export const validateJson = (text: string): boolean | null => {
+	if (text.trim().length === 0) return null;
+	try {
+		JSON.parse(text);
+		return true;
+	} catch {
+		return false;
+	}
+};
+
+/** Pretty-print a JSON string; returns the input unchanged when it is invalid. */
+export const formatJson = (text: string): string => {
+	try {
+		return JSON.stringify(JSON.parse(text), null, 2);
+	} catch {
+		return text;
+	}
+};
+
 /** Case-insensitive lookup for a header value. */
 export const headerValue = (headers: readonly HeaderTuple[], name: string): string | undefined => {
 	const lower = name.toLowerCase();
