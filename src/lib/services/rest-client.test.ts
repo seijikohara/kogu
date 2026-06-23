@@ -9,6 +9,7 @@ import {
 	formatJson,
 	type HeaderEntry,
 	type HeaderTuple,
+	importCurl,
 	parseQueryParams,
 	parseSetCookie,
 	type QueryParam,
@@ -294,5 +295,62 @@ describe('parseSetCookie', () => {
 	it('drops segments without a valid name', () => {
 		expect(parseSetCookie([cookie('Set-Cookie', 'noequalssign')])).toEqual([]);
 		expect(parseSetCookie([cookie('Set-Cookie', '=novalue')])).toEqual([]);
+	});
+});
+
+describe('importCurl', () => {
+	it('rejects input that does not start with curl', () => {
+		const result = importCurl('wget https://example.com');
+		expect(result.ok).toBe(false);
+	});
+
+	it('maps method, url, and headers', () => {
+		const result = importCurl(
+			"curl -X PUT 'https://example.com/api' -H 'Accept: application/json'"
+		);
+		expect(result.ok).toBe(true);
+		if (!result.ok) return;
+		expect(result.value.method).toBe('PUT');
+		expect(result.value.url).toBe('https://example.com/api');
+		expect(result.value.headers).toMatchObject([
+			{ key: 'Accept', value: 'application/json', enabled: true },
+		]);
+	});
+
+	it('infers POST and a raw body from a data flag', () => {
+		const result = importCurl("curl https://example.com --data-raw 'hello'");
+		expect(result.ok).toBe(true);
+		if (!result.ok) return;
+		expect(result.value.method).toBe('POST');
+		expect(result.value.bodyMode).toBe('raw');
+		expect(result.value.body).toBe('hello');
+	});
+
+	it('upgrades the body mode to json when a JSON content type is present', () => {
+		const result = importCurl(
+			`curl -X POST 'https://example.com' -H 'Content-Type: application/json' --data-raw '{"a":1}'`
+		);
+		expect(result.ok).toBe(true);
+		if (!result.ok) return;
+		expect(result.value.bodyMode).toBe('json');
+		expect(result.value.body).toBe('{"a":1}');
+	});
+
+	it('converts and clamps a max-time timeout to milliseconds', () => {
+		const within = importCurl('curl https://example.com --max-time 30');
+		expect(within.ok && within.value.timeoutMs).toBe(30_000);
+
+		const clampedHigh = importCurl('curl https://example.com --max-time 600');
+		expect(clampedHigh.ok && clampedHigh.value.timeoutMs).toBe(60_000);
+	});
+
+	it('leaves the timeout unset when no max-time is given', () => {
+		const result = importCurl('curl https://example.com');
+		expect(result.ok && result.value.timeoutMs).toBeNull();
+	});
+
+	it('captures the follow-redirects flag', () => {
+		const result = importCurl('curl -L https://example.com');
+		expect(result.ok && result.value.followRedirects).toBe(true);
 	});
 });

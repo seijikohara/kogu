@@ -1,5 +1,7 @@
 import { invoke } from '@tauri-apps/api/core';
 
+import { type ParsedCurl, parseCurl, type Result } from './curl';
+
 export type HttpMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE' | 'HEAD' | 'OPTIONS';
 
 export const HTTP_METHODS: readonly HttpMethod[] = [
@@ -390,3 +392,61 @@ export const createEmptyHeader = (): HeaderEntry => ({
 	value: '',
 	enabled: true,
 });
+
+/**
+ * Effective request fields decoded from a cURL command. `timeoutMs` is null
+ * when the command does not pin a timeout, so the caller keeps its current
+ * value instead of overwriting it.
+ */
+export interface CurlImport {
+	readonly method: HttpMethod;
+	readonly url: string;
+	readonly headers: readonly HeaderEntry[];
+	readonly bodyMode: BodyMode;
+	readonly body: string;
+	readonly followRedirects: boolean;
+	readonly timeoutMs: number | null;
+}
+
+const hasJsonContentType = (headers: readonly HeaderEntry[]): boolean =>
+	headers.some(
+		(h) =>
+			h.key.toLowerCase() === 'content-type' && h.value.toLowerCase().includes('application/json')
+	);
+
+/**
+ * Map a parsed cURL command onto rest-client request fields. The cURL parser
+ * only distinguishes a raw body, so the body mode is upgraded to `json` when a
+ * JSON Content-Type header accompanies it. A `--max-time` value is converted to
+ * milliseconds and clamped to the timeout slider's bounds.
+ */
+export const restRequestFromCurl = (parsed: ParsedCurl): CurlImport => {
+	const headers: readonly HeaderEntry[] = parsed.headers.map((h) => ({
+		id: createHeaderId(),
+		key: h.key,
+		value: h.value,
+		enabled: true,
+	}));
+	const bodyMode: BodyMode =
+		parsed.bodyMode === 'none' ? 'none' : hasJsonContentType(headers) ? 'json' : 'raw';
+	const timeoutMs =
+		parsed.timeoutSeconds > 0
+			? Math.min(TIMEOUT_MAX_MS, Math.max(TIMEOUT_MIN_MS, Math.round(parsed.timeoutSeconds * 1000)))
+			: null;
+	return {
+		method: parsed.method,
+		url: parsed.url,
+		headers,
+		bodyMode,
+		body: parsed.body,
+		followRedirects: parsed.followRedirects,
+		timeoutMs,
+	};
+};
+
+/** Parse a cURL command string into rest-client request fields. */
+export const importCurl = (command: string): Result<CurlImport> => {
+	const parsed = parseCurl(command);
+	if (!parsed.ok) return parsed;
+	return { ok: true, value: restRequestFromCurl(parsed.value) };
+};

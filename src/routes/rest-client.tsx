@@ -1,6 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { useEffect, useMemo, useRef, useState, type ChangeEvent, type ReactNode } from 'react';
 import {
+	ClipboardPaste,
 	Code2,
 	Cookie,
 	FileText,
@@ -30,6 +31,15 @@ import { Badge } from '@/lib/components/ui/badge';
 import { Button } from '@/lib/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/lib/components/ui/card';
 import { Checkbox } from '@/lib/components/ui/checkbox';
+import {
+	Dialog,
+	DialogContent,
+	DialogDescription,
+	DialogFooter,
+	DialogHeader,
+	DialogTitle,
+	DialogTrigger,
+} from '@/lib/components/ui/dialog';
 import { Input } from '@/lib/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/lib/components/ui/tabs';
 import { Textarea } from '@/lib/components/ui/textarea';
@@ -45,8 +55,10 @@ import {
 	buildUrlWithParams,
 	createEmptyHeader,
 	createHeaderId,
+	type CurlImport,
 	DEFAULT_AUTH,
 	exportAsCurl,
+	importCurl,
 	formatBytes,
 	formatJson,
 	formatResponseBody,
@@ -235,6 +247,24 @@ function RestClientPage() {
 		};
 	};
 
+	// Replace the whole request with the decoded cURL command. Auth and form
+	// fields reset so only the imported headers/body define the wire request,
+	// avoiding a stale credential folding in on top of the import.
+	const handleImportCurl = (imported: CurlImport) => {
+		patch({
+			method: imported.method,
+			url: imported.url,
+			headers: [...imported.headers],
+			auth: DEFAULT_AUTH,
+			bodyMode: imported.bodyMode,
+			body: imported.body,
+			formFields: [],
+			followRedirects: imported.followRedirects,
+			...(imported.timeoutMs !== null ? { timeoutMs: imported.timeoutMs } : {}),
+		});
+		setRequestTab(imported.bodyMode === 'none' ? 'headers' : 'body');
+	};
+
 	const handleCopyCurl = async () => {
 		if (!url.trim()) {
 			toast.error('Enter a URL first');
@@ -276,6 +306,7 @@ function RestClientPage() {
 			onLoadGetSample={handleLoadGetSample}
 			onLoadPostSample={handleLoadPostSample}
 			onCopyCurl={handleCopyCurl}
+			onImportCurl={handleImportCurl}
 		/>
 	);
 
@@ -351,6 +382,7 @@ interface RestClientRailProps {
 	readonly onLoadGetSample: () => void;
 	readonly onLoadPostSample: () => void;
 	readonly onCopyCurl: () => void;
+	readonly onImportCurl: (imported: CurlImport) => void;
 }
 
 function RestClientRail({
@@ -363,6 +395,7 @@ function RestClientRail({
 	onLoadGetSample,
 	onLoadPostSample,
 	onCopyCurl,
+	onImportCurl,
 }: RestClientRailProps) {
 	return (
 		<>
@@ -409,6 +442,10 @@ function RestClientRail({
 				</Button>
 			</FormSection>
 
+			<FormSection title="Import">
+				<ImportCurlDialog onImport={onImportCurl} />
+			</FormSection>
+
 			<FormSection title="Export">
 				<Button variant="outline" size="sm" className="w-full" onClick={onCopyCurl}>
 					<Code2 className="h-3.5 w-3.5" />
@@ -452,6 +489,58 @@ function SendButtonContent({ sending, label }: SendButtonContentProps) {
 			<Send className="h-4 w-4" />
 			{label}
 		</>
+	);
+}
+
+interface ImportCurlDialogProps {
+	readonly onImport: (imported: CurlImport) => void;
+}
+
+function ImportCurlDialog({ onImport }: ImportCurlDialogProps) {
+	const [open, setOpen] = useState(false);
+	const [text, setText] = useState('');
+
+	const handleImport = () => {
+		const result = importCurl(text);
+		if (!result.ok) {
+			toast.error('Could not parse cURL', { description: result.error });
+			return;
+		}
+		onImport(result.value);
+		toast.success('Imported cURL command');
+		setText('');
+		setOpen(false);
+	};
+
+	return (
+		<Dialog open={open} onOpenChange={setOpen}>
+			<DialogTrigger asChild>
+				<Button variant="outline" size="sm" className="w-full">
+					<ClipboardPaste className="h-3.5 w-3.5" />
+					Import cURL
+				</Button>
+			</DialogTrigger>
+			<DialogContent>
+				<DialogHeader>
+					<DialogTitle>Import cURL command</DialogTitle>
+					<DialogDescription>
+						Paste a cURL command to populate the method, URL, headers, and body.
+					</DialogDescription>
+				</DialogHeader>
+				<Textarea
+					value={text}
+					placeholder="curl 'https://example.com/api' -H 'Accept: application/json'"
+					rows={8}
+					className="font-mono text-xs"
+					onChange={(e) => setText(e.target.value)}
+				/>
+				<DialogFooter>
+					<Button onClick={handleImport} disabled={text.trim().length === 0}>
+						Import
+					</Button>
+				</DialogFooter>
+			</DialogContent>
+		</Dialog>
 	);
 }
 
