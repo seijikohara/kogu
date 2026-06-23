@@ -1,6 +1,15 @@
 import { describe, expect, it } from 'vitest';
 
-import { buildUrlWithParams, parseQueryParams, type QueryParam } from './rest-client';
+import {
+	applyAuth,
+	type AuthConfig,
+	buildUrlWithParams,
+	DEFAULT_AUTH,
+	parseQueryParams,
+	type QueryParam,
+} from './rest-client';
+
+const auth = (overrides: Partial<AuthConfig>): AuthConfig => ({ ...DEFAULT_AUTH, ...overrides });
 
 const param = (key: string, value: string, enabled = true): QueryParam => ({
 	id: `${key}-${value}`,
@@ -75,5 +84,71 @@ describe('buildUrlWithParams', () => {
 	it('round-trips parsed params', () => {
 		const url = 'https://example.com/api?a=1&b=two';
 		expect(buildUrlWithParams(url, [...parseQueryParams(url)])).toBe(url);
+	});
+});
+
+describe('applyAuth', () => {
+	const base: readonly (readonly [string, string])[] = [['Accept', '*/*']];
+	const url = 'https://example.com/api';
+
+	it('is a no-op for type none', () => {
+		expect(applyAuth(base, url, DEFAULT_AUTH)).toEqual({ headers: base, url });
+	});
+
+	it('adds a Bearer Authorization header', () => {
+		const result = applyAuth(base, url, auth({ type: 'bearer', token: ' abc ' }));
+		expect(result.headers).toContainEqual(['Authorization', 'Bearer abc']);
+	});
+
+	it('skips Bearer when the token is empty', () => {
+		expect(applyAuth(base, url, auth({ type: 'bearer' }))).toEqual({ headers: base, url });
+	});
+
+	it('encodes Basic credentials as base64', () => {
+		const result = applyAuth(
+			base,
+			url,
+			auth({ type: 'basic', username: 'user', password: 'pass' })
+		);
+		expect(result.headers).toContainEqual(['Authorization', `Basic ${btoa('user:pass')}`]);
+	});
+
+	it('encodes UTF-8 Basic credentials safely', () => {
+		const result = applyAuth(base, url, auth({ type: 'basic', username: 'résumé', password: '✓' }));
+		const header = result.headers.find(([k]) => k === 'Authorization')?.[1] ?? '';
+		expect(header.startsWith('Basic ')).toBe(true);
+		expect(atob(header.slice('Basic '.length))).not.toBe('résumé:✓'); // base64 of UTF-8 bytes, not Latin1
+	});
+
+	it('adds an API key as a header', () => {
+		const result = applyAuth(
+			base,
+			url,
+			auth({ type: 'apikey', apiKeyName: 'X-Api-Key', apiKeyValue: 'k1' })
+		);
+		expect(result.headers).toContainEqual(['X-Api-Key', 'k1']);
+		expect(result.url).toBe(url);
+	});
+
+	it('adds an API key as a query parameter', () => {
+		const result = applyAuth(
+			base,
+			url,
+			auth({
+				type: 'apikey',
+				apiKeyName: 'api_key',
+				apiKeyValue: 'k1',
+				apiKeyLocation: 'query',
+			})
+		);
+		expect(result.headers).toEqual(base);
+		expect(result.url).toBe('https://example.com/api?api_key=k1');
+	});
+
+	it('skips API key when the name is empty', () => {
+		expect(applyAuth(base, url, auth({ type: 'apikey', apiKeyValue: 'k1' }))).toEqual({
+			headers: base,
+			url,
+		});
 	});
 });

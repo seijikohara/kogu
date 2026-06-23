@@ -97,6 +97,78 @@ export const buildUrlWithParams = (url: string, params: readonly QueryParam[]): 
 	return `${base}${query.length > 0 ? `?${query}` : ''}${fragment}`;
 };
 
+/** Authentication scheme applied to the request at send time. */
+export type AuthType = 'none' | 'bearer' | 'basic' | 'apikey';
+
+/** Where an API-key credential is attached. */
+export type ApiKeyLocation = 'header' | 'query';
+
+/**
+ * Auth configuration owned by the UI. Credentials are folded into the effective
+ * request headers / URL by {@link applyAuth} only at send time, so the stored
+ * header rows stay clean and the chosen scheme can change without rewriting them.
+ */
+export interface AuthConfig {
+	readonly type: AuthType;
+	readonly token: string;
+	readonly username: string;
+	readonly password: string;
+	readonly apiKeyName: string;
+	readonly apiKeyValue: string;
+	readonly apiKeyLocation: ApiKeyLocation;
+}
+
+export const DEFAULT_AUTH: AuthConfig = {
+	type: 'none',
+	token: '',
+	username: '',
+	password: '',
+	apiKeyName: '',
+	apiKeyValue: '',
+	apiKeyLocation: 'header',
+};
+
+/** UTF-8-safe base64 for Basic credentials (btoa alone mangles non-Latin1). */
+const utf8ToBase64 = (input: string): string => {
+	const bytes = new TextEncoder().encode(input);
+	const binary = Array.from(bytes, (byte) => String.fromCharCode(byte)).join('');
+	return btoa(binary);
+};
+
+const appendQueryParam = (url: string, key: string, value: string): string =>
+	buildUrlWithParams(url, [...parseQueryParams(url), { id: 'auth', key, value, enabled: true }]);
+
+/**
+ * Fold the auth scheme into the request. Returns the effective headers and URL;
+ * an incomplete configuration (e.g. empty token) is a no-op so partial input
+ * never sends a malformed credential.
+ */
+export const applyAuth = (
+	headers: readonly HeaderTuple[],
+	url: string,
+	auth: AuthConfig
+): { readonly headers: readonly HeaderTuple[]; readonly url: string } => {
+	if (auth.type === 'bearer') {
+		const token = auth.token.trim();
+		return token.length > 0
+			? { headers: [...headers, ['Authorization', `Bearer ${token}`]], url }
+			: { headers, url };
+	}
+	if (auth.type === 'basic') {
+		if (auth.username.length === 0 && auth.password.length === 0) return { headers, url };
+		const encoded = utf8ToBase64(`${auth.username}:${auth.password}`);
+		return { headers: [...headers, ['Authorization', `Basic ${encoded}`]], url };
+	}
+	if (auth.type === 'apikey') {
+		const name = auth.apiKeyName.trim();
+		if (name.length === 0) return { headers, url };
+		return auth.apiKeyLocation === 'query'
+			? { headers, url: appendQueryParam(url, name, auth.apiKeyValue) }
+			: { headers: [...headers, [name, auth.apiKeyValue]], url };
+	}
+	return { headers, url };
+};
+
 export interface RestRequest {
 	readonly method: HttpMethod | string;
 	readonly url: string;
