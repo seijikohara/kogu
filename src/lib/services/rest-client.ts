@@ -1,5 +1,8 @@
 import { invoke } from '@tauri-apps/api/core';
 
+import { type ParsedCurl, parseCurl, type Result } from './curl';
+import { formatXml } from './formatters/xml';
+
 export type HttpMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE' | 'HEAD' | 'OPTIONS';
 
 export const HTTP_METHODS: readonly HttpMethod[] = [
@@ -185,6 +188,10 @@ export interface RestResponse {
 	readonly body: string;
 	readonly bytesReceived: number;
 	readonly elapsedMs: number;
+	/** Time to first byte: DNS, connect, TLS, and server processing (ms). */
+	readonly ttfbMs: number;
+	/** Time spent reading the response body after the headers arrived (ms). */
+	readonly downloadMs: number;
 	readonly finalUrl: string;
 }
 
@@ -320,20 +327,78 @@ export const parseSetCookie = (headers: readonly HeaderTuple[]): readonly Parsed
 		.map(([, v]) => parseCookieString(v))
 		.filter((c): c is ParsedCookie => c !== null);
 
+const isJsonContentType = (lower: string): boolean =>
+	lower.includes('application/json') || lower.includes('+json');
+
+const isXmlContentType = (lower: string): boolean =>
+	lower.includes('xml') || lower.includes('text/html');
+
 /**
- * Pretty-print a response body when the Content-Type indicates JSON.
- * Returns the original body unchanged for non-JSON or invalid JSON payloads.
+ * Pretty-print a response body based on its Content-Type. JSON and XML/HTML
+ * payloads are reformatted with indentation; every other type, and any payload
+ * that fails to parse, is returned unchanged so the raw bytes are never lost.
  */
 export const formatResponseBody = (body: string, contentType: string | undefined): string => {
 	if (!contentType) return body;
 	const lower = contentType.toLowerCase();
-	if (!lower.includes('application/json') && !lower.includes('+json')) return body;
-	try {
-		const parsed = JSON.parse(body) as unknown;
-		return JSON.stringify(parsed, null, 2);
-	} catch {
-		return body;
+	if (isJsonContentType(lower)) {
+		try {
+			return JSON.stringify(JSON.parse(body) as unknown, null, 2);
+		} catch {
+			return body;
+		}
 	}
+	if (isXmlContentType(lower)) {
+		try {
+			// Keep leaf text inline (collapseContent) so data-style XML stays
+			// compact and readable rather than exploding every value onto its own
+			// line. xml-formatter throws on unparseable input; fall back to raw.
+			return formatXml(body, { collapseContent: true });
+		} catch {
+			return body;
+		}
+	}
+	return body;
+};
+
+/** A run of body text tagged with whether it matches the active search query. */
+export interface HighlightSegment {
+	readonly text: string;
+	readonly match: boolean;
+}
+
+const escapeRegExp = (input: string): string => input.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+/**
+ * Split `text` into alternating non-match / match segments for the given
+ * case-insensitive query. An empty query yields the whole text as a single
+ * non-match segment. The capturing split places matches at odd indices, so the
+ * parity of the index marks each segment.
+ */
+export const splitHighlight = (text: string, query: string): readonly HighlightSegment[] => {
+	if (query.length === 0) return [{ text, match: false }];
+	const pattern = new RegExp(`(${escapeRegExp(query)})`, 'gi');
+	return text
+		.split(pattern)
+		.map((part, index) => ({ text: part, match: index % 2 === 1 }))
+		.filter((segment) => segment.text.length > 0);
+};
+
+/** Count case-insensitive occurrences of `query` in `text` (0 for an empty query). */
+export const countMatches = (text: string, query: string): number => {
+	if (query.length === 0) return 0;
+	return splitHighlight(text, query).filter((segment) => segment.match).length;
+};
+
+/** Suggest a download filename for a response body from its Content-Type. */
+export const responseFilename = (contentType: string | undefined): string => {
+	if (!contentType) return 'response.txt';
+	const lower = contentType.toLowerCase();
+	if (isJsonContentType(lower)) return 'response.json';
+	if (lower.includes('html')) return 'response.html';
+	if (lower.includes('xml')) return 'response.xml';
+	if (lower.includes('csv')) return 'response.csv';
+	return 'response.txt';
 };
 
 /** Tone classification used by the response status badge. */
@@ -390,3 +455,61 @@ export const createEmptyHeader = (): HeaderEntry => ({
 	value: '',
 	enabled: true,
 });
+
+/**
+ * Effective request fields decoded from a cURL command. `timeoutMs` is null
+ * when the command does not pin a timeout, so the caller keeps its current
+ * value instead of overwriting it.
+ */
+export interface CurlImport {
+	readonly method: HttpMethod;
+	readonly url: string;
+	readonly headers: readonly HeaderEntry[];
+	readonly bodyMode: BodyMode;
+	readonly body: string;
+	readonly followRedirects: boolean;
+	readonly timeoutMs: number | null;
+}
+
+const hasJsonContentType = (headers: readonly HeaderEntry[]): boolean =>
+	headers.some(
+		(h) =>
+			h.key.toLowerCase() === 'content-type' && h.value.toLowerCase().includes('application/json')
+	);
+
+/**
+ * Map a parsed cURL command onto rest-client request fields. The cURL parser
+ * only distinguishes a raw body, so the body mode is upgraded to `json` when a
+ * JSON Content-Type header accompanies it. A `--max-time` value is converted to
+ * milliseconds and clamped to the timeout slider's bounds.
+ */
+export const restRequestFromCurl = (parsed: ParsedCurl): CurlImport => {
+	const headers: readonly HeaderEntry[] = parsed.headers.map((h) => ({
+		id: createHeaderId(),
+		key: h.key,
+		value: h.value,
+		enabled: true,
+	}));
+	const bodyMode: BodyMode =
+		parsed.bodyMode === 'none' ? 'none' : hasJsonContentType(headers) ? 'json' : 'raw';
+	const timeoutMs =
+		parsed.timeoutSeconds > 0
+			? Math.min(TIMEOUT_MAX_MS, Math.max(TIMEOUT_MIN_MS, Math.round(parsed.timeoutSeconds * 1000)))
+			: null;
+	return {
+		method: parsed.method,
+		url: parsed.url,
+		headers,
+		bodyMode,
+		body: parsed.body,
+		followRedirects: parsed.followRedirects,
+		timeoutMs,
+	};
+};
+
+/** Parse a cURL command string into rest-client request fields. */
+export const importCurl = (command: string): Result<CurlImport> => {
+	const parsed = parseCurl(command);
+	if (!parsed.ok) return parsed;
+	return { ok: true, value: restRequestFromCurl(parsed.value) };
+};

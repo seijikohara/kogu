@@ -6,9 +6,14 @@ import {
 	buildUrlWithParams,
 	DEFAULT_AUTH,
 	encodeFormBody,
+	countMatches,
 	formatJson,
+	formatResponseBody,
 	type HeaderEntry,
 	type HeaderTuple,
+	importCurl,
+	responseFilename,
+	splitHighlight,
 	parseQueryParams,
 	parseSetCookie,
 	type QueryParam,
@@ -294,5 +299,156 @@ describe('parseSetCookie', () => {
 	it('drops segments without a valid name', () => {
 		expect(parseSetCookie([cookie('Set-Cookie', 'noequalssign')])).toEqual([]);
 		expect(parseSetCookie([cookie('Set-Cookie', '=novalue')])).toEqual([]);
+	});
+});
+
+describe('formatResponseBody', () => {
+	it('returns the body unchanged without a content type', () => {
+		expect(formatResponseBody('{"a":1}', undefined)).toBe('{"a":1}');
+	});
+
+	it('pretty-prints JSON for a JSON content type', () => {
+		const result = formatResponseBody('{"a":1}', 'application/json; charset=utf-8');
+		expect(result).toContain('\n');
+		expect(result).toContain('"a"');
+	});
+
+	it('pretty-prints a JSON suffix content type', () => {
+		const result = formatResponseBody('{"a":1}', 'application/vnd.api+json');
+		expect(result).toContain('\n');
+	});
+
+	it('pretty-prints XML for an XML content type', () => {
+		const result = formatResponseBody('<a><b>1</b></a>', 'application/xml');
+		expect(result).toContain('\n');
+		expect(result).toContain('<b>1</b>');
+	});
+
+	it('returns unparseable XML unchanged', () => {
+		expect(formatResponseBody('plain text, not xml', 'text/xml')).toBe('plain text, not xml');
+	});
+
+	it('leaves a plain-text body unchanged', () => {
+		expect(formatResponseBody('hello world', 'text/plain')).toBe('hello world');
+	});
+});
+
+describe('splitHighlight', () => {
+	it('returns the whole text as one non-match segment for an empty query', () => {
+		expect(splitHighlight('hello world', '')).toEqual([{ text: 'hello world', match: false }]);
+	});
+
+	it('marks matched runs case-insensitively', () => {
+		expect(splitHighlight('Hello hello', 'hello')).toEqual([
+			{ text: 'Hello', match: true },
+			{ text: ' ', match: false },
+			{ text: 'hello', match: true },
+		]);
+	});
+
+	it('treats regex metacharacters literally', () => {
+		expect(splitHighlight('a.b.c', '.')).toEqual([
+			{ text: 'a', match: false },
+			{ text: '.', match: true },
+			{ text: 'b', match: false },
+			{ text: '.', match: true },
+			{ text: 'c', match: false },
+		]);
+	});
+
+	it('reassembles to the original text', () => {
+		const text = 'the quick brown fox';
+		const joined = splitHighlight(text, 'o')
+			.map((s) => s.text)
+			.join('');
+		expect(joined).toBe(text);
+	});
+});
+
+describe('countMatches', () => {
+	it('counts case-insensitive occurrences', () => {
+		expect(countMatches('aAaA', 'a')).toBe(4);
+	});
+
+	it('returns zero for an empty query', () => {
+		expect(countMatches('anything', '')).toBe(0);
+	});
+
+	it('returns zero when there is no match', () => {
+		expect(countMatches('abc', 'z')).toBe(0);
+	});
+});
+
+describe('responseFilename', () => {
+	it('defaults to a text extension without a content type', () => {
+		expect(responseFilename(undefined)).toBe('response.txt');
+	});
+
+	it.each([
+		['application/json; charset=utf-8', 'response.json'],
+		['application/vnd.api+json', 'response.json'],
+		['text/html', 'response.html'],
+		['application/xml', 'response.xml'],
+		['text/csv', 'response.csv'],
+		['text/plain', 'response.txt'],
+	])('maps %s to %s', (contentType, expected) => {
+		expect(responseFilename(contentType)).toBe(expected);
+	});
+});
+
+describe('importCurl', () => {
+	it('rejects input that does not start with curl', () => {
+		const result = importCurl('wget https://example.com');
+		expect(result.ok).toBe(false);
+	});
+
+	it('maps method, url, and headers', () => {
+		const result = importCurl(
+			"curl -X PUT 'https://example.com/api' -H 'Accept: application/json'"
+		);
+		expect(result.ok).toBe(true);
+		if (!result.ok) return;
+		expect(result.value.method).toBe('PUT');
+		expect(result.value.url).toBe('https://example.com/api');
+		expect(result.value.headers).toMatchObject([
+			{ key: 'Accept', value: 'application/json', enabled: true },
+		]);
+	});
+
+	it('infers POST and a raw body from a data flag', () => {
+		const result = importCurl("curl https://example.com --data-raw 'hello'");
+		expect(result.ok).toBe(true);
+		if (!result.ok) return;
+		expect(result.value.method).toBe('POST');
+		expect(result.value.bodyMode).toBe('raw');
+		expect(result.value.body).toBe('hello');
+	});
+
+	it('upgrades the body mode to json when a JSON content type is present', () => {
+		const result = importCurl(
+			`curl -X POST 'https://example.com' -H 'Content-Type: application/json' --data-raw '{"a":1}'`
+		);
+		expect(result.ok).toBe(true);
+		if (!result.ok) return;
+		expect(result.value.bodyMode).toBe('json');
+		expect(result.value.body).toBe('{"a":1}');
+	});
+
+	it('converts and clamps a max-time timeout to milliseconds', () => {
+		const within = importCurl('curl https://example.com --max-time 30');
+		expect(within.ok && within.value.timeoutMs).toBe(30_000);
+
+		const clampedHigh = importCurl('curl https://example.com --max-time 600');
+		expect(clampedHigh.ok && clampedHigh.value.timeoutMs).toBe(60_000);
+	});
+
+	it('leaves the timeout unset when no max-time is given', () => {
+		const result = importCurl('curl https://example.com');
+		expect(result.ok && result.value.timeoutMs).toBeNull();
+	});
+
+	it('captures the follow-redirects flag', () => {
+		const result = importCurl('curl -L https://example.com');
+		expect(result.ok && result.value.followRedirects).toBe(true);
 	});
 });

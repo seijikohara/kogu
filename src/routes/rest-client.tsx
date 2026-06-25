@@ -1,8 +1,10 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { useEffect, useMemo, useRef, useState, type ChangeEvent, type ReactNode } from 'react';
 import {
+	ClipboardPaste,
 	Code2,
 	Cookie,
+	Download,
 	FileText,
 	FlaskConical,
 	Globe,
@@ -10,6 +12,7 @@ import {
 	Link2,
 	Loader2,
 	Plus,
+	Search,
 	Send,
 	Settings2,
 	Trash2,
@@ -30,9 +33,19 @@ import { Badge } from '@/lib/components/ui/badge';
 import { Button } from '@/lib/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/lib/components/ui/card';
 import { Checkbox } from '@/lib/components/ui/checkbox';
+import {
+	Dialog,
+	DialogContent,
+	DialogDescription,
+	DialogFooter,
+	DialogHeader,
+	DialogTitle,
+	DialogTrigger,
+} from '@/lib/components/ui/dialog';
 import { Input } from '@/lib/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/lib/components/ui/tabs';
 import { Textarea } from '@/lib/components/ui/textarea';
+import { ToggleGroup, ToggleGroupItem } from '@/lib/components/ui/toggle-group';
 import { ToneBadge } from '@/lib/components/ui/tone-badge';
 import { useDocumentTitle } from '@/lib/hooks';
 import {
@@ -42,13 +55,17 @@ import {
 	type AuthType,
 	type BodyMode,
 	buildUrlWithParams,
+	countMatches,
 	createEmptyHeader,
 	createHeaderId,
+	type CurlImport,
 	DEFAULT_AUTH,
 	exportAsCurl,
+	importCurl,
 	formatBytes,
 	formatJson,
 	formatResponseBody,
+	type HighlightSegment,
 	HTTP_METHODS,
 	type HeaderEntry,
 	type HttpMethod,
@@ -60,7 +77,9 @@ import {
 	parseSetCookie,
 	type QueryParam,
 	resolveBody,
+	responseFilename,
 	type RestResponse,
+	splitHighlight,
 	validateJson,
 	withContentType,
 	SAMPLE_GET_URL,
@@ -73,20 +92,18 @@ import {
 	TIMEOUT_MIN_MS,
 	TIMEOUT_STEP_MS,
 } from '@/lib/services/rest-client';
-import { createToolOptionsStore } from '@/lib/stores';
+import {
+	createToolOptionsStore,
+	type HistoryEntry,
+	type RequestSnapshot,
+	useRestClientHistory,
+} from '@/lib/stores';
 import { cn, getErrorMessage } from '@/lib/utils';
+import { downloadTextFile } from '@/lib/utils/file-operations';
 
-interface RestClientOptions {
-	readonly method: HttpMethod;
-	readonly url: string;
-	readonly headers: readonly HeaderEntry[];
-	readonly auth: AuthConfig;
-	readonly bodyMode: BodyMode;
-	readonly body: string;
-	readonly formFields: readonly HeaderEntry[];
-	readonly followRedirects: boolean;
-	readonly timeoutMs: number;
-}
+// The persisted options bag is exactly a restorable request snapshot, so the
+// history store and the editor share one shape.
+type RestClientOptions = RequestSnapshot;
 
 const DEFAULT_HEADERS: readonly HeaderEntry[] = [
 	{ id: 'hdr_default_accept', key: 'Accept', value: '*/*', enabled: true },
@@ -116,7 +133,8 @@ type RequestTab = 'params' | 'auth' | 'headers' | 'body';
 type ResponseTab = 'body' | 'headers' | 'cookies';
 
 function RestClientPage() {
-	const { value: options, patch } = useRestClientOptions();
+	const { value: options, patch, set } = useRestClientOptions();
+	const recordHistory = useRestClientHistory((s) => s.record);
 	const { method, url, headers, body, followRedirects, timeoutMs } = options;
 	// `auth`, `bodyMode`, and `formFields` were added after the options store
 	// shipped; persisted state from before that lacks the fields, so fall back to
@@ -127,6 +145,9 @@ function RestClientPage() {
 	const formFields = options.formFields ?? [];
 
 	const [response, setResponse] = useState<RestResponse | null>(null);
+	// The effective URL sent with the last request, captured so the response can
+	// flag a redirect by comparing it against the backend's `finalUrl`.
+	const [sentUrl, setSentUrl] = useState<string | null>(null);
 	const [error, setError] = useState<string | null>(null);
 	const [sending, setSending] = useState(false);
 	const [requestTab, setRequestTab] = useState<RequestTab>('params');
@@ -234,6 +255,24 @@ function RestClientPage() {
 		};
 	};
 
+	// Replace the whole request with the decoded cURL command. Auth and form
+	// fields reset so only the imported headers/body define the wire request,
+	// avoiding a stale credential folding in on top of the import.
+	const handleImportCurl = (imported: CurlImport) => {
+		patch({
+			method: imported.method,
+			url: imported.url,
+			headers: [...imported.headers],
+			auth: DEFAULT_AUTH,
+			bodyMode: imported.bodyMode,
+			body: imported.body,
+			formFields: [],
+			followRedirects: imported.followRedirects,
+			...(imported.timeoutMs !== null ? { timeoutMs: imported.timeoutMs } : {}),
+		});
+		setRequestTab(imported.bodyMode === 'none' ? 'headers' : 'body');
+	};
+
 	const handleCopyCurl = async () => {
 		if (!url.trim()) {
 			toast.error('Enter a URL first');
@@ -252,16 +291,35 @@ function RestClientPage() {
 		if (!canSend) return;
 		setSending(true);
 		setError(null);
+		const request = buildEffectiveRequest();
+		setSentUrl(request.url);
+		// Snapshot the editor state (with resolved fallbacks) so a restored
+		// history entry reproduces the exact form, not the auth-folded wire URL.
+		const snapshot: RequestSnapshot = { ...options, auth, bodyMode, formFields };
 		try {
-			const res = await sendRequest(buildEffectiveRequest());
+			const res = await sendRequest(request);
 			setResponse(res);
 			setResponseTab('body');
+			recordHistory(snapshot, {
+				status: res.status,
+				statusText: res.statusText,
+				elapsedMs: res.elapsedMs,
+			});
 		} catch (e) {
 			setError(getErrorMessage(e));
 			setResponse(null);
 		} finally {
 			setSending(false);
 		}
+	};
+
+	// Restore a past request into the editor. Clearing the error and response
+	// avoids showing a stale outcome next to the freshly loaded request.
+	const handleRestoreHistory = (entry: HistoryEntry) => {
+		set(entry.request);
+		setError(null);
+		setResponse(null);
+		setRequestTab(entry.request.bodyMode === 'none' ? 'params' : 'body');
 	};
 
 	const rail = (
@@ -275,6 +333,8 @@ function RestClientPage() {
 			onLoadGetSample={handleLoadGetSample}
 			onLoadPostSample={handleLoadPostSample}
 			onCopyCurl={handleCopyCurl}
+			onImportCurl={handleImportCurl}
+			onRestoreHistory={handleRestoreHistory}
 		/>
 	);
 
@@ -330,6 +390,7 @@ function RestClientPage() {
 
 						<ResponseCard
 							response={response}
+							requestUrl={sentUrl}
 							activeTab={responseTab}
 							onTabChange={setResponseTab}
 						/>
@@ -350,6 +411,8 @@ interface RestClientRailProps {
 	readonly onLoadGetSample: () => void;
 	readonly onLoadPostSample: () => void;
 	readonly onCopyCurl: () => void;
+	readonly onImportCurl: (imported: CurlImport) => void;
+	readonly onRestoreHistory: (entry: HistoryEntry) => void;
 }
 
 function RestClientRail({
@@ -362,6 +425,8 @@ function RestClientRail({
 	onLoadGetSample,
 	onLoadPostSample,
 	onCopyCurl,
+	onImportCurl,
+	onRestoreHistory,
 }: RestClientRailProps) {
 	return (
 		<>
@@ -408,11 +473,19 @@ function RestClientRail({
 				</Button>
 			</FormSection>
 
+			<FormSection title="Import">
+				<ImportCurlDialog onImport={onImportCurl} />
+			</FormSection>
+
 			<FormSection title="Export">
 				<Button variant="outline" size="sm" className="w-full" onClick={onCopyCurl}>
 					<Code2 className="h-3.5 w-3.5" />
 					Copy as cURL
 				</Button>
+			</FormSection>
+
+			<FormSection title="History">
+				<HistoryPanel onRestore={onRestoreHistory} />
 			</FormSection>
 
 			<ToolFooter
@@ -451,6 +524,133 @@ function SendButtonContent({ sending, label }: SendButtonContentProps) {
 			<Send className="h-4 w-4" />
 			{label}
 		</>
+	);
+}
+
+interface ImportCurlDialogProps {
+	readonly onImport: (imported: CurlImport) => void;
+}
+
+function ImportCurlDialog({ onImport }: ImportCurlDialogProps) {
+	const [open, setOpen] = useState(false);
+	const [text, setText] = useState('');
+
+	const handleImport = () => {
+		const result = importCurl(text);
+		if (!result.ok) {
+			toast.error('Could not parse cURL', { description: result.error });
+			return;
+		}
+		onImport(result.value);
+		toast.success('Imported cURL command');
+		setText('');
+		setOpen(false);
+	};
+
+	return (
+		<Dialog open={open} onOpenChange={setOpen}>
+			<DialogTrigger asChild>
+				<Button variant="outline" size="sm" className="w-full">
+					<ClipboardPaste className="h-3.5 w-3.5" />
+					Import cURL
+				</Button>
+			</DialogTrigger>
+			<DialogContent>
+				<DialogHeader>
+					<DialogTitle>Import cURL command</DialogTitle>
+					<DialogDescription>
+						Paste a cURL command to populate the method, URL, headers, and body.
+					</DialogDescription>
+				</DialogHeader>
+				<Textarea
+					value={text}
+					placeholder="curl 'https://example.com/api' -H 'Accept: application/json'"
+					rows={8}
+					className="font-mono text-xs"
+					onChange={(e) => setText(e.target.value)}
+				/>
+				<DialogFooter>
+					<Button onClick={handleImport} disabled={text.trim().length === 0}>
+						Import
+					</Button>
+				</DialogFooter>
+			</DialogContent>
+		</Dialog>
+	);
+}
+
+const METHOD_CLASS: Record<HttpMethod, string> = {
+	GET: 'text-info',
+	POST: 'text-success',
+	PUT: 'text-warning',
+	PATCH: 'text-warning',
+	DELETE: 'text-destructive',
+	HEAD: 'text-muted-foreground',
+	OPTIONS: 'text-muted-foreground',
+};
+
+// Compact relative time for the history list; falls back to a date once an
+// entry is older than a day so the label stays meaningful across sessions.
+function formatTimeAgo(at: number): string {
+	const seconds = Math.round((Date.now() - at) / 1000);
+	if (seconds < 60) return 'just now';
+	if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`;
+	if (seconds < 86_400) return `${Math.floor(seconds / 3600)}h ago`;
+	return new Date(at).toLocaleDateString();
+}
+
+interface HistoryPanelProps {
+	readonly onRestore: (entry: HistoryEntry) => void;
+}
+
+function HistoryPanel({ onRestore }: HistoryPanelProps) {
+	const entries = useRestClientHistory((s) => s.entries);
+	const remove = useRestClientHistory((s) => s.remove);
+	const clear = useRestClientHistory((s) => s.clear);
+
+	if (entries.length === 0) {
+		return <p className="text-xs text-muted-foreground">Sent requests appear here.</p>;
+	}
+
+	return (
+		<div className="space-y-1.5">
+			{entries.map((entry) => (
+				<div key={entry.id} className="group flex items-center gap-1">
+					<button
+						type="button"
+						className="flex min-w-0 flex-1 items-center gap-2 rounded-md px-2 py-1.5 text-left hover:bg-accent"
+						onClick={() => onRestore(entry)}
+						title={`${entry.request.method} ${entry.request.url} — ${entry.status} ${entry.statusText} · ${entry.elapsedMs} ms · ${formatTimeAgo(entry.at)}`}
+					>
+						<span
+							className={cn(
+								'w-10 shrink-0 font-mono text-2xs font-medium',
+								METHOD_CLASS[entry.request.method]
+							)}
+						>
+							{entry.request.method}
+						</span>
+						<span className="min-w-0 flex-1 truncate font-mono text-xs">{entry.request.url}</span>
+						<ToneBadge tone={statusTone(entry.status)} className="shrink-0 font-mono text-2xs">
+							{entry.status}
+						</ToneBadge>
+					</button>
+					<Button
+						variant="ghost"
+						size="icon-sm"
+						className="h-7 w-7 shrink-0 text-muted-foreground opacity-0 hover:text-destructive group-hover:opacity-100"
+						onClick={() => remove(entry.id)}
+						aria-label="Remove from history"
+					>
+						<Trash2 className="h-3.5 w-3.5" />
+					</Button>
+				</div>
+			))}
+			<Button variant="outline" size="sm" className="w-full" onClick={clear}>
+				<Trash2 className="h-3.5 w-3.5" />
+				Clear history
+			</Button>
+		</div>
 	);
 }
 
@@ -1032,11 +1232,14 @@ function AuthEditor({ auth, onAuthChange }: AuthEditorProps) {
 
 interface ResponseCardProps {
 	readonly response: RestResponse | null;
+	readonly requestUrl: string | null;
 	readonly activeTab: ResponseTab;
 	readonly onTabChange: (tab: ResponseTab) => void;
 }
 
-function ResponseCard({ response, activeTab, onTabChange }: ResponseCardProps) {
+function ResponseCard({ response, requestUrl, activeTab, onTabChange }: ResponseCardProps) {
+	const redirected = response !== null && requestUrl !== null && response.finalUrl !== requestUrl;
+
 	return (
 		<Card density="compact">
 			<CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
@@ -1050,12 +1253,13 @@ function ResponseCard({ response, activeTab, onTabChange }: ResponseCardProps) {
 				</div>
 				{response ? (
 					<div className="flex items-center gap-3 text-xs text-muted-foreground">
-						<span>{response.elapsedMs} ms</span>
+						<TimingSummary response={response} />
 						<span>{formatBytes(response.bytesReceived)}</span>
 					</div>
 				) : null}
 			</CardHeader>
-			<CardContent>
+			<CardContent className="space-y-3">
+				{redirected ? <RedirectNotice finalUrl={response.finalUrl} /> : null}
 				{response ? (
 					<ResponseTabs response={response} activeTab={activeTab} onTabChange={onTabChange} />
 				) : (
@@ -1067,6 +1271,46 @@ function ResponseCard({ response, activeTab, onTabChange }: ResponseCardProps) {
 				)}
 			</CardContent>
 		</Card>
+	);
+}
+
+interface RedirectNoticeProps {
+	readonly finalUrl: string;
+}
+
+// Surface the post-redirect destination so a 200 that silently moved (HTTPS
+// upgrade, trailing-slash, auth redirect) is not mistaken for a direct hit.
+function RedirectNotice({ finalUrl }: RedirectNoticeProps) {
+	return (
+		<div className="flex items-center gap-2 rounded-md border bg-info/10 px-3 py-2 text-xs">
+			<Link2 className="h-3.5 w-3.5 shrink-0 text-info" />
+			<span className="text-muted-foreground">Redirected to</span>
+			<span className="break-all font-mono text-foreground">{finalUrl}</span>
+		</div>
+	);
+}
+
+interface TimingSummaryProps {
+	readonly response: RestResponse;
+}
+
+// Show the total elapsed time, plus the wait/download split when the body read
+// took a measurable slice. The breakdown helps separate a slow server (high
+// TTFB) from a large or slow transfer (high download time).
+function TimingSummary({ response }: TimingSummaryProps): ReactNode {
+	const showBreakdown = response.downloadMs > 0;
+	return (
+		<span
+			title={`Wait ${response.ttfbMs} ms · Download ${response.downloadMs} ms`}
+			className="font-mono"
+		>
+			{response.elapsedMs} ms
+			{showBreakdown ? (
+				<span className="ml-1 text-muted-foreground/70">
+					({response.ttfbMs} + {response.downloadMs})
+				</span>
+			) : null}
+		</span>
 	);
 }
 
@@ -1111,7 +1355,7 @@ function ResponseTabs({ response, activeTab, onTabChange }: ResponseTabsProps) {
 			</TabsList>
 
 			<TabsContent value="body" className="pt-3">
-				<ResponseBody body={formattedBody} contentType={contentType} />
+				<ResponseBody raw={response.body} formatted={formattedBody} contentType={contentType} />
 			</TabsContent>
 
 			<TabsContent value="headers" className="pt-3">
@@ -1125,29 +1369,116 @@ function ResponseTabs({ response, activeTab, onTabChange }: ResponseTabsProps) {
 	);
 }
 
+type BodyView = 'pretty' | 'raw';
+
 interface ResponseBodyProps {
-	readonly body: string;
+	readonly raw: string;
+	readonly formatted: string;
 	readonly contentType: string | undefined;
 }
 
-function ResponseBody({ body, contentType }: ResponseBodyProps) {
+function ResponseBody({ raw, formatted, contentType }: ResponseBodyProps) {
+	const [view, setView] = useState<BodyView>('pretty');
+	const [query, setQuery] = useState('');
+	// Offer the toggle only when pretty-printing actually changed the payload.
+	const canPretty = formatted !== raw;
+	const shown = canPretty && view === 'pretty' ? formatted : raw;
+
+	const segments = useMemo(() => splitHighlight(shown, query), [shown, query]);
+	const matchCount = useMemo(() => countMatches(shown, query), [shown, query]);
+
+	const handleDownload = () => {
+		downloadTextFile(shown, responseFilename(contentType)).catch(() => undefined);
+	};
+
 	return (
 		<div className="space-y-2">
 			<div className="flex items-center justify-between gap-2">
 				<span className="font-mono text-xs text-muted-foreground">
 					{contentType ?? 'no content-type'}
 				</span>
-				<CopyButton text={body} toastLabel="Response body" size="sm" />
+				<div className="flex items-center gap-2">
+					{canPretty ? (
+						<ToggleGroup
+							type="single"
+							size="sm"
+							variant="outline"
+							value={view}
+							onValueChange={(v) => {
+								if (v === 'pretty' || v === 'raw') setView(v);
+							}}
+						>
+							<ToggleGroupItem value="pretty" className="text-xs">
+								Pretty
+							</ToggleGroupItem>
+							<ToggleGroupItem value="raw" className="text-xs">
+								Raw
+							</ToggleGroupItem>
+						</ToggleGroup>
+					) : null}
+					<Button
+						variant="ghost"
+						size="icon-sm"
+						className="h-8 w-8 text-muted-foreground"
+						onClick={handleDownload}
+						disabled={shown.length === 0}
+						aria-label="Download response body"
+					>
+						<Download className="h-3.5 w-3.5" />
+					</Button>
+					<CopyButton text={shown} toastLabel="Response body" size="sm" />
+				</div>
 			</div>
-			{body.length > 0 ? (
-				<pre className="max-h-96 overflow-auto rounded-md bg-muted p-3 font-mono text-xs">
-					{body}
-				</pre>
+			{shown.length > 0 ? (
+				<>
+					<div className="relative">
+						<Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+						<Input
+							value={query}
+							placeholder="Search response body"
+							className="h-8 pl-8 font-mono text-xs"
+							onChange={(e) => setQuery(e.target.value)}
+						/>
+						{query.length > 0 ? (
+							<span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-2xs text-muted-foreground">
+								{matchCount} {matchCount === 1 ? 'match' : 'matches'}
+							</span>
+						) : null}
+					</div>
+					<pre className="max-h-96 overflow-auto rounded-md bg-muted p-3 font-mono text-xs">
+						<HighlightedBody segments={segments} />
+					</pre>
+				</>
 			) : (
 				<p className="text-sm text-muted-foreground">Empty response body.</p>
 			)}
 		</div>
 	);
+}
+
+interface HighlightedBodyProps {
+	readonly segments: readonly HighlightSegment[];
+}
+
+// Render the body with matched runs wrapped in <mark>. A plain (empty-query)
+// body is a single non-match segment, so this collapses to a bare string. Keys
+// come from the running character offset (strictly increasing) so they stay
+// unique and stable without relying on the array index.
+function HighlightedBody({ segments }: HighlightedBodyProps): ReactNode {
+	return segments.reduce<{ readonly offset: number; readonly nodes: readonly ReactNode[] }>(
+		(acc, segment) => {
+			const key = `${acc.offset}:${segment.text.length}`;
+			const node = segment.match ? (
+				<mark key={key} className="rounded-[2px] bg-warning/40 text-foreground">
+					{segment.text}
+				</mark>
+			) : (
+				<span key={key}>{segment.text}</span>
+			);
+			return { offset: acc.offset + segment.text.length, nodes: [...acc.nodes, node] };
+		},
+		{ offset: 0, nodes: [] }
+	).nodes;
 }
 
 interface ResponseHeadersProps {
@@ -1246,6 +1577,7 @@ function StatusBarContent({ response }: StatusBarContentProps): ReactNode {
 				variant={statusVariant}
 			/>
 			<StatItem label="Elapsed" value={`${response.elapsedMs} ms`} />
+			<StatItem label="TTFB" value={`${response.ttfbMs} ms`} />
 			<StatItem label="Size" value={formatBytes(response.bytesReceived)} />
 		</>
 	);
