@@ -60,7 +60,7 @@ tokio-util = { version = "0.7", default-features = false }
 # Cryptographic Generators
 bcrypt = "0.19"
 ssh-key = { version = "0.6", features = ["ed25519", "p256", "p384", "rsa", "encryption", "rand_core"] }
-pgp = "0.19"
+pgp = "0.20"
 rand = "0.10"
 
 # Network Scanning
