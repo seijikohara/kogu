@@ -90,7 +90,7 @@
 		"jschardet": "^3.1.4",
 		"json5": "^2.2.3",
 		"jsonc-parser": "^3.3.1",
-		"katex": "^0.17.0",
+		"katex": "^0.18.0",
 		"lowlight": "^3.3.0",
 		"lucide-react": "^1.20.0",
 		"markdown-it": "^14.2.0",
