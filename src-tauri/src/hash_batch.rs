@@ -286,7 +286,7 @@ mod tests {
             res[0].hashes.get("sha256").unwrap(),
             "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad"
         );
-        assert!(res[0].hashes.get("sha512").unwrap().len() == 128);
+        assert_eq!(res[0].hashes.get("sha512").unwrap().len(), 128);
         assert_eq!(res[0].size_bytes, 3);
     }
 
