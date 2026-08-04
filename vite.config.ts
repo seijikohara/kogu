@@ -17,10 +17,19 @@ export default defineConfig({
 		tailwindcss(),
 	],
 	resolve: {
-		alias: {
-			'@': path.resolve(import.meta.dirname, './src'),
-			'@lib': path.resolve(import.meta.dirname, './src/lib'),
-		},
+		alias: [
+			// monaco-editor 0.56 re-rooted its `exports` subpaths at `esm/vs`, so a
+			// specifier that still carries the old `esm/vs/` prefix now resolves to
+			// `esm/vs/esm/vs/...` and fails. monaco-yaml depends on
+			// monaco-worker-manager, which is unmaintained (last release 2022) and
+			// still imports the pre-0.56 path. Strip the prefix so it resolves again.
+			{
+				find: /^monaco-editor\/esm\/vs\/(.*)$/,
+				replacement: 'monaco-editor/$1',
+			},
+			{ find: '@', replacement: path.resolve(import.meta.dirname, './src') },
+			{ find: '@lib', replacement: path.resolve(import.meta.dirname, './src/lib') },
+		],
 	},
 	clearScreen: false,
 	server: {
