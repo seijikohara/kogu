@@ -3981,9 +3981,9 @@ dependencies = [
 
 [[package]]
 name = "netdev"
-version = "0.45.0"
+version = "0.46.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "569dfbdd2efd771b24ec9bb57f956e04d4fbfc72f62b2f11961723f9b3f4b020"
+checksum = "fe5837045c9eeadc61432b095a6b10debefc0609241657771a194d48b2f39520"
 dependencies = [
  "block2 0.6.2",
  "dispatch2",
@@ -3996,10 +3996,7 @@ dependencies = [
  "netlink-packet-core",
  "netlink-packet-route",
  "netlink-sys",
- "objc2 0.6.4",
  "objc2-core-foundation",
- "objc2-core-wlan",
- "objc2-foundation 0.3.2",
  "objc2-system-configuration",
  "once_cell",
  "plist",
