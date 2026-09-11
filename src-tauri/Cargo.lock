@@ -3558,7 +3558,7 @@ dependencies = [
  "objc2-core-wlan",
  "objc2-foundation 0.3.2",
  "pgp",
- "quick-xml 0.41.0",
+ "quick-xml 0.42.0",
  "rand 0.10.2",
  "reqwest",
  "roxmltree",
@@ -7073,13 +7073,15 @@ dependencies = [
 
 [[package]]
 name = "tauri-plugin-mcp-bridge"
-version = "0.12.0"
+version = "0.13.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ee9c726f2293f54dc9a61739886967a75c9f1701d17a3dcb8a4544f7353d4861"
+checksum = "db0e3b2116693ae3ea616e041d83d8d95898ee2393629b2d1b8ee1d80f2eedb0"
 dependencies = [
  "base64 0.22.1",
  "block2 0.5.1",
+ "cairo-rs",
  "futures-util",
+ "gio",
  "image",
  "jni 0.21.1",
  "objc2 0.5.2",
@@ -7095,6 +7097,7 @@ dependencies = [
  "tokio",
  "tokio-tungstenite 0.28.0",
  "uuid",
+ "webkit2gtk",
  "webview2-com",
  "windows 0.61.3",
  "windows-core 0.61.2",
