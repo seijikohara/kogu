@@ -136,7 +136,7 @@ fn parse_probe_match(xml: &str) -> Option<WsDiscoveryInfo> {
     loop {
         match reader.read_event_into(&mut buf) {
             Ok(Event::Start(ref e)) => {
-                let tag = String::from_utf8_lossy(e.local_name().as_ref()).to_string();
+                let tag = e.local_name().as_ref().to_string();
                 if tag == "ProbeMatch" || tag == "ProbeMatches" {
                     in_probe_match = true;
                 }
@@ -149,7 +149,6 @@ fn parse_probe_match(xml: &str) -> Option<WsDiscoveryInfo> {
                 if in_probe_match {
                     let text = e
                         .xml_content(quick_xml::XmlVersion::Implicit1_0)
-                        .unwrap_or_default()
                         .trim()
                         .to_string();
                     if !text.is_empty() {
@@ -175,7 +174,7 @@ fn parse_probe_match(xml: &str) -> Option<WsDiscoveryInfo> {
                 }
             }
             Ok(Event::End(ref e)) => {
-                let tag = String::from_utf8_lossy(e.local_name().as_ref()).to_string();
+                let tag = e.local_name().as_ref().to_string();
                 if tag == "ProbeMatch" || tag == "ProbeMatches" {
                     in_probe_match = false;
                 }

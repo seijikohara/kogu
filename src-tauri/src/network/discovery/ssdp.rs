@@ -418,7 +418,7 @@ fn parse_upnp_device_xml(xml: &str, location: &str) -> Option<types::SsdpDeviceI
     loop {
         match reader.read_event_into(&mut buf) {
             Ok(Event::Start(ref e)) => {
-                let tag = String::from_utf8_lossy(e.local_name().as_ref()).to_string();
+                let tag = e.local_name().as_ref().to_string();
                 if tag == "device" {
                     device_depth += 1;
                 }
@@ -428,7 +428,6 @@ fn parse_upnp_device_xml(xml: &str, location: &str) -> Option<types::SsdpDeviceI
                 if device_depth == 1 {
                     let text = e
                         .xml_content(quick_xml::XmlVersion::Implicit1_0)
-                        .unwrap_or_default()
                         .trim()
                         .to_string();
                     if !text.is_empty() {
@@ -438,14 +437,14 @@ fn parse_upnp_device_xml(xml: &str, location: &str) -> Option<types::SsdpDeviceI
             }
             Ok(Event::CData(ref e)) => {
                 if device_depth == 1 {
-                    let text = String::from_utf8_lossy(e.as_ref()).trim().to_string();
+                    let text = e.as_ref().trim().to_string();
                     if !text.is_empty() {
                         assign_field(&current_tag, text);
                     }
                 }
             }
             Ok(Event::End(ref e)) => {
-                let tag = String::from_utf8_lossy(e.local_name().as_ref()).to_string();
+                let tag = e.local_name().as_ref().to_string();
                 if tag == "device" {
                     device_depth = device_depth.saturating_sub(1);
                 }
