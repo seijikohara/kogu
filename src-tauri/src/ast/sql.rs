@@ -405,6 +405,7 @@ const fn object_type_label(object_type: sqlparser::ast::ObjectType) -> &'static 
         ObjectType::User => "USER",
         ObjectType::Stream => "STREAM",
         ObjectType::Collation => "COLLATION",
+        ObjectType::Warehouse => "WAREHOUSE",
     }
 }
 
