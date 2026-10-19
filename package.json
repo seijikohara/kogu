@@ -38,11 +38,8 @@
 		"test:watch": "vitest",
 		"test:ui": "vitest --ui",
 		"test:coverage": "vitest run --coverage",
-		"deps:check": "bunx taze",
 		"deps:check:backend": "cargo install cargo-edit -q && cd src-tauri && cargo upgrade --dry-run",
-		"deps:update": "bunx taze major -r -w && bun install",
-		"deps:update:backend": "cargo install cargo-edit -q && cd src-tauri && cargo upgrade --incompatible && cargo update",
-		"deps:update:all": "bun run deps:update && bun run deps:update:backend"
+		"deps:update:backend": "cargo install cargo-edit -q && cd src-tauri && cargo upgrade --incompatible && cargo update"
 	},
 	"license": "MIT",
 	"dependencies": {
