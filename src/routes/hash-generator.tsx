@@ -137,20 +137,24 @@ function HashGeneratorPage() {
 function TextHashTab() {
 	const [textInput, setTextInput] = useState('');
 	const debouncedTextInput = useDebouncedValue(textInput, 150);
-	const [computedHashes, setComputedHashes] = useState<readonly HashResult[]>([]);
-	// A blank input never shows hashes. Derive that here instead of resetting
-	// the state from the effect.
-	const textHashes = debouncedTextInput.trim() ? computedHashes : NO_TEXT_HASHES;
+	const [textHashes, setTextHashes] = useState<readonly HashResult[]>(NO_TEXT_HASHES);
+
+	// Discard the results during render once the debounced input is blank, so neither
+	// a blank paste nor a hash that settles while Clear is debounced carries over to the
+	// next input. Non-blank edits keep the previous results until the new ones arrive.
+	if (!debouncedTextInput.trim() && textHashes.length > 0) {
+		setTextHashes(NO_TEXT_HASHES);
+	}
 
 	useEffect(() => {
 		if (!debouncedTextInput.trim()) return;
 		let cancelled = false;
 		generateAllHashes(debouncedTextInput)
 			.then((results) => {
-				if (!cancelled) setComputedHashes(results);
+				if (!cancelled) setTextHashes(results);
 			})
 			.catch(() => {
-				if (!cancelled) setComputedHashes([]);
+				if (!cancelled) setTextHashes(NO_TEXT_HASHES);
 			});
 		return () => {
 			cancelled = true;
@@ -166,13 +170,7 @@ function TextHashTab() {
 		}
 	};
 
-	// Drop the previous results when the input is emptied so that, as before, new text never
-	// shows hashes of an older input while its own hashes are computed.
-	const updateTextInput = (next: string) => {
-		setTextInput(next);
-		if (!next.trim()) setComputedHashes([]);
-	};
-	const handleClear = () => updateTextInput('');
+	const handleClear = () => setTextInput('');
 	const handleSample = () => setTextInput(SAMPLE_TEXT_FOR_HASH);
 
 	const isSecure = (algorithm: string): boolean =>
@@ -181,7 +179,7 @@ function TextHashTab() {
 	return (
 		<ToolShellTextContent
 			textInput={textInput}
-			onTextChange={updateTextInput}
+			onTextChange={setTextInput}
 			onPaste={handlePaste}
 			onClear={handleClear}
 			onSample={handleSample}

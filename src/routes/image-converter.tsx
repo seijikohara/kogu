@@ -91,6 +91,17 @@ function ImageConverterPage() {
 	const [showRail, setShowRail] = usePersistedRail('image-converter');
 
 	const fileInputRef = useRef<HTMLInputElement | null>(null);
+	// Tracks whether the page is mounted so a decode that finishes after the user
+	// leaves the route does not allocate a preview URL that nothing would revoke.
+	// Set inside the effect so StrictMode's simulated remount restores it.
+	const mountedRef = useRef(false);
+
+	useEffect(() => {
+		mountedRef.current = true;
+		return () => {
+			mountedRef.current = false;
+		};
+	}, []);
 
 	useEffect(() => {
 		return () => {
@@ -125,6 +136,10 @@ function ImageConverterPage() {
 		setError(null);
 		try {
 			const next = await loadSource(file);
+			if (!mountedRef.current) {
+				next.bitmap.close();
+				return;
+			}
 			setSource(next);
 			setSourceUrl(URL.createObjectURL(next.blob));
 			// Reset the transform so it starts from the new image's natural size.

@@ -82,11 +82,14 @@ function MacLookupPage() {
 	const parseResult = useMemo(() => parseMac(input), [input]);
 	const trimmed = input.trim();
 
-	// The lookup result is stored with the parse result it belongs to, so the
-	// loading flag and the empty state for invalid input are derived here
+	// The lookup result is stored with the parse result it belongs to. Only a
+	// result for the current parse result is exposed, so an older vendor never
+	// shows while a new lookup is pending, and the loading flag is derived here
 	// instead of being toggled from the effect.
-	const vendor = parseResult.ok ? (vendorLookup?.vendor ?? null) : null;
-	const vendorLoading = parseResult.ok && vendorLookup?.source !== parseResult;
+	const currentLookup =
+		parseResult.ok && vendorLookup?.source === parseResult ? vendorLookup : null;
+	const vendor = currentLookup?.vendor ?? null;
+	const vendorLoading = parseResult.ok && currentLookup === null;
 
 	// Resolve vendor whenever the parsed MAC changes. Render-effect because
 	// the lookup is an out-of-band IPC roundtrip that cannot be derived
@@ -140,7 +143,13 @@ function MacLookupPage() {
 			showRail={showRail}
 			onShowRailChange={setShowRail}
 			statusContent={
-				<MacLookupStatus parseResult={parseResult} vendor={vendor} flags={flags} dbInfo={dbInfo} />
+				<MacLookupStatus
+					parseResult={parseResult}
+					vendor={vendor}
+					vendorLoading={vendorLoading}
+					flags={flags}
+					dbInfo={dbInfo}
+				/>
 			}
 			rail={
 				<MacLookupRail
@@ -176,11 +185,12 @@ function MacLookupPage() {
 interface StatusProps {
 	readonly parseResult: ReturnType<typeof parseMac>;
 	readonly vendor: VendorResult | null;
+	readonly vendorLoading: boolean;
 	readonly flags: MacFlags | null;
 	readonly dbInfo: OuiDatabaseInfo | null;
 }
 
-function MacLookupStatus({ parseResult, vendor, flags, dbInfo }: StatusProps) {
+function MacLookupStatus({ parseResult, vendor, vendorLoading, flags, dbInfo }: StatusProps) {
 	if (!parseResult.ok || !flags) {
 		return dbInfo ? <StatItem label="OUI entries" value={dbInfo.entries.toLocaleString()} /> : null;
 	}
@@ -188,7 +198,7 @@ function MacLookupStatus({ parseResult, vendor, flags, dbInfo }: StatusProps) {
 	const adminLabel = flags.local ? 'Local' : 'Universal';
 	return (
 		<>
-			<StatItem label="Vendor" value={vendor?.vendor ?? 'Unknown'} />
+			<StatItem label="Vendor" value={vendorLoading ? '…' : (vendor?.vendor ?? 'Unknown')} />
 			<StatItem label="Type" value={typeLabel} />
 			<StatItem label="Admin" value={adminLabel} />
 		</>
