@@ -13,10 +13,17 @@ vi.mock('@/lib/services/image-convert', async (importOriginal) => ({
 	loadSource: vi.fn<typeof loadSource>(),
 }));
 
-const createObjectURL = vi.fn<(blob: Blob) => string>(() => 'blob:preview');
+const createObjectURL = vi.fn<(blob: Blob) => string>();
 const revokeObjectURL = vi.fn<(url: string) => void>();
 
-const pendingLoads: ((source: SourceImage) => void)[] = [];
+interface PendingLoad {
+	readonly file: File;
+	readonly resolve: (source: SourceImage) => void;
+}
+
+const pendingLoads: PendingLoad[] = [];
+
+const pngFile = (name: string) => new File(['png'], name, { type: 'image/png' });
 
 const fakeSource = (file: File) => {
 	const close = vi.fn<() => void>();
@@ -30,7 +37,7 @@ const fakeSource = (file: File) => {
 		bytes: file.size,
 		filename: file.name,
 	};
-	return { source, close };
+	return { file, source, close };
 };
 
 const pickFile = (container: HTMLElement, file: File) => {
@@ -39,25 +46,37 @@ const pickFile = (container: HTMLElement, file: File) => {
 	fireEvent.change(input, { target: { files: [file] } });
 };
 
-const settleLoad = async (source: SourceImage) => {
-	const resolve = pendingLoads.shift();
-	if (!resolve) throw new Error('No pending load');
+// Resolve the pending decodes of the given files within one act(), so React
+// commits no state between them.
+const settleLoads = async (...sources: readonly SourceImage[]) => {
 	await act(async () => {
-		resolve(source);
+		for (const source of sources) {
+			const pending = pendingLoads.find((p) => p.file === source.blob);
+			if (!pending) throw new Error(`No pending load for ${source.filename}`);
+			pending.resolve(source);
+		}
 		await Promise.resolve();
 	});
 };
 
+const createdUrls = () => createObjectURL.mock.results.map((r) => String(r.value));
+const revokedUrls = () => revokeObjectURL.mock.calls.map(([url]) => url);
+
 describe('image converter source loading', () => {
 	beforeEach(() => {
 		pendingLoads.length = 0;
+		let nextUrl = 0;
+		createObjectURL.mockImplementation(() => {
+			nextUrl += 1;
+			return `blob:preview-${nextUrl}`;
+		});
 		// jsdom implements neither object URL function.
 		Object.defineProperty(URL, 'createObjectURL', { configurable: true, value: createObjectURL });
 		Object.defineProperty(URL, 'revokeObjectURL', { configurable: true, value: revokeObjectURL });
 		vi.mocked(loadSource).mockImplementation(
-			() =>
+			(file) =>
 				new Promise<SourceImage>((resolve) => {
-					pendingLoads.push(resolve);
+					pendingLoads.push({ file, resolve });
 				})
 		);
 	});
@@ -68,26 +87,58 @@ describe('image converter source loading', () => {
 
 	it('creates the preview URL for a decoded image and revokes it on unmount', async () => {
 		const { container, unmount } = await renderRoute(Route);
-		const file = new File(['png'], 'a.png', { type: 'image/png' });
+		const file = pngFile('a.png');
 		pickFile(container, file);
 
 		const { source, close } = fakeSource(file);
-		await settleLoad(source);
+		await settleLoads(source);
 		expect(createObjectURL).toHaveBeenCalledWith(file);
 		expect(close).not.toHaveBeenCalled();
 
 		unmount();
-		expect(revokeObjectURL).toHaveBeenCalledWith('blob:preview');
+		expect(revokedUrls()).toEqual(['blob:preview-1']);
+	});
+
+	it('revokes the previous preview URL when a new image replaces it', async () => {
+		const { container, unmount } = await renderRoute(Route);
+		const first = fakeSource(pngFile('a.png'));
+		const second = fakeSource(pngFile('b.png'));
+
+		pickFile(container, first.file);
+		await settleLoads(first.source);
+		pickFile(container, second.file);
+		await settleLoads(second.source);
+		expect(revokedUrls()).toEqual(['blob:preview-1']);
+
+		unmount();
+		expect(revokedUrls()).toEqual(['blob:preview-1', 'blob:preview-2']);
+	});
+
+	it('keeps only the latest of two decodes that settle together', async () => {
+		const { container, unmount } = await renderRoute(Route);
+		const first = fakeSource(pngFile('a.png'));
+		const second = fakeSource(pngFile('b.png'));
+		pickFile(container, first.file);
+		pickFile(container, second.file);
+
+		await settleLoads(first.source, second.source);
+		expect(createObjectURL).toHaveBeenCalledTimes(1);
+		expect(createObjectURL).toHaveBeenCalledWith(second.file);
+		expect(first.close).toHaveBeenCalledTimes(1);
+		expect(second.close).not.toHaveBeenCalled();
+
+		unmount();
+		expect(revokedUrls()).toEqual(createdUrls());
 	});
 
 	it('discards a decode that finishes after the page unmounts', async () => {
 		const { container, unmount } = await renderRoute(Route);
-		const file = new File(['png'], 'a.png', { type: 'image/png' });
+		const file = pngFile('a.png');
 		pickFile(container, file);
 		unmount();
 
 		const { source, close } = fakeSource(file);
-		await settleLoad(source);
+		await settleLoads(source);
 		expect(createObjectURL).not.toHaveBeenCalled();
 		expect(close).toHaveBeenCalledTimes(1);
 	});

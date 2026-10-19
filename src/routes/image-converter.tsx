@@ -91,17 +91,28 @@ function ImageConverterPage() {
 	const [showRail, setShowRail] = usePersistedRail('image-converter');
 
 	const fileInputRef = useRef<HTMLInputElement | null>(null);
-	// Tracks whether the page is mounted so a decode that finishes after the user
-	// leaves the route does not allocate a preview URL that nothing would revoke.
-	// Set inside the effect so StrictMode's simulated remount restores it.
-	const mountedRef = useRef(false);
+	// Identifies the latest source load. A newer load, Clear, or unmount bumps it,
+	// so a decode that settles for an older value is discarded instead of
+	// replacing the current image or allocating a preview URL.
+	const loadGenerationRef = useRef(0);
+	// Owns the preview URL outside React state, so every URL is revoked exactly
+	// once even when a newer load or Clear replaces it before React commits.
+	const previewUrlRef = useRef<string | null>(null);
 
-	useEffect(() => {
-		mountedRef.current = true;
-		return () => {
-			mountedRef.current = false;
-		};
-	}, []);
+	const replacePreviewUrl = (blob: Blob | null) => {
+		if (previewUrlRef.current) URL.revokeObjectURL(previewUrlRef.current);
+		previewUrlRef.current = blob ? URL.createObjectURL(blob) : null;
+		setSourceUrl(previewUrlRef.current);
+	};
+
+	useEffect(
+		() => () => {
+			loadGenerationRef.current += 1;
+			if (previewUrlRef.current) URL.revokeObjectURL(previewUrlRef.current);
+			previewUrlRef.current = null;
+		},
+		[]
+	);
 
 	useEffect(() => {
 		return () => {
@@ -110,13 +121,6 @@ function ImageConverterPage() {
 			});
 		};
 	}, [results]);
-
-	// `acceptFile` creates the preview URL together with the source; revoke it
-	// once it is replaced, cleared, or the page unmounts.
-	useEffect(() => {
-		if (!sourceUrl) return;
-		return () => URL.revokeObjectURL(sourceUrl);
-	}, [sourceUrl]);
 
 	const aspect = source ? source.width / source.height : 1;
 
@@ -133,15 +137,17 @@ function ImageConverterPage() {
 	};
 
 	const acceptFile = async (file: File) => {
+		loadGenerationRef.current += 1;
+		const generation = loadGenerationRef.current;
 		setError(null);
 		try {
 			const next = await loadSource(file);
-			if (!mountedRef.current) {
+			if (generation !== loadGenerationRef.current) {
 				next.bitmap.close();
 				return;
 			}
 			setSource(next);
-			setSourceUrl(URL.createObjectURL(next.blob));
+			replacePreviewUrl(next.blob);
 			// Reset the transform so it starts from the new image's natural size.
 			setWidth(next.width);
 			setHeight(next.height);
@@ -151,6 +157,7 @@ function ImageConverterPage() {
 			setResults([]);
 			setActiveFormat(null);
 		} catch (e) {
+			if (generation !== loadGenerationRef.current) return;
 			setError(e instanceof Error ? e.message : 'Failed to load image');
 			toast.error('Failed to load image');
 		}
@@ -229,8 +236,9 @@ function ImageConverterPage() {
 	};
 
 	const handleClearSource = () => {
+		loadGenerationRef.current += 1;
 		setSource(null);
-		setSourceUrl(null);
+		replacePreviewUrl(null);
 		setResults([]);
 		setActiveFormat(null);
 		setError(null);
