@@ -29,7 +29,7 @@
 		"sourceMap": true,
 
 		"lib": ["ES2023", "DOM", "DOM.Iterable"],
-		"types": ["vite/client", "@testing-library/jest-dom", "bun-types", "react", "react-dom"],
+		"types": ["vite/client", "@testing-library/jest-dom", "bun", "react", "react-dom"],
 
 		"paths": {
 			"@/*": ["./src/*"],
