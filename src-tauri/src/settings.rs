@@ -293,8 +293,8 @@ mod tests {
     #[test]
     fn test_default_settings() {
         let settings = AppSettings::default();
-        assert!(settings.font.ui_family.is_empty());
-        assert!(settings.font.code_family.is_empty());
+        assert_eq!(settings.font.ui_family, "");
+        assert_eq!(settings.font.code_family, "");
         assert_eq!(settings.font.ui_size, 13);
         assert_eq!(settings.font.code_size, 13);
         assert!(!settings.font.google_fonts_enabled);
@@ -325,7 +325,7 @@ mod tests {
     #[test]
     fn test_deserialize_empty_toml() {
         let settings: AppSettings = toml::from_str("").unwrap();
-        assert!(settings.font.ui_family.is_empty());
+        assert_eq!(settings.font.ui_family, "");
         assert_eq!(settings.font.ui_size, 13);
     }
 
@@ -337,7 +337,7 @@ ui_family = "Helvetica"
 "#;
         let settings: AppSettings = toml::from_str(toml_str).unwrap();
         assert_eq!(settings.font.ui_family, "Helvetica");
-        assert!(settings.font.code_family.is_empty());
+        assert_eq!(settings.font.code_family, "");
         assert_eq!(settings.font.ui_size, 13);
     }
 
@@ -358,7 +358,7 @@ key = "value"
     #[test]
     fn test_load_missing_file() {
         let settings = load_from_file(Path::new("/nonexistent/path/settings.toml"));
-        assert!(settings.font.ui_family.is_empty());
+        assert_eq!(settings.font.ui_family, "");
         assert_eq!(settings.font.ui_size, 13);
     }
 
@@ -401,7 +401,7 @@ key = "value"
         std::fs::write(&path, "this is not valid toml [[[").unwrap();
 
         let settings = load_from_file(&path);
-        assert!(settings.font.ui_family.is_empty()); // defaults
+        assert_eq!(settings.font.ui_family, ""); // defaults
         assert!(backup.exists()); // backup created
 
         // Cleanup
@@ -425,7 +425,7 @@ ui_size = 14
     fn test_system_fonts_enumeration() {
         let fonts = enumerate_system_fonts();
         // System should have at least some fonts
-        assert!(!fonts.is_empty());
+        assert_ne!(fonts, &[] as &[String]);
         // Should be sorted (case-insensitive)
         for window in fonts.windows(2) {
             assert!(
@@ -443,7 +443,7 @@ ui_size = 14
         let all_fonts = enumerate_system_fonts();
 
         // Should have some monospace fonts
-        assert!(!mono_fonts.is_empty());
+        assert_ne!(mono_fonts, &[] as &[String]);
         // Monospace fonts should be a subset of all fonts
         assert!(mono_fonts.len() <= all_fonts.len());
         // Should be sorted (case-insensitive)

@@ -161,6 +161,6 @@ mod tests {
             Duration::from_millis(100),
         )
         .await;
-        assert!(result.is_empty());
+        assert_eq!(result, Vec::<String>::new());
     }
 }

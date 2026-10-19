@@ -401,7 +401,7 @@ mod tests {
         let key = result.unwrap();
         assert!(key.public_key.contains("ssh-ed25519"));
         assert!(key.private_key.contains("OPENSSH PRIVATE KEY"));
-        assert!(!key.fingerprint.is_empty());
+        assert_ne!(key.fingerprint, "");
     }
 
     #[test]
