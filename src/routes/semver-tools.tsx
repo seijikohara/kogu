@@ -410,7 +410,7 @@ function SemverToolsPage() {
 										if (!step.ok) {
 											return (
 												<li
-													// biome-ignore lint/suspicious/noArrayIndexKey: ordered step list is immutable per render
+													// oxlint-disable-next-line react/no-array-index-key -- ordered step list is immutable per render
 													key={idx}
 													className="flex flex-col gap-1 rounded-md border border-destructive/30 bg-destructive/5 px-3 py-2"
 												>
@@ -427,7 +427,7 @@ function SemverToolsPage() {
 										const DirectionIcon = DIRECTION_ICON[step.direction];
 										return (
 											<li
-												// biome-ignore lint/suspicious/noArrayIndexKey: ordered step list is immutable per render
+												// oxlint-disable-next-line react/no-array-index-key -- ordered step list is immutable per render
 												key={idx}
 												className="flex items-center gap-3 rounded-md border bg-card px-3 py-2"
 											>
@@ -504,16 +504,15 @@ function SemverToolsPage() {
 						<>
 							<Card density="compact">
 								<CardContent className="flex flex-col items-center gap-3 py-6">
-									<div
+									<output
 										className={cn(
 											'flex h-20 w-20 items-center justify-center rounded-full border-2 font-mono text-5xl font-semibold tabular-nums',
 											SIGN_TONE[compareResult.sign]
 										)}
-										role="status"
 										aria-live="polite"
 									>
 										{compareResult.sign}
-									</div>
+									</output>
 									<div className="flex flex-wrap items-center justify-center gap-2">
 										<BumpBadge bump={compareResult.bump} className="text-xs" />
 										{compareResult.metadataOnly ? (

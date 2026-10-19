@@ -79,7 +79,7 @@ describe('Base64', () => {
 		});
 
 		it('throws error for invalid Base64', () => {
-			expect(() => decodeFromBase64('invalid!!!')).toThrow();
+			expect(() => decodeFromBase64('invalid!!!')).toThrow(/invalid character/i);
 		});
 	});
 

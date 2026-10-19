@@ -7,6 +7,8 @@
  */
 import { useEffect, useRef, useState } from 'react';
 
+import type { FeatureUsage, RegexMatch } from '@/lib/services/regex';
+import type { VizNode } from '@/lib/services/regex-viz';
 import type { RegexRequest, RegexResponse } from '@/lib/workers/regex.worker';
 
 type Result<T> =
@@ -21,10 +23,10 @@ export interface UseRegexWorkerInput {
 }
 
 export interface UseRegexWorkerOutput {
-	readonly viz: Result<import('@/lib/services/regex-viz').VizNode> | null;
-	readonly matches: readonly import('@/lib/services/regex').RegexMatch[];
+	readonly viz: Result<VizNode> | null;
+	readonly matches: readonly RegexMatch[];
 	readonly replaced: Result<string> | null;
-	readonly features: readonly import('@/lib/services/regex').FeatureUsage[];
+	readonly features: readonly FeatureUsage[];
 	readonly captureGroupCount: number;
 	readonly isPending: boolean;
 }

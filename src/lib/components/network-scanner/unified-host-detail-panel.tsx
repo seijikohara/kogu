@@ -167,16 +167,31 @@ const getMethodDescription = (method: string): string => {
 	}
 };
 
-const getPortIcon = (port: number): ComponentType<SVGProps<SVGSVGElement>> => {
-	if ([443, 8443].includes(port)) return Lock;
-	if ([80, 8080].includes(port)) return Globe;
-	if (port === 22) return Terminal;
-	if ([3306, 5432, 27017, 6379].includes(port)) return Database;
-	if ([25, 110, 143, 993, 995].includes(port)) return Mail;
-	if ([21, 445, 139, 548].includes(port)) return HardDrive;
-	if ([3389, 5900].includes(port)) return Monitor;
-	if (port === 53) return Globe;
-	return Network;
+// A static lookup table (rather than a function returning a component) lets the
+// React Compiler see that the icon is a module-level component, not one created
+// during render. Ports without an entry fall back to `Network`.
+const PORT_ICONS: Readonly<Record<number, ComponentType<SVGProps<SVGSVGElement>>>> = {
+	443: Lock,
+	8443: Lock,
+	80: Globe,
+	8080: Globe,
+	22: Terminal,
+	3306: Database,
+	5432: Database,
+	27017: Database,
+	6379: Database,
+	25: Mail,
+	110: Mail,
+	143: Mail,
+	993: Mail,
+	995: Mail,
+	21: HardDrive,
+	445: HardDrive,
+	139: HardDrive,
+	548: HardDrive,
+	3389: Monitor,
+	5900: Monitor,
+	53: Globe,
 };
 
 const getServiceName = (port: PortInfo): string => {
@@ -290,7 +305,7 @@ interface OpenPortCardProps {
 }
 
 function OpenPortCard({ port }: OpenPortCardProps) {
-	const PortIcon = getPortIcon(port.port);
+	const PortIcon = PORT_ICONS[port.port] ?? Network;
 	const serviceName = getServiceName(port);
 	return (
 		<Card key={port.port} density="compact" className="transition-colors hover:border-border/80">
@@ -457,15 +472,14 @@ function PortsTab({
 			) : null}
 
 			{ports.length === 0 && scanDisabled && scanProgress ? (
-				<div className="space-y-1.5" role="status" aria-busy="true" aria-label="Loading ports">
+				<output className="block space-y-1.5" aria-busy="true" aria-label="Loading ports">
 					{Array.from({ length: 5 }, (_, i) => (
-						// biome-ignore lint/suspicious/noArrayIndexKey: static skeleton placeholders
 						<div key={i} className="flex items-center gap-2">
 							<Skeleton className="h-4 w-24" />
 							<Skeleton className="ml-auto h-4 w-12" />
 						</div>
 					))}
-				</div>
+				</output>
 			) : ports.length === 0 ? (
 				<EmbeddedEmptyState
 					icon={Network}

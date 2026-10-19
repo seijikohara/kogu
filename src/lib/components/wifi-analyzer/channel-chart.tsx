@@ -88,6 +88,7 @@ function ChannelChartInner({
 	const sortedByRssi = [...visibleNetworks].sort((a, b) => a.rssiDbm - b.rssiDbm);
 
 	return (
+		// oxlint-disable-next-line jsx-a11y/prefer-tag-over-role -- inline <svg> chart needs role="img" with aria-label; an <img> element cannot host inline SVG markup.
 		<svg width={width} height={height} role="img" aria-label={`Wi-Fi channel chart for ${band}`}>
 			<Group left={MARGIN.left} top={MARGIN.top}>
 				<GridRows
@@ -180,7 +181,6 @@ function ApCurve({ network, xScale, yScale, hovered, dimmed, onHover }: ApCurveP
 	// the keyboard-navigable network table beneath the chart provides the
 	// primary access path to the same data.
 	return (
-		// biome-ignore lint/a11y/noStaticElementInteractions: see comment above
 		<path
 			d={d}
 			aria-label={`${network.bssid} signal curve`}
@@ -209,7 +209,7 @@ interface ApLabelsProps {
  * the bounding box of an already-placed label.
  */
 function ApLabels({ networks, xScale, yScale, hoveredBssid }: ApLabelsProps) {
-	const placed: Array<{ x: number; y: number; w: number; h: number }> = [];
+	const placed: { x: number; y: number; w: number; h: number }[] = [];
 	const labelW = 90;
 	const labelH = 14;
 	const elements: React.JSX.Element[] = [];

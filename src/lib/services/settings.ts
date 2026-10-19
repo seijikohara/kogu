@@ -58,7 +58,7 @@ export const getSettings = (): Promise<AppSettings> => invoke<AppSettings>('get_
 
 /** Update application settings (auto-saves to disk) */
 export const updateSettings = (settings: AppSettings): Promise<void> =>
-	invoke<void>('update_settings', { settings });
+	invoke('update_settings', { settings });
 
 /** Reset all settings to defaults, delete settings file, and resize window */
 export const resetSettings = (): Promise<AppSettings> => invoke<AppSettings>('reset_settings');

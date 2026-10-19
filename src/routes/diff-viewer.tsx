@@ -404,13 +404,13 @@ function DiffViewerPage() {
 							{enhancedDiff && enhancedDiff.hunks.length > 0 && (leftInput || rightInput) ? (
 								<div className="font-mono text-sm">
 									{enhancedDiff.hunks.map((hunk, hunkIdx) => (
-										// biome-ignore lint/suspicious/noArrayIndexKey: hunks are immutable and ordered
+										// oxlint-disable-next-line react/no-array-index-key -- hunks are immutable and ordered
 										<div key={`hunk-${hunkIdx}-${formatHunkHeader(hunk)}`}>
 											<div className="sticky top-0 z-10 flex min-h-7 items-center border-y bg-info/10 px-3 text-xs font-semibold text-info">
 												<span className="font-mono">{formatHunkHeader(hunk)}</span>
 											</div>
 											{hunk.lines.map((line, lineIdx) => (
-												// biome-ignore lint/suspicious/noArrayIndexKey: diff result is immutable and ordered
+												// oxlint-disable-next-line react/no-array-index-key -- diff result is immutable and ordered
 												<div key={`l-${hunkIdx}-${lineIdx}-${line.type}`} className="flex min-h-6">
 													<div
 														className={`flex flex-1 border-r ${line.type === 'insert' ? 'bg-muted/20' : getDiffLeftLineBgClass(line.type)}`}
@@ -429,7 +429,7 @@ function DiffViewerPage() {
 															  line.leftSegments.length > 0 ? (
 																line.leftSegments.map((seg, sIdx) => (
 																	<span
-																		// biome-ignore lint/suspicious/noArrayIndexKey: diff segment list is immutable
+																		// oxlint-disable-next-line react/no-array-index-key -- diff segment list is immutable
 																		key={`ls-${hunkIdx}-${lineIdx}-${sIdx}`}
 																		className={getDiffSegmentClass(seg.type, 'left')}
 																	>
@@ -466,7 +466,7 @@ function DiffViewerPage() {
 															  line.rightSegments.length > 0 ? (
 																line.rightSegments.map((seg, sIdx) => (
 																	<span
-																		// biome-ignore lint/suspicious/noArrayIndexKey: diff segment list is immutable
+																		// oxlint-disable-next-line react/no-array-index-key -- diff segment list is immutable
 																		key={`rs-${hunkIdx}-${lineIdx}-${sIdx}`}
 																		className={getDiffSegmentClass(seg.type, 'right')}
 																	>
@@ -521,7 +521,7 @@ function DiffViewerPage() {
 										if (line.kind === 'hunk-header') {
 											return (
 												<div
-													// biome-ignore lint/suspicious/noArrayIndexKey: diff result is immutable and ordered
+													// oxlint-disable-next-line react/no-array-index-key -- diff result is immutable and ordered
 													key={`u-h-${lIdx}-${line.content}`}
 													className="sticky top-0 z-10 flex min-h-7 items-center border-y bg-info/10 px-3 text-xs font-semibold text-info"
 												>
@@ -532,7 +532,7 @@ function DiffViewerPage() {
 										const lineType = line.type as 'equal' | 'insert' | 'delete';
 										return (
 											<div
-												// biome-ignore lint/suspicious/noArrayIndexKey: diff result is immutable and ordered
+												// oxlint-disable-next-line react/no-array-index-key -- diff result is immutable and ordered
 												key={`u-l-${lIdx}-${lineType}`}
 												className={`flex min-h-6 ${getDiffUnifiedLineClass(lineType)}`}
 											>
@@ -556,7 +556,7 @@ function DiffViewerPage() {
 													lineType !== 'equal'
 														? line.segments.map((seg, sIdx) => (
 																<span
-																	// biome-ignore lint/suspicious/noArrayIndexKey: diff segment list is immutable
+																	// oxlint-disable-next-line react/no-array-index-key -- diff segment list is immutable
 																	key={`u-s-${lIdx}-${sIdx}`}
 																	className={getDiffUnifiedSegmentClass(seg.type, lineType)}
 																>

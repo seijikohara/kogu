@@ -24,7 +24,9 @@ export interface ArchiveEntry {
 
 export interface ArchiveInfo {
 	readonly path: string;
-	readonly format: ArchiveFormat | string;
+	// `string & {}` keeps editor completion for known formats while still
+	// accepting formats the backend may add later.
+	readonly format: ArchiveFormat | (string & {});
 	readonly entries: readonly ArchiveEntry[];
 	readonly totalEntries: number;
 	readonly totalUncompressed: number;

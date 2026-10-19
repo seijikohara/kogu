@@ -51,7 +51,7 @@ const groupIntoHunks = (lines: readonly EnhancedDiffLine[], contextLines: number
 		end: Math.min(lines.length - 1, firstIdx + contextLines),
 	};
 
-	const hunkRanges = changeIndices.slice(1).reduce<Array<{ start: number; end: number }>>(
+	const hunkRanges = changeIndices.slice(1).reduce<{ start: number; end: number }[]>(
 		(ranges, changeIdx) => {
 			const lastRange = ranges.at(-1);
 			if (!lastRange) return ranges;

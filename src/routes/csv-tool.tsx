@@ -108,6 +108,12 @@ interface SortState {
 	readonly direction: SortDirection;
 }
 
+// Focuses an inline editor when it mounts after a double-click. Module scope keeps
+// the callback ref stable, so React does not call it again (and steal focus) on re-render.
+const focusOnMount = (el: HTMLInputElement | null): void => {
+	el?.focus();
+};
+
 export const Route = createFileRoute('/csv-tool')({
 	component: CsvToolPage,
 });
@@ -135,26 +141,51 @@ function CsvToolPage() {
 	const { parse, format, parseResult, output: workerOutput } = useCsvToolWorker();
 	const debouncedRawText = useDebouncedValue(rawText, 300);
 
+	// When the debounced text or the user-controlled hints change, clear the table
+	// (empty text) or the sort (new parse). These resets run during render (React's
+	// "adjust state when a prop changes" pattern); only the worker call stays in
+	// the effect below.
+	const [parseInput, setParseInput] = useState({
+		text: debouncedRawText,
+		delimiterOverride: prefs.delimiterOverride,
+		hasHeader: prefs.hasHeader,
+	});
+	if (
+		parseInput.text !== debouncedRawText ||
+		parseInput.delimiterOverride !== prefs.delimiterOverride ||
+		parseInput.hasHeader !== prefs.hasHeader
+	) {
+		setParseInput({
+			text: debouncedRawText,
+			delimiterOverride: prefs.delimiterOverride,
+			hasHeader: prefs.hasHeader,
+		});
+		if (debouncedRawText.trim() === '') {
+			setTable(null);
+		} else {
+			setSort(null);
+		}
+	}
+
 	// Re-parse whenever the debounced text or the user-controlled hints change.
 	// Inline cell edits bypass this and mutate `table` directly via the handlers
 	// below; the format effect re-runs on that change.
 	useEffect(() => {
-		if (debouncedRawText.trim() === '') {
-			setTable(null);
-			return;
-		}
+		if (debouncedRawText.trim() === '') return;
 		const hint =
 			prefs.delimiterOverride === 'auto'
 				? { hasHeader: prefs.hasHeader }
 				: { delimiter: prefs.delimiterOverride, hasHeader: prefs.hasHeader };
 		parse(debouncedRawText, hint);
-		setSort(null);
 	}, [debouncedRawText, prefs.delimiterOverride, prefs.hasHeader, parse]);
 
-	// Adopt the worker's parsed table as editable local state.
-	useEffect(() => {
+	// Adopt each new worker parse result as editable local state, during render
+	// for the same reason as above.
+	const [adoptedParseResult, setAdoptedParseResult] = useState(parseResult);
+	if (adoptedParseResult !== parseResult) {
+		setAdoptedParseResult(parseResult);
 		if (parseResult) setTable(parseResult.table);
-	}, [parseResult]);
+	}
 
 	const columnTypes: readonly ColumnType[] = parseResult?.columnTypes ?? [];
 	const columnStats = parseResult?.columnStats ?? [];
@@ -731,7 +762,7 @@ function TableView({
 											<div className="flex items-center gap-1">
 												{isEditing ? (
 													<Input
-														autoFocus
+														ref={focusOnMount}
 														defaultValue={header}
 														onBlur={(e) => {
 															onHeaderRename(colIndex, e.target.value || header);
@@ -802,7 +833,9 @@ function TableView({
 									</th>
 								);
 							})}
-							<th className="w-10 border-b px-2 py-1" />
+							<th className="w-10 border-b px-2 py-1">
+								<span className="sr-only">Actions</span>
+							</th>
 						</tr>
 					</thead>
 					<tbody>
@@ -847,7 +880,7 @@ function TableView({
 												>
 													{isEditing ? (
 														<Input
-															autoFocus
+															ref={focusOnMount}
 															defaultValue={cell}
 															onBlur={(e) => {
 																onCellEdit(visibleRowIndex, colIndex, e.target.value);

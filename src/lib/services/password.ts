@@ -49,7 +49,7 @@ export const buildCharacterPool = (options: PasswordOptions): string => {
 		options.symbols ? SYMBOL_CHARS : '',
 	];
 	const base = parts.join('');
-	return [...base]
+	return Array.from(base)
 		.filter((c) => !options.excludeSimilar || !SIMILAR_CHARS.includes(c))
 		.filter((c) => !options.excludeAmbiguous || !AMBIGUOUS_CHARS.includes(c))
 		.join('');

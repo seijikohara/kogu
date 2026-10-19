@@ -98,7 +98,7 @@ export const useFormatterPage = <TStats>(
 	const setActiveTab = useCallback(
 		(tab: FormatterTabType): void => {
 			if (persistKey) setStoredTab(persistKey, tab);
-			navigate({
+			void navigate({
 				to: pathname,
 				search: (prev: Record<string, unknown>) => {
 					const next = { ...prev };

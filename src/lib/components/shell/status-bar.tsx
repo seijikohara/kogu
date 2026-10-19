@@ -39,8 +39,7 @@ export function StatusBar({ valid, error, children }: StatusBarProps) {
 	if (!hasContent) return null;
 
 	return (
-		<footer
-			role="status"
+		<output
 			aria-live="polite"
 			aria-label="Tool status"
 			className="flex h-7 shrink-0 items-center justify-between border-t border-border/60 bg-surface-2 px-3"
@@ -56,7 +55,7 @@ export function StatusBar({ valid, error, children }: StatusBarProps) {
 				)}
 			</div>
 			{valid !== undefined ? <ValidityBadge valid={valid ?? null} /> : null}
-		</footer>
+		</output>
 	);
 }
 

@@ -6,11 +6,11 @@ export type Platform = 'macos' | 'windows' | 'linux' | 'unknown';
 // holder so the binding itself is never reassigned.
 const platformCache: { value: Platform | null } = { value: null };
 
-export const getPlatform = async (): Promise<Platform> => {
+export const getPlatform = (): Platform => {
 	if (platformCache.value) return platformCache.value;
 
 	try {
-		const os = await platform();
+		const os = platform();
 		const resolved: Platform =
 			os === 'macos'
 				? 'macos'
@@ -26,7 +26,4 @@ export const getPlatform = async (): Promise<Platform> => {
 	}
 };
 
-export const isMacOS = async (): Promise<boolean> => {
-	const p = await getPlatform();
-	return p === 'macos';
-};
+export const isMacOS = (): boolean => getPlatform() === 'macos';

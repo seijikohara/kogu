@@ -72,39 +72,47 @@ function MacLookupPage() {
 	const { displayFormat, upperCase, randomLocalOnly, randomVendorOui } = options;
 
 	const [input, setInput] = useState<string>(SAMPLE_MAC);
-	const [vendor, setVendor] = useState<VendorResult | null>(null);
-	const [vendorLoading, setVendorLoading] = useState<boolean>(false);
+	const [vendorLookup, setVendorLookup] = useState<{
+		readonly source: ReturnType<typeof parseMac>;
+		readonly vendor: VendorResult | null;
+	} | null>(null);
 	const [dbInfo, setDbInfo] = useState<OuiDatabaseInfo | null>(null);
 	const [showRail, setShowRail] = usePersistedRail('mac-lookup');
 
 	const parseResult = useMemo(() => parseMac(input), [input]);
 	const trimmed = input.trim();
 
+	// The lookup result is stored with the parse result it belongs to, so the
+	// loading flag and the empty state for invalid input are derived here
+	// instead of being toggled from the effect.
+	const vendor = parseResult.ok ? (vendorLookup?.vendor ?? null) : null;
+	const vendorLoading = parseResult.ok && vendorLookup?.source !== parseResult;
+
 	// Resolve vendor whenever the parsed MAC changes. Render-effect because
 	// the lookup is an out-of-band IPC roundtrip that cannot be derived
 	// synchronously.
 	useEffect(() => {
-		if (!parseResult.ok) {
-			setVendor(null);
-			setVendorLoading(false);
-			return;
-		}
+		if (!parseResult.ok) return;
 		let cancelled = false;
-		setVendorLoading(true);
-		lookupVendor(parseResult.mac).then((result) => {
-			if (cancelled) return;
-			setVendor(result);
-			setVendorLoading(false);
-		});
+		lookupVendor(parseResult.mac)
+			.then((result) => {
+				if (!cancelled) setVendorLookup({ source: parseResult, vendor: result });
+			})
+			// lookupVendor maps IPC failures to an unknown vendor; mirror that so
+			// an unexpected rejection still ends the loading state.
+			.catch(() => {
+				if (!cancelled) setVendorLookup({ source: parseResult, vendor: null });
+			});
 		return () => {
 			cancelled = true;
 		};
 	}, [parseResult]);
 
 	// One-shot fetch of bundled database metadata for the freshness badge.
+	// getOuiDatabaseInfo resolves to null on failure, so it never rejects.
 	useEffect(() => {
 		let cancelled = false;
-		getOuiDatabaseInfo().then((info) => {
+		void getOuiDatabaseInfo().then((info) => {
 			if (!cancelled) setDbInfo(info);
 		});
 		return () => {

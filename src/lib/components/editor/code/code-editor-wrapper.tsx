@@ -7,6 +7,7 @@ import htmlWorker from 'monaco-editor/esm/vs/language/html/html.worker?worker';
 import jsonWorker from 'monaco-editor/esm/vs/language/json/json.worker?worker';
 import tsWorker from 'monaco-editor/esm/vs/language/typescript/ts.worker?worker';
 import { configureMonacoYaml } from 'monaco-yaml';
+// oxlint-disable-next-line import/default -- Vite's `?worker` suffix synthesizes the default export; oxlint resolves the bare worker module, which has none.
 import yamlWorker from '@/lib/workers/yaml.worker?worker';
 
 // One-shot configuration flags. Kept on a const holder so the bindings
@@ -206,51 +207,48 @@ export const CodeEditorWrapper = forwardRef<CodeEditorWrapperHandle, CodeEditorW
 			};
 		};
 
-		useImperativeHandle(
-			ref,
-			(): CodeEditorWrapperHandle => ({
-				getSelectionRange: () => {
-					const editor = editorRef.current;
-					if (!editor) return { start: 0, end: 0 };
-					const model = editor.getModel();
-					if (!model) return { start: 0, end: 0 };
-					const selection = editor.getSelection();
-					if (!selection) return { start: 0, end: 0 };
-					return {
-						start: model.getOffsetAt(selection.getStartPosition()),
-						end: model.getOffsetAt(selection.getEndPosition()),
-					};
-				},
-				setSelectionRange: (start, end) => {
-					const editor = editorRef.current;
-					if (!editor) return;
-					const model = editor.getModel();
-					if (!model) return;
-					const startPos = model.getPositionAt(start);
-					const endPos = model.getPositionAt(end);
-					editor.setSelection({
-						startLineNumber: startPos.lineNumber,
-						startColumn: startPos.column,
-						endLineNumber: endPos.lineNumber,
-						endColumn: endPos.column,
-					});
-				},
-				focusEditor: () => editorRef.current?.focus(),
-				scrollToLine: (line, focus = true) => {
-					const editor = editorRef.current;
-					if (!editor) return;
-					const model = editor.getModel();
-					if (!model) return;
-					const lineCount = model.getLineCount();
-					const targetLine = Math.min(Math.max(1, line), lineCount);
-					editor.revealLineInCenter(targetLine);
-					editor.setPosition({ lineNumber: targetLine, column: 1 });
-					if (focus) {
-						editor.focus();
-					}
-				},
-			})
-		);
+		useImperativeHandle(ref, (): CodeEditorWrapperHandle => ({
+			getSelectionRange: () => {
+				const editor = editorRef.current;
+				if (!editor) return { start: 0, end: 0 };
+				const model = editor.getModel();
+				if (!model) return { start: 0, end: 0 };
+				const selection = editor.getSelection();
+				if (!selection) return { start: 0, end: 0 };
+				return {
+					start: model.getOffsetAt(selection.getStartPosition()),
+					end: model.getOffsetAt(selection.getEndPosition()),
+				};
+			},
+			setSelectionRange: (start, end) => {
+				const editor = editorRef.current;
+				if (!editor) return;
+				const model = editor.getModel();
+				if (!model) return;
+				const startPos = model.getPositionAt(start);
+				const endPos = model.getPositionAt(end);
+				editor.setSelection({
+					startLineNumber: startPos.lineNumber,
+					startColumn: startPos.column,
+					endLineNumber: endPos.lineNumber,
+					endColumn: endPos.column,
+				});
+			},
+			focusEditor: () => editorRef.current?.focus(),
+			scrollToLine: (line, focus = true) => {
+				const editor = editorRef.current;
+				if (!editor) return;
+				const model = editor.getModel();
+				if (!model) return;
+				const lineCount = model.getLineCount();
+				const targetLine = Math.min(Math.max(1, line), lineCount);
+				editor.revealLineInCenter(targetLine);
+				editor.setPosition({ lineNumber: targetLine, column: 1 });
+				if (focus) {
+					editor.focus();
+				}
+			},
+		}));
 
 		// Editor lifecycle: create on mount, dispose on unmount. Empty deps array ensures we
 		// never recreate the editor on prop changes — value/mode/theme/readOnly sync through
@@ -407,7 +405,6 @@ export const CodeEditorWrapper = forwardRef<CodeEditorWrapperHandle, CodeEditorW
 		};
 
 		return (
-			// biome-ignore lint/a11y/noStaticElementInteractions: Monaco mounts focusable, role-aware editor widgets inside this container; the contextmenu handler delegates to Monaco's own keyboard/mouse semantics.
 			<div
 				ref={containerRef}
 				className="code-editor-wrapper relative isolate z-0 overflow-hidden [&_.monaco-editor]:h-full"

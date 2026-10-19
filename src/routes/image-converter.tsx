@@ -93,15 +93,6 @@ function ImageConverterPage() {
 	const fileInputRef = useRef<HTMLInputElement | null>(null);
 
 	useEffect(() => {
-		if (!source) return;
-		setWidth(source.width);
-		setHeight(source.height);
-		setRotation(0);
-		setFlipH(false);
-		setFlipV(false);
-	}, [source]);
-
-	useEffect(() => {
 		return () => {
 			results.forEach((r) => {
 				if (r.ok) URL.revokeObjectURL(r.converted.url);
@@ -109,15 +100,12 @@ function ImageConverterPage() {
 		};
 	}, [results]);
 
+	// `acceptFile` creates the preview URL together with the source; revoke it
+	// once it is replaced, cleared, or the page unmounts.
 	useEffect(() => {
-		if (!source) {
-			setSourceUrl(null);
-			return;
-		}
-		const url = URL.createObjectURL(source.blob);
-		setSourceUrl(url);
-		return () => URL.revokeObjectURL(url);
-	}, [source]);
+		if (!sourceUrl) return;
+		return () => URL.revokeObjectURL(sourceUrl);
+	}, [sourceUrl]);
 
 	const aspect = source ? source.width / source.height : 1;
 
@@ -138,6 +126,13 @@ function ImageConverterPage() {
 		try {
 			const next = await loadSource(file);
 			setSource(next);
+			setSourceUrl(URL.createObjectURL(next.blob));
+			// Reset the transform so it starts from the new image's natural size.
+			setWidth(next.width);
+			setHeight(next.height);
+			setRotation(0);
+			setFlipH(false);
+			setFlipV(false);
 			setResults([]);
 			setActiveFormat(null);
 		} catch (e) {
@@ -220,6 +215,7 @@ function ImageConverterPage() {
 
 	const handleClearSource = () => {
 		setSource(null);
+		setSourceUrl(null);
 		setResults([]);
 		setActiveFormat(null);
 		setError(null);

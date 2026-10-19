@@ -520,7 +520,9 @@ function SubnettingPanel({
 												<th className="py-1.5 pr-3 font-semibold">First</th>
 												<th className="py-1.5 pr-3 font-semibold">Last</th>
 												<th className="py-1.5 pr-3 font-semibold text-right">Addresses</th>
-												<th className="py-1.5 pr-1" />
+												<th className="py-1.5 pr-1">
+													<span className="sr-only">Actions</span>
+												</th>
 											</tr>
 										</thead>
 										<tbody>

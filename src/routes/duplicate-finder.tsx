@@ -182,18 +182,13 @@ function DuplicateFinderPage() {
 	const [progress, setProgress] = useState<ScanProgress | null>(null);
 	const [selected, setSelected] = useState<ReadonlySet<string>>(new Set());
 	const [showRail, setShowRail] = usePersistedRail('duplicate-finder');
-	const [platform, setPlatform] = useState<Platform>('unknown');
 
 	const minSize = MIN_SIZE_STEPS[prefs.minSizeIdx] ?? MIN_SIZE_STEPS[3] ?? 1024;
 	const maxSize = MAX_SIZE_STEPS[prefs.maxSizeIdx] ?? MAX_SIZE_STEPS[4] ?? 1024 * 1024 * 1024;
 
-	// Resolve platform once at mount so the link action uses an
-	// OS-appropriate verb (symlink on Unix, hard link on Windows).
-	useEffect(() => {
-		getPlatform()
-			.then(setPlatform)
-			.catch(() => undefined);
-	}, []);
+	// The link action uses an OS-appropriate verb (symlink on Unix, hard
+	// link on Windows). `getPlatform` is synchronous and cached.
+	const platform: Platform = getPlatform();
 
 	const linkKind: 'symlink' | 'hardlink' = platform === 'windows' ? 'hardlink' : 'symlink';
 
@@ -206,13 +201,19 @@ function DuplicateFinderPage() {
 		let cancelled = false;
 		onScanProgress((p) => {
 			if (!cancelled) setProgress(p);
-		}).then((unlisten) => {
-			if (cancelled) {
-				unlisten();
-				return;
-			}
-			unlistenRef.current = unlisten;
-		});
+		})
+			.then((unlisten) => {
+				if (cancelled) {
+					unlisten();
+					return;
+				}
+				unlistenRef.current = unlisten;
+			})
+			.catch((e: unknown) => {
+				if (cancelled) return;
+				const message = e instanceof Error ? e.message : String(e);
+				setError(`Failed to subscribe to scan progress: ${message}`);
+			});
 		return () => {
 			cancelled = true;
 			unlistenRef.current?.();

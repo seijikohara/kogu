@@ -7,7 +7,7 @@
  * computes. `sourceBytes` is structure-cloned to the worker, so the route
  * keeps its own copy for the hex-dump preview.
  */
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 import type {
 	BomAction,
@@ -46,12 +46,22 @@ const EMPTY_RESULT: EncodingConverterResult = {
 	isPending: false,
 };
 
+const FIRST_PENDING_RESULT: EncodingConverterResult = { ...EMPTY_RESULT, isPending: true };
+
+interface ConvertedOutput {
+	readonly request: EncodingConvertRequest;
+	readonly result: Omit<EncodingConverterResult, 'isPending'>;
+}
+
 export const useEncodingConverterWorker = (
 	input: UseEncodingConverterInput
 ): EncodingConverterResult => {
 	const workerRef = useRef<Worker | null>(null);
 	const latestIdRef = useRef(0);
-	const [output, setOutput] = useState<EncodingConverterResult>(EMPTY_RESULT);
+	// The request tagged `latestIdRef`. Its response is stored together with its
+	// inputs so `isPending` can be derived by comparing them with the current input.
+	const latestRequestRef = useRef<EncodingConvertRequest | null>(null);
+	const [converted, setConverted] = useState<ConvertedOutput | null>(null);
 
 	useEffect(() => {
 		const worker = new Worker(
@@ -61,14 +71,17 @@ export const useEncodingConverterWorker = (
 		workerRef.current = worker;
 		const handleMessage = (event: MessageEvent<EncodingConvertResponse>) => {
 			const response = event.data;
-			if (response.id !== latestIdRef.current) return;
-			setOutput({
-				detected: response.detected,
-				decodedText: response.decodedText,
-				targetBytes: response.targetBytes,
-				targetText: response.targetText,
-				base64: response.base64,
-				isPending: false,
+			const request = latestRequestRef.current;
+			if (!request || response.id !== latestIdRef.current) return;
+			setConverted({
+				request,
+				result: {
+					detected: response.detected,
+					decodedText: response.decodedText,
+					targetBytes: response.targetBytes,
+					targetText: response.targetText,
+					base64: response.base64,
+				},
 			});
 		};
 		worker.addEventListener('message', handleMessage);
@@ -81,17 +94,22 @@ export const useEncodingConverterWorker = (
 
 	const { sourceBytes, overrideEncoding, targetEncoding, lineEnding, bomAction } = input;
 
+	// Drop the stored result during render once the source is cleared, so the next
+	// file starts from an empty result instead of the result of an older file.
+	if (!sourceBytes && converted !== null) {
+		setConverted(null);
+	}
+
 	useEffect(() => {
 		const worker = workerRef.current;
 		if (!worker) return;
 		if (!sourceBytes) {
 			latestIdRef.current += 1;
-			setOutput(EMPTY_RESULT);
+			latestRequestRef.current = null;
 			return;
 		}
 		const id = latestIdRef.current + 1;
 		latestIdRef.current = id;
-		setOutput((prev) => ({ ...prev, isPending: true }));
 		const request: EncodingConvertRequest = {
 			id,
 			sourceBytes,
@@ -100,9 +118,22 @@ export const useEncodingConverterWorker = (
 			lineEnding,
 			bomAction,
 		};
+		latestRequestRef.current = request;
 		// No transfer: the route keeps `sourceBytes` for its own hex-dump preview.
 		worker.postMessage(request);
 	}, [sourceBytes, overrideEncoding, targetEncoding, lineEnding, bomAction]);
 
-	return output;
+	return useMemo<EncodingConverterResult>(() => {
+		if (!sourceBytes) return EMPTY_RESULT;
+		if (!converted) return FIRST_PENDING_RESULT;
+		// Keep the previous result visible while a newer conversion runs.
+		const { request } = converted;
+		const isPending =
+			request.sourceBytes !== sourceBytes ||
+			request.overrideEncoding !== overrideEncoding ||
+			request.targetEncoding !== targetEncoding ||
+			request.lineEnding !== lineEnding ||
+			request.bomAction !== bomAction;
+		return { ...converted.result, isPending };
+	}, [converted, sourceBytes, overrideEncoding, targetEncoding, lineEnding, bomAction]);
 };

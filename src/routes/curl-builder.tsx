@@ -587,7 +587,7 @@ function CurlBuilderPage() {
 										<div className="space-y-1.5">
 											{parsedCurl.value.headers.map((header, idx) => (
 												<div
-													// biome-ignore lint/suspicious/noArrayIndexKey: parsed header list reflects positional curl args
+													// oxlint-disable-next-line react/no-array-index-key -- parsed header list reflects positional curl args
 													key={idx}
 													className="flex items-baseline gap-2 rounded-md border bg-card px-3 py-2"
 												>

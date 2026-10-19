@@ -45,7 +45,8 @@ export function PatternEditor({
 
 	const tokens = tokenizeRegex(value);
 	// Build per-token character offsets so we can derive a stable React key from
-	// the token's position in the original pattern (Biome forbids array index as key).
+	// the token's position in the original pattern (react/no-array-index-key
+	// forbids array indexes as keys).
 	// A const cursor object threads the running offset without a `let` accumulator.
 	const offsetCursor = { value: 0 };
 	const keyedTokens = tokens.map((token) => {

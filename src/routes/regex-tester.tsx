@@ -160,7 +160,7 @@ function RenderNode({ node, depth }: RenderNodeProps) {
 						)}
 					>
 						{node.children.map((child, idx) => (
-							// biome-ignore lint/suspicious/noArrayIndexKey: viz tree is immutable
+							// oxlint-disable-next-line react/no-array-index-key -- viz tree is immutable
 							<RenderNode key={idx} node={child} depth={depth + 1} />
 						))}
 					</div>
@@ -187,7 +187,7 @@ function MatchGroupList({ match }: MatchGroupListProps) {
 						const color = groupColor(gIdx + 1);
 						return (
 							<div
-								// biome-ignore lint/suspicious/noArrayIndexKey: groups in stable order
+								// oxlint-disable-next-line react/no-array-index-key -- groups in stable order
 								key={gIdx}
 								className="flex items-baseline gap-2 text-2xs"
 							>
@@ -244,7 +244,7 @@ function MatchesAccordion({ matches, compiledOk }: MatchesAccordionProps) {
 				{matches.length > 0 ? (
 					<div className="space-y-2">
 						{matches.map((match, mIdx) => (
-							// biome-ignore lint/suspicious/noArrayIndexKey: matches in stable order
+							// oxlint-disable-next-line react/no-array-index-key -- matches in stable order
 							<Card key={mIdx} density="compact">
 								<CardContent>
 									<div className="flex items-center gap-2">
@@ -390,7 +390,7 @@ function InlinePreview({ segments }: InlinePreviewProps) {
 			</div>
 			<pre className="whitespace-pre-wrap break-all rounded-md border bg-muted p-3 font-mono text-sm">
 				{segments.map((seg, idx) => (
-					// biome-ignore lint/suspicious/noArrayIndexKey: segments are stable
+					// oxlint-disable-next-line react/no-array-index-key -- segments are stable
 					<PreviewSegment key={idx} seg={seg} />
 				))}
 			</pre>
@@ -495,7 +495,7 @@ function ReplaceCardBody({
 						</div>
 						<pre className="overflow-auto whitespace-pre-wrap break-all rounded-md border bg-muted p-3 font-mono text-sm">
 							{replaceSegments.map((seg, idx) => (
-								// biome-ignore lint/suspicious/noArrayIndexKey: segments are stable
+								// oxlint-disable-next-line react/no-array-index-key -- segments are stable
 								<span key={idx}>{seg.text}</span>
 							))}
 						</pre>

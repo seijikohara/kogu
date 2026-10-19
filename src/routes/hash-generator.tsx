@@ -99,6 +99,8 @@ const useHashGeneratorPrefs = createToolOptionsStore<HashGeneratorPrefs>(
 
 const isFileMode = (value: string): value is FileMode => FILE_MODES.some((m) => m.value === value);
 
+const NO_TEXT_HASHES: readonly HashResult[] = [];
+
 export const Route = createFileRoute('/hash-generator')({
 	component: HashGeneratorPage,
 });
@@ -135,20 +137,20 @@ function HashGeneratorPage() {
 function TextHashTab() {
 	const [textInput, setTextInput] = useState('');
 	const debouncedTextInput = useDebouncedValue(textInput, 150);
-	const [textHashes, setTextHashes] = useState<readonly HashResult[]>([]);
+	const [computedHashes, setComputedHashes] = useState<readonly HashResult[]>([]);
+	// A blank input never shows hashes. Derive that here instead of resetting
+	// the state from the effect.
+	const textHashes = debouncedTextInput.trim() ? computedHashes : NO_TEXT_HASHES;
 
 	useEffect(() => {
-		if (!debouncedTextInput.trim()) {
-			setTextHashes([]);
-			return;
-		}
+		if (!debouncedTextInput.trim()) return;
 		let cancelled = false;
 		generateAllHashes(debouncedTextInput)
 			.then((results) => {
-				if (!cancelled) setTextHashes(results);
+				if (!cancelled) setComputedHashes(results);
 			})
 			.catch(() => {
-				if (!cancelled) setTextHashes([]);
+				if (!cancelled) setComputedHashes([]);
 			});
 		return () => {
 			cancelled = true;
@@ -164,7 +166,13 @@ function TextHashTab() {
 		}
 	};
 
-	const handleClear = () => setTextInput('');
+	// Drop the previous results when the input is emptied so that, as before, new text never
+	// shows hashes of an older input while its own hashes are computed.
+	const updateTextInput = (next: string) => {
+		setTextInput(next);
+		if (!next.trim()) setComputedHashes([]);
+	};
+	const handleClear = () => updateTextInput('');
 	const handleSample = () => setTextInput(SAMPLE_TEXT_FOR_HASH);
 
 	const isSecure = (algorithm: string): boolean =>
@@ -173,7 +181,7 @@ function TextHashTab() {
 	return (
 		<ToolShellTextContent
 			textInput={textInput}
-			onTextChange={setTextInput}
+			onTextChange={updateTextInput}
 			onPaste={handlePaste}
 			onClear={handleClear}
 			onSample={handleSample}
@@ -727,31 +735,31 @@ function DropZoneCard({
 }: DropZoneCardProps) {
 	return (
 		<Card density="compact">
-			<CardContent
-				role="region"
-				aria-label="Drop files to hash"
-				onDrop={onDrop}
-				onDragOver={onDragOver}
-				onDragLeave={onDragLeave}
-				className={cn(
-					'flex flex-col items-center gap-3 rounded-md border-2 border-dashed py-8 text-center transition-colors',
-					isDragOver ? 'border-primary bg-primary/10' : 'border-border'
-				)}
-			>
-				<FilePlus className="h-8 w-8 text-muted-foreground" />
-				<div className="space-y-1">
-					<p className="text-sm font-medium">
-						{hasFiles ? 'Drop more files to add to the batch' : 'Drop files to hash'}
-					</p>
-					<p className="text-xs text-muted-foreground">
-						Or use the picker — multi-select is supported.
-					</p>
-				</div>
-				<Button variant="default" size="sm" onClick={onPick} disabled={busy}>
-					<FolderOpen className="h-3.5 w-3.5" />
-					Open files…
-				</Button>
-			</CardContent>
+			<section aria-label="Drop files to hash">
+				<CardContent
+					onDrop={onDrop}
+					onDragOver={onDragOver}
+					onDragLeave={onDragLeave}
+					className={cn(
+						'flex flex-col items-center gap-3 rounded-md border-2 border-dashed py-8 text-center transition-colors',
+						isDragOver ? 'border-primary bg-primary/10' : 'border-border'
+					)}
+				>
+					<FilePlus className="h-8 w-8 text-muted-foreground" />
+					<div className="space-y-1">
+						<p className="text-sm font-medium">
+							{hasFiles ? 'Drop more files to add to the batch' : 'Drop files to hash'}
+						</p>
+						<p className="text-xs text-muted-foreground">
+							Or use the picker — multi-select is supported.
+						</p>
+					</div>
+					<Button variant="default" size="sm" onClick={onPick} disabled={busy}>
+						<FolderOpen className="h-3.5 w-3.5" />
+						Open files…
+					</Button>
+				</CardContent>
+			</section>
 		</Card>
 	);
 }

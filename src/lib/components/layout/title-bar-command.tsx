@@ -58,7 +58,7 @@ export const TitleBarCommand = forwardRef<TitleBarCommandHandle, TitleBarCommand
 			// `navigate` accepts a typed `to` path; the page registry uses string URLs that
 			// are validated by the validate-pages script, so we cast to satisfy the typed
 			// router without weakening callers.
-			navigate({ to: url as never });
+			void navigate({ to: url as never });
 		};
 
 		const handleAction = (fn: () => void) => {

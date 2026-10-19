@@ -8,7 +8,6 @@ import {
 	ShieldAlert,
 	Usb,
 } from 'lucide-react';
-import type { LucideIcon } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
@@ -74,33 +73,45 @@ function DriveInfoPage() {
 	const { value: prefs, patch } = useDriveInfoPrefs();
 
 	const [drives, setDrives] = useState<readonly DriveInfo[]>([]);
-	const [loading, setLoading] = useState(false);
+	// Starts true because the mount effect below begins loading immediately.
+	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState<string | null>(null);
 	const [loaded, setLoaded] = useState(false);
 	const [showRail, setShowRail] = usePersistedRail('drive-info');
 
+	// Every state update sits in a promise callback, so the mount effect can call this
+	// without a synchronous setState inside the effect. An explicit chain is used
+	// because react/set-state-in-effect treats code after `await` as synchronous.
+	const loadDrives = useCallback(
+		() =>
+			listDrives()
+				.then((next) => {
+					setDrives(next);
+					setLoaded(true);
+				})
+				.catch((e: unknown) => {
+					const message = e instanceof Error ? e.message : String(e);
+					setError(message);
+					toast.error('Failed to enumerate drives', { description: message });
+				})
+				.finally(() => {
+					setLoading(false);
+				}),
+		[]
+	);
+
 	const refresh = useCallback(async () => {
 		setLoading(true);
 		setError(null);
-		try {
-			const next = await listDrives();
-			setDrives(next);
-			setLoaded(true);
-		} catch (e) {
-			const message = e instanceof Error ? e.message : String(e);
-			setError(message);
-			toast.error('Failed to enumerate drives', { description: message });
-		} finally {
-			setLoading(false);
-		}
-	}, []);
+		await loadDrives();
+	}, [loadDrives]);
 
 	// Initial load on mount. The backend snapshot is cheap; subsequent
 	// refreshes go through the toolbar button so the user controls the
 	// timing (avoids reloads racing while a removable drive mounts).
 	useEffect(() => {
-		refresh().catch(() => undefined);
-	}, [refresh]);
+		loadDrives().catch(() => undefined);
+	}, [loadDrives]);
 
 	const visibleDrives = useMemo(() => {
 		if (prefs.showSystem) return drives;
@@ -297,12 +308,11 @@ function TotalsCard({ capacity, used, available, tier, count }: TotalsCardProps)
 function DriveCard({ drive }: { readonly drive: DriveInfo }) {
 	const percent = usagePercent(drive);
 	const tier = usageTier(percent);
-	const KindIcon = pickKindIcon(drive);
 	return (
 		<Card density="compact">
 			<CardHeader>
 				<CardTitle className="flex items-center gap-2 text-sm">
-					<KindIcon className="h-4 w-4 text-muted-foreground" />
+					<DriveKindIcon drive={drive} className="h-4 w-4 text-muted-foreground" />
 					<span className="min-w-0 flex-1 truncate font-mono">{drive.name}</span>
 					<div className="flex shrink-0 items-center gap-1">
 						<Badge variant="outline" className="font-mono text-2xs">
@@ -352,11 +362,19 @@ function DriveCard({ drive }: { readonly drive: DriveInfo }) {
 }
 
 /**
- * Pick a Lucide glyph for a drive based on its removable / kind hint.
+ * Render a Lucide glyph for a drive based on its removable / kind hint.
  * Falls back to the generic disk icon when neither hint matches.
  */
-const pickKindIcon = (drive: DriveInfo): LucideIcon => {
-	if (drive.isRemovable) return Usb;
-	if (drive.kind === 'SSD' || drive.kind === 'HDD') return HardDriveDownload;
-	return HardDrive;
-};
+function DriveKindIcon({
+	drive,
+	className,
+}: {
+	readonly drive: DriveInfo;
+	readonly className?: string;
+}) {
+	if (drive.isRemovable) return <Usb className={className} />;
+	if (drive.kind === 'SSD' || drive.kind === 'HDD') {
+		return <HardDriveDownload className={className} />;
+	}
+	return <HardDrive className={className} />;
+}

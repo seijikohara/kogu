@@ -156,6 +156,7 @@ function VennDiagram({ aOnly, common, bOnly }: VennDiagramProps) {
 	return (
 		<svg
 			viewBox="0 0 240 140"
+			// oxlint-disable-next-line jsx-a11y/prefer-tag-over-role -- inline <svg> chart needs role="img" with aria-label; an <img> element cannot host inline SVG markup.
 			role="img"
 			aria-label={`Venn diagram: A only ${aOnly}, common ${common}, B only ${bOnly}`}
 			className="h-32 w-full max-w-md"
@@ -433,7 +434,7 @@ grape`}
 										const region = regionFor(line, result);
 										return (
 											<li
-												// biome-ignore lint/suspicious/noArrayIndexKey: result list is immutable per render
+												// oxlint-disable-next-line react/no-array-index-key -- result list is immutable per render
 												key={`${region}-${index}-${line}`}
 												className={cn(
 													'flex items-center gap-3 border-l-4 px-3 py-1.5 font-mono text-sm',

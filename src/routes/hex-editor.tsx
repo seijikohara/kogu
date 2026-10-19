@@ -215,13 +215,11 @@ function HexEditorPage() {
 	// Byte search runs in a worker so scanning a large binary never freezes typing.
 	const { matches } = useHexSearchWorker({ buffer, pattern: searchPattern });
 
-	useEffect(() => {
-		if (matches.length === 0) {
-			setActiveMatchIdx(0);
-		} else if (activeMatchIdx >= matches.length) {
-			setActiveMatchIdx(0);
-		}
-	}, [matches, activeMatchIdx]);
+	// Reset the active match when it falls outside the current match list.
+	// Adjusting state during render avoids the extra commit of an effect.
+	if (activeMatchIdx !== 0 && activeMatchIdx >= matches.length) {
+		setActiveMatchIdx(0);
+	}
 
 	const totalRows = useMemo(() => {
 		if (!buffer) return 0;
@@ -430,9 +428,10 @@ function HexEditorPage() {
 
 	// Window-level mouseup so a drag started inside the viewport still
 	// resolves when the cursor leaves the bounds. A div onMouseUp would
-	// fire on the wrapper, but biome rejects interactivity on a non-semantic
-	// container; the window listener avoids the rule without rewrapping in
-	// a button/grid that does not match the visual structure.
+	// fire on the wrapper, but the linter's jsx-a11y rules reject
+	// interactivity on a non-semantic container; the window listener avoids
+	// those rules without rewrapping in a button/grid that does not match the
+	// visual structure.
 	useEffect(() => {
 		const handler = () => {
 			dragAnchorRef.current = null;

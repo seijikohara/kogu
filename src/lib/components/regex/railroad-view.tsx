@@ -338,6 +338,7 @@ export function RailroadView({ node }: RailroadViewProps) {
 			width={diagram.width}
 			height={diagram.height}
 			className="text-foreground"
+			// oxlint-disable-next-line jsx-a11y/prefer-tag-over-role -- inline <svg> chart needs role="img" with aria-label; an <img> element cannot host inline SVG markup.
 			role="img"
 			aria-label="Railroad diagram of regex pattern"
 		>

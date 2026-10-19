@@ -181,7 +181,12 @@ const formatValue = (raw: unknown): string | null => {
 		}
 		return `"${raw}"`;
 	}
-	return String(raw);
+	if (typeof raw === 'number' || typeof raw === 'boolean' || typeof raw === 'bigint') {
+		return String(raw);
+	}
+	// Objects and other non-primitive values would otherwise print as
+	// "[object Object]"; JSON keeps them readable.
+	return JSON.stringify(raw);
 };
 
 const getVisibleTreeItems = (el: HTMLElement): HTMLElement[] => {
@@ -268,36 +273,8 @@ export function TreeView({
 	const styles = useMemo(() => getTypeStyles(node.type), [node.type]);
 	const displayValue = useMemo(() => formatValue(node.value), [node.value]);
 
-	const initialExpandedStates = useMemo<Record<string, boolean>>(
-		() =>
-			Object.fromEntries(
-				(node.children ?? []).map((_child, i) => [String(i), level + 1 < maxInitialDepth])
-			),
-		[node.children, level, maxInitialDepth]
-	);
-
-	const [expandedStates, setExpandedStates] = useState<Record<string, boolean>>({});
-	useEffect(() => {
-		setExpandedStates((prev) => {
-			// Compute the diff first; only allocate a new object when at least
-			// one initial key is missing. reduce avoids the `changed` let flag.
-			const missingKeys = Object.keys(initialExpandedStates).filter((key) => !(key in prev));
-			if (missingKeys.length === 0) return prev;
-			return missingKeys.reduce<Record<string, boolean>>(
-				(acc, key) => {
-					acc[key] = initialExpandedStates[key] ?? false;
-					return acc;
-				},
-				{ ...prev }
-			);
-		});
-	}, [initialExpandedStates]);
-
-	const getChildExpanded = (index: number): boolean => {
-		const key = String(index);
-		if (key in expandedStates) return expandedStates[key] ?? false;
-		return level + 1 < maxInitialDepth;
-	};
+	// Children start expanded until they reach the initial depth limit.
+	const childExpanded = level + 1 < maxInitialDepth;
 
 	const childCount = node.children?.length ?? 0;
 	const getBadgeText = (): string => {
@@ -502,9 +479,9 @@ export function TreeView({
 			</div>
 
 			{hasChildren && expanded ? (
-				// biome-ignore lint/a11y/useSemanticElements: WAI-ARIA tree pattern requires role="group" on the descendant container of a treeitem; <fieldset> is incorrect here.
+				// oxlint-disable-next-line jsx-a11y/prefer-tag-over-role -- WAI-ARIA tree pattern requires role="group" on the descendant container of a treeitem; <fieldset> is incorrect here.
 				<div role="group" className="relative ml-2.5 border-l border-border/50 pl-0.5">
-					{(node.children ?? []).map((child, index) => (
+					{(node.children ?? []).map((child) => (
 						<TreeView
 							key={child.path}
 							node={child}
@@ -512,7 +489,7 @@ export function TreeView({
 							maxInitialDepth={maxInitialDepth}
 							selectedPath={selectedPath}
 							onSelect={onSelect}
-							expanded={getChildExpanded(index)}
+							expanded={childExpanded}
 						/>
 					))}
 				</div>

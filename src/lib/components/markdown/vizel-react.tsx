@@ -8,7 +8,7 @@
  * registered after creation — both implemented in React (see
  * `vizel-slash-menu.tsx` / `vizel-bubble-menu.tsx`).
  */
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { EditorContent } from '@tiptap/react';
 import {
 	createVizelEditorInstance,
@@ -74,14 +74,18 @@ export function Vizel({
 		onSelectionUpdate,
 		onError,
 	});
-	callbacksRef.current = {
-		onCreate,
-		onUpdate,
-		onFocus,
-		onBlur,
-		onSelectionUpdate,
-		onError,
-	};
+	// Refresh the callbacks after every commit. A layout effect runs before any
+	// passive effect, so editor events never reach a stale callback.
+	useLayoutEffect(() => {
+		callbacksRef.current = {
+			onCreate,
+			onUpdate,
+			onFocus,
+			onBlur,
+			onSelectionUpdate,
+			onError,
+		};
+	});
 
 	// Create the editor exactly once. Vizel options like `placeholder` and
 	// `features` are captured at instantiation time; editor construction

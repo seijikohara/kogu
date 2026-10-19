@@ -137,12 +137,12 @@ export const encodeUrlWithOptions = (
  * Custom URL encoding with specified preserved characters.
  */
 const customUrlEncode = (text: string, preserveChars: string, encodeNonAscii: boolean): string => {
-	const safeChars = new Set([...RFC3986_UNRESERVED, ...preserveChars]);
+	const safeChars = new Set([...Array.from(RFC3986_UNRESERVED), ...Array.from(preserveChars)]);
 
-	// Encode each Unicode code point and join the resulting fragments. Array
-	// spread iterates by code point (not UTF-16 code unit), matching the
+	// Encode each Unicode code point and join the resulting fragments.
+	// Array.from iterates by code point (not UTF-16 code unit), matching the
 	// original for..of behavior.
-	return [...text]
+	return Array.from(text)
 		.map((char) => {
 			const code = char.charCodeAt(0);
 			if (safeChars.has(char)) return char;
