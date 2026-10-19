@@ -118,12 +118,12 @@ bun run tauri build
 | `bun run build`       | Build frontend                                    |
 | `bun run tauri build` | Build desktop app                                 |
 | `bun run check`       | TypeScript check + page validation + design audit |
-| `bun run lint`        | Biome lint                                        |
-| `bun run format`      | Format with Prettier                              |
+| `bun run lint`        | Lint with oxlint (type-aware)                     |
+| `bun run format`      | Format with oxfmt                                 |
 
 ## Recommended IDE Setup
 
-[VS Code](https://code.visualstudio.com/) + [Biome](https://marketplace.visualstudio.com/items?itemName=biomejs.biome) + [Tauri](https://marketplace.visualstudio.com/items?itemName=tauri-apps.tauri-vscode) + [rust-analyzer](https://marketplace.visualstudio.com/items?itemName=rust-lang.rust-analyzer)
+[VS Code](https://code.visualstudio.com/) + [Oxc](https://marketplace.visualstudio.com/items?itemName=oxc.oxc-vscode) + [Tauri](https://marketplace.visualstudio.com/items?itemName=tauri-apps.tauri-vscode) + [rust-analyzer](https://marketplace.visualstudio.com/items?itemName=rust-lang.rust-analyzer)
 
 ## License
 

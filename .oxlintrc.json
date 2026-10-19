@@ -1,0 +1,106 @@
+{
+	"$schema": "./node_modules/oxlint/configuration_schema.json",
+	"plugins": ["eslint", "typescript", "unicorn", "oxc", "react", "jsx-a11y", "import", "vitest"],
+	"categories": {
+		"correctness": "error"
+	},
+	"env": {
+		"browser": true,
+		"es2024": true
+	},
+	"ignorePatterns": ["src/lib/components/ui/**", "src/route-tree.gen.ts"],
+	"rules": {
+		"complexity": [
+			"warn",
+			{
+				"max": 20
+			}
+		],
+		"unicorn/prefer-array-flat-map": "error",
+		"typescript/prefer-optional-chain": "error",
+		"no-void": [
+			"error",
+			{
+				"allowAsStatement": true
+			}
+		],
+		"typescript/no-non-null-assertion": "error",
+		"prefer-template": "error",
+		"prefer-const": "error",
+		"typescript/array-type": [
+			"error",
+			{
+				"default": "array"
+			}
+		],
+		"typescript/consistent-type-exports": "error",
+		"typescript/consistent-type-imports": "error",
+		"no-param-reassign": "error",
+		"default-param-last": "error",
+		"no-else-return": "error",
+		"unicorn/prefer-number-properties": "error",
+		"typescript/only-throw-error": "error",
+		"typescript/no-explicit-any": "error",
+		"no-console": "warn",
+		"no-debugger": "error",
+		"eqeqeq": [
+			"error",
+			"always",
+			{
+				"null": "ignore"
+			}
+		],
+		"typescript/no-invalid-void-type": "error",
+		"no-unused-vars": [
+			"error",
+			{
+				"argsIgnorePattern": "^_",
+				"varsIgnorePattern": "^_",
+				"caughtErrorsIgnorePattern": "^_"
+			}
+		],
+		"react/no-array-index-key": "error",
+		"react/no-danger": "error",
+		"react/exhaustive-deps": "off",
+		"typescript/require-await": "error",
+		"jsx-a11y/no-noninteractive-element-interactions": [
+			"error",
+			{
+				"handlers": [
+					"onClick",
+					"onError",
+					"onLoad",
+					"onMouseDown",
+					"onMouseUp",
+					"onKeyPress",
+					"onKeyDown",
+					"onKeyUp"
+				]
+			}
+		],
+		"jsx-a11y/control-has-associated-label": [
+			"error",
+			{
+				"depth": 3
+			}
+		]
+	},
+	"overrides": [
+		{
+			"files": ["**/*.test.ts", "**/*.spec.ts", "**/*.test.tsx", "**/*.spec.tsx"],
+			"rules": {
+				"typescript/no-explicit-any": "off"
+			}
+		},
+		{
+			"files": ["scripts/**/*.ts"],
+			"rules": {
+				"no-console": "off"
+			}
+		}
+	],
+	"options": {
+		"typeAware": true,
+		"reportUnusedDisableDirectives": "error"
+	}
+}

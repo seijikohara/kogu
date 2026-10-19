@@ -5,15 +5,15 @@ pre-commit:
   parallel: true
   commands:
     frontend-format:
-      glob: '*.{ts,tsx,js,jsx,json,css,md,html}'
+      glob: '*.{ts,tsx,js,jsx,json,jsonc,json5,css,md,html,yml,yaml}'
       exclude: 'node_modules|bun.lock|route-tree.gen.ts'
-      run: bun run format --write {staged_files} && git add {staged_files}
+      run: bun run format --no-error-on-unmatched-pattern {staged_files}
       stage_fixed: true
 
     frontend-lint:
       glob: '*.{ts,tsx,js,jsx}'
       exclude: 'node_modules|route-tree.gen.ts'
-      run: bun run biome lint --no-errors-on-unmatched {staged_files}
+      run: bun run lint --no-error-on-unmatched-pattern {staged_files}
 
     backend-format:
       root: 'src-tauri/'

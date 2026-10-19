@@ -88,7 +88,7 @@
 		{
 			description: 'Group linting and formatting tools',
 			groupName: 'linting and formatting',
-			matchPackageNames: ['@biomejs/biome', 'prettier'],
+			matchPackageNames: ['oxlint', 'oxfmt', 'oxlint-tsgolint'],
 		},
 		{
 			description: 'Group the build toolchain',

@@ -1,0 +1,22 @@
+{
+	"$schema": "./node_modules/oxfmt/configuration_schema.json",
+	"useTabs": true,
+	"tabWidth": 2,
+	"singleQuote": true,
+	"trailingComma": "es5",
+	"printWidth": 100,
+	"sortPackageJson": false,
+	"ignorePatterns": [
+		"build/",
+		"dist/",
+		"target/",
+		"src-tauri/gen/",
+		"node_modules/",
+		"bun.lock",
+		"package-lock.json",
+		"*.min.js",
+		"*.min.css",
+		"**/*.toml",
+		"src/route-tree.gen.ts"
+	]
+}
