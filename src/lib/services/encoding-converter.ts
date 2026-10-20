@@ -96,7 +96,7 @@ export const ENCODING_META: readonly EncodingMeta[] = [
 	{
 		id: 'shift-jis',
 		label: 'Shift-JIS',
-		aliases: ['shift_jis', 'shift-jis', 'sjis', 'ms_kanji'],
+		aliases: ['shift_jis', 'shift-jis', 'sjis', 'ms_kanji', 'cp932', 'windows-31j'],
 		decoderName: 'shift_jis',
 		writable: false,
 	},
@@ -107,7 +107,13 @@ export const ENCODING_META: readonly EncodingMeta[] = [
 		decoderName: 'euc-jp',
 		writable: false,
 	},
-	{ id: 'gbk', label: 'GBK', aliases: ['gbk', 'gb2312'], decoderName: 'gbk', writable: false },
+	{
+		id: 'gbk',
+		label: 'GBK',
+		aliases: ['gbk', 'gb2312', 'gb18030'],
+		decoderName: 'gbk',
+		writable: false,
+	},
 	{
 		id: 'big5',
 		label: 'Big5',
@@ -233,18 +239,14 @@ export const detectEncoding = (bytes: Uint8Array): DetectedEncoding => {
 		};
 	}
 
-	// jschardet expects either a Node Buffer or a Latin-1 string. The
-	// Latin-1 string form is portable and avoids the Buffer polyfill.
-	let latin1 = '';
-	for (let i = 0; i < body.length; i += 1) {
-		latin1 += String.fromCharCode(body[i] ?? 0);
-	}
-	const guess = jschardet.detect(latin1);
-	const matched = guess?.encoding ? lookupByAlias(guess.encoding) : null;
+	// jschardet 4 reads the bytes directly. It reports a name for every input
+	// (null only for binary data), so unsupported names fall through below.
+	const guess = jschardet.detect(body);
+	const matched = guess.encoding ? lookupByAlias(guess.encoding) : null;
 	if (matched) {
 		return {
 			encoding: matched,
-			confidence: typeof guess.confidence === 'number' ? guess.confidence : 0,
+			confidence: guess.confidence,
 			hasBom: false,
 			lineEndings,
 		};
