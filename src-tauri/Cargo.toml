@@ -18,6 +18,10 @@ default-run = "kogu"
 name = "kogu_lib"
 crate-type = ["staticlib", "cdylib", "rlib"]
 
+# `tauri build` compiles every `[[bin]]` target and bundles it next to the
+# main executable, which is where `ShellExt::sidecar("worker")` resolves it.
+# Do not also list this binary in `bundle.externalBin`: the same destination
+# path would be added twice, and the RPM bundler rejects duplicate entries.
 [[bin]]
 name = "worker"
 path = "src/bin/worker.rs"

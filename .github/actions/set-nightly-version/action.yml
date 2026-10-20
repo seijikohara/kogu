@@ -1,0 +1,33 @@
+name: Set Nightly Version
+description: Append the short commit SHA to the app version in tauri.conf.json and Cargo.toml
+
+outputs:
+  version:
+    description: 'Nightly version written to both files (e.g., 0.0.6+abc1234)'
+    value: ${{ steps.set-version.outputs.version }}
+
+runs:
+  using: composite
+  steps:
+    - name: Set nightly version
+      id: set-version
+      shell: bash
+      env:
+        COMMIT_SHA: ${{ github.sha }}
+      run: |
+        CURRENT_VERSION=$(jq -r '.version' src-tauri/tauri.conf.json)
+        SHORT_SHA=$(echo "$COMMIT_SHA" | cut -c1-7)
+        # Attach the commit as SemVer build metadata ("+"), not as a
+        # pre-release ("-"). RPM reserves "-" as the Version-Release
+        # separator, and the rpm crate used by tauri-bundler rejects it.
+        NIGHTLY_VERSION="${CURRENT_VERSION}+${SHORT_SHA}"
+
+        # Update tauri.conf.json
+        jq --arg v "$NIGHTLY_VERSION" '.version = $v' src-tauri/tauri.conf.json > tmp.json && mv tmp.json src-tauri/tauri.conf.json
+
+        # Update Cargo.toml
+        sed -i.bak "s/^version = \"[^\"]*\"/version = \"$NIGHTLY_VERSION\"/" src-tauri/Cargo.toml
+        rm -f src-tauri/Cargo.toml.bak
+
+        echo "version=$NIGHTLY_VERSION" >> "$GITHUB_OUTPUT"
+        echo "Set version to $NIGHTLY_VERSION"

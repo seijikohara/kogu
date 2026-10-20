@@ -39,19 +39,30 @@ jobs:
   # Branch-protection-friendly aggregate that resolves to a single
   # "Test Backend" check regardless of how many entries the matrix has.
   # Without this, renaming the matrix would silently bypass any required
-  # status checks pinned to the old "Test Backend" name.
+  # status checks pinned to the old "Test Backend" name. The aggregate also
+  # covers "Bundle Linux", so a failed or cancelled bundle build blocks the
+  # merge without adding another required check.
   test-backend:
     name: Test Backend
     if: ${{ always() }}
-    needs: [test-backend-matrix]
+    needs: [test-backend-matrix, bundle-linux]
     runs-on: ubuntu-latest
     steps:
-      - name: Verify matrix outcome
+      - name: Verify job outcomes
+        env:
+          MATRIX_RESULT: ${{ needs.test-backend-matrix.result }}
+          BUNDLE_RESULT: ${{ needs.bundle-linux.result }}
         run: |
-          if [ "${{ needs.test-backend-matrix.result }}" != "success" ]; then
-            echo "test-backend-matrix did not succeed: ${{ needs.test-backend-matrix.result }}"
-            exit 1
+          status=0
+          if [ "$MATRIX_RESULT" != "success" ]; then
+            echo "test-backend-matrix did not succeed: $MATRIX_RESULT"
+            status=1
           fi
+          if [ "$BUNDLE_RESULT" != "success" ]; then
+            echo "bundle-linux did not succeed: $BUNDLE_RESULT"
+            status=1
+          fi
+          exit "$status"
 
   test-backend-matrix:
     name: Test Backend (${{ matrix.os }})
@@ -95,3 +106,83 @@ jobs:
       - name: Build
         if: matrix.os != 'ubuntu-latest'
         run: cargo build --locked --all-targets
+
+  # Build the Linux bundles that release.yml publishes, with the same nightly
+  # version, so that bundler regressions (for example from a Tauri CLI update)
+  # fail the pull request instead of the release after the merge. The
+  # `cargo` checks above never run the bundler.
+  bundle-linux:
+    name: Bundle Linux
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - name: Setup frontend
+        uses: ./.github/actions/setup-frontend
+
+      - name: Setup Tauri dependencies
+        uses: ./.github/actions/setup-tauri-deps
+
+      - name: Setup Rust
+        uses: ./.github/actions/setup-rust-tauri
+        with:
+          components: ''
+
+      - name: Set nightly version
+        id: nightly-version
+        uses: ./.github/actions/set-nightly-version
+
+      # No build-sidecar step: `tauri build` compiles every cargo binary,
+      # including `worker`, and bundles it next to the main executable.
+      - name: Build bundles
+        run: bun tauri build --target x86_64-unknown-linux-gnu --bundles deb,rpm,appimage
+
+      - name: Verify bundles
+        env:
+          BUNDLE_DIR: src-tauri/target/x86_64-unknown-linux-gnu/release/bundle
+          EXPECTED_VERSION: ${{ steps.nightly-version.outputs.version }}
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+
+          fail() {
+            echo "::error::$*"
+            exit 1
+          }
+
+          rpms=("$BUNDLE_DIR"/rpm/*.rpm)
+          debs=("$BUNDLE_DIR"/deb/*.deb)
+          appimages=("$BUNDLE_DIR"/appimage/*.AppImage)
+          [ "${#rpms[@]}" -eq 1 ] || fail "expected 1 rpm, found ${#rpms[@]}"
+          [ "${#debs[@]}" -eq 1 ] || fail "expected 1 deb, found ${#debs[@]}"
+          [ "${#appimages[@]}" -eq 1 ] || fail "expected 1 AppImage, found ${#appimages[@]}"
+          rpm_file="${rpms[0]}"
+          deb_file="${debs[0]}"
+          appimage_file="$(realpath "${appimages[0]}")"
+
+          # The bundlers must carry the nightly version unchanged.
+          rpm_version="$(rpm -qp --qf '%{VERSION}' "$rpm_file")"
+          deb_version="$(dpkg-deb -f "$deb_file" Version)"
+          [ "$rpm_version" = "$EXPECTED_VERSION" ] || fail "rpm version is $rpm_version, expected $EXPECTED_VERSION"
+          [ "$deb_version" = "$EXPECTED_VERSION" ] || fail "deb version is $deb_version, expected $EXPECTED_VERSION"
+
+          # The worker binary must be packaged exactly once, next to the main
+          # executable, where `ShellExt::sidecar("worker")` resolves it.
+          rpm_files="$(rpm -qlp "$rpm_file")"
+          deb_files="$(dpkg-deb -c "$deb_file")"
+          echo "rpm /usr/bin entries:"
+          grep '^/usr/bin/' <<< "$rpm_files" || true
+          echo "deb usr/bin entries:"
+          # tauri-bundler writes deb members without a "./" prefix; accept both.
+          grep -E ' (\./)?usr/bin/' <<< "$deb_files" || true
+          rpm_workers="$(grep -c '^/usr/bin/worker$' <<< "$rpm_files" || true)"
+          deb_workers="$(grep -cE ' (\./)?usr/bin/worker$' <<< "$deb_files" || true)"
+          [ "$rpm_workers" -eq 1 ] || fail "rpm contains /usr/bin/worker $rpm_workers times, expected 1"
+          [ "$deb_workers" -eq 1 ] || fail "deb contains /usr/bin/worker $deb_workers times, expected 1"
+
+          extract_dir="$(mktemp -d)"
+          (cd "$extract_dir" && "$appimage_file" --appimage-extract usr/bin/worker > /dev/null)
+          [ -x "$extract_dir/squashfs-root/usr/bin/worker" ] || fail "AppImage does not contain an executable usr/bin/worker"
+
+          echo "Bundles OK: version $EXPECTED_VERSION, one /usr/bin/worker in rpm, deb and AppImage"

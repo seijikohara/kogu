@@ -100,23 +100,11 @@ jobs:
           target: ${{ matrix.settings.target }}
           profile: release
 
+      # Shared with the "Bundle Linux" job in ci.yml, which bundles with the
+      # same version on every pull request.
       - name: Set nightly version
         if: github.ref == 'refs/heads/main'
-        shell: bash
-        run: |
-          # Get current version and short commit hash
-          CURRENT_VERSION=$(jq -r '.version' src-tauri/tauri.conf.json)
-          SHORT_SHA=$(echo "${{ github.sha }}" | cut -c1-7)
-          NIGHTLY_VERSION="${CURRENT_VERSION}-${SHORT_SHA}"
-
-          # Update tauri.conf.json
-          jq --arg v "$NIGHTLY_VERSION" '.version = $v' src-tauri/tauri.conf.json > tmp.json && mv tmp.json src-tauri/tauri.conf.json
-
-          # Update Cargo.toml
-          sed -i.bak "s/^version = \"[^\"]*\"/version = \"$NIGHTLY_VERSION\"/" src-tauri/Cargo.toml
-          rm -f src-tauri/Cargo.toml.bak
-
-          echo "Set version to $NIGHTLY_VERSION"
+        uses: ./.github/actions/set-nightly-version
 
       - name: Build and release (nightly)
         if: github.ref == 'refs/heads/main'
