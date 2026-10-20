@@ -109,7 +109,7 @@ http-body-util = "0.1"
 bytes = "1"
 
 # Archive Inspector
-zip = { version = "8", default-features = false, features = ["deflate", "bzip2"] }
+zip = { version = "9", default-features = false, features = ["deflate", "bzip2"] }
 tar = "0.4"
 flate2 = "1"
 brotli = "9"

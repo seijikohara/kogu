@@ -166,6 +166,48 @@ fn detect_format(path: &Path) -> Result<&'static str, String> {
     Err(format!("Unrecognised archive format: {}", path.display()))
 }
 
+/// General purpose flag bit 11 (APPNOTE 4.4.4): the entry name is UTF-8. zip
+/// also sets it when a valid Info-ZIP Unicode Path extra field supplied the name.
+const ZIP_FLAG_UTF8_NAME: u16 = 1 << 11;
+
+/// CP437 characters for the bytes 0x80..=0xFF. Bytes below 0x80 are ASCII.
+const CP437_HIGH: [char; 128] = [
+    '\u{00c7}', '\u{00fc}', '\u{00e9}', '\u{00e2}', '\u{00e4}', '\u{00e0}', '\u{00e5}', '\u{00e7}',
+    '\u{00ea}', '\u{00eb}', '\u{00e8}', '\u{00ef}', '\u{00ee}', '\u{00ec}', '\u{00c4}', '\u{00c5}',
+    '\u{00c9}', '\u{00e6}', '\u{00c6}', '\u{00f4}', '\u{00f6}', '\u{00f2}', '\u{00fb}', '\u{00f9}',
+    '\u{00ff}', '\u{00d6}', '\u{00dc}', '\u{00a2}', '\u{00a3}', '\u{00a5}', '\u{20a7}', '\u{0192}',
+    '\u{00e1}', '\u{00ed}', '\u{00f3}', '\u{00fa}', '\u{00f1}', '\u{00d1}', '\u{00aa}', '\u{00ba}',
+    '\u{00bf}', '\u{2310}', '\u{00ac}', '\u{00bd}', '\u{00bc}', '\u{00a1}', '\u{00ab}', '\u{00bb}',
+    '\u{2591}', '\u{2592}', '\u{2593}', '\u{2502}', '\u{2524}', '\u{2561}', '\u{2562}', '\u{2556}',
+    '\u{2555}', '\u{2563}', '\u{2551}', '\u{2557}', '\u{255d}', '\u{255c}', '\u{255b}', '\u{2510}',
+    '\u{2514}', '\u{2534}', '\u{252c}', '\u{251c}', '\u{2500}', '\u{253c}', '\u{255e}', '\u{255f}',
+    '\u{255a}', '\u{2554}', '\u{2569}', '\u{2566}', '\u{2560}', '\u{2550}', '\u{256c}', '\u{2567}',
+    '\u{2568}', '\u{2564}', '\u{2565}', '\u{2559}', '\u{2558}', '\u{2552}', '\u{2553}', '\u{256b}',
+    '\u{256a}', '\u{2518}', '\u{250c}', '\u{2588}', '\u{2584}', '\u{258c}', '\u{2590}', '\u{2580}',
+    '\u{03b1}', '\u{00df}', '\u{0393}', '\u{03c0}', '\u{03a3}', '\u{03c3}', '\u{00b5}', '\u{03c4}',
+    '\u{03a6}', '\u{0398}', '\u{03a9}', '\u{03b4}', '\u{221e}', '\u{03c6}', '\u{03b5}', '\u{2229}',
+    '\u{2261}', '\u{00b1}', '\u{2265}', '\u{2264}', '\u{2320}', '\u{2321}', '\u{00f7}', '\u{2248}',
+    '\u{00b0}', '\u{2219}', '\u{00b7}', '\u{221a}', '\u{207f}', '\u{00b2}', '\u{25a0}', '\u{00a0}',
+];
+
+/// Decode a zip entry name as UTF-8 only when the entry says it is UTF-8, and
+/// as CP437 otherwise, as APPNOTE specifies.
+///
+/// `ZipFile::name()` in zip 9 tries UTF-8 first for every entry. That turns a
+/// CP437 name whose bytes also form valid UTF-8 (`ßéá` is `E1 82 A0`) into
+/// different text, so kogu decodes the raw name itself, as zip 8 did.
+fn zip_entry_name(raw: &[u8], flags: u16) -> String {
+    if flags & ZIP_FLAG_UTF8_NAME != 0 {
+        return String::from_utf8_lossy(raw).into_owned();
+    }
+    raw.iter()
+        .map(|&byte| {
+            byte.checked_sub(0x80)
+                .map_or_else(|| char::from(byte), |high| CP437_HIGH[usize::from(high)])
+        })
+        .collect()
+}
+
 fn list_zip(path: &Path) -> Result<Vec<ArchiveEntry>, String> {
     let file = File::open(path).map_err(|e| format!("Failed to open zip: {e}"))?;
     let mut archive =
@@ -176,7 +218,7 @@ fn list_zip(path: &Path) -> Result<Vec<ArchiveEntry>, String> {
             let entry = archive
                 .by_index(i)
                 .map_err(|e| format!("Failed to read zip entry: {e}"))?;
-            let path = entry.name().replace('\\', "/");
+            let path = zip_entry_name(entry.name_raw(), entry.flags().as_u16()).replace('\\', "/");
             let is_dir = entry.is_dir();
             let modified_ms = entry.last_modified().and_then(zip_datetime_to_unix_ms);
             Ok(ArchiveEntry {
@@ -609,7 +651,7 @@ fn extract_zip_all(
         let mut entry = zip
             .by_index(i)
             .map_err(|e| format!("Failed to read zip entry: {e}"))?;
-        let name = entry.name().replace('\\', "/");
+        let name = zip_entry_name(entry.name_raw(), entry.flags().as_u16()).replace('\\', "/");
         if let Some(set) = filter {
             if !set.contains(&name) {
                 continue;
@@ -683,6 +725,77 @@ fn extract_tar_all_stream<R: Read>(
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// Build a zip with one empty, stored entry whose name is written as the
+    /// given raw bytes and general purpose flags.
+    fn zip_with_raw_name(name: &[u8], flags: u16) -> Vec<u8> {
+        let name_len = u16::try_from(name.len()).unwrap();
+        let mut local = Vec::new();
+        local.extend_from_slice(&0x0403_4b50_u32.to_le_bytes());
+        local.extend_from_slice(&20_u16.to_le_bytes()); // version needed
+        local.extend_from_slice(&flags.to_le_bytes());
+        local.extend_from_slice(&[0; 4]); // stored, time 00:00
+        local.extend_from_slice(&0x0021_u16.to_le_bytes()); // date 1980-01-01
+        local.extend_from_slice(&[0; 12]); // crc32 and sizes of the empty body
+        local.extend_from_slice(&name_len.to_le_bytes());
+        local.extend_from_slice(&0_u16.to_le_bytes()); // extra field length
+        local.extend_from_slice(name);
+
+        let mut central = Vec::new();
+        central.extend_from_slice(&0x0201_4b50_u32.to_le_bytes());
+        central.extend_from_slice(&20_u16.to_le_bytes()); // version made by
+        central.extend_from_slice(&20_u16.to_le_bytes()); // version needed
+        central.extend_from_slice(&flags.to_le_bytes());
+        central.extend_from_slice(&[0; 4]); // stored, time 00:00
+        central.extend_from_slice(&0x0021_u16.to_le_bytes());
+        central.extend_from_slice(&[0; 12]);
+        central.extend_from_slice(&name_len.to_le_bytes());
+        central.extend_from_slice(&[0; 12]); // extra, comment, disk, attributes
+        central.extend_from_slice(&0_u32.to_le_bytes()); // local header offset
+        central.extend_from_slice(name);
+
+        let mut eocd = Vec::new();
+        eocd.extend_from_slice(&0x0605_4b50_u32.to_le_bytes());
+        eocd.extend_from_slice(&[0; 4]); // disk numbers
+        eocd.extend_from_slice(&1_u16.to_le_bytes());
+        eocd.extend_from_slice(&1_u16.to_le_bytes());
+        eocd.extend_from_slice(&u32::try_from(central.len()).unwrap().to_le_bytes());
+        eocd.extend_from_slice(&u32::try_from(local.len()).unwrap().to_le_bytes());
+        eocd.extend_from_slice(&0_u16.to_le_bytes()); // comment length
+
+        [local, central, eocd].concat()
+    }
+
+    fn list_zip_bytes(bytes: &[u8]) -> Vec<ArchiveEntry> {
+        let mut file = tempfile::NamedTempFile::new().unwrap();
+        std::io::Write::write_all(&mut file, bytes).unwrap();
+        list_zip(file.path()).unwrap()
+    }
+
+    // `E1 82 A0` is "ßéá" in CP437 and also the valid UTF-8 encoding of "Ⴀ".
+    const AMBIGUOUS_NAME: &[u8] = b"\xe1\x82\xa0.txt";
+
+    #[test]
+    fn zip_entry_name_decodes_cp437_without_the_utf8_flag() {
+        assert_eq!(zip_entry_name(AMBIGUOUS_NAME, 0), "ßéá.txt");
+        assert_eq!(zip_entry_name(&[0x80, 0xff, b'a'], 0), "Ç\u{a0}a");
+    }
+
+    #[test]
+    fn zip_entry_name_decodes_utf8_with_the_utf8_flag() {
+        assert_eq!(zip_entry_name(AMBIGUOUS_NAME, ZIP_FLAG_UTF8_NAME), "Ⴀ.txt");
+        assert_eq!(zip_entry_name(&[0xff], ZIP_FLAG_UTF8_NAME), "\u{fffd}");
+    }
+
+    #[test]
+    fn list_zip_respects_the_utf8_flag() {
+        let cp437 = list_zip_bytes(&zip_with_raw_name(AMBIGUOUS_NAME, 0));
+        assert_eq!(cp437.len(), 1);
+        assert_eq!(cp437[0].path, "ßéá.txt");
+
+        let utf8 = list_zip_bytes(&zip_with_raw_name(AMBIGUOUS_NAME, ZIP_FLAG_UTF8_NAME));
+        assert_eq!(utf8[0].path, "Ⴀ.txt");
+    }
 
     #[test]
     fn safe_join_accepts_relative_paths() {
