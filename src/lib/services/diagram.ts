@@ -7,6 +7,7 @@ import type * as VizModule from '@viz-js/viz';
 import type * as KatexModule from 'katex';
 import type * as MermaidModule from 'mermaid';
 import type { RenderResult as MermaidRenderResult } from 'mermaid';
+import { installMermaidPolyfills } from '@/lib/polyfills/mermaid-runtime';
 import { getErrorMessage } from '@/lib/utils';
 
 // Types
@@ -125,10 +126,16 @@ const loadKatex = async (): Promise<typeof KatexModule> => {
  */
 const loadMermaid = async (): Promise<typeof MermaidModule> => {
 	if (!moduleCache.mermaid) {
+		// mermaid 12 targets Safari 17.4; the shims cover the macOS 13 WebView.
+		installMermaidPolyfills();
 		const mod = await import('mermaid');
 		mod.default.initialize({
 			startOnLoad: false,
 			theme: 'default',
+			// mermaid 12 defaults to the ELK layout and the "neo" look. Keep the
+			// dagre layout and classic look so existing diagrams render as before.
+			layout: 'dagre',
+			look: 'classic',
 			securityLevel: 'strict',
 			fontFamily: 'inherit',
 		});
