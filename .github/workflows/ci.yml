@@ -169,12 +169,15 @@ jobs:
 
           # The worker binary must be packaged exactly once, next to the main
           # executable, where `ShellExt::sidecar("worker")` resolves it.
+          rpm_files="$(rpm -qlp "$rpm_file")"
+          deb_files="$(dpkg-deb -c "$deb_file")"
           echo "rpm /usr/bin entries:"
-          rpm -qlp "$rpm_file" | grep '^/usr/bin/' || true
+          grep '^/usr/bin/' <<< "$rpm_files" || true
           echo "deb usr/bin entries:"
-          dpkg-deb -c "$deb_file" | grep ' \./usr/bin/' || true
-          rpm_workers="$(rpm -qlp "$rpm_file" | grep -c '^/usr/bin/worker$' || true)"
-          deb_workers="$(dpkg-deb -c "$deb_file" | grep -c ' \./usr/bin/worker$' || true)"
+          # tauri-bundler writes deb members without a "./" prefix; accept both.
+          grep -E ' (\./)?usr/bin/' <<< "$deb_files" || true
+          rpm_workers="$(grep -c '^/usr/bin/worker$' <<< "$rpm_files" || true)"
+          deb_workers="$(grep -cE ' (\./)?usr/bin/worker$' <<< "$deb_files" || true)"
           [ "$rpm_workers" -eq 1 ] || fail "rpm contains /usr/bin/worker $rpm_workers times, expected 1"
           [ "$deb_workers" -eq 1 ] || fail "deb contains /usr/bin/worker $deb_workers times, expected 1"
 
