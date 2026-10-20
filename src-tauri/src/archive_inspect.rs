@@ -176,7 +176,10 @@ fn list_zip(path: &Path) -> Result<Vec<ArchiveEntry>, String> {
             let entry = archive
                 .by_index(i)
                 .map_err(|e| format!("Failed to read zip entry: {e}"))?;
-            let path = entry.name().replace('\\', "/");
+            let path = entry
+                .name()
+                .map_err(|e| format!("Invalid zip entry name: {e}"))?
+                .replace('\\', "/");
             let is_dir = entry.is_dir();
             let modified_ms = entry.last_modified().and_then(zip_datetime_to_unix_ms);
             Ok(ArchiveEntry {
@@ -609,7 +612,10 @@ fn extract_zip_all(
         let mut entry = zip
             .by_index(i)
             .map_err(|e| format!("Failed to read zip entry: {e}"))?;
-        let name = entry.name().replace('\\', "/");
+        let name = entry
+            .name()
+            .map_err(|e| format!("Invalid zip entry name: {e}"))?
+            .replace('\\', "/");
         if let Some(set) = filter {
             if !set.contains(&name) {
                 continue;
