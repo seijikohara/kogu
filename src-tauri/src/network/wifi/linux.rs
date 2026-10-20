@@ -11,8 +11,7 @@
 use std::collections::HashMap;
 use std::time::Duration;
 
-use zbus::zvariant::{OwnedObjectPath, OwnedValue};
-use zbus::Connection;
+use zbus::{Connection, OwnedObjectPath, OwnedVariant};
 
 use super::channels::freq_mhz_to_channel;
 use super::types::{WifiBand, WifiError, WifiNetwork, WifiSecurity};
@@ -99,7 +98,7 @@ async fn request_scan(
     device_path: &OwnedObjectPath,
 ) -> Result<(), WifiError> {
     let proxy = build_proxy(connection, device_path.as_str(), NM_WIRELESS_IFACE).await?;
-    let options: HashMap<String, OwnedValue> = HashMap::new();
+    let options: HashMap<String, OwnedVariant> = HashMap::new();
     let _: () = proxy
         .call("RequestScan", &(options,))
         .await
@@ -222,7 +221,7 @@ async fn get_property(
     path: &OwnedObjectPath,
     interface: &str,
     property: &str,
-) -> Result<OwnedValue, WifiError> {
+) -> Result<OwnedVariant, WifiError> {
     let proxy = build_proxy(connection, path.as_str(), NM_DBUS_PROPERTIES).await?;
     proxy
         .call("Get", &(interface, property))
