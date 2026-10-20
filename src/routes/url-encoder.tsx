@@ -479,7 +479,7 @@ function UrlEncoderPage() {
 							<CardContent>
 								<div className="space-y-2">
 									{parsedUrl.params.map((param, idx) => (
-										// biome-ignore lint/suspicious/noArrayIndexKey: query params keep insertion order
+										// oxlint-disable-next-line react/no-array-index-key -- query params keep insertion order
 										<div key={`${idx}-${param.key}`} className="flex items-center gap-2 text-xs">
 											<code className="rounded bg-primary/10 px-2 py-1 font-mono text-primary">
 												{param.key}
@@ -535,7 +535,7 @@ function UrlEncoderPage() {
 				</div>
 				<div className="space-y-2">
 					{queryParams.map((param, index) => (
-						// biome-ignore lint/suspicious/noArrayIndexKey: parameter rows are user-controlled position
+						// oxlint-disable-next-line react/no-array-index-key -- parameter rows are user-controlled position
 						<div key={index} className="flex items-center gap-2">
 							<Input
 								type="text"

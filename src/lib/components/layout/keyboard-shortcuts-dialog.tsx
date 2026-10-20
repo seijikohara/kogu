@@ -85,10 +85,16 @@ export function KeyboardShortcutsDialog({
 	}, [query]);
 
 	// Reset the query and focus the input each time the dialog opens so the next
-	// keystroke filters from a clean state.
+	// keystroke filters from a clean state. The reset runs during render (React's
+	// "adjust state when a prop changes" pattern) so the dialog never paints the old query.
+	const [prevOpen, setPrevOpen] = useState(open);
+	if (prevOpen !== open) {
+		setPrevOpen(open);
+		if (open) setQuery('');
+	}
+
 	useEffect(() => {
 		if (!open) return;
-		setQuery('');
 		// Defer focus until after the dialog has mounted its content.
 		queueMicrotask(() => {
 			searchInputRef.current?.focus();

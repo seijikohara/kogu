@@ -26,16 +26,16 @@ const CSHARP_TYPE_MAP: Record<string, string> = {
 // Type Resolution
 // ============================================================================
 
-const resolveType = (typeInfo: TypeInfo, options: CSharpOptions): string => {
+const resolveType = (typeInfo: TypeInfo): string => {
 	if (typeInfo.isArray && typeInfo.arrayItemType) {
-		return `List<${resolveType(typeInfo.arrayItemType, options)}>`;
+		return `List<${resolveType(typeInfo.arrayItemType)}>`;
 	}
 	if (typeInfo.isObject) return typeInfo.name;
 	return CSHARP_TYPE_MAP[typeInfo.name] ?? 'object';
 };
 
 const buildPropType = (childType: TypeInfo, options: CSharpOptions): string => {
-	const baseType = resolveType(childType, options);
+	const baseType = resolveType(childType);
 	return options.optionalProperties && options.useNullableReferenceTypes
 		? `${baseType}?`
 		: baseType;

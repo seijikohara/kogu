@@ -6,7 +6,7 @@ import { CopyButton } from '@/lib/components/action';
 import { FormError, FormInfo, FormInput, FormSection } from '@/lib/components/form';
 import { SubsectionLabel } from '@/lib/components/layout';
 import { ToolFooter, ToolShell } from '@/lib/components/shell';
-import { EmbeddedEmptyState, StatItem } from '@/lib/components/status';
+import { EmbeddedEmptyState, LiveStatusRegion, StatItem } from '@/lib/components/status';
 import { Button } from '@/lib/components/ui/button';
 import {
 	Card,
@@ -150,10 +150,12 @@ function CronExpressionBuilderPage() {
 								</div>
 								<CopyButton text={buildExpr} toastLabel="Expression" size="sm" />
 							</CardHeader>
-							<CardContent role="status" aria-live="polite" aria-atomic="true">
-								<code className="block break-all rounded-md bg-muted p-3 font-mono text-base tabular-nums">
-									{buildExpr}
-								</code>
+							<CardContent>
+								<LiveStatusRegion atomic="true">
+									<code className="block break-all rounded-md bg-muted p-3 font-mono text-base tabular-nums">
+										{buildExpr}
+									</code>
+								</LiveStatusRegion>
 							</CardContent>
 						</Card>
 
@@ -164,12 +166,14 @@ function CronExpressionBuilderPage() {
 									<CardTitle className="text-sm font-medium">Description</CardTitle>
 								</div>
 							</CardHeader>
-							<CardContent role="status" aria-live="polite" aria-atomic="true">
-								{buildDescription.ok ? (
-									<p className="text-sm">{buildDescription.value}</p>
-								) : (
-									<FormError message={buildDescription.error} className="text-sm" />
-								)}
+							<CardContent>
+								<LiveStatusRegion atomic="true">
+									{buildDescription.ok ? (
+										<p className="text-sm">{buildDescription.value}</p>
+									) : (
+										<FormError message={buildDescription.error} className="text-sm" />
+									)}
+								</LiveStatusRegion>
 							</CardContent>
 						</Card>
 					</div>
@@ -181,48 +185,50 @@ function CronExpressionBuilderPage() {
 								<CardTitle className="text-sm font-medium">Next 8 executions</CardTitle>
 							</div>
 						</CardHeader>
-						<CardContent role="status" aria-live="polite" aria-atomic="false">
-							{buildNextRuns.ok ? (
-								buildNextRuns.value.length > 0 ? (
-									<ul className="space-y-1.5">
-										{buildNextRuns.value.map((date, idx) => {
-											const fmt = formatDateParts(date);
-											return (
-												<li
-													// biome-ignore lint/suspicious/noArrayIndexKey: next-execution list is immutable per render
-													key={idx}
-													className="flex items-center gap-3 rounded-md border bg-card px-3 py-2"
-												>
-													<span className="w-6 text-xs tabular-nums text-muted-foreground">
-														{idx + 1}.
-													</span>
-													<ToneBadge
-														tone={dayTone(fmt.dayIndex, fmt.isWeekend)}
-														className="text-2xs font-mono"
+						<CardContent>
+							<LiveStatusRegion atomic="false">
+								{buildNextRuns.ok ? (
+									buildNextRuns.value.length > 0 ? (
+										<ul className="space-y-1.5">
+											{buildNextRuns.value.map((date, idx) => {
+												const fmt = formatDateParts(date);
+												return (
+													<li
+														// oxlint-disable-next-line react/no-array-index-key -- next-execution list is immutable per render
+														key={idx}
+														className="flex items-center gap-3 rounded-md border bg-card px-3 py-2"
 													>
-														{fmt.dayLabel}
-													</ToneBadge>
-													<span className="font-mono text-sm tabular-nums">{fmt.date}</span>
-													<span className="font-mono text-sm tabular-nums text-muted-foreground">
-														{fmt.time}
-													</span>
-													<span className="ml-auto text-xs text-muted-foreground">
-														{fmt.relative}
-													</span>
-												</li>
-											);
-										})}
-									</ul>
+														<span className="w-6 text-xs tabular-nums text-muted-foreground">
+															{idx + 1}.
+														</span>
+														<ToneBadge
+															tone={dayTone(fmt.dayIndex, fmt.isWeekend)}
+															className="text-2xs font-mono"
+														>
+															{fmt.dayLabel}
+														</ToneBadge>
+														<span className="font-mono text-sm tabular-nums">{fmt.date}</span>
+														<span className="font-mono text-sm tabular-nums text-muted-foreground">
+															{fmt.time}
+														</span>
+														<span className="ml-auto text-xs text-muted-foreground">
+															{fmt.relative}
+														</span>
+													</li>
+												);
+											})}
+										</ul>
+									) : (
+										<EmbeddedEmptyState
+											icon={Calendar}
+											title="No upcoming executions"
+											description="The current expression does not match any future time within the lookahead window."
+										/>
+									)
 								) : (
-									<EmbeddedEmptyState
-										icon={Calendar}
-										title="No upcoming executions"
-										description="The current expression does not match any future time within the lookahead window."
-									/>
-								)
-							) : (
-								<FormError message={buildNextRuns.error} className="text-sm" />
-							)}
+									<FormError message={buildNextRuns.error} className="text-sm" />
+								)}
+							</LiveStatusRegion>
 						</CardContent>
 					</Card>
 
@@ -357,12 +363,14 @@ function CronExpressionBuilderPage() {
 										<CardTitle className="text-sm font-medium">Description</CardTitle>
 									</div>
 								</CardHeader>
-								<CardContent role="status" aria-live="polite" aria-atomic="true">
-									{parseDescription.ok ? (
-										<p className="text-sm">{parseDescription.value}</p>
-									) : (
-										<FormError message={parseDescription.error} className="text-sm" />
-									)}
+								<CardContent>
+									<LiveStatusRegion atomic="true">
+										{parseDescription.ok ? (
+											<p className="text-sm">{parseDescription.value}</p>
+										) : (
+											<FormError message={parseDescription.error} className="text-sm" />
+										)}
+									</LiveStatusRegion>
 								</CardContent>
 							</Card>
 
@@ -373,44 +381,46 @@ function CronExpressionBuilderPage() {
 										<CardTitle className="text-sm font-medium">Next 8 executions</CardTitle>
 									</div>
 								</CardHeader>
-								<CardContent role="status" aria-live="polite" aria-atomic="false">
-									{parseNextRuns.ok ? (
-										parseNextRuns.value.length > 0 ? (
-											<ul className="space-y-1.5">
-												{parseNextRuns.value.map((date, idx) => {
-													const fmt = formatDateParts(date);
-													return (
-														<li
-															// biome-ignore lint/suspicious/noArrayIndexKey: next-execution list is immutable per render
-															key={idx}
-															className="flex items-center gap-3 rounded-md border bg-card px-3 py-2"
-														>
-															<span className="w-6 text-xs tabular-nums text-muted-foreground">
-																{idx + 1}.
-															</span>
-															<ToneBadge
-																tone={dayTone(fmt.dayIndex, fmt.isWeekend)}
-																className="text-2xs font-mono"
+								<CardContent>
+									<LiveStatusRegion atomic="false">
+										{parseNextRuns.ok ? (
+											parseNextRuns.value.length > 0 ? (
+												<ul className="space-y-1.5">
+													{parseNextRuns.value.map((date, idx) => {
+														const fmt = formatDateParts(date);
+														return (
+															<li
+																// oxlint-disable-next-line react/no-array-index-key -- next-execution list is immutable per render
+																key={idx}
+																className="flex items-center gap-3 rounded-md border bg-card px-3 py-2"
 															>
-																{fmt.dayLabel}
-															</ToneBadge>
-															<span className="font-mono text-sm tabular-nums">{fmt.date}</span>
-															<span className="font-mono text-sm tabular-nums text-muted-foreground">
-																{fmt.time}
-															</span>
-															<span className="ml-auto text-xs text-muted-foreground">
-																{fmt.relative}
-															</span>
-														</li>
-													);
-												})}
-											</ul>
+																<span className="w-6 text-xs tabular-nums text-muted-foreground">
+																	{idx + 1}.
+																</span>
+																<ToneBadge
+																	tone={dayTone(fmt.dayIndex, fmt.isWeekend)}
+																	className="text-2xs font-mono"
+																>
+																	{fmt.dayLabel}
+																</ToneBadge>
+																<span className="font-mono text-sm tabular-nums">{fmt.date}</span>
+																<span className="font-mono text-sm tabular-nums text-muted-foreground">
+																	{fmt.time}
+																</span>
+																<span className="ml-auto text-xs text-muted-foreground">
+																	{fmt.relative}
+																</span>
+															</li>
+														);
+													})}
+												</ul>
+											) : (
+												<p className="text-sm text-muted-foreground">No upcoming executions.</p>
+											)
 										) : (
-											<p className="text-sm text-muted-foreground">No upcoming executions.</p>
-										)
-									) : (
-										<FormError message={parseNextRuns.error} className="text-sm" />
-									)}
+											<FormError message={parseNextRuns.error} className="text-sm" />
+										)}
+									</LiveStatusRegion>
 								</CardContent>
 							</Card>
 						</>

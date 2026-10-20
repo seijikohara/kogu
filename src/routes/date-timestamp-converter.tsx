@@ -121,8 +121,10 @@ function DateTimestampConverterPage() {
 		}
 	};
 
-	const applyPreset = (resolve: (nowMs: number) => number) => {
-		const next = resolve(Date.now());
+	// The click handler reads `Date.now()` and passes the resolved time in. Reading the
+	// clock in this helper instead makes react/purity treat it as render code, because
+	// the helper is referenced from the `.map` callback that renders the preset buttons.
+	const applyPreset = (next: number) => {
 		setPickedMs(next);
 		setInputText(String(next));
 		setStickyNow(false);
@@ -224,7 +226,7 @@ function DateTimestampConverterPage() {
 							variant="outline"
 							size="sm"
 							className="h-7 px-2 text-xs"
-							onClick={() => applyPreset(preset.resolve)}
+							onClick={() => applyPreset(preset.resolve(Date.now()))}
 							title={preset.description}
 						>
 							{preset.label}
@@ -567,7 +569,7 @@ function CronSection({
 									const clock = zonedClock(date.getTime(), primaryTimezone);
 									return (
 										<li
-											// biome-ignore lint/suspicious/noArrayIndexKey: list is immutable per render
+											// oxlint-disable-next-line react/no-array-index-key -- list is immutable per render
 											key={idx}
 											className="flex items-center gap-3 rounded-md border bg-card px-3 py-2"
 										>

@@ -45,7 +45,7 @@ export const webhookStart = (params: WebhookStartParams): Promise<WebhookStartRe
 	});
 
 /** Stop the local listener. Safe to call when already stopped. */
-export const webhookStop = (): Promise<void> => invoke<void>('webhook_stop');
+export const webhookStop = (): Promise<void> => invoke('webhook_stop');
 
 /** Query the current server state. */
 export const webhookStatus = (): Promise<WebhookStatus> => invoke<WebhookStatus>('webhook_status');

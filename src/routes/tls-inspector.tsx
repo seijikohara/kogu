@@ -8,7 +8,7 @@ import {
 	ShieldAlert,
 	ShieldCheck,
 } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { toast } from 'sonner';
 
 import { ActionButton, CopyButton } from '@/lib/components/action';
@@ -124,6 +124,9 @@ function TlsInspectorPage() {
 	const [parsedChain, setParsedChain] = useState<readonly ParsedCertificate[]>([]);
 	const [error, setError] = useState<string | null>(null);
 	const [running, setRunning] = useState(false);
+	// Reference time for the expiry badges. Captured when a result arrives so
+	// re-renders do not shift the badges.
+	const [now, setNow] = useState(() => new Date());
 	const [showRail, setShowRail] = usePersistedRail('tls-inspector');
 
 	const canRun = host.trim().length > 0 && !running;
@@ -141,6 +144,7 @@ function TlsInspectorPage() {
 				timeoutMs,
 			});
 			setResult(next);
+			setNow(new Date());
 			const parsed = await decodeChain(next.peerChainBase64);
 			setParsedChain(parsed.certificates);
 			if (parsed.errors.length > 0) {
@@ -161,8 +165,6 @@ function TlsInspectorPage() {
 		setParsedChain([]);
 		setError(null);
 	};
-
-	const now = useMemo(() => new Date(), [result]);
 
 	return (
 		<ToolShell

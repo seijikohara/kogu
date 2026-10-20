@@ -66,6 +66,7 @@ export function MasterDetailLayout({
 							'flex-1 overflow-auto outline-none focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:ring-inset',
 							listClassName
 						)}
+						// oxlint-disable-next-line jsx-a11y/prefer-tag-over-role -- WAI-ARIA listbox container for rich, keyboard-navigable rows; native <select>/<datalist> cannot render them.
 						role="listbox"
 						aria-label={listAriaLabel ?? listTitle}
 						aria-activedescendant={listAriaActiveDescendant}

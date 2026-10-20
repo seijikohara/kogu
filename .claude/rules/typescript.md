@@ -4,20 +4,20 @@ paths: src/**/*.{ts,tsx}
 
 # TypeScript Guidelines
 
-> **IMPORTANT**: Do not bypass linter or compiler errors using `// @ts-ignore`, `// @ts-expect-error`, `// biome-ignore`, `eslint-disable`, or similar directives. Fix the root cause instead.
+> **IMPORTANT**: Do not bypass linter or compiler errors using `// @ts-ignore`, `// @ts-expect-error`, `// oxlint-disable`, `eslint-disable`, or similar directives. Fix the root cause instead. The only exception is a verified false positive, suppressed per line with `// oxlint-disable-next-line <rule> -- <reason>`; `oxlint` reports unused suppressions as errors.
 
 ## Linter Enforcement
 
-The following rules are enforced by Biome and should not be documented here to avoid duplication:
+The following rules are enforced by oxlint and should not be documented here to avoid duplication:
 
-- Template literals (`useTemplate`)
-- Non-null assertion prohibition (`noNonNullAssertion`)
-- `any` type prohibition (`noExplicitAny`)
-- `else` after `return` prohibition (`noUselessElse`)
-- `import type` / `export type` (`useImportType`, `useExportType`)
-- Optional chaining (`useOptionalChain`)
+- Template literals (`prefer-template`)
+- Non-null assertion prohibition (`typescript/no-non-null-assertion`)
+- `any` type prohibition (`typescript/no-explicit-any`)
+- `else` after `return` prohibition (`no-else-return`)
+- `import type` / `export type` (`typescript/consistent-type-imports`, `typescript/consistent-type-exports`)
+- Optional chaining (`typescript/prefer-optional-chain`)
 
-See `biome.json` for the complete linter configuration.
+See `.oxlintrc.json` for the complete linter configuration.
 
 ## Fundamental Principles
 

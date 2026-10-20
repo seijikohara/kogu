@@ -91,15 +91,28 @@ function ImageConverterPage() {
 	const [showRail, setShowRail] = usePersistedRail('image-converter');
 
 	const fileInputRef = useRef<HTMLInputElement | null>(null);
+	// Identifies the latest source load. A newer load, Clear, or unmount bumps it,
+	// so a decode that settles for an older value is discarded instead of
+	// replacing the current image or allocating a preview URL.
+	const loadGenerationRef = useRef(0);
+	// Owns the preview URL outside React state, so every URL is revoked exactly
+	// once even when a newer load or Clear replaces it before React commits.
+	const previewUrlRef = useRef<string | null>(null);
 
-	useEffect(() => {
-		if (!source) return;
-		setWidth(source.width);
-		setHeight(source.height);
-		setRotation(0);
-		setFlipH(false);
-		setFlipV(false);
-	}, [source]);
+	const replacePreviewUrl = (blob: Blob | null) => {
+		if (previewUrlRef.current) URL.revokeObjectURL(previewUrlRef.current);
+		previewUrlRef.current = blob ? URL.createObjectURL(blob) : null;
+		setSourceUrl(previewUrlRef.current);
+	};
+
+	useEffect(
+		() => () => {
+			loadGenerationRef.current += 1;
+			if (previewUrlRef.current) URL.revokeObjectURL(previewUrlRef.current);
+			previewUrlRef.current = null;
+		},
+		[]
+	);
 
 	useEffect(() => {
 		return () => {
@@ -108,16 +121,6 @@ function ImageConverterPage() {
 			});
 		};
 	}, [results]);
-
-	useEffect(() => {
-		if (!source) {
-			setSourceUrl(null);
-			return;
-		}
-		const url = URL.createObjectURL(source.blob);
-		setSourceUrl(url);
-		return () => URL.revokeObjectURL(url);
-	}, [source]);
 
 	const aspect = source ? source.width / source.height : 1;
 
@@ -133,14 +136,37 @@ function ImageConverterPage() {
 		if (prefs.lockAspect && aspect > 0) setWidth(Math.max(1, Math.round(clamped * aspect)));
 	};
 
-	const acceptFile = async (file: File) => {
+	// Start a new load; every load that started earlier becomes stale.
+	const beginLoad = () => {
+		loadGenerationRef.current += 1;
+		return loadGenerationRef.current;
+	};
+	const isCurrentLoad = (generation: number) => generation === loadGenerationRef.current;
+
+	// Callers that await something before the decode pass the generation they
+	// started first, so an unmount during that wait still invalidates the load.
+	const acceptFile = async (file: File, startedGeneration?: number) => {
+		const generation = startedGeneration ?? beginLoad();
+		if (!isCurrentLoad(generation)) return;
 		setError(null);
 		try {
 			const next = await loadSource(file);
+			if (!isCurrentLoad(generation)) {
+				next.bitmap.close();
+				return;
+			}
 			setSource(next);
+			replacePreviewUrl(next.blob);
+			// Reset the transform so it starts from the new image's natural size.
+			setWidth(next.width);
+			setHeight(next.height);
+			setRotation(0);
+			setFlipH(false);
+			setFlipV(false);
 			setResults([]);
 			setActiveFormat(null);
 		} catch (e) {
+			if (!isCurrentLoad(generation)) return;
 			setError(e instanceof Error ? e.message : 'Failed to load image');
 			toast.error('Failed to load image');
 		}
@@ -171,12 +197,16 @@ function ImageConverterPage() {
 	};
 
 	const handleLoadDemo = async () => {
+		const generation = beginLoad();
 		const demo = await generateDemoImage();
-		await acceptFile(demo);
+		await acceptFile(demo, generation);
 	};
 
 	const handleConvert = async () => {
 		if (!source || prefs.targets.length === 0) return;
+		// The results belong to the source that is current now. A new load, Clear,
+		// or unmount before they arrive makes them stale.
+		const generation = loadGenerationRef.current;
 		setConverting(true);
 		setError(null);
 		results.forEach((r) => {
@@ -192,6 +222,13 @@ function ImageConverterPage() {
 				flip: { h: flipH, v: flipV },
 				backgroundFill: prefs.backgroundFill,
 			}));
+			if (!isCurrentLoad(generation)) {
+				// Nothing will render these results, so nothing else would revoke their URLs.
+				outcomes.forEach((o) => {
+					if (o.ok) URL.revokeObjectURL(o.converted.url);
+				});
+				return;
+			}
 			setResults(outcomes);
 			const firstOk = outcomes.find((o): o is Extract<MultiConvertOutcome, { ok: true }> => o.ok);
 			setActiveFormat(firstOk?.format ?? null);
@@ -206,6 +243,7 @@ function ImageConverterPage() {
 				toast.success(`Converted ${outcomes.length} format${outcomes.length === 1 ? '' : 's'}`);
 			}
 		} catch (e) {
+			if (!isCurrentLoad(generation)) return;
 			setError(e instanceof Error ? e.message : 'Conversion failed');
 			toast.error('Conversion failed');
 		} finally {
@@ -219,7 +257,9 @@ function ImageConverterPage() {
 	};
 
 	const handleClearSource = () => {
+		beginLoad();
 		setSource(null);
+		replacePreviewUrl(null);
 		setResults([]);
 		setActiveFormat(null);
 		setError(null);

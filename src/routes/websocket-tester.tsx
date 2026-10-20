@@ -118,8 +118,9 @@ function WebSocketTesterPage() {
 	const [error, setError] = useState<string | null>(null);
 	const [frames, setFrames] = useState<readonly LogEntry[]>([]);
 
+	// Mirrors `connId` for the event listeners registered once on mount.
+	// `handleConnect` updates it together with the state.
 	const connIdRef = useRef(connId);
-	connIdRef.current = connId;
 
 	const logRef = useRef<HTMLDivElement | null>(null);
 
@@ -188,6 +189,7 @@ function WebSocketTesterPage() {
 		// Use a fresh connection id so leftover events from a previous session
 		// (which already unsubscribed) cannot cross-contaminate this one.
 		const nextId = crypto.randomUUID();
+		connIdRef.current = nextId;
 		setConnId(nextId);
 		try {
 			await wsConnect(nextId, url.trim(), [], parseSubprotocols(subprotocols));

@@ -944,6 +944,7 @@ function HostListPane({
 			</LiveStatusRegion>
 			<div
 				className="flex-1 overflow-auto outline-none focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:ring-inset"
+				// oxlint-disable-next-line jsx-a11y/prefer-tag-over-role -- WAI-ARIA listbox of rich host rows with arrow-key navigation; native <select>/<datalist> cannot render these rows.
 				role="listbox"
 				tabIndex={0}
 				aria-label="Discovered hosts"
@@ -990,15 +991,14 @@ function HostListPane({
 
 function LoadingHostsSkeleton() {
 	return (
-		<div className="space-y-1.5 p-2" role="status" aria-busy="true" aria-label="Loading hosts">
+		<output className="block space-y-1.5 p-2" aria-busy="true" aria-label="Loading hosts">
 			{Array.from({ length: 6 }, (_, i) => (
-				// biome-ignore lint/suspicious/noArrayIndexKey: static skeleton placeholders
 				<div key={i} className="flex items-center gap-2">
 					<Skeleton className="h-4 w-32" />
 					<Skeleton className="ml-auto h-4 w-12" />
 				</div>
 			))}
-		</div>
+		</output>
 	);
 }
 

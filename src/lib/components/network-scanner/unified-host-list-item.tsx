@@ -92,8 +92,10 @@ export function UnifiedHostListItem({
 	return (
 		<ListItemButton
 			variant="option"
+			// oxlint-disable-next-line jsx-a11y/prefer-tag-over-role -- option inside a custom WAI-ARIA listbox; native <option> only renders plain text inside <select>.
 			role="option"
 			selected={selected}
+			aria-selected={selected}
 			data-host-id={hostId}
 			className={cn('items-start', isNew && 'animate-highlight-new')}
 			onClick={onClick}

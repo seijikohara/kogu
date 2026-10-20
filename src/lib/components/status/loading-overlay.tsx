@@ -34,6 +34,7 @@ export function LoadingOverlay({
 	return (
 		<div
 			className="absolute inset-0 z-50 flex animate-fade-in items-center justify-center bg-background/80 backdrop-blur-sm"
+			// oxlint-disable-next-line jsx-a11y/prefer-tag-over-role -- in-flow overlay scoped to its container; a native <dialog> would add UA styles and top-layer/modal behaviour that this overlay must not have.
 			role="dialog"
 			aria-modal="true"
 			aria-labelledby="loading-title"

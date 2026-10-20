@@ -1,6 +1,6 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
-import { TanStackRouterVite } from '@tanstack/router-vite-plugin';
+import { tanstackRouter } from '@tanstack/router-plugin/vite';
 import tailwindcss from '@tailwindcss/vite';
 import path from 'node:path';
 
@@ -8,7 +8,7 @@ const TAURI_DEV_HOST = process.env['TAURI_DEV_HOST'];
 
 export default defineConfig({
 	plugins: [
-		TanStackRouterVite({
+		tanstackRouter({
 			routesDirectory: './src/routes',
 			generatedRouteTree: './src/route-tree.gen.ts',
 			autoCodeSplitting: true,
@@ -51,9 +51,11 @@ export default defineConfig({
 	build: {
 		// Tauri 2 ships modern WebView2 (Chromium evergreen) on Windows and WKWebView
 		// (Safari 15+) on macOS 12+. Monaco editor 0.55+ uses private class fields and
-		// other ES2022 features that esbuild cannot downlevel to safari13/chrome105.
+		// other ES2022 features that cannot be downleveled to safari13/chrome105.
 		target: process.env['TAURI_ENV_PLATFORM'] === 'windows' ? 'chrome120' : 'safari16',
-		minify: !process.env['TAURI_ENV_DEBUG'] ? 'esbuild' : false,
+		// Vite 8 minifies with Oxc by default; the esbuild minifier is deprecated and
+		// would need esbuild as an extra dependency.
+		minify: !process.env['TAURI_ENV_DEBUG'] ? 'oxc' : false,
 		sourcemap: !!process.env['TAURI_ENV_DEBUG'],
 	},
 });

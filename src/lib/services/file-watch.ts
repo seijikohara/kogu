@@ -47,8 +47,7 @@ export const startWatch = (path: string): Promise<string> =>
  * Stop a previously started watcher. Safe to call with an unknown ID;
  * the backend treats unknown IDs as a no-op.
  */
-export const stopWatch = (watchId: string): Promise<void> =>
-	invoke<void>('file_watch_stop', { watchId });
+export const stopWatch = (watchId: string): Promise<void> => invoke('file_watch_stop', { watchId });
 
 interface UseFileWatchReturn {
 	readonly events: readonly FileWatchEvent[];

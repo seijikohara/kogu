@@ -113,7 +113,8 @@ export const Route = createFileRoute('/network-interfaces')({
 
 function NetworkInterfacesPage() {
 	const [interfaces, setInterfaces] = useState<DetailedNetworkInterface[]>([]);
-	const [loading, setLoading] = useState(false);
+	// The mount effect starts the first fetch, so the page opens in its loading state.
+	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState<string | null>(null);
 	const [showOptions, setShowOptions] = usePersistedRail('network-interfaces');
 	const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
@@ -124,24 +125,35 @@ function NetworkInterfacesPage() {
 
 	useDocumentTitle('Network Interfaces');
 
-	const fetchInterfaces = useCallback(async () => {
+	// Settle a fetch into state. Every state update happens in a promise
+	// callback, so the mount effect can start the fetch without a synchronous
+	// setState; callers that refetch set the loading state themselves.
+	const loadInterfaces = useCallback(
+		() =>
+			getDetailedNetworkInterfaces()
+				.then((result) => {
+					setInterfaces(result);
+				})
+				.catch((e: unknown) => {
+					const message = getErrorMessage(e);
+					setError(message);
+					toast.error('Failed to fetch network interfaces', { description: message });
+				})
+				.finally(() => {
+					setLoading(false);
+				}),
+		[]
+	);
+
+	const fetchInterfaces = useCallback(() => {
 		setLoading(true);
 		setError(null);
-		try {
-			const result = await getDetailedNetworkInterfaces();
-			setInterfaces(result);
-		} catch (e) {
-			const message = getErrorMessage(e);
-			setError(message);
-			toast.error('Failed to fetch network interfaces', { description: message });
-		} finally {
-			setLoading(false);
-		}
-	}, []);
+		void loadInterfaces();
+	}, [loadInterfaces]);
 
 	useEffect(() => {
-		fetchInterfaces();
-	}, [fetchInterfaces]);
+		void loadInterfaces();
+	}, [loadInterfaces]);
 
 	const filters: FilterOptions = { showActive, showInactive, showLoopback };
 	const filteredInterfaces = sortInterfaces(filterInterfaces(interfaces, filters), sortField);
@@ -151,11 +163,12 @@ function NetworkInterfacesPage() {
 	const defaultInterface = interfaces.find((iface) => iface.isDefault);
 	const scopeIdMap = buildScopeIdMap(interfaces);
 
-	useEffect(() => {
-		if (selectedIndex !== null || filteredInterfaces.length === 0) return;
+	// Auto-select the default interface (or the first one) until the user picks
+	// one. Adjusting state during render avoids the extra commit of an effect.
+	if (selectedIndex === null && filteredInterfaces.length > 0) {
 		const def = filteredInterfaces.find((iface) => iface.isDefault);
 		setSelectedIndex(def?.index ?? filteredInterfaces[0]?.index ?? null);
-	}, [filteredInterfaces, selectedIndex]);
+	}
 
 	const handleListKeydown = (e: React.KeyboardEvent<HTMLDivElement>) => {
 		if (!['ArrowUp', 'ArrowDown', 'Home', 'End'].includes(e.key)) return;
@@ -282,7 +295,9 @@ function NetworkInterfacesPage() {
 									<ListItemButton
 										key={iface.index}
 										variant="option"
+										// oxlint-disable-next-line jsx-a11y/prefer-tag-over-role -- a native <option> only renders as plain text inside <select>/<datalist>; this listbox row needs rich content and custom styling
 										role="option"
+										aria-selected={isSelected}
 										selected={isSelected}
 										data-iface-index={iface.index}
 										className="items-start"
@@ -650,20 +665,18 @@ function NetworkInterfacesPage() {
 							}
 						/>
 					) : loading ? (
-						<div
-							className="space-y-1.5 p-2"
-							role="status"
+						<output
+							className="block space-y-1.5 p-2"
 							aria-busy="true"
 							aria-label="Loading network interfaces"
 						>
 							{Array.from({ length: 5 }, (_, i) => (
-								// biome-ignore lint/suspicious/noArrayIndexKey: static skeleton placeholders
 								<div key={i} className="flex items-center gap-2">
 									<Skeleton className="h-4 w-28" />
 									<Skeleton className="ml-auto h-4 w-16" />
 								</div>
 							))}
-						</div>
+						</output>
 					) : error ? (
 						<ErrorDisplay variant="centered" title="Failed to load interfaces" message={error} />
 					) : (

@@ -60,7 +60,7 @@ import {
 	parseToAst,
 	type PathToLineMap,
 } from '@/lib/services/ast';
-import { cn } from '@/lib/utils';
+import { cn, getErrorMessage } from '@/lib/utils';
 import {
 	CodeEditorWrapper,
 	type CodeEditorWrapperHandle,
@@ -74,6 +74,20 @@ import { TreeView } from './tree-view';
 
 type PaneMode = 'input' | 'output' | 'readonly';
 type ViewMode = 'code' | 'tree' | 'split';
+
+interface AstState {
+	readonly ast: AstNode | null;
+	readonly errors: readonly AstParseError[];
+	readonly pathToLineMap: PathToLineMap;
+	readonly lineToPathMap: LineToPathMap;
+}
+
+const EMPTY_AST_STATE: AstState = {
+	ast: null,
+	errors: [],
+	pathToLineMap: new Map(),
+	lineToPathMap: new Map(),
+};
 
 interface FormatOption {
 	readonly value: string;
@@ -480,22 +494,18 @@ export const CodeEditor = forwardRef<CodeEditorHandle, CodeEditorProps>(function
 
 	const editorWrapperRef = useRef<CodeEditorWrapperHandle | null>(null);
 
-	useImperativeHandle(
-		ref,
-		(): CodeEditorHandle => ({
-			getSelectionRange: () =>
-				editorWrapperRef.current?.getSelectionRange() ?? { start: 0, end: 0 },
-			setSelectionRange: (start, end) => {
-				editorWrapperRef.current?.setSelectionRange(start, end);
-			},
-			focusEditor: () => {
-				editorWrapperRef.current?.focusEditor();
-			},
-			gotoLine: (line, focus = false) => {
-				editorWrapperRef.current?.scrollToLine(line, focus);
-			},
-		})
-	);
+	useImperativeHandle(ref, (): CodeEditorHandle => ({
+		getSelectionRange: () => editorWrapperRef.current?.getSelectionRange() ?? { start: 0, end: 0 },
+		setSelectionRange: (start, end) => {
+			editorWrapperRef.current?.setSelectionRange(start, end);
+		},
+		focusEditor: () => {
+			editorWrapperRef.current?.focusEditor();
+		},
+		gotoLine: (line, focus = false) => {
+			editorWrapperRef.current?.scrollToLine(line, focus);
+		},
+	}));
 
 	const isInput = mode === 'input';
 	const isOutput = mode === 'output' || mode === 'readonly';
@@ -508,10 +518,15 @@ export const CodeEditor = forwardRef<CodeEditorHandle, CodeEditorProps>(function
 		editorMode === 'sql' ||
 		editorMode === 'markdown';
 
-	const [currentAst, setCurrentAst] = useState<AstNode | null>(null);
-	const [parseErrors, setParseErrors] = useState<readonly AstParseError[]>([]);
-	const [pathToLineMap, setPathToLineMap] = useState<PathToLineMap>(new Map());
-	const [lineToPathMap, setLineToPathMap] = useState<LineToPathMap>(new Map());
+	const [astState, setAstState] = useState<AstState>(EMPTY_AST_STATE);
+	// Clear the tree during render as soon as the content stops being parseable (React's
+	// "adjust state when a prop changes" pattern). Clearing it in the parse effect would
+	// commit one render that still shows the previous document's tree.
+	const canParseAst = getAstLanguage(editorMode) !== null && !!value?.trim();
+	if (!canParseAst && astState !== EMPTY_AST_STATE) {
+		setAstState(EMPTY_AST_STATE);
+	}
+	const { ast: currentAst, errors: parseErrors, pathToLineMap, lineToPathMap } = astState;
 
 	const canShowTree = supportsTreeView && (currentAst !== null || parseErrors.length > 0);
 
@@ -528,28 +543,25 @@ export const CodeEditor = forwardRef<CodeEditorHandle, CodeEditorProps>(function
 
 	useEffect(() => {
 		const language = getAstLanguage(editorMode);
-		if (!language || !value?.trim()) {
-			setCurrentAst(null);
-			setParseErrors([]);
-			setPathToLineMap(new Map());
-			setLineToPathMap(new Map());
-			return;
-		}
+		if (!language || !value?.trim()) return;
 		// Cancellation flag in a const ref so the cleanup closure can flip
 		// `.cancelled` without a `let` binding.
 		const lifecycle = { cancelled: false };
-		parseToAst(value, language).then((result) => {
-			if (lifecycle.cancelled) return;
-			setCurrentAst(result.ast);
-			setParseErrors(result.errors);
-			if (result.ast) {
-				setPathToLineMap(buildPathToLineMap(result.ast));
-				setLineToPathMap(buildLineToPathMap(result.ast));
-			} else {
-				setPathToLineMap(new Map());
-				setLineToPathMap(new Map());
-			}
-		});
+		parseToAst(value, language)
+			.then((result) => {
+				if (lifecycle.cancelled) return;
+				setAstState({
+					ast: result.ast,
+					errors: result.errors,
+					pathToLineMap: buildPathToLineMap(result.ast),
+					lineToPathMap: buildLineToPathMap(result.ast),
+				});
+			})
+			.catch((error: unknown) => {
+				if (lifecycle.cancelled) return;
+				// Mirror parseToAst's own failure shape so the tree panel lists the error.
+				setAstState({ ...EMPTY_AST_STATE, errors: [{ message: getErrorMessage(error) }] });
+			});
 		return () => {
 			lifecycle.cancelled = true;
 		};
@@ -783,7 +795,6 @@ export const CodeEditor = forwardRef<CodeEditorHandle, CodeEditorProps>(function
 			aria-label={isInput ? 'Drop files here' : undefined}
 		>
 			{isDragOver && isInput ? (
-				// biome-ignore lint/a11y/noStaticElementInteractions: overlay forwards drag/drop to the labelled outer <section>; the inner div is a visual marker only.
 				<div
 					className="absolute inset-0 z-50 flex items-center justify-center bg-primary/10 ring-2 ring-inset ring-primary"
 					onDragOver={handleDragOver}

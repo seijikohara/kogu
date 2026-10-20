@@ -48,7 +48,7 @@ const convertObjectToXml = (
 		: attributeEntries;
 
 	const attributes = sortedAttrEntries
-		.map(([key, value]) => ` ${key.slice(attributePrefix.length)}="${value}"`)
+		.map(([key, value]) => ` ${key.slice(attributePrefix.length)}="${String(value)}"`)
 		.join('');
 
 	const textEntry = entries.find(([key]) => key === textNodeName);

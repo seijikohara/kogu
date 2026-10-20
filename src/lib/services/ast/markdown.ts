@@ -342,11 +342,11 @@ const parseBlocks = (
 				if (
 					paraLine.trim() === '' ||
 					/^#{1,6}\s/.test(paraLine) ||
-					/^```/.test(paraLine) ||
-					/^>/.test(paraLine) ||
+					paraLine.startsWith('```') ||
+					paraLine.startsWith('>') ||
 					/^[-*+]\s/.test(paraLine) ||
 					/^\d+\.\s/.test(paraLine) ||
-					/^\|/.test(paraLine) ||
+					paraLine.startsWith('|') ||
 					/^(---+|\*\*\*+|___+)$/.test(paraLine.trim())
 				) {
 					break;

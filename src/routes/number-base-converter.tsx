@@ -724,7 +724,9 @@ function BitwiseTable({
 										{BASE_LABEL[base]}
 									</th>
 								))}
-								<th className="py-1.5 pr-1 text-right" />
+								<th className="py-1.5 pr-1 text-right">
+									<span className="sr-only">Actions</span>
+								</th>
 							</tr>
 						</thead>
 						<tbody>

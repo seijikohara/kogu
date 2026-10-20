@@ -1,5 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router';
-import { useEffect, useRef, useState } from 'react';
+import { useState } from 'react';
 import {
 	Braces,
 	ClipboardPaste,
@@ -50,6 +50,13 @@ import {
 } from '@/lib/services/escape';
 
 type Side = 'raw' | 'escaped';
+
+interface SyncInputs {
+	readonly flavor: EscapeFlavor;
+	readonly options: FlavorOptions;
+	readonly raw: string;
+	readonly escaped: string;
+}
 
 const FLAVOR_TABS = [
 	{ id: 'json' as const, label: 'JSON', icon: Braces },
@@ -126,8 +133,9 @@ function EscapeToolPage() {
 	});
 
 	// `lastEditedSide` tracks which textarea the user typed into last so the
-	// reactive sync effect knows which direction to transform.
-	const lastEditedSideRef = useRef<Side>('raw');
+	// cross-side sync knows which direction to transform. The sync reads it
+	// during render, so it lives in state rather than a ref.
+	const [lastEditedSide, setLastEditedSide] = useState<Side>('raw');
 
 	const raw = rawByFlavor[activeFlavor];
 	const escaped = escapedByFlavor[activeFlavor];
@@ -142,33 +150,48 @@ function EscapeToolPage() {
 
 	// Sync: when the raw side or options change after a raw edit, recompute the
 	// escaped side. Symmetrically, after an escaped edit recompute the raw
-	// side. Driven by `[activeFlavor, persisted.options, debouncedRaw,
-	// debouncedEscaped]` so option toggles take effect immediately.
-	useEffect(() => {
-		if (lastEditedSideRef.current === 'raw') {
+	// side. Driven by `activeFlavor`, `persisted.options`, `debouncedRaw` and
+	// `debouncedEscaped` so option toggles take effect immediately. The sync
+	// adjusts state during render whenever one of those inputs changes
+	// (React's "storing information from previous renders" pattern), which
+	// avoids the extra commit of a synchronous setState inside an effect.
+	// The textarea values are deliberately not inputs: the sync writes them,
+	// so re-running on them would cycle. `lastEditedSide` is not one either;
+	// the debounced values already trigger the sync after an edit.
+	const [syncedInputs, setSyncedInputs] = useState<SyncInputs | null>(null);
+	if (
+		syncedInputs === null ||
+		syncedInputs.flavor !== activeFlavor ||
+		syncedInputs.options !== persisted.options ||
+		syncedInputs.raw !== debouncedRaw ||
+		syncedInputs.escaped !== debouncedEscaped
+	) {
+		setSyncedInputs({
+			flavor: activeFlavor,
+			options: persisted.options,
+			raw: debouncedRaw,
+			escaped: debouncedEscaped,
+		});
+		if (lastEditedSide === 'raw') {
 			const nextEscaped = escapeByFlavor(activeFlavor, debouncedRaw, persisted.options);
-			if (nextEscaped !== escapedByFlavor[activeFlavor]) {
+			if (nextEscaped !== escaped) {
 				setEscapedByFlavor((prev) => ({ ...prev, [activeFlavor]: nextEscaped }));
 			}
 		} else {
 			const nextRaw = unescapeByFlavor(activeFlavor, debouncedEscaped, persisted.options);
-			if (nextRaw !== rawByFlavor[activeFlavor]) {
+			if (nextRaw !== raw) {
 				setRawByFlavor((prev) => ({ ...prev, [activeFlavor]: nextRaw }));
 			}
 		}
-		// rawByFlavor / escapedByFlavor read inside the effect intentionally
-		// skip the dep array to avoid cycling on the very state this effect
-		// writes; the debounced reads above already provide the trigger.
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [activeFlavor, persisted.options, debouncedRaw, debouncedEscaped]);
+	}
 
 	const updateRaw = (value: string) => {
-		lastEditedSideRef.current = 'raw';
+		setLastEditedSide('raw');
 		setRawByFlavor((prev) => ({ ...prev, [activeFlavor]: value }));
 	};
 
 	const updateEscaped = (value: string) => {
-		lastEditedSideRef.current = 'escaped';
+		setLastEditedSide('escaped');
 		setEscapedByFlavor((prev) => ({ ...prev, [activeFlavor]: value }));
 	};
 
@@ -204,7 +227,7 @@ function EscapeToolPage() {
 
 	const handleSample = () => {
 		const sample = SAMPLES[activeFlavor];
-		lastEditedSideRef.current = 'raw';
+		setLastEditedSide('raw');
 		setRawByFlavor((prev) => ({ ...prev, [activeFlavor]: sample.raw }));
 	};
 

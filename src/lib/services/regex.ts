@@ -86,7 +86,7 @@ export interface RegexMatch {
 	readonly namedGroups: Readonly<Record<string, GroupSlice>>;
 }
 
-type IndicesArray = ReadonlyArray<readonly [number, number] | undefined>;
+type IndicesArray = readonly (readonly [number, number] | undefined)[];
 type IndicesGroups = Readonly<Record<string, readonly [number, number] | undefined>>;
 
 const readIndices = (m: RegExpMatchArray | RegExpExecArray): IndicesArray => {

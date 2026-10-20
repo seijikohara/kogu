@@ -95,8 +95,8 @@ function FileInspectorPage() {
 		hash: hashBuffer,
 		reset: resetHashWorker,
 	} = useFileInspectWorker();
-	const [imagePreview, setImagePreview] = useState<ImagePreview | null>(null);
-	const [audioInfo, setAudioInfo] = useState<{
+	const [loadedImagePreview, setLoadedImagePreview] = useState<ImagePreview | null>(null);
+	const [loadedAudioInfo, setLoadedAudioInfo] = useState<{
 		readonly duration: number;
 		readonly sampleRate: number;
 		readonly channels: number;
@@ -116,6 +116,13 @@ function FileInspectorPage() {
 
 	const detectedMime = mimeInfo?.mime ?? mimeInfo?.expectedFromExtension ?? null;
 
+	// The media extraction effect below only fills these for a decoded file
+	// with a known MIME type. Derive the empty state here instead of resetting
+	// the state from the effect.
+	const hasMediaSource = result !== null && bytes !== null && detectedMime !== null;
+	const imagePreview = hasMediaSource ? loadedImagePreview : null;
+	const audioInfo = hasMediaSource ? loadedAudioInfo : null;
+
 	const mimeMismatch = useMemo(() => {
 		if (!mimeInfo) return false;
 		const { mime, expectedFromExtension } = mimeInfo;
@@ -129,8 +136,8 @@ function FileInspectorPage() {
 		setResult(null);
 		setBytes(null);
 		setError(null);
-		setImagePreview(null);
-		setAudioInfo(null);
+		setLoadedImagePreview(null);
+		setLoadedAudioInfo(null);
 	}, [resetHashWorker]);
 
 	const loadFromPath = useCallback(
@@ -144,8 +151,8 @@ function FileInspectorPage() {
 			setLoading(true);
 			setCancelling(false);
 			setError(null);
-			setImagePreview(null);
-			setAudioInfo(null);
+			setLoadedImagePreview(null);
+			setLoadedAudioInfo(null);
 			try {
 				const next = await inspectFile(opId, path);
 				setResult(next);
@@ -234,11 +241,7 @@ function FileInspectorPage() {
 	// Image-format extraction: dimensions, EXIF. Audio-format
 	// extraction: duration, sample rate, channel count.
 	useEffect(() => {
-		if (!result || !bytes || !detectedMime) {
-			setImagePreview(null);
-			setAudioInfo(null);
-			return;
-		}
+		if (!result || !bytes || !detectedMime) return;
 
 		let revokeUrl: string | null = null;
 		let cancelled = false;
@@ -254,7 +257,7 @@ function FileInspectorPage() {
 					.parse(blob, { translateValues: true })
 					.then((exif) => {
 						if (cancelled) return;
-						setImagePreview({
+						setLoadedImagePreview({
 							url,
 							width: img.naturalWidth,
 							height: img.naturalHeight,
@@ -263,7 +266,7 @@ function FileInspectorPage() {
 					})
 					.catch(() => {
 						if (cancelled) return;
-						setImagePreview({
+						setLoadedImagePreview({
 							url,
 							width: img.naturalWidth,
 							height: img.naturalHeight,
@@ -273,7 +276,7 @@ function FileInspectorPage() {
 			};
 			img.onerror = () => {
 				if (cancelled) return;
-				setImagePreview(null);
+				setLoadedImagePreview(null);
 			};
 			img.src = url;
 		} else if (isAudioMime(detectedMime)) {
@@ -286,7 +289,7 @@ function FileInspectorPage() {
 					.decodeAudioData(bytes.slice().buffer as ArrayBuffer)
 					.then((decoded) => {
 						if (cancelled) return;
-						setAudioInfo({
+						setLoadedAudioInfo({
 							duration: decoded.duration,
 							sampleRate: decoded.sampleRate,
 							channels: decoded.numberOfChannels,
@@ -294,7 +297,7 @@ function FileInspectorPage() {
 					})
 					.catch(() => {
 						if (cancelled) return;
-						setAudioInfo(null);
+						setLoadedAudioInfo(null);
 					})
 					.finally(() => {
 						ctx.close().catch(() => undefined);

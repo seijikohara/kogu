@@ -183,25 +183,25 @@ export const LANGUAGE_OPTIONS: readonly LanguageInfo[] = Object.values(LANGUAGE_
 export const PYTHON_STYLE_OPTIONS = [
 	{ value: 'dataclass', label: 'dataclass', description: '@dataclass decorator' },
 	{ value: 'typeddict', label: 'TypedDict', description: 'TypedDict class' },
-] as const satisfies ReadonlyArray<{ value: PythonStyle; label: string; description: string }>;
+] as const satisfies readonly { value: PythonStyle; label: string; description: string }[];
 
 export const JAVA_CLASS_STYLE_OPTIONS = [
 	{ value: 'record', label: 'Record (Java 16+)', description: 'Immutable data class' },
 	{ value: 'pojo', label: 'POJO', description: 'Traditional JavaBean' },
 	{ value: 'lombok', label: 'Lombok', description: 'With @Data annotation' },
 	{ value: 'immutables', label: 'Immutables', description: 'With @Value.Immutable' },
-] as const satisfies ReadonlyArray<{ value: JavaClassStyle; label: string; description: string }>;
+] as const satisfies readonly { value: JavaClassStyle; label: string; description: string }[];
 
 export const JAVA_SERIALIZATION_OPTIONS = [
 	{ value: 'none', label: 'None', description: 'No serialization annotations' },
 	{ value: 'jackson', label: 'Jackson', description: '@JsonProperty annotations' },
 	{ value: 'gson', label: 'Gson', description: '@SerializedName annotations' },
 	{ value: 'moshi', label: 'Moshi', description: '@Json annotations' },
-] as const satisfies ReadonlyArray<{
+] as const satisfies readonly {
 	value: JavaSerializationLibrary;
 	label: string;
 	description: string;
-}>;
+}[];
 
 export const KOTLIN_SERIALIZATION_OPTIONS = [
 	{ value: 'none', label: 'None', description: 'No serialization annotations' },
@@ -209,8 +209,8 @@ export const KOTLIN_SERIALIZATION_OPTIONS = [
 	{ value: 'gson', label: 'Gson', description: '@SerializedName annotations' },
 	{ value: 'moshi', label: 'Moshi', description: '@Json annotations' },
 	{ value: 'jackson', label: 'Jackson', description: '@JsonProperty annotations' },
-] as const satisfies ReadonlyArray<{
+] as const satisfies readonly {
 	value: KotlinSerializationLibrary;
 	label: string;
 	description: string;
-}>;
+}[];

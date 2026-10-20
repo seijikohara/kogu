@@ -117,6 +117,12 @@ const TONE_TIMELINE_CLASS: Readonly<Record<ExpiryTone, string>> = {
 	destructive: 'fill-destructive/30 stroke-destructive',
 };
 
+// Report a parser or file-read rejection through the decoder's error list.
+const failedParse = (e: unknown): ParseResult => ({
+	certificates: [],
+	errors: [{ index: 0, message: e instanceof Error ? e.message : String(e) }],
+});
+
 export const Route = createFileRoute('/x509-decoder')({
 	component: X509DecoderPage,
 });
@@ -133,19 +139,31 @@ function X509DecoderPage() {
 	const [showRail, setShowRail] = usePersistedRail('x509-decoder');
 	const [isDragOver, setIsDragOver] = useState(false);
 
+	// Clear the result as soon as the input changes to blank. A DER drop sets a
+	// result without touching `input`, so the result cannot be derived from
+	// `input` alone; tracking the previous input and adjusting state during
+	// render avoids the extra commit of an effect.
+	const [prevInput, setPrevInput] = useState(input);
+	if (input !== prevInput) {
+		setPrevInput(input);
+		if (input.trim().length === 0) setParseResult(null);
+	}
+
+	// Settle a parse into state. A rejection lands in the error list, so the
+	// returned promise never rejects and `parsing` never sticks.
+	const settleParse = (pending: Promise<ParseResult>): Promise<void> =>
+		pending.catch(failedParse).then((res) => {
+			setParseResult(res);
+			setParsing(false);
+		});
+
 	// Re-parse whenever the textual input changes. Debounce so a long paste
 	// (multi-cert PEM bundles) does not run the parser on each keystroke.
 	useEffect(() => {
-		if (input.trim().length === 0) {
-			setParseResult(null);
-			return;
-		}
+		if (input.trim().length === 0) return;
 		const id = window.setTimeout(() => {
 			setParsing(true);
-			parseCertificates(input).then((res) => {
-				setParseResult(res);
-				setParsing(false);
-			});
+			void settleParse(parseCertificates(input));
 		}, 200);
 		return () => window.clearTimeout(id);
 	}, [input]);
@@ -175,21 +193,23 @@ function X509DecoderPage() {
 		setIsDragOver(false);
 		const file = e.dataTransfer.files[0];
 		if (!file) return;
-		file.arrayBuffer().then((buf) => {
-			const bytes = new Uint8Array(buf);
-			// Prefer text decoding when the file looks ASCII (PEM bundles); fall
-			// back to raw DER bytes otherwise so binary .cer / .der files parse.
-			const text = new TextDecoder('utf-8').decode(bytes);
-			if (/-----BEGIN [^-]+-----/.test(text)) {
-				setInput(text);
-				return;
-			}
-			setParsing(true);
-			parseCertificates(bytes).then((res) => {
-				setParseResult(res);
-				setParsing(false);
+		file
+			.arrayBuffer()
+			.then((buf) => {
+				const bytes = new Uint8Array(buf);
+				// Prefer text decoding when the file looks ASCII (PEM bundles); fall
+				// back to raw DER bytes otherwise so binary .cer / .der files parse.
+				const text = new TextDecoder('utf-8').decode(bytes);
+				if (/-----BEGIN [^-]+-----/.test(text)) {
+					setInput(text);
+					return;
+				}
+				setParsing(true);
+				return settleParse(parseCertificates(bytes));
+			})
+			.catch((e: unknown) => {
+				setParseResult(failedParse(e));
 			});
-		});
 	};
 
 	const handleDragOver = (e: DragEvent<HTMLDivElement>) => {
@@ -206,12 +226,12 @@ function X509DecoderPage() {
 	const errors = parseResult?.errors ?? [];
 
 	const soonestExpiry = useMemo(() => {
-		if (certificates.length === 0) return null;
-		const min = certificates.reduce(
+		const [first, ...rest] = certificates;
+		if (!first) return null;
+		return rest.reduce(
 			(acc, c) => (c.notAfter.getTime() < acc.getTime() ? c.notAfter : acc),
-			certificates[0]?.notAfter ?? new Date()
+			first.notAfter
 		);
-		return min;
 	}, [certificates]);
 
 	// Tri-state validity: a decoded certificate is valid, a parse error
@@ -457,6 +477,7 @@ function ValidityTimeline({ cert, now, tone }: ValidityTimelineProps) {
 			<svg
 				viewBox="0 0 100 12"
 				preserveAspectRatio="none"
+				// oxlint-disable-next-line jsx-a11y/prefer-tag-over-role -- an <img> cannot host this inline SVG, whose fill and stroke follow the theme's Tailwind classes
 				role="img"
 				aria-label={`Validity timeline from ${formatDate(cert.notBefore)} to ${formatDate(
 					cert.notAfter

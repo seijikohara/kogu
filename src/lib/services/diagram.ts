@@ -3,6 +3,9 @@
  * Provides pure functions for rendering diagrams and mathematical expressions.
  */
 
+import type * as VizModule from '@viz-js/viz';
+import type * as KatexModule from 'katex';
+import type * as MermaidModule from 'mermaid';
 import type { RenderResult as MermaidRenderResult } from 'mermaid';
 import { getErrorMessage } from '@/lib/utils';
 
@@ -102,15 +105,15 @@ export const getPlantUmlUrl = (source: string): string => {
 // Lazy-loaded module caches. The bindings themselves are const; only the
 // `value` field mutates on first load.
 const moduleCache: {
-	katex: typeof import('katex') | null;
-	mermaid: typeof import('mermaid') | null;
-	viz: typeof import('@viz-js/viz') | null;
+	katex: typeof KatexModule | null;
+	mermaid: typeof MermaidModule | null;
+	viz: typeof VizModule | null;
 } = { katex: null, mermaid: null, viz: null };
 
 /**
  * Load KaTeX module lazily.
  */
-const loadKatex = async (): Promise<typeof import('katex')> => {
+const loadKatex = async (): Promise<typeof KatexModule> => {
 	if (!moduleCache.katex) {
 		moduleCache.katex = await import('katex');
 	}
@@ -120,7 +123,7 @@ const loadKatex = async (): Promise<typeof import('katex')> => {
 /**
  * Load Mermaid module lazily.
  */
-const loadMermaid = async (): Promise<typeof import('mermaid')> => {
+const loadMermaid = async (): Promise<typeof MermaidModule> => {
 	if (!moduleCache.mermaid) {
 		const mod = await import('mermaid');
 		mod.default.initialize({
@@ -137,7 +140,7 @@ const loadMermaid = async (): Promise<typeof import('mermaid')> => {
 /**
  * Load Viz.js module lazily.
  */
-const loadViz = async (): Promise<typeof import('@viz-js/viz')> => {
+const loadViz = async (): Promise<typeof VizModule> => {
 	if (!moduleCache.viz) {
 		moduleCache.viz = await import('@viz-js/viz');
 	}
@@ -243,15 +246,18 @@ export const renderDiagram = async (
 		case 'mermaid':
 			return await renderMermaid(source);
 		case 'plantuml':
-			return await renderPlantUml(source);
+			return renderPlantUml(source);
 		case 'graphviz':
 			return await renderGraphviz(source);
-		default:
+		default: {
+			// `type` is `never` here; widen it so the fallback message stays printable.
+			const unknownType: string = type;
 			return {
 				success: false,
-				html: `<div class="diagram-error">Unknown diagram type: ${type}</div>`,
-				error: `Unknown diagram type: ${type}`,
+				html: `<div class="diagram-error">Unknown diagram type: ${unknownType}</div>`,
+				error: `Unknown diagram type: ${unknownType}`,
 			};
+		}
 	}
 };
 

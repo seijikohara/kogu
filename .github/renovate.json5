@@ -88,12 +88,12 @@
 		{
 			description: 'Group linting and formatting tools',
 			groupName: 'linting and formatting',
-			matchPackageNames: ['@biomejs/biome', 'prettier'],
+			matchPackageNames: ['oxlint', 'oxfmt', 'oxlint-tsgolint'],
 		},
 		{
 			description: 'Group the build toolchain',
 			groupName: 'build toolchain',
-			matchPackageNames: ['vite', 'vite-plugin-*', 'esbuild', 'typescript'],
+			matchPackageNames: ['vite', 'vite-plugin-*', 'typescript'],
 		},
 		{
 			description: 'Group TypeScript type definitions',

@@ -13,18 +13,18 @@ bun run build         # Build frontend
 bun run tauri build   # Build desktop app
 bun run check         # TypeScript check + validate-pages + audit-design
 bun run audit:design  # Container Patterns audit (Card density rule)
-bun run format        # Format with Prettier
+bun run format        # Format with oxfmt
 bun run format:check  # Check formatting
-bun run lint          # Biome lint
-bun run lint:fix      # Biome lint with auto-fix
+bun run lint          # oxlint (type-aware)
+bun run lint:fix      # oxlint with auto-fix
 ```
 
-### Prettier Settings
+### Formatter Settings (oxfmt)
 
-- Tab indentation (configured in `.prettierrc`)
+- Tab indentation (configured in `.oxfmtrc.json`)
 - Single quotes for strings
-- Trailing commas
-- Print width: 120
+- Trailing commas (ES5)
+- Print width: 100
 
 ### File Naming
 

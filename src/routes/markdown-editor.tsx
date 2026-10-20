@@ -1,5 +1,13 @@
 import { createFileRoute } from '@tanstack/react-router';
-import { useCallback, useEffect, useMemo, useRef, useState, type ComponentType } from 'react';
+import {
+	useCallback,
+	useEffect,
+	useLayoutEffect,
+	useMemo,
+	useRef,
+	useState,
+	type ComponentType,
+} from 'react';
 import {
 	Bold,
 	ChevronDown,
@@ -302,8 +310,13 @@ function MarkdownEditorPage() {
 	const activeEditorRef = useRef<ActiveEditor>(null);
 	const inputRef = useRef('');
 
-	activeEditorRef.current = activeEditor;
-	inputRef.current = input;
+	// Mirror the latest state into the refs read by the stable editor callbacks.
+	// A layout effect runs right after commit, before any passive effect (such
+	// as the Vizel sync below) or browser event can call those callbacks.
+	useLayoutEffect(() => {
+		activeEditorRef.current = activeEditor;
+		inputRef.current = input;
+	}, [activeEditor, input]);
 
 	useDocumentTitle('Markdown Editor');
 
@@ -776,7 +789,7 @@ function MarkdownEditorPage() {
 								</div>
 								<div className="markdown-preview flex-1 overflow-auto p-4">
 									{input.trim() ? (
-										// biome-ignore lint/security/noDangerouslySetInnerHtml: htmlOutput originates from the local markdownToHtmlAsync pipeline; content is generated from user input that already lives in the same process.
+										// oxlint-disable-next-line react/no-danger -- htmlOutput originates from the local markdownToHtmlAsync pipeline; content is generated from user input that already lives in the same process.
 										<div dangerouslySetInnerHTML={{ __html: htmlOutput }} />
 									) : (
 										<EmbeddedEmptyState

@@ -16,7 +16,7 @@ import {
 	Trash2,
 	TrendingUp,
 } from 'lucide-react';
-import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
+import { useCallback, useMemo, useRef, useState, type CSSProperties } from 'react';
 import { toast } from 'sonner';
 
 import { CopyButton } from '@/lib/components/action';
@@ -66,6 +66,11 @@ interface FolderTreeVisualizerPrefs {
 	readonly sortDir: SortDir;
 }
 
+type ScanFilters = Pick<
+	FolderTreeVisualizerPrefs,
+	'includeGlobs' | 'excludeGlobs' | 'maxDepth' | 'showHidden'
+>;
+
 const DEFAULT_PREFS: FolderTreeVisualizerPrefs = {
 	includeGlobs: '',
 	excludeGlobs: 'node_modules,.git,.DS_Store',
@@ -109,9 +114,6 @@ function FolderTreeVisualizerPage() {
 	// registers under its own op id. Cancelling must signal both.
 	const scanOpIdsRef = useRef<{ readonly walk: string; readonly largest: string } | null>(null);
 
-	const includes = useMemo(() => splitPatterns(prefs.includeGlobs), [prefs.includeGlobs]);
-	const excludes = useMemo(() => splitPatterns(prefs.excludeGlobs), [prefs.excludeGlobs]);
-
 	const sortedRoot = useMemo<TreeNode | null>(() => {
 		if (!root) return null;
 		return sortTree(root, prefs.sortKey, prefs.sortDir);
@@ -133,49 +135,50 @@ function FolderTreeVisualizerPage() {
 		[sortedRoot]
 	);
 
-	const runScan = useCallback(
-		async (path: string) => {
-			const walkOpId = crypto.randomUUID();
-			const largestOpId = crypto.randomUUID();
-			scanOpIdsRef.current = { walk: walkOpId, largest: largestOpId };
-			setLoading(true);
-			setCancelling(false);
-			setError(null);
-			const startedAt = performance.now();
-			try {
-				const [walked, top] = await Promise.all([
-					walkFolder(walkOpId, {
-						root: path,
-						includeGlobs: includes,
-						excludeGlobs: excludes,
-						maxDepth: prefs.maxDepth,
-						showHidden: prefs.showHidden,
-					}),
-					findLargestFiles(largestOpId, path, TOP_N, includes, excludes),
-				]);
-				setRoot(walked);
-				setLargest(top);
-				setRootPath(path);
-				// Auto-expand the root so users see something immediately.
-				setExpanded(new Set([walked.path]));
-				setScanTimeMs(performance.now() - startedAt);
-			} catch (e) {
-				const message = e instanceof Error ? e.message : String(e);
-				// Cancellation is a user action, not a failure: keep the panel clean.
-				if (message.includes('cancelled')) {
-					toast.info('Scan cancelled');
-				} else {
-					setError(message);
-					toast.error('Failed to scan folder', { description: message });
-				}
-			} finally {
-				scanOpIdsRef.current = null;
-				setLoading(false);
-				setCancelling(false);
+	// Callers pass the filters explicitly: a filter change re-scans from its
+	// event handler, before the patched prefs reach this render's closure.
+	const runScan = useCallback(async (path: string, filters: ScanFilters) => {
+		const includes = splitPatterns(filters.includeGlobs);
+		const excludes = splitPatterns(filters.excludeGlobs);
+		const walkOpId = crypto.randomUUID();
+		const largestOpId = crypto.randomUUID();
+		scanOpIdsRef.current = { walk: walkOpId, largest: largestOpId };
+		setLoading(true);
+		setCancelling(false);
+		setError(null);
+		const startedAt = performance.now();
+		try {
+			const [walked, top] = await Promise.all([
+				walkFolder(walkOpId, {
+					root: path,
+					includeGlobs: includes,
+					excludeGlobs: excludes,
+					maxDepth: filters.maxDepth,
+					showHidden: filters.showHidden,
+				}),
+				findLargestFiles(largestOpId, path, TOP_N, includes, excludes),
+			]);
+			setRoot(walked);
+			setLargest(top);
+			setRootPath(path);
+			// Auto-expand the root so users see something immediately.
+			setExpanded(new Set([walked.path]));
+			setScanTimeMs(performance.now() - startedAt);
+		} catch (e) {
+			const message = e instanceof Error ? e.message : String(e);
+			// Cancellation is a user action, not a failure: keep the panel clean.
+			if (message.includes('cancelled')) {
+				toast.info('Scan cancelled');
+			} else {
+				setError(message);
+				toast.error('Failed to scan folder', { description: message });
 			}
-		},
-		[includes, excludes, prefs.maxDepth, prefs.showHidden]
-	);
+		} finally {
+			scanOpIdsRef.current = null;
+			setLoading(false);
+			setCancelling(false);
+		}
+	}, []);
 
 	const handleCancel = useCallback(() => {
 		const ids = scanOpIdsRef.current;
@@ -191,19 +194,19 @@ function FolderTreeVisualizerPage() {
 		try {
 			const selected = await openDialog({ multiple: false, directory: true });
 			if (typeof selected === 'string' && selected.length > 0) {
-				await runScan(selected);
+				await runScan(selected, prefs);
 			}
 		} catch (e) {
 			const message = e instanceof Error ? e.message : String(e);
 			toast.error('Failed to open folder dialog', { description: message });
 		}
-	}, [runScan]);
+	}, [prefs, runScan]);
 
 	const handleRefresh = useCallback(() => {
 		if (rootPath) {
-			runScan(rootPath).catch(() => undefined);
+			runScan(rootPath, prefs).catch(() => undefined);
 		}
-	}, [rootPath, runScan]);
+	}, [prefs, rootPath, runScan]);
 
 	const handleClear = useCallback(() => {
 		setRoot(null);
@@ -217,13 +220,16 @@ function FolderTreeVisualizerPage() {
 	// Re-scan automatically when filters / depth / hidden flag change after
 	// the initial scan. Without this the rail looks unresponsive: filters
 	// would only apply after the user manually hits Refresh.
-	useEffect(() => {
-		if (!rootPath) return;
-		// Avoid scanning during the initial mount before the user has
-		// picked a folder; only re-scan once we already have a root.
-		runScan(rootPath).catch(() => undefined);
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [prefs.includeGlobs, prefs.excludeGlobs, prefs.maxDepth, prefs.showHidden]);
+	const patchScanFilters = (next: Partial<ScanFilters>) => {
+		const changed = (Object.keys(next) as (keyof ScanFilters)[]).some(
+			(key) => next[key] !== prefs[key]
+		);
+		patch(next);
+		// Skip the re-scan before the user has picked a folder, and when the
+		// control reports the value it already had.
+		if (!changed || !rootPath) return;
+		runScan(rootPath, { ...prefs, ...next }).catch(() => undefined);
+	};
 
 	const toggleExpanded = useCallback((path: string) => {
 		setExpanded((prev) => {
@@ -342,8 +348,8 @@ function FolderTreeVisualizerPage() {
 						<FormGlobFilters
 							include={prefs.includeGlobs}
 							exclude={prefs.excludeGlobs}
-							onIncludeChange={(v) => patch({ includeGlobs: v })}
-							onExcludeChange={(v) => patch({ excludeGlobs: v })}
+							onIncludeChange={(v) => patchScanFilters({ includeGlobs: v })}
+							onExcludeChange={(v) => patchScanFilters({ excludeGlobs: v })}
 							includePlaceholder="e.g. *.png, *.jpg"
 							excludePlaceholder="e.g. node_modules, .git"
 							includeHint="Comma or space separated. Leave empty for all files."
@@ -353,7 +359,7 @@ function FolderTreeVisualizerPage() {
 							size="compact"
 							label="Show hidden entries (dotfiles)"
 							checked={prefs.showHidden}
-							onCheckedChange={(checked) => patch({ showHidden: checked })}
+							onCheckedChange={(checked) => patchScanFilters({ showHidden: checked })}
 						/>
 					</FormSection>
 
@@ -365,7 +371,7 @@ function FolderTreeVisualizerPage() {
 							max={10}
 							step={1}
 							valueLabel={`${prefs.maxDepth} level${prefs.maxDepth === 1 ? '' : 's'}`}
-							onValueChange={(v) => patch({ maxDepth: v })}
+							onValueChange={(v) => patchScanFilters({ maxDepth: v })}
 							hint="Deeper levels collapse with an ellipsis."
 						/>
 					</FormSection>
@@ -571,7 +577,6 @@ interface TreeRowProps {
 function TreeRow({ row, isExpanded, onToggle, onReveal }: TreeRowProps) {
 	const { node, depth, siblingRatio } = row;
 	const heatClass = node.isDir ? '' : ratioToHeatClass(siblingRatio);
-	const FileTypeIcon = pickFileIcon(node);
 	const handleClick = () => {
 		if (node.isDir) onToggle(node.path);
 	};
@@ -626,7 +631,7 @@ function TreeRow({ row, isExpanded, onToggle, onReveal }: TreeRowProps) {
 							<Folder className="h-3.5 w-3.5 shrink-0 text-amber-600" />
 						)
 					) : (
-						<FileTypeIcon className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+						<FileTypeIcon node={node} className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
 					)}
 					<span className="min-w-0 flex-1 truncate font-mono">
 						{node.name || '/'}
@@ -753,15 +758,20 @@ const CODE_EXTS = new Set([
 	'svelte',
 ]);
 
-function pickFileIcon(node: TreeNode): typeof FileIcon {
-	if (node.isDir) return Folder;
+interface FileTypeIconProps {
+	readonly node: TreeNode;
+	readonly className: string;
+}
+
+function FileTypeIcon({ node, className }: FileTypeIconProps) {
+	if (node.isDir) return <Folder className={className} />;
 	const lastDot = node.name.lastIndexOf('.');
-	if (lastDot < 0) return FileIcon;
+	if (lastDot < 0) return <FileIcon className={className} />;
 	const ext = node.name.slice(lastDot + 1).toLowerCase();
-	if (IMAGE_EXTS.has(ext)) return ImageIcon;
-	if (CODE_EXTS.has(ext)) return FileCode;
-	if (TEXT_EXTS.has(ext)) return FileText;
-	return FileIcon;
+	if (IMAGE_EXTS.has(ext)) return <ImageIcon className={className} />;
+	if (CODE_EXTS.has(ext)) return <FileCode className={className} />;
+	if (TEXT_EXTS.has(ext)) return <FileText className={className} />;
+	return <FileIcon className={className} />;
 }
 
 interface LargestFilesPanelProps {

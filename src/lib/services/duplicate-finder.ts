@@ -77,7 +77,7 @@ export const deleteFiles = (paths: readonly string[]): Promise<number> =>
  * Hard links require source and target to live on the same volume.
  */
 export const replaceWithLink = (source: string, target: string): Promise<void> =>
-	invoke<void>('duplicate_replace_with_link', { source, target });
+	invoke('duplicate_replace_with_link', { source, target });
 
 /**
  * Subscribe to scan progress events. Returns an unlisten function the

@@ -141,7 +141,6 @@ function QrCodeGeneratorPage() {
 			qrInstanceRef.current = null;
 			host.replaceChildren();
 		};
-		// eslint-disable-next-line react-hooks/exhaustive-deps -- intentionally mount once
 	}, []);
 
 	useEffect(() => {

@@ -2,7 +2,7 @@ import type { ComponentProps } from 'react';
 
 import { cn } from '@/lib/utils';
 
-interface LiveStatusRegionProps extends ComponentProps<'div'> {
+interface LiveStatusRegionProps extends ComponentProps<'output'> {
 	// `aria-atomic` mode. `"false"` (default) announces only the diff inside the
 	// region — appropriate for multi-row outputs (generator lists, key-pair
 	// sections) where re-announcing the entire region would be noisy. Pass
@@ -11,8 +11,8 @@ interface LiveStatusRegionProps extends ComponentProps<'div'> {
 	readonly atomic?: 'true' | 'false';
 }
 
-// Polite live region for tool output. Bakes in the
-// `role="status" aria-live="polite" aria-atomic="..."` triad used across
+// Polite live region for tool output. Renders <output>, whose implicit role
+// is `status`, and bakes in the `aria-live="polite" aria-atomic="..."` pair used across
 // every tool route that announces a freshly produced result. Single source of
 // truth for the screen-reader contract; callers only need to bring the
 // className / children, and pick `atomic` if the default `"false"` is not
@@ -24,9 +24,9 @@ export function LiveStatusRegion({
 	...props
 }: LiveStatusRegionProps) {
 	return (
-		<div role="status" aria-live="polite" aria-atomic={atomic} className={cn(className)} {...props}>
+		<output aria-live="polite" aria-atomic={atomic} className={cn('block', className)} {...props}>
 			{children}
-		</div>
+		</output>
 	);
 }
 

@@ -6,7 +6,7 @@
  * responses (a superseded buffer edit or pattern change). The caller is
  * expected to debounce the search input upstream.
  */
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 import type { HexSearchRequest, HexSearchResponse } from '@/lib/workers/hex-search.worker';
 
@@ -21,11 +21,20 @@ export interface UseHexSearchOutput {
 }
 
 const EMPTY_OUTPUT: UseHexSearchOutput = { matches: [], isPending: false };
+const FIRST_PENDING_OUTPUT: UseHexSearchOutput = { ...EMPTY_OUTPUT, isPending: true };
+
+interface SearchResult {
+	readonly request: HexSearchRequest;
+	readonly matches: readonly number[];
+}
 
 export const useHexSearchWorker = (input: UseHexSearchInput): UseHexSearchOutput => {
 	const workerRef = useRef<Worker | null>(null);
 	const latestIdRef = useRef(0);
-	const [output, setOutput] = useState<UseHexSearchOutput>(EMPTY_OUTPUT);
+	// The request tagged `latestIdRef`. Its response is stored together with its
+	// inputs so `isPending` can be derived by comparing them with the current input.
+	const latestRequestRef = useRef<HexSearchRequest | null>(null);
+	const [result, setResult] = useState<SearchResult | null>(null);
 
 	useEffect(() => {
 		const worker = new Worker(new URL('@/lib/workers/hex-search.worker.ts', import.meta.url), {
@@ -33,8 +42,9 @@ export const useHexSearchWorker = (input: UseHexSearchInput): UseHexSearchOutput
 		});
 		workerRef.current = worker;
 		const handleMessage = (event: MessageEvent<HexSearchResponse>) => {
-			if (event.data.id !== latestIdRef.current) return;
-			setOutput({ matches: event.data.matches, isPending: false });
+			const request = latestRequestRef.current;
+			if (!request || event.data.id !== latestIdRef.current) return;
+			setResult({ request, matches: event.data.matches });
 		};
 		worker.addEventListener('message', handleMessage);
 		return () => {
@@ -45,23 +55,36 @@ export const useHexSearchWorker = (input: UseHexSearchInput): UseHexSearchOutput
 	}, []);
 
 	const { buffer, pattern } = input;
+	const hasQuery = buffer !== null && pattern !== null && pattern.length > 0;
+
+	// Drop the stored matches during render once the query is cleared, so the next
+	// query starts from an empty list instead of the matches of an older query.
+	if (!hasQuery && result !== null) {
+		setResult(null);
+	}
 
 	useEffect(() => {
 		const worker = workerRef.current;
 		if (!worker) return;
 		if (!buffer || !pattern || pattern.length === 0) {
 			latestIdRef.current += 1;
-			setOutput(EMPTY_OUTPUT);
+			latestRequestRef.current = null;
 			return;
 		}
 		const id = latestIdRef.current + 1;
 		latestIdRef.current = id;
-		setOutput((prev) => ({ ...prev, isPending: true }));
 		// Structure-clone the buffer to the worker; the route keeps its own copy
 		// for rendering and editing.
 		const request: HexSearchRequest = { id, buffer, pattern };
+		latestRequestRef.current = request;
 		worker.postMessage(request);
 	}, [buffer, pattern]);
 
-	return output;
+	return useMemo<UseHexSearchOutput>(() => {
+		if (!hasQuery) return EMPTY_OUTPUT;
+		if (!result) return FIRST_PENDING_OUTPUT;
+		// Keep the previous matches visible while a newer search runs.
+		const isPending = result.request.buffer !== buffer || result.request.pattern !== pattern;
+		return { matches: result.matches, isPending };
+	}, [hasQuery, result, buffer, pattern]);
 };

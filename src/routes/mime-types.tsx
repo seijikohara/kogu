@@ -458,7 +458,9 @@ function MimeDetailPanel({ entry, onClose }: MimeDetailPanelProps) {
 									<th className="py-1 pr-3 font-semibold">Offset</th>
 									<th className="py-1 pr-3 font-semibold">Hex</th>
 									<th className="py-1 pr-3 font-semibold">Description</th>
-									<th className="py-1" />
+									<th className="py-1">
+										<span className="sr-only">Actions</span>
+									</th>
 								</tr>
 							</thead>
 							<tbody>

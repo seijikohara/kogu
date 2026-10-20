@@ -173,7 +173,8 @@ export const applyAuth = (
 };
 
 export interface RestRequest {
-	readonly method: HttpMethod | string;
+	// `string & {}` keeps completion for standard methods while allowing custom verbs.
+	readonly method: HttpMethod | (string & {});
 	readonly url: string;
 	readonly headers: readonly HeaderTuple[];
 	readonly body?: string;

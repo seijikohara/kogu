@@ -170,23 +170,28 @@ function RsaToolsPage() {
 	// reflects whichever PEM the user is actively working with.
 	useEffect(() => {
 		let cancelled = false;
-		resolveKeyInfo(activeTab, prefs).then((info) => {
-			if (!cancelled) setKeyInfo(info);
-		});
+		resolveKeyInfo(activeTab, prefs)
+			.then((info) => {
+				if (!cancelled) setKeyInfo(info);
+			})
+			// A key that fails to import has no info to show, same as a resolved null.
+			.catch(() => {
+				if (!cancelled) setKeyInfo(null);
+			});
 		return () => {
 			cancelled = true;
 		};
 	}, [activeTab, prefs]);
 
-	// Reset transient outputs when switching tabs so users see a clean slate.
-	useEffect(() => {
-		setOutput('');
-		setError(null);
-		setVerifyResult(null);
-	}, [activeTab]);
-
 	const handleTabChange = (tab: string) => {
-		if (isRsaTab(tab)) patch({ activeTab: tab });
+		if (!isRsaTab(tab)) return;
+		// Reset transient outputs when switching tabs so users see a clean slate.
+		if (tab !== activeTab) {
+			setOutput('');
+			setError(null);
+			setVerifyResult(null);
+		}
+		patch({ activeTab: tab });
 	};
 
 	const handleGenerateKeypair = async () => {
@@ -204,11 +209,11 @@ function RsaToolsPage() {
 	};
 
 	const handleOpenSshGenerator = () => {
-		router.navigate({ to: '/ssh-key-generator' });
+		void router.navigate({ to: '/ssh-key-generator' });
 	};
 
 	const handleOpenGpgGenerator = () => {
-		router.navigate({ to: '/gpg-key-generator' });
+		void router.navigate({ to: '/gpg-key-generator' });
 	};
 
 	const handleEncrypt = async () => {

@@ -101,6 +101,26 @@ const EMPTY_DERIVED: DerivedState = {
 	detectedAlgorithm: null,
 };
 
+// Inputs of one compress / decompress run. A change to any of them starts a new run.
+interface RunInputs {
+	readonly input: string;
+	readonly direction: Direction;
+	readonly algorithm: CompressionAlgorithm;
+	readonly level: number;
+	readonly outputFormat: OutputFormat;
+	readonly autoDetect: boolean;
+	readonly formatOutput: ReturnType<typeof useCompressionWorker>['formatBytes'];
+}
+
+const sameRunInputs = (a: RunInputs, b: RunInputs): boolean =>
+	a.input === b.input &&
+	a.direction === b.direction &&
+	a.algorithm === b.algorithm &&
+	a.level === b.level &&
+	a.outputFormat === b.outputFormat &&
+	a.autoDetect === b.autoDetect &&
+	a.formatOutput === b.formatOutput;
+
 const errorState = (message: string): DerivedState => ({
 	output: '',
 	error: message,
@@ -232,37 +252,60 @@ function StringCompressorPage() {
 	// effect but do not need debouncing — they change once per click.
 	const debouncedInput = useDebouncedValue(inputText, DEBOUNCE_MS);
 
-	useEffect(() => {
-		const trimmed = debouncedInput.trim();
-		const apply = (state: DerivedState) => {
-			setOutputText(state.output);
-			setError(state.error);
-			setLastResult(state.result);
-			setDetectedAlgorithm(state.detectedAlgorithm);
-			setBusy(false);
-		};
+	const applyDerived = (state: DerivedState) => {
+		setOutputText(state.output);
+		setError(state.error);
+		setLastResult(state.result);
+		setDetectedAlgorithm(state.detectedAlgorithm);
+		setBusy(false);
+	};
 
-		if (trimmed.length === 0) {
-			apply(EMPTY_DERIVED);
-			return;
+	// Start a run whenever one of its inputs changes: a blank input clears the
+	// outputs, anything else flags the run as busy until the effect below
+	// settles it. Adjusting state during render avoids the extra commit of a
+	// synchronous setState inside the effect.
+	const runInputs: RunInputs = {
+		input: debouncedInput,
+		direction,
+		algorithm,
+		level,
+		outputFormat,
+		autoDetect,
+		formatOutput: formatCompressedOutput,
+	};
+	const [startedRun, setStartedRun] = useState<RunInputs | null>(null);
+	if (startedRun === null || !sameRunInputs(startedRun, runInputs)) {
+		setStartedRun(runInputs);
+		if (debouncedInput.trim().length === 0) {
+			applyDerived(EMPTY_DERIVED);
+		} else {
+			setBusy(true);
 		}
+	}
+
+	useEffect(() => {
+		if (debouncedInput.trim().length === 0) return;
 
 		let cancelled = false;
-		setBusy(true);
 
-		(async () => {
-			const next =
-				direction === 'compress'
-					? await runCompress(
-							debouncedInput,
-							algorithm,
-							level,
-							outputFormat,
-							formatCompressedOutput
-						)
-					: await runDecompress(debouncedInput, algorithm, autoDetect);
-			if (cancelled) return;
-			apply(next);
+		void (async () => {
+			try {
+				const next =
+					direction === 'compress'
+						? await runCompress(
+								debouncedInput,
+								algorithm,
+								level,
+								outputFormat,
+								formatCompressedOutput
+							)
+						: await runDecompress(debouncedInput, algorithm, autoDetect);
+				if (!cancelled) applyDerived(next);
+			} catch (e) {
+				// Codec or worker failures surface through the error state
+				// instead of leaving the run busy.
+				if (!cancelled) applyDerived(errorState(e instanceof Error ? e.message : String(e)));
+			}
 		})();
 
 		return () => {
@@ -508,6 +551,7 @@ function StringCompressorPage() {
 						</div>
 						<div
 							className="mt-2 h-2 w-full overflow-hidden rounded-full bg-muted/70"
+							// oxlint-disable-next-line jsx-a11y/prefer-tag-over-role -- a native <progress> needs vendor pseudo-elements to style its track and fill; this custom bar keeps the shared Tailwind track and the savings / expansion fill colour
 							role="progressbar"
 							aria-label="Compression ratio"
 							aria-valuemin={0}

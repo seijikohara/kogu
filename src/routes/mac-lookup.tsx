@@ -72,39 +72,50 @@ function MacLookupPage() {
 	const { displayFormat, upperCase, randomLocalOnly, randomVendorOui } = options;
 
 	const [input, setInput] = useState<string>(SAMPLE_MAC);
-	const [vendor, setVendor] = useState<VendorResult | null>(null);
-	const [vendorLoading, setVendorLoading] = useState<boolean>(false);
+	const [vendorLookup, setVendorLookup] = useState<{
+		readonly source: ReturnType<typeof parseMac>;
+		readonly vendor: VendorResult | null;
+	} | null>(null);
 	const [dbInfo, setDbInfo] = useState<OuiDatabaseInfo | null>(null);
 	const [showRail, setShowRail] = usePersistedRail('mac-lookup');
 
 	const parseResult = useMemo(() => parseMac(input), [input]);
 	const trimmed = input.trim();
 
+	// The lookup result is stored with the parse result it belongs to. Only a
+	// result for the current parse result is exposed, so an older vendor never
+	// shows while a new lookup is pending, and the loading flag is derived here
+	// instead of being toggled from the effect.
+	const currentLookup =
+		parseResult.ok && vendorLookup?.source === parseResult ? vendorLookup : null;
+	const vendor = currentLookup?.vendor ?? null;
+	const vendorLoading = parseResult.ok && currentLookup === null;
+
 	// Resolve vendor whenever the parsed MAC changes. Render-effect because
 	// the lookup is an out-of-band IPC roundtrip that cannot be derived
 	// synchronously.
 	useEffect(() => {
-		if (!parseResult.ok) {
-			setVendor(null);
-			setVendorLoading(false);
-			return;
-		}
+		if (!parseResult.ok) return;
 		let cancelled = false;
-		setVendorLoading(true);
-		lookupVendor(parseResult.mac).then((result) => {
-			if (cancelled) return;
-			setVendor(result);
-			setVendorLoading(false);
-		});
+		lookupVendor(parseResult.mac)
+			.then((result) => {
+				if (!cancelled) setVendorLookup({ source: parseResult, vendor: result });
+			})
+			// lookupVendor maps IPC failures to an unknown vendor; mirror that so
+			// an unexpected rejection still ends the loading state.
+			.catch(() => {
+				if (!cancelled) setVendorLookup({ source: parseResult, vendor: null });
+			});
 		return () => {
 			cancelled = true;
 		};
 	}, [parseResult]);
 
 	// One-shot fetch of bundled database metadata for the freshness badge.
+	// getOuiDatabaseInfo resolves to null on failure, so it never rejects.
 	useEffect(() => {
 		let cancelled = false;
-		getOuiDatabaseInfo().then((info) => {
+		void getOuiDatabaseInfo().then((info) => {
 			if (!cancelled) setDbInfo(info);
 		});
 		return () => {
@@ -132,7 +143,13 @@ function MacLookupPage() {
 			showRail={showRail}
 			onShowRailChange={setShowRail}
 			statusContent={
-				<MacLookupStatus parseResult={parseResult} vendor={vendor} flags={flags} dbInfo={dbInfo} />
+				<MacLookupStatus
+					parseResult={parseResult}
+					vendor={vendor}
+					vendorLoading={vendorLoading}
+					flags={flags}
+					dbInfo={dbInfo}
+				/>
 			}
 			rail={
 				<MacLookupRail
@@ -168,11 +185,12 @@ function MacLookupPage() {
 interface StatusProps {
 	readonly parseResult: ReturnType<typeof parseMac>;
 	readonly vendor: VendorResult | null;
+	readonly vendorLoading: boolean;
 	readonly flags: MacFlags | null;
 	readonly dbInfo: OuiDatabaseInfo | null;
 }
 
-function MacLookupStatus({ parseResult, vendor, flags, dbInfo }: StatusProps) {
+function MacLookupStatus({ parseResult, vendor, vendorLoading, flags, dbInfo }: StatusProps) {
 	if (!parseResult.ok || !flags) {
 		return dbInfo ? <StatItem label="OUI entries" value={dbInfo.entries.toLocaleString()} /> : null;
 	}
@@ -180,7 +198,7 @@ function MacLookupStatus({ parseResult, vendor, flags, dbInfo }: StatusProps) {
 	const adminLabel = flags.local ? 'Local' : 'Universal';
 	return (
 		<>
-			<StatItem label="Vendor" value={vendor?.vendor ?? 'Unknown'} />
+			<StatItem label="Vendor" value={vendorLoading ? '…' : (vendor?.vendor ?? 'Unknown')} />
 			<StatItem label="Type" value={typeLabel} />
 			<StatItem label="Admin" value={adminLabel} />
 		</>

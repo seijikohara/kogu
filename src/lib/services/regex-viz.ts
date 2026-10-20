@@ -137,7 +137,7 @@ const characterClassExpr = (expr: unknown): string => {
 	return '';
 };
 
-// biome-ignore lint/suspicious/noExplicitAny: regexp-tree exposes a recursive AST without exported types.
+// oxlint-disable-next-line typescript/no-explicit-any -- regexp-tree exposes a recursive AST without exported types.
 const buildVizNode = (node: any): VizNode => {
 	if (!node || typeof node !== 'object') return { kind: 'unknown', label: '?', children: [] };
 	const type = node.type as string;

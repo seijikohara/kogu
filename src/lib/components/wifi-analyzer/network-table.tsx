@@ -220,6 +220,7 @@ function RssiBarsIndicator({ bars }: { readonly bars: RssiBars }) {
 	return (
 		<div
 			className="flex items-end gap-0.5"
+			// oxlint-disable-next-line jsx-a11y/prefer-tag-over-role -- signal bars are drawn from styled <span>s; role="img" exposes them as one labelled graphic, which an <img> element cannot contain.
 			role="img"
 			aria-label={`Signal strength: ${bars}`}
 			title={`Signal strength: ${bars}`}

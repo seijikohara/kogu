@@ -599,7 +599,7 @@ function ColumnRow({
 	const handleOptionChange = (key: string, value: unknown) => {
 		onChange({
 			...column,
-			options: { ...(column.options ?? {}), [key]: value },
+			options: { ...column.options, [key]: value },
 		});
 	};
 
@@ -882,7 +882,7 @@ function PreviewCard({ columns, rows, totalRows, format, previewOutput }: Previe
 							) : (
 								rows.map((row, rowIdx) => (
 									<tr
-										// biome-ignore lint/suspicious/noArrayIndexKey: preview rows are regenerated each render and have no intrinsic id.
+										// oxlint-disable-next-line react/no-array-index-key -- preview rows are regenerated each render and have no intrinsic id.
 										key={rowIdx}
 										className={cn(rowIdx % 2 === 0 ? 'bg-transparent' : 'bg-surface-2/40')}
 									>
