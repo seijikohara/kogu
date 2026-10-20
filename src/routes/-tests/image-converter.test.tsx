@@ -1,7 +1,13 @@
-import { act, fireEvent } from '@testing-library/react';
+import { act, fireEvent, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { loadSource, type SourceImage } from '@/lib/services/image-convert';
+import {
+	convertMany,
+	generateDemoImage,
+	loadSource,
+	type MultiConvertOutcome,
+	type SourceImage,
+} from '@/lib/services/image-convert';
 
 import { Route } from '../image-converter';
 import { renderRoute } from './render-route';
@@ -11,6 +17,8 @@ vi.mock('@/lib/components/editor', () => import('./code-editor-stub'));
 vi.mock('@/lib/services/image-convert', async (importOriginal) => ({
 	...(await importOriginal<Record<string, unknown>>()),
 	loadSource: vi.fn<typeof loadSource>(),
+	generateDemoImage: vi.fn<typeof generateDemoImage>(),
+	convertMany: vi.fn<typeof convertMany>(),
 }));
 
 const createObjectURL = vi.fn<(blob: Blob) => string>();
@@ -141,5 +149,90 @@ describe('image converter source loading', () => {
 		await settleLoads(source);
 		expect(createObjectURL).not.toHaveBeenCalled();
 		expect(close).toHaveBeenCalledTimes(1);
+	});
+
+	it('revokes conversion results that arrive after the page unmounts', async () => {
+		let resolveConvert: (outcomes: readonly MultiConvertOutcome[]) => void = () => undefined;
+		vi.mocked(convertMany).mockImplementation(
+			() =>
+				new Promise<readonly MultiConvertOutcome[]>((resolve) => {
+					resolveConvert = resolve;
+				})
+		);
+		const { container, unmount } = await renderRoute(Route);
+		const loaded = fakeSource(pngFile('a.png'));
+		pickFile(container, loaded.file);
+		await settleLoads(loaded.source);
+
+		const convertButton = screen
+			.getAllByRole('button')
+			.find((button) => button.textContent?.trim().startsWith('Convert'));
+		if (!convertButton) throw new Error('Convert button not found');
+		fireEvent.click(convertButton);
+		expect(convertMany).toHaveBeenCalledTimes(1);
+		unmount();
+
+		await act(async () => {
+			resolveConvert([
+				{
+					format: 'png',
+					ok: true,
+					converted: {
+						format: 'png',
+						blob: loaded.file,
+						url: 'blob:converted-png',
+						bytes: loaded.file.size,
+						width: 4,
+						height: 3,
+					},
+				},
+			]);
+			await Promise.resolve();
+		});
+		expect(revokedUrls()).toContain('blob:converted-png');
+	});
+
+	describe('demo image', () => {
+		let resolveDemo: (file: File) => void = () => undefined;
+
+		beforeEach(() => {
+			vi.mocked(generateDemoImage).mockImplementation(
+				() =>
+					new Promise<File>((resolve) => {
+						resolveDemo = resolve;
+					})
+			);
+		});
+
+		const clickLoadDemo = () => {
+			const [button] = screen.getAllByRole('button', { name: /load demo image/i });
+			if (!button) throw new Error('Load demo image button not found');
+			fireEvent.click(button);
+		};
+
+		const settleDemo = (file: File) =>
+			act(async () => {
+				resolveDemo(file);
+				await Promise.resolve();
+			});
+
+		it('loads the generated demo image', async () => {
+			await renderRoute(Route);
+			clickLoadDemo();
+			const demo = fakeSource(pngFile('demo.png'));
+			await settleDemo(demo.file);
+			await settleLoads(demo.source);
+			expect(createObjectURL).toHaveBeenCalledWith(demo.file);
+		});
+
+		it('discards a demo image that is generated after the page unmounts', async () => {
+			const { unmount } = await renderRoute(Route);
+			clickLoadDemo();
+			unmount();
+
+			await settleDemo(pngFile('demo.png'));
+			expect(loadSource).not.toHaveBeenCalled();
+			expect(createObjectURL).not.toHaveBeenCalled();
+		});
 	});
 });
