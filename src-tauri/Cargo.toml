@@ -74,7 +74,7 @@ dns-lookup = "4"
 uuid = { version = "1", features = ["v4"] }
 if-addrs = "0.15"
 mdns-sd = "0.21"
-netdev = { version = "0.46", features = ["gateway"] }
+netdev = { version = "0.47", features = ["gateway"] }
 
 # UPnP Device Description Fetch
 reqwest = { version = "0.13", default-features = false, features = ["rustls"] }
@@ -124,7 +124,7 @@ xz2 = "0.1"
 notify = "8"
 
 # Drive / Disk Info — cross-platform disk enumeration + recursive sizing
-sysinfo = { version = "0.39", default-features = false, features = ["disk"] }
+sysinfo = { version = "0.40", default-features = false, features = ["disk"] }
 
 # Wi-Fi scan — platform-native APIs, no shell-outs.
 [target.'cfg(target_os = "macos")'.dependencies]

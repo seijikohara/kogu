@@ -99,11 +99,16 @@ fn drive_from_sysinfo(disk: &sysinfo::Disk) -> DriveInfo {
 /// stat-per-disk pass, which is fast enough to call synchronously on
 /// the UI thread for the typical desktop case (single-digit drive
 /// count).
-#[must_use]
+///
+/// # Errors
+///
+/// Returns an error string when `sysinfo` cannot enumerate disks on the
+/// current platform.
 #[tauri::command]
-pub fn drives_list() -> Vec<DriveInfo> {
-    let disks = Disks::new_with_refreshed_list();
-    disks.list().iter().map(drive_from_sysinfo).collect()
+pub fn drives_list() -> Result<Vec<DriveInfo>, String> {
+    let disks =
+        Disks::new_with_refreshed_list().map_err(|e| format!("Failed to enumerate drives: {e}"))?;
+    Ok(disks.iter().map(drive_from_sysinfo).collect())
 }
 
 /// One row in the result of [`folder_size_scan`]. Represents either an
