@@ -1,0 +1,11 @@
+# Bun settings: https://bun.com/docs/runtime/bunfig
+[install]
+# Skip npm versions published less than 3 days (259200 seconds) ago, to match the
+# minimumReleaseAge of the shared Renovate preset. Renovate does not pass its hold
+# to Bun, and the Renovate hold does not cover lock file maintenance or transitive
+# dependencies. Bun applies this setting to every new resolution, direct or
+# transitive; existing bun.lock entries stay unchanged.
+# Trade-off: Renovate raises security fixes without the hold, but Bun rejects a
+# version younger than 3 days, so the lock file update of such a PR fails until the
+# version ages. For an urgent fix, add "name@version" to minimumReleaseAgeExcludes.
+minimumReleaseAge = 259200
