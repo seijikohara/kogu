@@ -14,9 +14,18 @@
 			matchPackageNames: ['@tauri-apps/*'],
 		},
 		{
-			description: 'Group React and its Vite plugin',
+			// config:recommended groups react, react-dom, and their type definitions as 'react monorepo'.
+			// This rule moves react and react-dom to the 'react' group, so it takes the type definitions
+			// too. Otherwise a React major arrives in two PRs that can merge apart.
+			description: 'Group React, its type definitions, and its Vite plugin',
 			groupName: 'react',
-			matchPackageNames: ['react', 'react-dom', '@vitejs/plugin-react'],
+			matchPackageNames: [
+				'react',
+				'react-dom',
+				'@types/react',
+				'@types/react-dom',
+				'@vitejs/plugin-react',
+			],
 		},
 		{
 			description: 'Group the TanStack packages',
@@ -53,9 +62,10 @@
 			matchPackageNames: ['vite', 'typescript'],
 		},
 		{
-			description: 'Group TypeScript type definitions',
+			// Later rules win. Exclude the React type definitions so the react group above keeps them.
+			description: 'Group TypeScript type definitions outside the react group',
 			groupName: 'type definitions',
-			matchPackageNames: ['@types/*'],
+			matchPackageNames: ['@types/*', '!@types/react', '!@types/react-dom'],
 		},
 	],
 }
