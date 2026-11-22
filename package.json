@@ -114,7 +114,7 @@
 	"devDependencies": {
 		"@tanstack/router-plugin": "^1.168.47",
 		"@tauri-apps/cli": "^2.11.2",
-		"@testing-library/jest-dom": "^7.0.0",
+		"@testing-library/jest-dom": "^8.0.0",
 		"@testing-library/react": "^16.3.2",
 		"@testing-library/user-event": "^14.6.1",
 		"@types/bun": "^1.4.3",
@@ -123,7 +123,7 @@
 		"@types/react-dom": "^19.2.3",
 		"@types/semver": "^7.7.1",
 		"@vitejs/plugin-react": "^6.0.2",
-		"jsdom": "^30.0.0",
+		"jsdom": "^31.0.0",
 		"lefthook": "^2.1.9",
 		"oxfmt": "^0.76.0",
 		"oxlint": "^1.89.0",
